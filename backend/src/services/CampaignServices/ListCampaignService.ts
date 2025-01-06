@@ -2,11 +2,15 @@ import { Sequelize } from "sequelize-typescript";
 import Campaign from "../../models/Campaign";
 import CampaignContacts from "../../models/CampaignContacts";
 
+// Interface que define os parâmetros de busca
+// Permite filtrar campanhas por tenant e status
 interface Request {
   tenantId: string | number;
   isActive?: string | boolean | null;
 }
 
+// Serviço responsável por listar campanhas com estatísticas
+// Retorna campanhas e contagens de mensagens por status
 const ListCampaignService = async ({
   tenantId
 }: Request): Promise<Campaign[]> => {

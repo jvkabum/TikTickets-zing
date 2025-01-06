@@ -3,12 +3,16 @@ import AppError from "../../errors/AppError";
 import Campaign from "../../models/Campaign";
 import { logger } from "../../utils/logger";
 
+// Função que extrai o nome do arquivo de uma URL
+// Usada para obter o nome do arquivo de mídia da campanha
 const cArquivoName = (url: string | undefined) => {
   if (!url) return "";
   const split = url.split("/");
   const name = split[split.length - 1];
   return name;
 };
+// Interface que define os dados atualizáveis de uma campanha
+// Inclui todas as propriedades que podem ser modificadas
 interface CampaignData {
   name: string;
   start: string;
@@ -22,6 +26,8 @@ interface CampaignData {
   sessionId: string;
 }
 
+// Interface que define os parâmetros necessários para atualização
+// Combina dados da campanha com arquivos de mídia e identificadores
 interface Request {
   campaignData: CampaignData;
   medias?: Express.Multer.File[];
@@ -29,6 +35,8 @@ interface Request {
   tenantId: string | number;
 }
 
+// Serviço responsável por atualizar uma campanha existente
+// Processa arquivos de mídia e atualiza dados no banco
 const UpdateCampaignService = async ({
   campaignData,
   medias,

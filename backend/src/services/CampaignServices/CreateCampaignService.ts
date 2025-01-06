@@ -4,6 +4,8 @@ import { logger } from "../../utils/logger";
 
 import Campaign from "../../models/Campaign";
 
+// Interface que define os dados necessários para criar uma campanha
+// Inclui informações sobre mensagens, agendamento e mídia
 interface CampaignRequest {
   name: string;
   start: string;
@@ -18,11 +20,15 @@ interface CampaignRequest {
   tenantId: string;
 }
 
+// Interface que combina dados da campanha com arquivos de mídia
+// Permite envio de arquivos junto com as informações da campanha
 interface Request {
   campaign: CampaignRequest;
   medias?: Express.Multer.File[];
 }
 
+// Serviço responsável por criar uma nova campanha
+// Processa arquivos de mídia e salva dados no banco
 const CreateCampaignService = async ({
   campaign,
   medias

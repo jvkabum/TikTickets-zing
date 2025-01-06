@@ -7,12 +7,18 @@ import Whatsapp from "../../models/Whatsapp";
 import { logger } from "../../utils/logger";
 import MessengerSendMessagesSystem from "./MessengerSendMessagesSystem";
 
+// Interface que estende o cliente do Messenger
+// Adiciona ID necessário para identificação do bot
 interface Session extends MessengerClient {
   id: number;
 }
 
+// Controle de estado para evitar verificações simultâneas
+// Mapeia tenantId para status de verificação
 const checkingMessenger: any = {};
 
+// Função que verifica periodicamente mensagens pendentes
+// Processa mensagens na fila de envio do tenant
 const messengerCheckMessages = async (
   messengerBot: Session,
   tenantId: string | number
@@ -28,6 +34,8 @@ const messengerCheckMessages = async (
   checkingMessenger[tenantId] = false;
 };
 
+// Função principal que inicializa o bot do Messenger
+// Configura a conexão e inicia o monitoramento de mensagens
 export const StartMessengerBot = async (
   connection: Whatsapp
 ): Promise<void> => {

@@ -1,6 +1,8 @@
 import AppError from "../../errors/AppError";
 import Queue from "../../models/Queue";
 
+// Interface que define os dados atualizáveis de uma fila
+// Inclui todas as propriedades que podem ser modificadas
 interface QueueData {
   queue: string;
   isActive: boolean;
@@ -8,11 +10,15 @@ interface QueueData {
   tenantId: number | string;
 }
 
+// Interface que define os parâmetros necessários para atualização
+// Combina novos dados com identificador da fila
 interface Request {
   queueData: QueueData;
   queueId: string;
 }
 
+// Serviço responsável por atualizar uma fila de atendimento
+// Verifica existência e atualiza dados no banco
 const UpdateQueueService = async ({
   queueData,
   queueId

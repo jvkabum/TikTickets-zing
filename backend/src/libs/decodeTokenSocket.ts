@@ -1,49 +1,54 @@
-import { verify, JsonWebTokenError } from "jsonwebtoken";
-import authConfig from "../config/auth";
-import { logger } from "../utils/logger";
+import { verify, JsonWebTokenError } from "jsonwebtoken"; 
+import authConfig from "../config/auth"; 
+import { logger } from "../utils/logger"; 
+
+// ====================
+// Definição das Interfaces
+// ====================
 
 interface TokenPayload {
-  id: string;
-  username: string;
-  profile: string;
-  tenantId: number;
-  iat: number;
-  exp: number;
+  id: string; // ID do usuário
+  username: string; // Nome de usuário
+  profile: string; // Perfil do usuário
+  tenantId: number; // ID do inquilino
+  iat: number; // Timestamp de quando o token foi emitido
+  exp: number; // Timestamp de quando o token expira
 }
 
 interface Data {
-  id: number | string;
-  profile: string;
-  tenantId: number | string;
+  id: number | string; // ID do usuário ou inquilino
+  profile: string; // Perfil do usuário
+  tenantId: number | string; // ID do inquilino
 }
 
 interface Result {
-  isValid: boolean;
-  data: Data;
+  isValid: boolean; // Indica se o token é válido
+  data: Data; // Dados extraídos do token
 }
 
+// Função que decodifica o token JWT e valida
 const decode = (token: string): Result => {
   const validation: Result = {
-    isValid: false,
+    isValid: false, // Inicializa como inválido
     data: {
-      id: "",
-      profile: "",
-      tenantId: 0
+      id: "", // Inicializa ID
+      profile: "", // Inicializa perfil
+      tenantId: 0 // Inicializa ID do inquilino
     }
   };
 
   // Verifica se o token é fornecido
   if (!token) {
-    logger.error("JWT must be provided");
+    logger.error("JWT must be provided"); // Registra erro se o token não estiver presente
     return validation; // Retorna sem validar
   }
 
   try {
     // Decodifica o token e valida
-    const decoded = verify(token, authConfig.secret) as TokenPayload;
-    const { id, profile, tenantId } = decoded;
+    const decoded = verify(token, authConfig.secret) as TokenPayload; // Verifica a validade do token usando a chave secreta
+    const { id, profile, tenantId } = decoded; // Extrai dados do token
 
-    validation.isValid = true;
+    validation.isValid = true; // Marca como válido
     validation.data = {
       id,
       profile,
@@ -52,13 +57,13 @@ const decode = (token: string): Result => {
   } catch (err) {
     // Trata os erros de verificação do JWT
     if (err instanceof JsonWebTokenError) {
-      logger.error(`JWT verification error: ${err.message}`);
+      logger.error(`JWT verification error: ${err.message}`); // Registra erro de verificação
     } else {
-      logger.error(`Unexpected error: ${err}`);
+      logger.error(`Unexpected error: ${err}`); // Registra erro inesperado
     }
   }
   
-  return validation;
+  return validation; // Retorna o resultado da validação
 };
 
-export default decode;
+export default decode; // Exporta a função decode para uso em outras partes da aplicação

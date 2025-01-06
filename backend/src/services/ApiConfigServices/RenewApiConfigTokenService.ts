@@ -4,6 +4,8 @@ import ApiInstance from "../../models/ApiConfig";
 import authConfig from "../../config/auth";
 import AppError from "../../errors/AppError";
 
+// Interface que define os parâmetros necessários para renovação do token
+// Inclui identificadores da API, sessão, usuário e tenant
 interface Request {
   apiId: string;
   sessionId: string | number;
@@ -11,6 +13,8 @@ interface Request {
   tenantId: string | number;
 }
 
+// Serviço responsável por renovar o token de uma configuração de API
+// Gera um novo token JWT com validade estendida
 const RenewApiConfigTokenService = async ({
   apiId,
   sessionId,

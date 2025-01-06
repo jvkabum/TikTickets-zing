@@ -218,10 +218,11 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
 
 // Função para obter a instância do bot do WhatsApp
 export const getWbot = (whatsappId: number): Session => {
-  const sessionIndex = sessions.findIndex(s => s.id === whatsappId); // Verifica se a sessão existe
+  const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
   if (sessionIndex === -1) {
-    throw new AppError("ERR_WAPP_NOT_INITIALIZED"); // Lança erro se a sessão não estiver inicializada
+    logger.error(`Sessão do WhatsApp não inicializada. ID: ${whatsappId}`);
+    throw new AppError("A sessão do WhatsApp não está inicializada. Por favor, reconecte a sessão.", 400);
   }
 
-  return sessions[sessionIndex]; // Retorna a sessão correspondente
+  return sessions[sessionIndex];
 };

@@ -1,26 +1,33 @@
-import "reflect-metadata"; // Importa metadados para TypeScript
-import "express-async-errors"; // Para tratar erros assíncronos
-import { Application, json, urlencoded, Request, Response, NextFunction } from "express"; // Importa módulos do Express
-import cors from "cors"; // Middleware para CORS
-import cookieParser from "cookie-parser"; // Middleware para manipulação de cookies
-import helmet from "helmet"; // Middleware para segurança
-import { logger } from "../utils/logger"; // Importa o logger
+import "reflect-metadata";
+import "express-async-errors";
+import { Application, json, urlencoded, Request, Response, NextFunction } from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { logger } from "../utils/logger";
 
+// Função principal de configuração do Express
 export default async function express(app: Application): Promise<void> {
+  // Define as origens permitidas para requisições CORS
+  // Por padrão, permite apenas o frontend definido nas variáveis de ambiente
   const origin = [process.env.FRONTEND_URL || "https://app.tikanais.com.br"];
-  // Configuração do CORS
+
+  // Configura o CORS para permitir requisições da origem definida
+  // e habilita o envio de credenciais (cookies, headers de autenticação)
   app.use(
     cors({
       origin,
-      credentials: true // Permite cookies e cabeçalhos de autenticação
+      credentials: true
     })
   );
 
-  // Configurações de segurança se não estiver no ambiente de desenvolvimento
+  // Aplica configurações de segurança apenas em ambientes de produção
   if (process.env.NODE_ENV !== "dev") {
+    // Adiciona headers de segurança usando o Helmet
     app.use(helmet());
     
-    // Configuração da política de segurança de conteúdo
+    // Configura a Política de Segurança de Conteúdo (CSP)
+    // Define regras para carregamento de recursos (scripts, estilos, imagens, etc)
     app.use(
       helmet.contentSecurityPolicy({
         directives: {
@@ -44,7 +51,9 @@ export default async function express(app: Application): Promise<void> {
         }
       })
     );
-    // Adiciona políticas de recursos cruzados
+
+    // Configura políticas de recursos cross-origin
+    // Permite compartilhamento de recursos entre diferentes origens
     app.use(
       helmet({
         crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -53,22 +62,34 @@ export default async function express(app: Application): Promise<void> {
     );
   }
 
-  console.info("cors domain ======>>>>", process.env.FRONTEND_URL); // Log do domínio CORS
+  // Log do domínio configurado para CORS
+  console.info("cors domain ======>>>>", process.env.FRONTEND_URL);
 
-  // Configuração de middleware
-  app.use(cookieParser());
-  app.use(json({ limit: "100MB" })); // Limite para o corpo JSON
+  // Configuração dos middlewares principais
+  app.use(cookieParser()); // Parser para cookies
+  app.use(json({ limit: "100MB" })); // Parser para JSON com limite de 100MB
   app.use(
-    urlencoded({ extended: true, limit: "100MB", parameterLimit: 200000 }) // Limite para dados URL-encoded
+    urlencoded({ 
+      extended: true, 
+      limit: "100MB", 
+      parameterLimit: 200000 
+    }) // Parser para dados de formulário com limites
   );
 
-  // Middleware de tratamento de erros
+  // Middleware global para tratamento de erros
+  // Captura qualquer erro não tratado na aplicação
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    logger.error("Erro ocorrido:", err.message); // Log do erro
+    // Registra o erro no log
+    logger.error("Erro ocorrido:", err.message);
+    
+    // Retorna resposta de erro
     res.status(500).json({
       message: "Ocorreu um erro interno no servidor",
-      stack: process.env.NODE_ENV === "dev" ? err.stack : undefined // Inclui o stack trace para depuração, se não estiver em produção
+      // Inclui stack trace apenas em ambiente de desenvolvimento
+      stack: process.env.NODE_ENV === "dev" ? err.stack : undefined
     });
   });
-  logger.info("express already in server!"); // Log para indicar que o Express foi configurado
+
+  // Log indicando que a configuração do Express foi concluída
+  logger.info("express already in server!");
 }

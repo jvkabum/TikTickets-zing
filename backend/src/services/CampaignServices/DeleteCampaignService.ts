@@ -1,11 +1,15 @@
 import Campaign from "../../models/Campaign";
 import AppError from "../../errors/AppError";
 
+// Interface que define os parâmetros necessários para exclusão
+// Requer identificação da campanha e do tenant
 interface Request {
   id: string;
   tenantId: number | string;
 }
 
+// Serviço responsável por excluir uma campanha do sistema
+// Verifica status e permissões antes da exclusão
 const DeleteCampaignService = async ({
   id,
   tenantId

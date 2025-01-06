@@ -1,6 +1,5 @@
 import express from "express";
 import isAuth from "../middleware/isAuth";
-
 import * as FastReplyController from "../controllers/FastReplyController";
 
 const fastReplyRoutes = express.Router();

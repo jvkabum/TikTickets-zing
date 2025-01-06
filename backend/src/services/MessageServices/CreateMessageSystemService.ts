@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 import fs from "fs";
 import { join } from "path";
 import axios from "axios";

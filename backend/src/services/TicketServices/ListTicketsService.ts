@@ -195,7 +195,7 @@ const ListTicketsService = async ({
   u."name" as username,
   q.queue,
   jsonb_build_object('id', w.id, 'name', w."name") whatsapp,
-    t.*,
+  t.*,
   json_agg(
     json_build_object(
       'id', ct."tagId",

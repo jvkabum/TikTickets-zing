@@ -21,27 +21,40 @@ import Whatsapp from "../models/Whatsapp";
 import { ImportFileContactsService } from "../services/WbotServices/ImportFileContactsService";
 import Contact from "../models/Contact";
 
+// Interface para parâmetros de busca na listagem de contatos
 type IndexQuery = {
-  searchParam: string;
-  pageNumber: string;
+  searchParam: string;   // Termo de busca para filtrar contatos
+  pageNumber: string;    // Número da página para paginação
 };
 
+// Interface para informações extras do contato
 interface ExtraInfo {
-  name: string;
-  value: string;
+  name: string;          // Nome do campo extra
+  value: string;         // Valor do campo extra
 }
+
+// Interface para dados do contato
 interface ContactData {
-  name: string;
-  number: string;
-  email?: string;
-  extraInfo?: ExtraInfo[];
-  wallets?: null | number[] | string[];
+  name: string;          // Nome do contato
+  number: string;        // Número do telefone
+  email?: string;        // Email (opcional)
+  extraInfo?: ExtraInfo[]; // Informações adicionais
+  wallets?: null | number[] | string[]; // Carteiras associadas
 }
 
+/**
+ * Lista contatos com paginação e filtros
+ * Esta função retorna uma lista de contatos baseada nos parâmetros de busca,
+ * considerando as permissões do usuário e o tenant.
+ * @param searchParam - Termo para filtrar contatos
+ * @param pageNumber - Número da página para paginação
+ * @returns Lista paginada de contatos, total e indicador de mais páginas
+ */
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { tenantId, id: userId, profile } = req.user;
-  const { searchParam, pageNumber } = req.query as IndexQuery;
+  const { tenantId, id: userId, profile } = req.user; // Obtém dados do usuário autenticado
+  const { searchParam, pageNumber } = req.query as IndexQuery; // Parâmetros de busca e paginação
 
+  // Busca contatos no banco de dados com filtros aplicados
   const { contacts, count, hasMore } = await ListContactsService({
     searchParam,
     pageNumber,

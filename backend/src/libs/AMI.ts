@@ -8,25 +8,32 @@ import Asterisk from "asterisk-manager";
 //   true
 // );
 
+// Cria uma nova instância do Asterisk Manager Interface (AMI) com as credenciais e configurações
 const ami: any = new Asterisk(
-  "5038",
-  "192.168.206.50",
-  "admin",
-  "start123",
-  true
+  "5038", // Porta do AMI
+  "192.168.206.50", // Endereço IP do servidor Asterisk
+  "admin", // Nome de usuário para autenticação
+  "start123", // Senha para autenticação
+  true // Conexão segura
 );
 
-ami.keepConnected();
+ami.keepConnected(); // Mantém a conexão ativa com o servidor Asterisk
 
+// ====================
+// Eventos e Ações do AMI
+// ====================
+
+// Ação para obter o status da fila
 // ami.action({ action: "QueueStatus" }, (err: any, res: any) => {
 //   console.log("QueueStatus", err, res);
 // });
 
+// Ação para obter a lista de agentes
 // ami.action({ action: "Agents" }, (err: any, res: any) => {
 //   console.log("AgentShow", err, res);
 // });
 
-// // Evento de quando a chamada entra na fila
+// Evento de quando a chamada entra na fila
 // ami.on("queuecallerjoin", (evt: any) => {
 //   console.log(
 //     `### Emitindo no canal ${evt.queue} a mensagem: \r\n ${JSON.stringify(
@@ -36,7 +43,7 @@ ami.keepConnected();
 //   // io.emit(evt.queue, evt);
 // });
 
-// // Evento de quando a chamada sai da fila (quando e atendida ou abandonada)
+// Evento de quando a chamada sai da fila (quando é atendida ou abandonada)
 // ami.on("queuecallerleave", (evt: any) => {
 //   console.log(
 //     `### Emitindo no canal ${evt.queue} a mensagem: \r\n ${JSON.stringify(
@@ -46,7 +53,7 @@ ami.keepConnected();
 //   // io.emit(evt.queue, evt);
 // });
 
-// // Evento de quando a chamada e abandonada
+// Evento de quando a chamada é abandonada
 // ami.on("queuecallerabandon", (evt: any) => {
 //   console.log(
 //     `### Emitindo no canal ${evt.queue} a mensagem: \r\n ${JSON.stringify(
@@ -56,7 +63,7 @@ ami.keepConnected();
 //   // io.emit(evt.queue, evt);
 // });
 
-// // Evento de quando o membro da fila (agente) muda de status
+// Evento de quando o membro da fila (agente) muda de status
 // ami.on("queuememberstatus", (evt: any) => {
 //   console.log(
 //     `### Emitindo no canal ${evt.queue} a mensagem: \r\n ${JSON.stringify(
@@ -66,7 +73,7 @@ ami.keepConnected();
 //   // io.emit(evt.queue, evt);
 // });
 
-// // Evento de quando a chamada é atendida
+// Evento de quando a chamada é atendida
 // ami.on("agentconnect", (evt: any) => {
 //   console.log(
 //     `### Emitindo no canal ${evt.queue} a mensagem: \r\n ${JSON.stringify(
@@ -76,7 +83,7 @@ ami.keepConnected();
 //   // io.emit(evt.queue, evt);
 // });
 
-// // Evento de membros de uma fila (que so aparece quando voce da um queue show na fila)
+// Evento de membros de uma fila (que só aparece quando você dá um queue show na fila)
 // ami.on("queuemember", (evt: any) => {
 //   console.log(
 //     `### Emitindo no canal ${evt.queue} a mensagem: \r\n ${JSON.stringify(
@@ -86,7 +93,7 @@ ami.keepConnected();
 //   // io.emit(evt.queue, evt);
 // });
 
-// // Evento de parametros de uma fila (que so aparece quando voce da um queue show na fila)
+// Evento de parâmetros de uma fila (que só aparece quando você dá um queue show na fila)
 // ami.on("queueparams", (evt: any) => {
 //   console.log(
 //     `### Emitindo no canal ${evt.queue} a mensagem: \r\n ${JSON.stringify(
@@ -96,15 +103,7 @@ ami.keepConnected();
 //   // io.emit(evt.queue, evt);
 // });
 
-// ami.on("Hangup", (evt: any) => {
-//   console.log(
-//     `### Emitindo no canal a mensagem de desligamento da chamada: \r\n ${JSON.stringify(
-//       evt
-//     )} \r\n \r\n \r\n`
-//   );
-//   // io.emit(evt.queue, evt);
-// });
-
+// Evento de desligamento da chamada
 ami.on("Dial", (evt: any) => {
   console.log(
     `### Emitindo no canal a mensagem de desligamento da chamada: \r\n ${JSON.stringify(
@@ -114,59 +113,33 @@ ami.on("Dial", (evt: any) => {
   // io.emit(evt.queue, evt);
 });
 
-// ami.on("peerstatus", (evt: any) => {
-//   console.log(JSON.stringify(evt));
-// });
+// Evento de desligamento
+ami.on("hangup", (evt: any) => {
+  console.log("hangup", evt); // Loga o evento de desligamento
+});
 
-// realizar chamada
+// Escuta as respostas de ações
+ami.on("response", (evt: any) => {
+  console.log("response", evt); // Loga a resposta da ação
+});
+
+// Realiza uma chamada
 ami.action(
   {
-    action: "originate",
-    // channel: "SIP/4815",
-    channel: "SIP/4815",
-    context: "from-internal",
-    exten: "0991191708",
-    priority: 1,
+    action: "originate", // Ação para originar uma chamada
+    channel: "SIP/4815", // Canal de origem da chamada
+    context: "from-internal", // Contexto da chamada
+    exten: "0991191708", // Número de destino
+    priority: 1, // Prioridade da chamada
     variable: {
-      connectedlinenum: "0991191708",
-      connectedlinename: "CID:4815"
-      // name1: "value1",
-      // name2: "value2"
+      connectedlinenum: "0991191708", // Número da linha conectada
+      connectedlinename: "CID:4815" // Nome da linha conectada
     }
   },
   (err: any, res: any) => {
-    console.log("action", err, res);
+    console.log("action", err, res); // Loga o resultado da ação
   }
 );
 
-// ami.on("managerevent", (evt: any) => {
-//   if (!(evt.event === "RTCPReceived" || evt.event === "RTCPSent")) {
-//     console.log("managerevent", evt);
-//   }
-//   // QueueMemberPaused => agente entrou em pausa
-//   if (evt.queue === "call_center") {
-//     console.log("call_center", evt);
-//   }
-//   if (evt.queue === "call_center" && evt.event === "AgentComplete") {
-//     console.log("AgentComplete", evt);
-//     // socket.emit('AgentComplete', evt);
-//   }
-//   if (evt.queue === "call_center" && evt.event === "AgentCalled") {
-//     console.log("AgentCalled", evt);
-//     // socket.emit('AgentCalled', evt);
-//   }
-// });
-
-// Listen for specific AMI events. A list of event names can be found at
-// https://wiki.asterisk.org/wiki/display/AST/Asterisk+11+AMI+Events
-// ligação é desligada
-ami.on("hangup", (evt: any) => {
-  console.log("hangup", evt);
-});
-
-// Listen for Action responses.
-ami.on("response", (evt: any) => {
-  console.log("response", evt);
-});
-
+// Exporta a instância do AMI
 export default ami;

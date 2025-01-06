@@ -4,6 +4,8 @@
 
 import { getHours } from "date-fns";
 
+// Função interna que escapa caracteres HTML especiais
+// Converte caracteres como &, ", ', <, > em suas entidades HTML
 const _htmlEscape = string =>
   string
     .replace(/&/g, "&amp;") // Must happen first or else it will escape other just-escaped characters.
@@ -12,116 +14,126 @@ const _htmlEscape = string =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-const _htmlUnescape = htmlString =>
+// Função interna que desfaz o escape de caracteres HTML
+// Converte entidades HTML de volta para seus caracteres originais
+const _htmlUnescape = (htmlString: string) =>
   htmlString
-    .replace(/&gt;/g, ">")
-    .replace(/&lt;/g, "<")
-    .replace(/&#0?39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, "&"); // Must happen last or else it will unescape other characters in the wrong order.
+    .replace(/>/g, ">") // Desescapa o caractere '>'
+    .replace(/</g, "<") // Desescapa o caractere '<'
+    .replace(/&#0?39;/g, "'") // Desescapa o caractere "'"
+    .replace(/"/g, '"') // Desescapa o caractere '"'
+    .replace(/&amp;/g, "&"); // Desescapa o caractere '&'
 
-export function htmlEscape(strings, ...values) {
+// Função que escapa strings HTML, suportando template literals
+// Permite escapar tanto strings simples quanto templates com valores dinâmicos
+export function htmlEscape(strings: TemplateStringsArray, ...values: any[]) {
   if (typeof strings === "string") {
-    return _htmlEscape(strings);
+    return _htmlEscape(strings); // Escapa a string se for simples
   }
 
-  let output = strings[0];
+  let output = strings[0]; // Inicializa a saída com a primeira parte da string
   for (const [index, value] of values.entries()) {
-    output = output + _htmlEscape(String(value)) + strings[index + 1];
+    output = output + _htmlEscape(String(value)) + strings[index + 1]; // Escapa cada valor e concatena
   }
 
-  return output;
+  return output; // Retorna a string escapada
 }
 
-export function htmlUnescape(strings, ...values) {
+// Função que desfaz o escape de strings HTML, suportando template literals
+// Permite desescapar tanto strings simples quanto templates com valores dinâmicos
+export function htmlUnescape(strings: TemplateStringsArray, ...values: any[]) {
   if (typeof strings === "string") {
-    return _htmlUnescape(strings);
+    return _htmlUnescape(strings); // Desescapa a string se for simples
   }
 
-  let output = strings[0];
+  let output = strings[0]; // Inicializa a saída com a primeira parte da string
   for (const [index, value] of values.entries()) {
-    output = output + _htmlUnescape(String(value)) + strings[index + 1];
+    output = output + _htmlUnescape(String(value)) + strings[index + 1]; // Desescapa cada valor e concatena
   }
 
-  return output;
+  return output; // Retorna a string desescapada
 }
 
+// Classe de erro personalizada para valores ausentes em templates
+// Usada quando um placeholder não pode ser substituído por falta de valor
 export class MissingValueError extends Error {
-  key: any;
+  key: any; // Chave do placeholder que está faltando
 
-  constructor(key) {
+  constructor(key: any) {
     super(
-      `Missing a value for ${key ? `the placeholder: ${key}` : "a placeholder"}`
+      `Missing a value for ${key ? `the placeholder: ${key}` : "a placeholder"}` // Mensagem de erro
     );
-    this.name = "MissingValueError";
-    this.key = key;
+    this.name = "MissingValueError"; // Nome da classe de erro
+    this.key = key; // Armazena a chave do placeholder
   }
 }
 
+// Função principal que processa templates com placeholders
+// Substitui placeholders no formato {{chave}} ou {chave} por valores reais
 export const pupa = function pupa(
-  template,
-  data,
-  { ignoreMissing = true, transform = ({ value }: any) => value } = {}
+  template: string,
+  data: object,
+  { ignoreMissing = true, transform = (value: any) => value } = {}
 ) {
   if (typeof template !== "string") {
     throw new TypeError(
-      `Expected a \`string\` in the first argument, got \`${typeof template}\``
+      `Expected a \`string\` in the first argument, got \`${typeof template}\`` // Lança erro se o template não for uma string
     );
   }
 
   if (typeof data !== "object") {
     throw new TypeError(
-      `Expected an \`object\` or \`Array\` in the second argument, got \`${typeof data}\``
+      `Expected an \`object\` or \`Array\` in the second argument, got \`${typeof data}\`` // Lança erro se os dados não forem um objeto
     );
   }
 
-  const hours = getHours(new Date());
+  const hours = getHours(new Date()); // Obtém a hora atual
   const getGreeting = () => {
     if (hours >= 6 && hours <= 11) {
-      return "Bom dia!";
+      return "Bom dia!"; // Retorna saudação de bom dia
     }
     if (hours > 11 && hours <= 17) {
-      return "Boa Tarde!";
+      return "Boa Tarde!"; // Retorna saudação de boa tarde
     }
     if (hours > 17 && hours <= 23) {
-      return "Boa Noite!";
+      return "Boa Noite!"; // Retorna saudação de boa noite
     }
-    return "Olá!";
+    return "Olá!"; // Retorna saudação padrão
   };
 
-  data = { ...data, greeting: getGreeting() };
+  data = { ...data, greeting: getGreeting() }; // Adiciona a saudação aos dados
 
-  const replace = (placeholder, key) => {
-    let value = data;
+  const replace = (placeholder: string, key: string) => {
+    let value = data; // Inicializa o valor com os dados
     for (const property of key.split(".")) {
-      value = value ? value[property] : undefined;
+      value = value ? value[property] : undefined; // Navega pela chave
     }
 
-    const transformedValue = transform({ value, key });
+    const transformedValue = transform(value); // Aplica transformação ao valor
     if (transformedValue === undefined) {
       if (ignoreMissing) {
-        return "";
+        return ""; // Retorna string vazia se ignorar valores ausentes
       }
 
-      throw new MissingValueError(key);
+      throw new MissingValueError(key); // Lança erro se o valor estiver ausente
     }
 
-    return String(transformedValue);
+    return String(transformedValue); // Retorna o valor transformado como string
   };
 
   const composeHtmlEscape =
     replacer =>
       (...args: any) =>
-        htmlEscape(replacer(...args));
+        htmlEscape(replacer(...args)); // Composição para escapar HTML
 
-  // The regex tries to match either a number inside `{{ }}` or a valid JS identifier or key path.
+  // O regex tenta corresponder a um número dentro de `{{ }}` ou um identificador ou caminho de chave válido.
   const doubleBraceRegex = /{{(\d+|[a-z$_][\w\-$]*?(?:\.[\w\-$]*?)*?)}}/gi;
 
   if (doubleBraceRegex.test(template)) {
-    template = template.replace(doubleBraceRegex, composeHtmlEscape(replace));
+    template = template.replace(doubleBraceRegex, composeHtmlEscape(replace)); // Substitui placeholders duplos
   }
 
   const braceRegex = /{(\d+|[a-z$_][\w\-$]*?(?:\.[\w\-$]*?)*?)}/gi;
 
-  return template.replace(braceRegex, replace);
+  return template.replace(braceRegex, replace); // Substitui placeholders simples
 };

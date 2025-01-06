@@ -19,6 +19,8 @@ import { EventSender } from "./MessengerTypes";
 //   }
 // }
 
+// Serviço responsável por verificar e atualizar contatos do Messenger
+// Busca informações do usuário na API do Messenger e mantém o contato atualizado no sistema
 const MessengerVerifyContact = async (
   contact: EventSender,
   messagerBot: MessengerClient,

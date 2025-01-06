@@ -8,6 +8,7 @@ import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import { getWbot } from "../libs/wbot";
 
+// Interface para dados da requisição de mensagem
 interface MessageDataRequest {
   apiId: string;
   sessionId: number;
@@ -18,6 +19,7 @@ interface MessageDataRequest {
   tenantId: number;
 }
 
+// Envia mensagem através da API externa
 export const sendMessageAPI = async (
   req: Request,
   res: Response
@@ -26,11 +28,7 @@ export const sendMessageAPI = async (
   const { apiId } = req.params;
   const media = req.file as Express.Multer.File;
 
-  // eslint-disable-next-line eqeqeq
-  // if (!apiIdParam || apiId != apiIdParam) {
-  //   throw new AppError("ERR_APIID_NO_PERMISSION", 403);
-  // }
-
+  // Verifica se a configuração da API existe e pertence ao tenant
   const APIConfig = await ApiConfig.findOne({
     where: {
       id: apiId,
@@ -38,10 +36,12 @@ export const sendMessageAPI = async (
     }
   });
 
+  // Verifica se a sessão tem autorização para usar esta API
   if (APIConfig?.sessionId !== sessionId) {
     throw new AppError("ERR_SESSION_NOT_AUTH_TOKEN", 403);
   }
 
+  // Prepara os dados da nova mensagem
   const newMessage: MessageDataRequest = {
     ...req.body,
     apiId,
@@ -51,6 +51,7 @@ export const sendMessageAPI = async (
     media
   };
 
+  // Schema de validação dos dados da mensagem
   const schema = Yup.object().shape({
     apiId: Yup.string(),
     sessionId: Yup.number(),
@@ -78,11 +79,13 @@ export const sendMessageAPI = async (
     throw new AppError(error.message);
   }
 
+  // Adiciona mensagem à fila de envio
   Queue.add("SendMessageAPI", newMessage);
 
   return res.status(200).json({ message: "Message add queue" });
 };
 
+// Inicia uma sessão do WhatsApp
 export const startSession = async (
   req: Request,
   res: Response
@@ -90,6 +93,7 @@ export const startSession = async (
   const { tenantId, sessionId } = req.APIAuth;
   const { apiId } = req.params;
 
+  // Verifica se a configuração da API existe e pertence ao tenant
   const APIConfig = await ApiConfig.findOne({
     where: {
       id: apiId,
@@ -97,22 +101,27 @@ export const startSession = async (
     }
   });
 
+  // Verifica se a sessão tem autorização para usar esta API
   if (APIConfig?.sessionId !== sessionId) {
     throw new AppError("ERR_SESSION_NOT_AUTH_TOKEN", 403);
   }
 
+  // Busca informações da conexão WhatsApp
   const whatsapp = await ShowWhatsAppService({
     id: APIConfig.sessionId,
     tenantId: APIConfig.tenantId,
     isInternal: true
   });
+
   try {
+    // Verifica se já existe uma conexão ativa
     const wbot = getWbot(APIConfig.sessionId);
     const isConnectStatus = (await wbot.getState()) === "CONNECTED";
     if (!isConnectStatus) {
       throw new Error("Necessário iniciar sessão");
     }
   } catch (error) {
+    // Se não houver conexão ou estiver desconectada, inicia uma nova sessão
     StartWhatsAppSession(whatsapp);
   }
 

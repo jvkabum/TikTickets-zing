@@ -1,11 +1,21 @@
 import CampaignContacts from "../../models/CampaignContacts";
 import Contact from "../../models/Contact";
 
+// ====================
+// Definição da Interface
+// ====================
+
+// Parâmetros necessários para listar contatos de uma campanha
 interface Request {
-  tenantId: string | number;
-  campaignId: string | number;
+  tenantId: string | number;    // Filtra contatos por tenant
+  campaignId: string | number;  // Identifica a campanha específica
 }
 
+// ====================
+// Serviço Principal
+// ====================
+
+// Lista todos os contatos associados a uma campanha específica
 const ListCampaignContactsService = async ({
   campaignId,
   tenantId

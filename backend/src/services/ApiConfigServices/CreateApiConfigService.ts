@@ -3,6 +3,8 @@ import { sign } from "jsonwebtoken";
 import ApiConfig from "../../models/ApiConfig";
 import authConfig from "../../config/auth";
 
+// Interface que define os dados necessários para criar uma configuração de API
+// Inclui informações de conexão, URLs de webhook e identificadores
 interface Request {
   name: string;
   sessionId: string | number;
@@ -13,6 +15,8 @@ interface Request {
   tenantId: string | number;
 }
 
+// Serviço responsável por criar uma nova configuração de API
+// Gera token JWT e salva as configurações no banco de dados
 const CreateApiConfigService = async ({
   name,
   sessionId,
