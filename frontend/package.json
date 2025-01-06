@@ -1,15 +1,21 @@
 {
-  "name": "FlowDeskPro",
-  "version": "2.5.0",
+  "name": "izing-flow",
+  "version": "2.7.0",
   "description": "Bot Multiatendimento, multicanais e multiempresas.",
-  "productName": "FlowDeskPro",
-  "author": "FlowDeskPro <FlowDeskPro@FlowDeskPro.io>",
+  "productName": "izingFlow",
+  "author": "Durans/FlowDeskPro/TiOKaBuM",
   "private": false,
   "license": "AGPL-3.0-or-later",
-  "github": "https://github.com/flowdeskpro/flowdeskpro.git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvkabum/Izingflow"
+  },
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "start": "pm2 start server.js --name FlowDeskPro-frontend",
+    "stop": "pm2 stop server.js --name FlowDeskPro-frontend",
+    "build": "export NODE_OPTIONS=--openssl-legacy-provider && npx quasar build -P -m pwa"
   },
   "dependencies": {
     "@quasar/cli": "^2.4.0",
@@ -56,11 +62,6 @@
     "eslint-plugin-vue": "^6.1.2",
     "quasar-app-extension-qdatetimepicker": "^1.0.0-rc.18",
     "workbox-webpack-plugin": "^6.6.0"
-  },
-  "scripts": {
-    "start": "pm2 start server.js --name FlowDeskPro-frontend",
-    "stop": "pm2 stop server.js --name FlowDeskPro-frontend",
-    "build": "export NODE_OPTIONS=--openssl-legacy-provider && npx quasar build -P -m pwa"
   },
   "browserslist": [
     "last 10 Chrome versions",

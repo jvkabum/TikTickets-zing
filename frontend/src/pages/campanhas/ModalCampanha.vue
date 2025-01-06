@@ -456,7 +456,7 @@ export default {
         message2: null,
         message3: null,
         sessionId: null,
-        delay: 61
+        delay: 10
       },
       messageTemplate: {
         mediaUrl: null,

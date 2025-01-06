@@ -1,4 +1,3 @@
-
 import request from 'src/service/request'
 
 export function CriarMensagemRapida (data) {

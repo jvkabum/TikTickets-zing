@@ -8,6 +8,7 @@
       @updateTicket:retornar="atualizarStatusTicket('pending')"
       @updateTicket:reabrir="atualizarStatusTicket('open')"
       @abrir:modalAgendamentoMensagem="modalAgendamentoMensagem = true"
+      @removeFocusFromChat="sairConversa"
     />
 
     <q-scroll-area
@@ -435,6 +436,13 @@ export default {
     },
     scrollToBottom () {
       document.getElementById('inicioListaMensagensChat').scrollIntoView()
+    },
+    // sairConversa() {
+    sairConversa () {
+    // Função para sair da conversa e retornar à lista de chats abertos
+    //  this.$store.commit('TICKET_FOCADO', {})
+    // },
+      this.$store.commit('TICKET_FOCADO', {})
     },
     abrirModalEncaminharMensagem (msg) {
       this.mensagemEncaminhamento = msg

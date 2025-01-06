@@ -2,62 +2,103 @@
   <div class="q-pa-sm">
     <q-card class="q-my-md">
       <q-card-section class="row justify-between items-center">
-        <div class="col-12 justify-center flex q-gutter-sm">
-          <q-datetime-picker
-            style="width: 200px"
-            dense
-            rounded
-            hide-bottom-space
-            outlined
-            stack-label
-            bottom-slots
-            label="Data/Hora Agendamento"
-            mode="date"
-            color="primary"
-            format24h
-            v-model="params.startDate"
-          />
-          <q-datetime-picker
-            style="width: 200px"
-            dense
-            rounded
-            hide-bottom-space
-            outlined
-            stack-label
-            bottom-slots
-            label="Data/Hora Agendamento"
-            mode="date"
-            color="primary"
-            format24h
-            v-model="params.endDate"
-          />
-          <q-select
-            style="width: 300px"
-            dense
-            rounded
-            outlined
-            hide-bottom-space
-            emit-value
-            map-options
-            multiple
-            options-dense
-            use-chips
-            label="Filas"
-            color="primary"
-            v-model="params.queuesIds"
-            :options="filas"
-            :input-debounce="700"
-            option-value="id"
-            option-label="queue"
-            input-style="width: 280px; max-width: 280px;"
-          />
+        <div class="col-xs-12 col-md-3 text-h4 text-bold text-center text-md-left">
+          Painel de Controle
+        </div>
+        <div class="col-xs-12 col-md-9 justify-end flex q-gutter-sm text-center text-md-right q-my-md rdsPainelDate">
+          <div class="q-mb-sm">
+            <q-datetime-picker
+              style="width: 200px"
+              dense
+              hide-bottom-space
+              outlined
+              stack-label
+              bottom-slots
+              label="Data/Hora Agendamento"
+              mode="date"
+              color="primary"
+              format24h
+              v-model="params.startDate"
+            />
+          </div>
+          <div class="q-mb-sm">
+            <q-datetime-picker
+              style="width: 200px"
+              dense
+              hide-bottom-space
+              outlined
+              stack-label
+              bottom-slots
+              label="Data/Hora Agendamento"
+              mode="date"
+              color="primary"
+              format24h
+              v-model="params.endDate"
+            />
+          </div>
+          <!-- <div class="q-mb-sm">
+            <q-select
+              style="width: 300px"
+              dense
+              outlined
+              hide-bottom-space
+              emit-value
+              map-options
+              multiple
+              options-dense
+              use-chips
+              label="SETORES"
+              color="primary"
+              v-model="params.queuesIds"
+              :options="filas"
+              :input-debounce="700"
+              option-value="id"
+              option-label="queue"
+              input-style="width: 280px; max-width: 280px;"
+            />
+          </div>
+          <div class="q-mb-sm">
+            <q-select
+              style="width: 300px"
+              dense
+              outlined
+              hide-bottom-space
+              emit-value
+              map-options
+              multiple
+              options-dense
+              use-chips
+              label="USUÁRIOS"
+              color="primary"
+              v-model="params.userIds"
+              :options="usuarios"
+              :input-debounce="700"
+              option-value="id"
+              option-label="name"
+              input-style="width: 280px; max-width: 280px;"
+            />
+          </div> -->
           <q-btn
-            rounded
+            class="bg-padrao q-mb-sm"
+            flat
             color="primary"
             icon="refresh"
-            label="Atualizar"
+            label="Gerar"
             @click="getDashData"
           />
+          <q-toggle
+            v-if="grupoAtivo === 'disabled'"
+            v-model="toggleValue"
+            checked-icon="check"
+            unchecked-icon="clear"
+            @input="handleGroups"
+            :color="toggleValue ? 'green' : 'negative'"
+            size="md"
+            >
+            <q-tooltip anchor="bottom middle" self="top middle">
+              <span>Filtrar Grupos</span>
+            </q-tooltip>
+          </q-toggle>
         </div>
 
       </q-card-section>
@@ -70,10 +111,11 @@
               flat
               bordered
               class="my-card full-height"
-              style="min-width: 200px"
+              style="min-width: 200px; background-color: #05d69e; color: white"
             >
               <q-card-section class="text-center ">
                 <p class="text-h4 text-bold text-center"> {{ ticketsAndTimes.qtd_total_atendimentos }} </p>
+                <q-icon name="verified" size="lg" color="white" class="text-white" />
                 Total Atendimentos
               </q-card-section>
             </q-card>
@@ -83,10 +125,11 @@
               flat
               bordered
               class="my-card full-height"
-              style="min-width: 200px"
+              style="min-width: 200px; background-color: #faad42; color: white"
             >
               <q-card-section class="text-center">
                 <p class="text-h4 text-bold text-center"> {{ ticketsAndTimes.qtd_demanda_ativa }} </p>
+                <q-icon name="mdi-comment-processing-outline" size="lg" color="white" class="text-white" />
                 Ativo
               </q-card-section>
             </q-card>
@@ -96,10 +139,11 @@
               flat
               bordered
               class="my-card full-height"
-              style="min-width: 200px"
+              style="min-width: 200px; background-color: #0398e2; color: white"
             >
               <q-card-section class="text-center">
                 <p class="text-h4 text-bold text-center"> {{ ticketsAndTimes.qtd_demanda_receptiva }} </p>
+                <q-icon name="mdi-arrow-left-bold" size="lg" color="white" class="text-white" />
                 Receptivo
               </q-card-section>
             </q-card>
@@ -109,40 +153,38 @@
               flat
               bordered
               class="my-card full-height"
-              style="min-width: 200px"
+              style="min-width: 200px; background-color: #0398e2; color: white"
             >
               <q-card-section class="text-center">
                 <p class="text-h4 text-bold text-center"> {{ ticketsAndTimes.new_contacts }} </p>
+                <q-icon name="mdi-contacts-outline" size="lg" color="white" class="text-white" />
                 Novos Contatos
               </q-card-section>
             </q-card>
           </div>
           <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
-            <q-card
-              flat
-              bordered
-              class="my-card full-height"
-            >
+            <q-card flat bordered class="my-card full-height" style="background-color: #ffa880; color: white">
               <q-card-section class="text-center">
-                <p class="text-h5 text-bold text-center"> {{ cTmaFormat }} </p>
-                Tempo Médio Atendimento (TMA)
+                <p class="text-h5 text-bold text-center">
+                  <q-icon name="mdi-clock-outline" size="lg" color="white" class="text-white" />
+                  {{ cTmaFormat }}
+                </p>
+                Tempo Médio de Atendimento (TMA)
               </q-card-section>
             </q-card>
           </div>
           <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
-            <q-card
-              flat
-              bordered
-              class="my-card full-height"
-            >
+            <q-card flat bordered class="my-card full-height" style="background-color: #fc5881ff; color: white">
               <q-card-section class="text-center">
-                <p class="text-h5 text-bold text-center"> {{ cTmeFormat }} </p>
+                <p class="text-h5 text-bold text-center"></p>
+                  <q-icon name="mdi-timer-sand" size="lg" color="white" class="text-white" />
+                  {{ cTmeFormat }}
+                  </p>
                 Tempo Médio 1º Resposta
               </q-card-section>
             </q-card>
           </div>
         </div>
-
       </q-card-section>
     </q-card>
 
@@ -152,7 +194,7 @@
           <q-card-section class="q-pa-md">
             <ApexChart
               ref="ChartTicketsChannels"
-              type="donut"
+              type="pie"
               height="300"
               width="100%"
               :options="ticketsChannelsOptions"
@@ -166,7 +208,7 @@
           <q-card-section class="q-pa-md">
             <ApexChart
               ref="ChartTicketsQueue"
-              type="donut"
+              type="pie"
               height="300"
               width="100%"
               :options="ticketsQueueOptions"
