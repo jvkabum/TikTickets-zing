@@ -5,13 +5,16 @@ import TelegramSendMessagesSystem from "../services/TbotServices/TelegramSendMes
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
 import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
 
+// Interface para os dados necessários para envio de mensagem
 type Payload = {
-  ticket: any;
-  messageData: any;
-  media: any;
-  userId: any;
+  ticket: any;       // Ticket relacionado à mensagem
+  messageData: any;  // Dados da mensagem
+  media: any;        // Arquivo de mídia (se houver)
+  userId: any;       // ID do usuário que está enviando
 };
 
+// Função Proxy para enviar mensagens em diferentes canais
+// Implementa o padrão Proxy para abstrair a complexidade de envio em diferentes plataformas
 const SendMessageSystemProxy = async ({
   ticket,
   messageData,
@@ -20,8 +23,10 @@ const SendMessageSystemProxy = async ({
 }: Payload): Promise<any> => {
   let message;
 
+  // Se a mensagem contém mídia (imagem, áudio, vídeo, etc)
   if (messageData.mediaName) {
     switch (ticket.channel) {
+      // Envia mídia no Instagram
       case "instagram":
         message = await InstagramSendMessagesSystem(
           getInstaBot(ticket.whatsappId),
@@ -30,6 +35,7 @@ const SendMessageSystemProxy = async ({
         );
         break;
 
+      // Envia mídia no Telegram
       case "telegram":
         message = await TelegramSendMessagesSystem(
           getTbot(ticket.whatsappId),
@@ -38,14 +44,17 @@ const SendMessageSystemProxy = async ({
         );
         break;
 
+      // Por padrão, envia mídia no WhatsApp
       default:
         message = await SendWhatsAppMedia({ media, ticket, userId });
         break;
     }
   }
 
+  // Se a mensagem não contém mídia (apenas texto)
   if (!media) {
     switch (ticket.channel) {
+      // Envia texto no Instagram
       case "instagram":
         message = await InstagramSendMessagesSystem(
           getInstaBot(ticket.whatsappId),
@@ -54,6 +63,7 @@ const SendMessageSystemProxy = async ({
         );
         break;
 
+      // Envia texto no Telegram
       case "telegram":
         message = await TelegramSendMessagesSystem(
           getTbot(ticket.whatsappId),
@@ -62,6 +72,7 @@ const SendMessageSystemProxy = async ({
         );
         break;
 
+      // Por padrão, envia texto no WhatsApp
       default:
         message = await SendWhatsAppMessage({
           body: messageData.body,
@@ -72,6 +83,7 @@ const SendMessageSystemProxy = async ({
     }
   }
 
+  // Retorna a mensagem enviada
   return message;
 };
 

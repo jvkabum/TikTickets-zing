@@ -7,23 +7,36 @@ import ListAutoReplyService from "../services/AutoReplyServices/ListAutoReplySer
 import UpdateAutoReplyService from "../services/AutoReplyServices/UpdateAutoReplyService";
 import DeleteAutoReplyService from "../services/AutoReplyServices/DeleteAutoReplyService";
 
+/**
+ * Interface que define a estrutura de uma resposta automática
+ * Respostas automáticas são mensagens predefinidas enviadas automaticamente
+ * baseadas em determinadas condições ou gatilhos
+ */
 interface AutoReplyData {
-  name: string;
-  action: number;
-  userId: number;
-  isActive: boolean;
-  celularTeste?: string;
-  tenantId: number | string;
+  name: string;              // Nome identificador da resposta
+  action: number;            // Tipo de ação (1: mensagem, 2: encaminhamento, etc)
+  userId: number;            // ID do usuário que criou/gerencia
+  isActive: boolean;         // Status de ativação da resposta
+  celularTeste?: string;     // Número para testes da resposta
+  tenantId: number | string; // ID da organização/tenant
 }
 
+/**
+ * Cria uma nova resposta automática
+ * Apenas administradores podem criar respostas automáticas
+ * Valida todos os campos obrigatórios antes da criação
+ * Importante para automação do atendimento
+ */
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
+  // Verifica se o usuário é admin
   if (req.user.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
   const newAutoReply: AutoReplyData = { ...req.body, tenantId };
 
+  // Schema de validação dos dados
   const schema = Yup.object().shape({
     name: Yup.string().required(),
     action: Yup.number().required(),
@@ -42,12 +55,23 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(autoReply);
 };
 
+/**
+ * Lista todas as respostas automáticas do tenant
+ * Retorna respostas ativas e inativas para gerenciamento
+ * Útil para visualizar e gerenciar automações existentes
+ */
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   const autoReply = await ListAutoReplyService({ tenantId });
   return res.status(200).json(autoReply);
 };
 
+/**
+ * Atualiza uma resposta automática existente
+ * Permite modificar condições, mensagens e configurações
+ * Mantém histórico do usuário que fez a alteração
+ * Requer permissões administrativas
+ */
 export const update = async (
   req: Request,
   res: Response
@@ -58,6 +82,7 @@ export const update = async (
   const { tenantId } = req.user;
   const autoReplyData: AutoReplyData = req.body;
 
+  // Schema de validação para atualização
   const schema = Yup.object().shape({
     name: Yup.string().required(),
     action: Yup.number().required(),
@@ -80,6 +105,12 @@ export const update = async (
   return res.status(200).json(autoReply);
 };
 
+/**
+ * Remove uma resposta automática do sistema
+ * A remoção é permanente e desativa a automação
+ * Requer confirmação de permissões administrativas
+ * Importante verificar impactos antes da remoção
+ */
 export const remove = async (
   req: Request,
   res: Response

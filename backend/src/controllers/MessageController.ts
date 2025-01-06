@@ -22,20 +22,30 @@ import { logger } from "../utils/logger";
 // import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
 import EditWhatsAppMessage from "../services/WbotServices/EditWhatsAppMessage";
 
+/**
+ * Interface para parâmetros de paginação na listagem de mensagens
+ */
 type IndexQuery = {
-  pageNumber: string;
+  pageNumber: string;  // Número da página atual
 };
 
+/**
+ * Interface que define a estrutura de uma mensagem
+ */
 type MessageData = {
-  body: string;
-  fromMe: boolean;
-  read: boolean;
-  sendType?: string;
-  scheduleDate?: string | Date;
-  quotedMsg?: Message;
-  idFront?: string;
+  body: string;         // Corpo/conteúdo da mensagem
+  fromMe: boolean;      // Indica se a mensagem foi enviada pelo usuário atual
+  read: boolean;        // Status de leitura da mensagem
+  sendType?: string;    // Tipo de envio (chat, campanha, etc)
+  scheduleDate?: string | Date;  // Data/hora agendada para envio
+  quotedMsg?: Message;  // Mensagem que está sendo respondida/citada
+  idFront?: string;     // ID temporário usado no frontend
 };
 
+/**
+ * Lista as mensagens de um ticket específico
+ * Retorna mensagens paginadas, incluindo mensagens offline e status do ticket
+ */
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { pageNumber } = req.query as IndexQuery;
@@ -57,6 +67,11 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   return res.json({ count, messages, messagesOffLine, ticket, hasMore });
 };
 
+/**
+ * Armazena uma nova mensagem
+ * Processa o envio de mensagens com ou sem mídia, incluindo respostas rápidas
+ * Se a mensagem contiver ID de resposta rápida, busca e anexa a mídia correspondente
+ */
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { tenantId, id: userId } = req.user;
@@ -74,7 +89,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   // eslint-disable-next-line no-restricted-globals
   if (isNaN(parsedIdMessagem)) {
     // Se o ID não for um número válido, registrar o erro ou continuar sem buscar FastReply
-    console.error(`ID da mensagem inválido: ${idMessagem}`);
+    //console.error(`ID da mensagem rapida inválido: ${idMessagem}`);
   } else {
     try {
       const fastReply = await FastReply.findOne({
@@ -155,6 +170,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   }
 };
 
+/**
+ * Remove uma mensagem específica
+ * Deleta a mensagem tanto do sistema quanto do WhatsApp quando possível
+ */
 export const remove = async (
   req: Request,
   res: Response
@@ -171,6 +190,10 @@ export const remove = async (
   return res.send();
 };
 
+/**
+ * Encaminha mensagens para outros contatos
+ * Permite encaminhar múltiplas mensagens para um contato específico
+ */
 export const forward = async (
   req: Request,
   res: Response
@@ -191,10 +214,11 @@ export const forward = async (
   return res.send();
 };
 
+/**
+ * Edita uma mensagem existente
+ * Atualiza o conteúdo da mensagem tanto no sistema quanto no WhatsApp
+ */
 export const edit = async (req: Request, res: Response): Promise<Response> => {
-
-
-
   const { messageId } = req.params;
   const { tenantId } = req.user;
   const { body }: MessageData = req.body;
@@ -211,6 +235,10 @@ export const edit = async (req: Request, res: Response): Promise<Response> => {
 };
 
 // Função para pegar um arquivo no servidor baseado na URL já existente
+/**
+ * Recupera um arquivo de mídia do servidor
+ * Busca e prepara arquivos de mídia para envio baseado na URL fornecida
+ */
 export const getMediaFileFromServer = async (
   mediaUrl: string
 ): Promise<any> => {

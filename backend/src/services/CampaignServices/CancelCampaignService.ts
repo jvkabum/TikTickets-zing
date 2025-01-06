@@ -3,11 +3,15 @@ import Campaign from "../../models/Campaign";
 import AppError from "../../errors/AppError";
 import CampaignContacts from "../../models/CampaignContacts";
 
+// Interface que define os parâmetros necessários para cancelamento
+// Requer identificação da campanha e do tenant
 interface Request {
   campaignId: string | number;
   tenantId: number | string;
 }
 
+// Serviço responsável por cancelar uma campanha em andamento
+// Remove jobs pendentes e limpa dados de mensagens não enviadas
 const CancelCampaignService = async ({
   campaignId,
   tenantId

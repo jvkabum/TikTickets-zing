@@ -1,0 +1,33 @@
+{
+    "version": "0.2",
+    "language": "en,pt,pt-BR",
+    "words": [
+        "izing",
+        "multicanais",
+        "multiempresas",
+        "Durans",
+        "posttest",
+        "androz",
+        "instagram",
+        "whatsapp",
+        "pedroslopez",
+        "typegram",
+        "apexcharts",
+        "drawflow",
+        "printd",
+        "qrcode",
+        "vdata",
+        "lightbox",
+        "facebook",
+        "linkify",
+        "vuedraggable",
+        "vuelidate",
+        "qdatetimepicker"
+    ],
+    "ignorePaths": [
+        "node_modules/**",
+        "dist/**",
+        "build/**",
+        "coverage/**"
+    ]
+} 

@@ -3,7 +3,6 @@ import FastReply from "../../models/FastReply";
 
 interface DeleteFastReplyImageRequest {
   fastReplyId: string | number;
-
 }
 
 const DeleteFastReplyImageService = async ({

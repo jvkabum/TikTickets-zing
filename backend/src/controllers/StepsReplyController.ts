@@ -6,13 +6,22 @@ import AppError from "../errors/AppError";
 import UpdateStepsReplyService from "../services/AutoReplyServices/StepsReplyServices/UpdateStepsReplyService";
 import DeleteStepsReplyService from "../services/AutoReplyServices/StepsReplyServices/DeleteStepsReplyService";
 
+/**
+ * Interface que define a estrutura de um passo de resposta automática
+ * Representa uma etapa específica no fluxo de respostas automáticas
+ */
 interface StepsReplyData {
-  reply: string;
-  idAutoReply: number;
-  userId: number;
-  initialStep: boolean;
+  reply: string;          // Conteúdo da resposta para este passo
+  idAutoReply: number;    // ID da resposta automática relacionada
+  userId: number;         // ID do usuário que criou/gerencia
+  initialStep: boolean;   // Indica se é o passo inicial do fluxo
 }
 
+/**
+ * Cria um novo passo de resposta automática
+ * Apenas administradores podem criar passos
+ * Valida dados e garante consistência do fluxo
+ */
 export const store = async (req: Request, res: Response): Promise<Response> => {
   if (req.user.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
@@ -38,6 +47,11 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(stepsReply);
 };
 
+/**
+ * Atualiza um passo de resposta existente
+ * Permite modificar mensagem e configurações do passo
+ * Mantém integridade do fluxo de respostas
+ */
 export const update = async (
   req: Request,
   res: Response
@@ -69,6 +83,11 @@ export const update = async (
   return res.status(200).json(stepsReply);
 };
 
+/**
+ * Remove um passo de resposta do sistema
+ * A remoção pode afetar o fluxo de respostas
+ * Requer verificação de impactos antes da remoção
+ */
 export const remove = async (
   req: Request,
   res: Response

@@ -2,18 +2,28 @@
 import SendMessagesSchenduleWbot from "../services/WbotServices/SendMessagesSchenduleWbot";
 import { logger } from "../utils/logger";
 
+// Job responsável por processar e enviar mensagens agendadas
+// Verifica periodicamente se existem mensagens que devem ser enviadas
 export default {
+  // Identificador único do job no sistema
   key: "SendMessageSchenduled",
+
+  // Configurações de execução do job
   options: {
-    // attempts: 0,
+    // Mantém o histórico de execuções completas
     removeOnComplete: false,
+    // Mantém o registro em caso de falhas para análise
     removeOnFail: false,
+    // ID único para identificação do job na fila
     jobId: "SendMessageSchenduled",
+    // Configuração de repetição: executa a cada 1 minuto
     repeat: {
-      every: 1 * 60 * 1000
+      every: 1 * 60 * 1000 // Intervalo de 1 minuto em milissegundos
     }
   },
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+
+  // Função principal que processa o envio das mensagens agendadas
+  // Busca e envia todas as mensagens que atingiram seu horário programado
   async handle() {
     try {
       logger.info("SendMessageSchenduled Initiated");

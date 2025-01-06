@@ -15,19 +15,31 @@ import VerifyContact from "../services/WbotServices/helpers/VerifyContact";
 import FindOrCreateTicketService from "../services/TicketServices/FindOrCreateTicketService";
 import CreateMessageSystemService from "../services/MessageServices/CreateMessageSystemService";
 
+// Job responsável por processar e enviar mensagens através da API
+// Gerencia o envio de mensagens, validação de contatos e criação de tickets
 export default {
+  // Identificador único do job no sistema
   key: "SendMessageAPI",
+
+  // Configurações de execução e retry do job
   options: {
+    // Atraso inicial antes de processar (6 segundos)
     delay: 6000,
+    // Número máximo de tentativas em caso de falha
     attempts: 50,
+    // Remove o job da fila após completar com sucesso
     removeOnComplete: true,
+    // Mantém o job na fila em caso de falha para análise
     removeOnFail: false,
+    // Configuração de retry em caso de falha
     backoff: {
       type: "fixed",
-      delay: 60000 * 3 // 3 min
+      delay: 60000 * 3 // Intervalo de 3 minutos entre tentativas
     }
   },
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+
+  // Função principal que processa o envio da mensagem
+  // Recebe os dados da mensagem e gerencia todo o fluxo de envio
   async handle({ data }: any) {
     try {
       const wbot = getWbot(data.sessionId);

@@ -1,4 +1,3 @@
-// import * as Yup from "yup";
 import { Request, Response } from "express";
 import AppError from "../errors/AppError";
 
@@ -7,15 +6,18 @@ import ListCampaignContactsService from "../services/CampaignContactsServices/Li
 import DeleteCampaignContactsService from "../services/CampaignContactsServices/DeleteCampaignContactsService";
 import DeleteAllCampaignContactsService from "../services/CampaignContactsServices/DeleteAllCampaignContactsService";
 
+// Adiciona contatos a uma campanha
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  // const { tenantId } = req.user;
+  // Verifica se o usuário é admin
   if (req.user.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
+  // Lista de contatos a serem adicionados
   const contacts = [...req.body];
   const { campaignId } = req.params;
 
+  // Cria os contatos da campanha
   const cc = await CreateCampaignContactsService({
     campaignContacts: contacts,
     campaignId
@@ -24,17 +26,20 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(cc);
 };
 
+// Lista contatos de uma campanha
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   const { campaignId } = req.params;
+  
+  // Busca os contatos da campanha
   const tags = await ListCampaignContactsService({
     campaignId,
     tenantId
-    // eslint-disable-next-line eqeqeq
   });
   return res.status(200).json(tags);
 };
 
+// Código comentado de atualização
 // export const update = async (
 //   req: Request,
 //   res: Response
@@ -68,6 +73,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 //   return res.status(200).json(tagObj);
 // };
 
+// Remove um contato específico da campanha
 export const remove = async (
   req: Request,
   res: Response
@@ -78,10 +84,12 @@ export const remove = async (
   }
   const { campaignId, contactId } = req.params;
 
+  // Remove o contato da campanha
   await DeleteCampaignContactsService({ campaignId, contactId, tenantId });
   return res.status(200).json({ message: "Campagin Contact deleted" });
 };
 
+// Remove todos os contatos de uma campanha
 export const removeAll = async (
   req: Request,
   res: Response
@@ -92,6 +100,7 @@ export const removeAll = async (
   }
   const { campaignId } = req.params;
 
+  // Remove todos os contatos da campanha
   await DeleteAllCampaignContactsService({ campaignId, tenantId });
   return res.status(200).json({ message: "Campagin Contacts deleted" });
 };

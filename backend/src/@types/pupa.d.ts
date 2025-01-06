@@ -1,33 +1,35 @@
+// Classe de erro para valores ausentes
 export class MissingValueError extends Error {
-  name: "MissingValueError";
+  name: "MissingValueError"; // Nome do erro
 
-  message: string;
+  message: string; // Mensagem do erro
 
-  key: string;
+  key: string; // Chave associada ao erro
 
-  constructor(key: string);
+  constructor(key: string); // Construtor que recebe a chave
 }
 
+// Tipo de opções para a função pupa
 export type Options = {
   /**
-  By default, Pupa throws a `MissingValueError` when a placeholder resolves to `undefined`. With this option set to `true`, it simply ignores it and leaves the placeholder as is.
+  Por padrão, Pupa lança um `MissingValueError` quando um placeholder resolve para `undefined`. Com esta opção definida como `true`, ele simplesmente ignora e deixa o placeholder como está.
 
   @default false
   */
-  ignoreMissing?: boolean;
+  ignoreMissing?: boolean; // Ignora valores ausentes se definido como true
   /**
-  Performs arbitrary operation for each interpolation. If the returned value was `undefined`, it behaves differently depending on the `ignoreMissing` option. Otherwise, the returned value will be interpolated into a string (and escaped when double-braced) and embedded into the template.
+  Realiza uma operação arbitrária para cada interpolação. Se o valor retornado for `undefined`, ele se comporta de maneira diferente dependendo da opção `ignoreMissing`. Caso contrário, o valor retornado será interpolado em uma string (e escapado quando entre chaves duplas) e incorporado ao template.
 
   @default ({value}) => value
   */
-  transform?: (data: { value: unknown; key: string }) => unknown;
+  transform?: (data: { value: unknown; key: string }) => unknown; // Função de transformação para interpolação
 };
 
 /**
-Simple micro templating.
+Template micro simples.
 
-@param template - Text with placeholders for `data` properties.
-@param data - Data to interpolate into `template`.
+@param template - Texto com placeholders para propriedades de `data`.
+@param data - Dados a serem interpolados no `template`.
 
 @example
 ```
@@ -50,7 +52,7 @@ pupa('I like {{0}} and {{1}}', ['<br>🦄</br>', '<i>🐮</i>']);
 ```
 */
 export default function pupa(
-  template: string,
-  data: unknown[] | Record<string, any>,
-  options?: Options
-): string;
+  template: string, // Template com placeholders
+  data: unknown[] | Record<string, any>, // Dados para interpolação
+  options?: Options // Opções adicionais
+): string; // Retorna a string interpolada

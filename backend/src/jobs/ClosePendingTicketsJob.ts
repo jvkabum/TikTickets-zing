@@ -3,6 +3,8 @@ import { QueryTypes } from 'sequelize';
 import db from '../database'; // Ajuste o caminho conforme necessário
 import { getDaysToClose } from '../services/SettingServices/ConfiguraFechamentoTicketService';
 
+// Função responsável por fechar tickets pendentes automaticamente
+// Esta função é executada periodicamente para manter o sistema organizado
 const closePendingTickets = async () => {
     try {
         // Obter o número de dias para fechar os Tickets
@@ -45,10 +47,12 @@ const closePendingTickets = async () => {
     }
 };
 
-// Configura a tarefa agendada para executar diariamente à meia-noite
+// Função que agenda a execução do fechamento automático de tickets
+// Configura um job cron para executar a tarefa periodicamente
 const scheduleClosePendingTicketsJob = () => {
-    // Executa a cada minuto para testes, ajuste conforme necessário
-    cron.schedule('* * * * *', closePendingTickets);
+    // Agenda a execução para todos os dias à meia-noite
+    // O padrão '0 0 * * *' significa: minuto 0, hora 0, qualquer dia do mês, qualquer mês, qualquer dia da semana
+    cron.schedule('0 0 * * *', closePendingTickets);
 };
 
 export default scheduleClosePendingTicketsJob;

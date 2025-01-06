@@ -1,6 +1,8 @@
 import AppError from "../../errors/AppError";
 import Tenant from "../../models/Tenant";
 
+// Interface que define a estrutura de um dia de trabalho
+// Contém informações sobre horários e tipo de operação
 interface Day {
   day: string | number;
   label: string;
@@ -11,11 +13,15 @@ interface Day {
   hr4: string;
 }
 
+// Interface que define os parâmetros necessários para atualização
+// Inclui novos horários e identificação do tenant
 interface Request {
   businessHours: Day[];
   tenantId: number | string;
 }
 
+// Serviço responsável por atualizar horários comerciais do tenant
+// Atualiza configurações de dias e horários de funcionamento
 const UpdateBusinessHoursService = async ({
   businessHours,
   tenantId

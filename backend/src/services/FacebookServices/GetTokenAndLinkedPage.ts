@@ -6,6 +6,8 @@ import Whatsapp from "../../models/Whatsapp";
 import SetLogoutLinkedPage from "./SetLogoutLinkedPage";
 import { getIO } from "../../libs/socket";
 
+// Interface que define os parâmetros necessários para vincular uma página
+// Inclui informações do WhatsApp, conta do Facebook e tenant
 interface Request {
   whatsapp: Whatsapp;
   accountId: string;
@@ -13,11 +15,14 @@ interface Request {
   tenantId: number | string;
 }
 
-const api_version = "v16.0";
-const baseUrl = `https://graph.facebook.com/${api_version}`;
-const app_id = process.env.VUE_FACEBOOK_APP_ID;
-const app_secret = process.env.FACEBOOK_APP_SECRET_KEY;
+// Configurações da API do Facebook
+const api_version = "v16.0";                                     // Versão da API Graph
+const baseUrl = `https://graph.facebook.com/${api_version}`;     // URL base da API
+const app_id = process.env.VUE_FACEBOOK_APP_ID;                 // ID do aplicativo
+const app_secret = process.env.FACEBOOK_APP_SECRET_KEY;         // Chave secreta do app
 
+// Função que converte token de curta duração em token de longa duração
+// Necessário para manter a conexão ativa por mais tempo
 const getLongLivedAccessToken = async (short_lived_token: string) => {
   const { data } = await axios.get(
     `${baseUrl}/oauth/access_token?grant_type=fb_exchange_token&client_id=${app_id}&client_secret=${app_secret}&fb_exchange_token=${short_lived_token}`
@@ -25,6 +30,8 @@ const getLongLivedAccessToken = async (short_lived_token: string) => {
   return data.access_token;
 };
 
+// Função que obtém o token permanente da página
+// Permite acesso contínuo às funcionalidades da página
 const getPermanentPageAccessToken = async (
   long_lived_access_token: string,
   account_id: string
@@ -38,6 +45,8 @@ const getPermanentPageAccessToken = async (
   return data.length && data[0]; // page_item.access_token;
 };
 
+// Função que busca informações das páginas vinculadas à conta
+// Retorna detalhes das páginas que o usuário administra
 const getPageInfo = async (accountId: string, userToken: string) => {
   const urlPageInfo = `${baseUrl}/${accountId}/accounts?limit=25&access_token=${userToken}`;
 
@@ -52,6 +61,8 @@ const getPageInfo = async (accountId: string, userToken: string) => {
   return data;
 };
 
+// Função principal que gerencia o processo de vinculação de página
+// Obtém tokens necessários e atualiza as configurações do WhatsApp
 const GetTokenAndLinkedPage = async ({
   whatsapp,
   accountId,

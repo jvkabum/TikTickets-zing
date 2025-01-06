@@ -1,41 +1,59 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable camelcase */
+
+// ====================
+// Interface para Mensagem de Texto do WABA
+// ====================
 interface WabaMessageText {
   text: {
-    body: string;
+    body: string; // Corpo da mensagem de texto
   };
 }
 
+// ====================
+// Interface para ID da Mensagem
+// ====================
 interface messageId {
-  id: string;
+  id: string; // ID da mensagem
 }
 
+// ====================
+// Interface para Resposta do WABA
+// ====================
 interface WabaResponse {
-  messages: messageId[];
-
+  messages: messageId[]; // Lista de IDs das mensagens
 }
 
+// ====================
+// Interface para Mensagem de Documento do WABA
+// ====================
 interface WabaMessageDocument {
-  caption?: string;
-  filename?: string;
-  id?: string;
-  mime_type?: string;
-  sha256?: string;
+  caption?: string; // Legenda opcional do documento
+  filename?: string; // Nome do arquivo
+  id?: string; // ID do documento
+  mime_type?: string; // Tipo MIME do documento
+  sha256?: string; // Hash SHA256 do documento
 }
 
+// ====================
+// Interface para Mensagem de Mídia do WABA
+// ====================
 interface WabaMessageMedia {
-  id?: string;
-  caption?: string;
-  mime_type?: string;
-  sha256?: string;
+  id?: string; // ID da mídia
+  caption?: string; // Legenda opcional da mídia
+  mime_type?: string; // Tipo MIME da mídia
+  sha256?: string; // Hash SHA256 da mídia
 }
 
+// ====================
+// Interface para Mensagem do WABA
+// ====================
 interface WabaMessage {
-  id?: string;
-  fromMe?: boolean;
+  id?: string; // ID da mensagem
+  fromMe?: boolean; // Indica se a mensagem foi enviada pelo usuário
   // eslint-disable-next-line camelcase
-  recipient_type: "individual" | "group";
-  to: string;
+  recipient_type: "individual" | "group"; // Tipo de destinatário
+  to: string; // Destinatário da mensagem
   type:
   | "text"
   | "voice"
@@ -43,27 +61,33 @@ interface WabaMessage {
   | "image"
   | "video"
   | "audio"
-  | "document";
+  | "document"; // Tipo da mensagem
   text?: {
-    body: string;
+    body: string; // Corpo da mensagem de texto
   };
-  video?: WabaMessageMedia;
-  image?: WabaMessageMedia;
-  document?: WabaMessageDocument;
-  audio?: WabaMessageMedia;
-  voice?: WabaMessageMedia;
-  timestamp: string;
+  video?: WabaMessageMedia; // Mensagem de vídeo
+  image?: WabaMessageMedia; // Mensagem de imagem
+  document?: WabaMessageDocument; // Mensagem de documento
+  audio?: WabaMessageMedia; // Mensagem de áudio
+  voice?: WabaMessageMedia; // Mensagem de voz
+  timestamp: string; // Timestamp da mensagem
 }
 
+// ====================
+// Interface para Contato do WABA
+// ====================
 interface WabaContact {
   profile: {
-    name: string;
+    name: string; // Nome do contato
   };
   // eslint-disable-next-line camelcase
-  wa_id: string;
+  wa_id: string; // ID do WhatsApp do contato
 }
 
+// ====================
+// Interface para Contexto do WABA
+// ====================
 interface WabaContext {
-  messages: WabaMessage[];
-  contacts: WabaContact[];
+  messages: WabaMessage[]; // Lista de mensagens
+  contacts: WabaContact[]; // Lista de contatos
 }

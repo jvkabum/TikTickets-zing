@@ -4,6 +4,8 @@ import Contact from "../../models/Contact";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 
+// Serviço responsável por marcar mensagens como lidas no Messenger
+// Atualiza o status de leitura e notifica os clientes conectados via socket
 const MessengerMarkRead = async (
   messageObj: any,
   tenantId: string | number

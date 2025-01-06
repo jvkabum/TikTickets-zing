@@ -1,8 +1,11 @@
 import { QueryInterface } from "sequelize";
 
 module.exports = {
+  // ====================
+  // Função de Migração para Atualizar a Tabela de Inquilinos
+  // ====================
   up: async (queryInterface: QueryInterface) => {
-    // Update the maxConnections and maxUsers columns for the row with id 1 in the Tenants table
+    // Atualiza as colunas maxConnections e maxUsers para o registro com id 1 na tabela Tenants
     await queryInterface.sequelize.query(`
       UPDATE "Tenants"
       SET "maxConnections" = 99, "maxUsers" = 99
@@ -10,8 +13,11 @@ module.exports = {
     `);
   },
 
+  // ====================
+  // Função de Reversão da Migração
+  // ====================
   down: async (queryInterface: QueryInterface) => {
-    // Revert the changes made in the up migration
-    // (You can implement the down migration logic here if needed)
+    // Reverte as alterações feitas na migração up
+    // (Você pode implementar a lógica de reversão aqui, se necessário)
   }
 };

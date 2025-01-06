@@ -5,19 +5,30 @@ import { logger } from "../utils/logger";
 import { getWbot } from "../libs/wbot";
 import CampaignContacts from "../models/CampaignContacts";
 
+// Job responsável por enviar mensagens de campanha via WhatsApp
+// Gerencia o envio de mensagens em massa para contatos específicos
 export default {
+  // Identificador único do job no sistema
   key: "SendMessageWhatsappCampaign",
+
+  // Configurações de execução e retry do job
   options: {
+    // Atraso inicial de 15 segundos entre mensagens
+    // Evita sobrecarga e bloqueios do WhatsApp
     delay: 15000,
+    // Número máximo de tentativas em caso de falha
     attempts: 10,
+    // Remove o job da fila após completar com sucesso
     removeOnComplete: true,
-    // removeOnFail: true,
+    // Configuração de retry em caso de falha
     backoff: {
       type: "fixed",
-      delay: 60000 * 5 // 5 min
+      delay: 60000 * 5 // Intervalo de 5 minutos entre tentativas
     }
   },
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+
+  // Função principal que processa o envio da mensagem de campanha
+  // Suporta envio de mensagens com ou sem mídia anexada
   async handle({ data }: any) {
     try {
       /// feito por está apresentando problema com o tipo

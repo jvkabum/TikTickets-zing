@@ -10,6 +10,10 @@ import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService
 import UpdateWhatsAppService from "../services/WhatsappService/UpdateWhatsAppService";
 import CreateWhatsAppService from "../services/WhatsappService/CreateWhatsAppService";
 
+/**
+ * Lista todas as conexões WhatsApp do tenant
+ * Retorna as instâncias do WhatsApp associadas ao tenant atual
+ */
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
 
@@ -18,6 +22,10 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(whatsapps);
 };
 
+/**
+ * Exibe detalhes de uma conexão WhatsApp específica
+ * Retorna informações detalhadas de uma instância do WhatsApp
+ */
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params;
   const { tenantId } = req.user;
@@ -27,6 +35,12 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(whatsapp);
 };
 
+/**
+ * Obtém o número máximo de conexões permitidas para um tenant
+ * Verifica os limites de conexão configurados para o tenant
+ * @param tenantId ID do tenant para verificar
+ * @returns Número máximo de conexões permitidas
+ */
 const getTenantmaxConnections = async (tenantId: string): Promise<number> => {
   try {
     const tenant = await Tenant.findOne({ where: { id: tenantId } });
@@ -39,6 +53,11 @@ const getTenantmaxConnections = async (tenantId: string): Promise<number> => {
   }
 };
 
+/**
+ * Cria uma nova conexão WhatsApp
+ * Verifica limites de conexão antes de criar uma nova instância
+ * Valida tanto o limite global quanto o limite específico do tenant
+ */
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params;
   const whatsappData = req.body;
@@ -62,6 +81,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(whatsapp);
 };
 
+/**
+ * Atualiza uma conexão WhatsApp existente
+ * Permite modificar configurações e dados de uma instância
+ */
 export const update = async (
   req: Request,
   res: Response
@@ -79,6 +102,10 @@ export const update = async (
   return res.status(200).json(whatsapp);
 };
 
+/**
+ * Remove uma conexão WhatsApp
+ * Desconecta a instância, remove do banco de dados e notifica via socket
+ */
 export const remove = async (
   req: Request,
   res: Response

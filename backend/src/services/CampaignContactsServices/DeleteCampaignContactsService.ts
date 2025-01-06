@@ -2,12 +2,16 @@ import CampaignContacts from "../../models/CampaignContacts";
 import AppError from "../../errors/AppError";
 import Campaign from "../../models/Campaign";
 
+// Interface que define os parâmetros necessários para remoção
+// Requer identificação da campanha, contato e tenant
 interface Request {
   campaignId: string | number;
   contactId: string | number;
   tenantId: number | string;
 }
 
+// Serviço responsável por remover um contato específico de uma campanha
+// Verifica existência e permissões antes da remoção
 const DeleteCampaignContactsService = async ({
   campaignId,
   contactId,

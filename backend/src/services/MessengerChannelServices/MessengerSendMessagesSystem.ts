@@ -16,10 +16,14 @@ import { sleepRandomTime } from "../../utils/sleepRandomTime";
 // import { sleepRandomTime } from "../../utils/sleepRandomTime";
 // import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 
+// Interface que estende o cliente do Messenger
+// Adiciona o ID necessário para identificação do bot
 interface Session extends MessengerClient {
   id: number;
 }
 
+// Serviço responsável por enviar mensagens do sistema via Messenger
+// Processa diferentes tipos de mídia e gerencia o status de envio
 const MessengerSendMessagesSystem = async (
   messengerBot: Session | any,
   tenantId: number | string

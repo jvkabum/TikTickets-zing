@@ -20,6 +20,8 @@ import AppError from "../../errors/AppError";
 import CampaignContacts from "../../models/CampaignContacts";
 import Queue from "../../libs/Queue";
 
+// Interface que define os parâmetros necessários para iniciar uma campanha
+// Inclui identificadores e opções de configuração do job
 interface Request {
   campaignId: string | number;
   tenantId: number | string;
@@ -27,6 +29,8 @@ interface Request {
   options?: JobOptions;
 }
 
+// Função que extrai o nome do arquivo de uma URL
+// Usada para obter o nome do arquivo de mídia da campanha
 const cArquivoName = (url: string | null) => {
   if (!url) return "";
   const split = url.split("/");
@@ -34,10 +38,14 @@ const cArquivoName = (url: string | null) => {
   return name;
 };
 
+// Função que gera um número aleatório dentro de um intervalo
+// Usada para selecionar aleatoriamente entre as mensagens disponíveis
 const randomInteger = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
+// Função que monta os dados da mensagem a ser enviada
+// Seleciona mensagem aleatória e substitui variáveis no template
 const mountMessageData = (
   campaign: Campaign,
   campaignContact: CampaignContacts,
@@ -70,6 +78,8 @@ return {
   };
 };
 
+// Função que ajusta a data para o próximo horário válido
+// Garante que mensagens sejam enviadas apenas em horário comercial
 const nextDayHoursValid = (date: Date) => {
   let dateVerify = date;
   const dateNow = new Date();
@@ -108,12 +118,16 @@ const nextDayHoursValid = (date: Date) => {
   return dateVerify;
 };
 
+// Função que calcula o atraso necessário para o envio
+// Considera a diferença entre a data atual e a próxima data válida
 const calcDelay = (nextDate: Date, delay: number) => {
   const diffSeconds = differenceInSeconds(nextDate, new Date());
 
   return diffSeconds * 1000 + delay;
 };
 
+// Serviço principal que inicia uma campanha
+// Prepara e agenda o envio de mensagens para todos os contatos
 const StartCampaignService = async ({
   campaignId,
   tenantId,

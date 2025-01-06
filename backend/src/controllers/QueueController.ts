@@ -7,13 +7,21 @@ import ListQueueService from "../services/QueueServices/ListQueueService";
 import DeleteQueueService from "../services/QueueServices/DeleteQueueService";
 import UpdateQueueService from "../services/QueueServices/UpdateQueueService";
 
+/**
+ * Interface que define a estrutura de dados de uma fila
+ */
 interface QueueData {
-  queue: string;
-  isActive: boolean;
-  userId: number;
-  tenantId: number | string;
+  queue: string;           // Nome da fila
+  isActive: boolean;       // Status de ativação da fila
+  userId: number;          // ID do usuário que criou/modificou
+  tenantId: number | string; // ID do tenant/organização
 }
 
+/**
+ * Cria uma nova fila de atendimento
+ * Apenas administradores podem criar filas
+ * Valida os dados obrigatórios antes da criação
+ */
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   if (req.user.profile !== "admin") {
@@ -39,12 +47,21 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(queue);
 };
 
+/**
+ * Lista todas as filas do tenant
+ * Retorna as filas de atendimento disponíveis
+ */
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   const queues = await ListQueueService({ tenantId });
   return res.status(200).json(queues);
 };
 
+/**
+ * Atualiza uma fila existente
+ * Apenas administradores podem modificar filas
+ * Valida os dados antes da atualização
+ */
 export const update = async (
   req: Request,
   res: Response
@@ -77,6 +94,11 @@ export const update = async (
   return res.status(200).json(queueObj);
 };
 
+/**
+ * Remove uma fila do sistema
+ * Apenas administradores podem remover filas
+ * Verifica permissões antes da remoção
+ */
 export const remove = async (
   req: Request,
   res: Response

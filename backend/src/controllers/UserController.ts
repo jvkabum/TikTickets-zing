@@ -1,3 +1,5 @@
+// src/controllers/UserController.ts
+
 import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
 import CheckSettingsHelper from "../helpers/CheckSettings";
@@ -10,11 +12,20 @@ import DeleteUserService from "../services/UserServices/DeleteUserService";
 import UpdateUserConfigsService from "../services/UserServices/UpdateUserConfigsService";
 import Tenant from "../models/Tenant"; 
 
+/**
+ * Interface para parâmetros de busca na listagem de usuários
+ */
 type IndexQuery = {
-  searchParam: string;
-  pageNumber: string;
+  searchParam: string;    // Termo para busca de usuários
+  pageNumber: string;     // Número da página atual
 };
 
+/**
+ * Lista usuários do tenant com paginação
+ * 
+ * Este endpoint permite listar usuários associados a um tenant específico,
+ * retornando uma lista filtrada e dados de paginação.
+ */
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   const { searchParam, pageNumber } = req.query as IndexQuery;
@@ -28,6 +39,12 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   return res.json({ users, count, hasMore });
 };
 
+/**
+ * Obtém o número máximo de usuários permitidos para um tenant
+ * Verifica os limites configurados na organização
+ * @param tenantId ID do tenant para verificar
+ * @returns Número máximo de usuários permitidos
+ */
 const getTenantMaxUsers = async (tenantId: string): Promise<number> => {
   try {
     const tenant = await Tenant.findOne({ where: { id: tenantId } });
@@ -40,6 +57,11 @@ const getTenantMaxUsers = async (tenantId: string): Promise<number> => {
   }
 };
 
+/**
+ * Cria um novo usuário no sistema
+ * Verifica limites de usuários e permissões antes da criação
+ * Notifica criação via socket para atualização em tempo real
+ */
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   const { email, password, name, profile } = req.body;
@@ -80,6 +102,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(user);
 };
 
+/**
+ * Exibe detalhes de um usuário específico
+ * Retorna informações completas do usuário solicitado
+ */
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { userId } = req.params;
   const { tenantId } = req.user;
@@ -89,6 +115,10 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(user);
 };
 
+/**
+ * Atualiza dados de um usuário
+ * Permite modificar informações do perfil e notifica via socket
+ */
 export const update = async (
   req: Request,
   res: Response
@@ -108,6 +138,10 @@ export const update = async (
   return res.status(200).json(user);
 };
 
+/**
+ * Atualiza configurações específicas do usuário
+ * Permite modificar preferências e configurações pessoais
+ */
 export const updateConfigs = async (
   req: Request,
   res: Response
@@ -121,6 +155,11 @@ export const updateConfigs = async (
   return res.status(200).json();
 };
 
+/**
+ * Remove um usuário do sistema
+ * Apenas administradores podem remover usuários
+ * Notifica remoção via socket para atualização em tempo real
+ */
 export const remove = async (
   req: Request,
   res: Response

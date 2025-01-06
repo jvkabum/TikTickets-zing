@@ -11,12 +11,18 @@ import Whatsapp from "../../models/Whatsapp";
 import { EventMessage, MessengerRawEvent } from "./MessengerTypes";
 import getQuotedForMessageId from "../../helpers/getQuotedForMessageId";
 
+// Interface que estende o tipo de mensagem do Messenger
+// Adiciona campos necessários para processamento interno
 interface IMessage extends EventMessage {
   type: string;
   timestamp: number;
 }
 
+// Função responsável por baixar arquivos de mídia do Messenger
+// Salva o arquivo localmente e retorna o nome do arquivo salvo
 const downloadFile = async (url: string, filename: string): Promise<string> => {
+  // Faz a requisição para baixar o arquivo
+  // Usa stream para lidar com arquivos grandes
   const request = await axios({
     url,
     method: "GET",
@@ -54,6 +60,8 @@ const downloadFile = async (url: string, filename: string): Promise<string> => {
   return name;
 };
 
+// Serviço principal para processar mensagens com mídia do Messenger
+// Baixa os arquivos, cria mensagens no sistema e atualiza o ticket
 const MessengerVerifyMediaMessage = async (
   channel: Whatsapp,
   msg: MessengerRawEvent | any,

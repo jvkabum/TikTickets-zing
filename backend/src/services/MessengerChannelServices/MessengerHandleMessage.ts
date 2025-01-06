@@ -10,7 +10,8 @@ import MessengerMarkRead from "./MessengerMarkRead";
 import MessengerShowChannel from "./MessengerShowChannel";
 import verifyBusinessHours from "../WbotServices/helpers/VerifyBusinessHours";
 
-// eslint-disable-next-line consistent-return
+// Função que determina o tipo de mensagem recebida do Messenger
+// Analisa o conteúdo e anexos para identificar se é texto, imagem, áudio, etc.
 const getMessageType = (message: any) => {
   const { attachments } = message;
   const hasAttachment = attachments && attachments.length > 0;
@@ -23,6 +24,8 @@ const getMessageType = (message: any) => {
   if (hasAttachment && attachments[0].type === "fallback") return "fallback";
 };
 
+// Serviço principal para processamento de mensagens do Messenger
+// Gerencia todo o fluxo de recebimento e tratamento das mensagens
 const MessengerHandleMessage = async (
   context: MessengerRequestBody
 ): Promise<void> => {
@@ -85,7 +88,7 @@ const MessengerHandleMessage = async (
           await MessengerVerifyMessage(msgData, ticket, contact);
         }
         await VerifyStepsChatFlowTicket(msgData, ticket);
-
+        
         await verifyBusinessHours(msgData, ticket);
         resolve();
       } catch (error) {
