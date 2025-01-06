@@ -1,4 +1,3 @@
-
 const checkTicketFilter = (ticket) => {
   const filtroPadrao = {
     searchParam: '',
@@ -9,7 +8,8 @@ const checkTicketFilter = (ticket) => {
     queuesIds: [],
     withUnreadMessages: false,
     isNotAssignedUser: false,
-    includeNotQueueDefined: true
+    includeNotQueueDefined: true,
+    tags: []
     // date: new Date(),
   }
 
@@ -129,6 +129,18 @@ const checkTicketFilter = (ticket) => {
   if (filtros.isNotAssignedUser) {
     console.log('isNotAssignedUser ativo para exibir somente tickets não assinados', filtros.isNotAssignedUser, !ticket.userId)
     return filtros.isNotAssignedUser && !ticket.userId
+  }
+
+  // verificar se há filtro de tags ativo
+  if (filtros.tags && filtros.tags.length > 0) {
+    console.log('Verificando tags do ticket:', ticket?.contact?.tags)
+    console.log('Tags do filtro:', filtros.tags)
+    const ticketTags = ticket?.contact?.tags?.map(t => t.id) || []
+    const hasMatchingTag = filtros.tags.some(tagId => ticketTags.includes(tagId))
+    if (!hasMatchingTag) {
+      console.log('Ticket não possui as tags filtradas', filtros.tags, ticketTags)
+      return false
+    }
   }
 
   return isValid

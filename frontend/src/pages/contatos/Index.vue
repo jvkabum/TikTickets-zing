@@ -55,6 +55,41 @@
             <q-icon name="search" />
           </template>
         </q-input>
+        <q-select
+          style="width: 300px"
+          class="q-ml-sm"
+          dense
+          outlined
+          rounded
+          v-model="selectedTags"
+          multiple
+          label="Filtrar por Tags"
+          :options="etiquetas"
+          use-chips
+          option-value="id"
+          option-label="tag"
+          emit-value
+          map-options
+          @input="filtrarContatosPorTags"
+        >
+          <template v-slot:selected-item="{ opt }">
+            <q-chip
+              dense
+              square
+              color="white"
+              text-color="primary"
+              class="q-ma-xs"
+            >
+              <q-icon
+                :style="`color: ${opt.color}`"
+                name="mdi-pound-box-outline"
+                size="20px"
+                class="q-mr-xs"
+              />
+              {{ opt.tag }}
+            </q-chip>
+          </template>
+        </q-select>
         <q-space />
         <q-btn-dropdown
           color="primary"
@@ -342,6 +377,7 @@ export default {
   data () {
     return {
       contacts: [],
+      selectedTags: [],
       modalImportarContatos: false,
       modalContato: false,
       file: [],
@@ -732,8 +768,24 @@ export default {
         this.loading = true
       }
       this.loading = true
+    },
+    async filtrarContatosPorTags () {
+      try {
+        this.loading = true
+        this.contacts = []
+        this.params.pageNumber = 1
+        this.params.tags = this.selectedTags
+        const { data } = await ListarContatos(this.params)
+        this.params.hasMore = data.hasMore
+        this.LOAD_CONTACTS(data.contacts)
+        this.pagination.lastIndex = this.contacts.length - 1
+        this.pagination.rowsNumber = data.count
+        this.loading = false
+      } catch (err) {
+        this.loading = false
+        this.$notificarErro('Não foi possível filtrar os contatos por tags', err)
+      }
     }
-
   },
   mounted () {
     this.usuario = JSON.parse(localStorage.getItem('usuario'))

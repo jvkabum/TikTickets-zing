@@ -103,21 +103,31 @@
                 class="row q-pa-sm"
                 style="min-width: 350px; max-width: 350px"
               >
-                <div class="q-ma-sm">
-                  <div class="text-h6 q-mb-md">Filtros Avançados</div>
-                  <q-toggle
-                    v-if="profile === 'admin'"
-                    class="q-ml-lg"
-                    v-model="pesquisaTickets.showAll"
-                    label="(Admin) - Visualizar Todos"
-                    :class="{ 'q-mb-lg': pesquisaTickets.showAll }"
-                    @input="debounce(BuscarTicketFiltro(), 700)"
-                  />
-                  <q-separator
-                    class="q-mb-md"
-                    v-if="!pesquisaTickets.showAll"
-                  />
-                  <div v-if="!pesquisaTickets.showAll">
+                <div class="q-ma-sm full-width">
+                  <div class="row items-center justify-between q-mb-md relative-position">
+                    <div class="text-h6">Filtros Avançados</div>
+                    <q-btn
+                      color="negative"
+                      icon="close"
+                      flat
+                      round
+                      v-close-popup
+                      class="absolute-top-right q-mr-xs"
+                      size="md"
+                      style="margin-top: -2px"
+                    >
+                      <q-tooltip>Fechar</q-tooltip>
+                    </q-btn>
+                  </div>
+                  <q-scroll-area style="height: 450px;">
+                    <q-toggle
+                      v-if="profile === 'admin'"
+                      class="q-ml-lg q-mb-md"
+                      v-model="pesquisaTickets.showAll"
+                      label="(Admin) - Visualizar Todos"
+                      @input="debounce(BuscarTicketFiltro(), 700)"
+                    />
+                    <q-separator class="q-mb-md" />
                     <q-select
                       :disable="pesquisaTickets.showAll"
                       rounded
@@ -139,6 +149,70 @@
                       @input="debounce(BuscarTicketFiltro(), 700)"
                       input-style="width: 300px; max-width: 300px;"
                     />
+
+                    <q-select
+                      rounded
+                      dense
+                      outlined
+                      hide-bottom-space
+                      emit-value
+                      map-options
+                      multiple
+                      options-dense
+                      use-chips
+                      label="Tags"
+                      color="primary"
+                      v-model="pesquisaTickets.tagsIds"
+                      :options="etiquetas"
+                      :input-debounce="700"
+                      option-value="id"
+                      option-label="tag"
+                      @input="debounce(BuscarTicketFiltro(), 700)"
+                      input-style="width: 300px; max-width: 300px;"
+                      class="q-mt-sm"
+                    >
+                      <template v-slot:option="{ opt, itemProps, itemEvents }">
+                        <q-item
+                          v-bind="itemProps"
+                          v-on="itemEvents"
+                        >
+                          <q-item-section>
+                            <q-item-label>
+                              <div class="row items-center">
+                                <q-icon :style="`color: ${opt.color}`" name="mdi-pound-box-outline" size="28px" class="q-mr-sm"/>
+                                <span>{{ opt.tag }}</span>
+                              </div>
+                            </q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </template>
+                      <template v-slot:selected-item="{ opt }">
+                        <q-chip
+                          dense
+                          square
+                          :style="`border: 1px solid ${opt.color}`"
+                          text-color="primary"
+                          class="q-ma-xs"
+                        >
+                          <q-icon
+                            :style="`color: ${opt.color}`"
+                            name="mdi-pound-box-outline"
+                            size="18px"
+                            class="q-mr-xs"
+                          />
+                          {{ opt.tag }}
+                        </q-chip>
+                      </template>
+                      <template v-slot:no-option>
+                        <q-item>
+                          <q-item-section>
+                            <q-item-label class="text-negative">
+                              Nenhuma tag encontrada
+                            </q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </template>
+                    </q-select>
 
                     <q-list
                       dense
@@ -207,20 +281,7 @@
                       label="Somente Tickets não atribuidos (sem usuário definido)"
                       @input="debounce(BuscarTicketFiltro(), 700)"
                     />
-                  </div>
-                  <q-separator
-                    class="q-my-md"
-                    spaced
-                    v-if="!pesquisaTickets.showAll"
-                  />
-                  <q-btn
-                    class="float-right q-my-md"
-                    color="negative"
-                    label="Fechar"
-                    push
-                    rounded
-                    v-close-popup
-                  />
+                  </q-scroll-area>
                 </div>
               </div>
             </q-menu>
@@ -368,7 +429,7 @@
                   <!-- :color="item.status === 'CONNECTED' ? 'positive' : 'negative'"
                   :icon-right="item.status === 'CONNECTED' ? 'mdi-check-all' : 'mdi-alert-circle-outline'" -->
                   <q-tooltip
-                    max-height="300px"
+                    max-height="350px"
                     content-class="bg-blue-1 text-body1 text-grey-9 hide-scrollbar"
                   >
                     <ItemStatusChannel :item="item" />
@@ -405,6 +466,25 @@
           </span>
         </div>
         <q-separator />
+        <q-item tag="label" v-ripple v-if="profile == 'admin'">
+          <q-card
+              class="bg-white btn-rounded q-mt-sm"
+              style="width: 100%"
+              bordered
+              flat
+            >
+              <q-card-section class="text-bold q-pa-sm ">
+                <q-btn
+                  flat
+                  class="bg-padrao btn-rounded"
+                  :color="!$q.dark.isActive ? 'grey-9' : 'white'"
+                  label="Logs"
+                  icon="mdi-timeline-text-outline"
+                  @click="abrirModalLogs"
+                />
+              </q-card-section>
+            </q-card>
+        </q-item>
         <q-scroll-area style="height: calc(100vh - 70px)">
           <div class="q-pa-sm">
             <q-card
@@ -464,23 +544,6 @@
                   icon="edit"
                   label="Editar Contato"
                   @click="editContact(ticketFocado.contact.id)"
-                />
-              </q-card-section>
-            </q-card>
-            <q-card
-              class="bg-white btn-rounded q-mt-sm"
-              style="width: 100%"
-              bordered
-              flat
-            >
-              <q-card-section class="text-bold q-pa-sm ">
-                <q-btn
-                  flat
-                  class="bg-padrao btn-rounded"
-                  :color="!$q.dark.isActive ? 'grey-9' : 'white'"
-                  label="Logs"
-                  icon="mdi-timeline-text-outline"
-                  @click="abrirModalLogs"
                 />
               </q-card-section>
             </q-card>
@@ -852,6 +915,7 @@ export default {
         showAll: false,
         count: null,
         queuesIds: [],
+        tagsIds: [],
         withUnreadMessages: false,
         isNotAssignedUser: false,
         includeNotQueueDefined: true
@@ -910,8 +974,8 @@ export default {
       return this.$route.name === 'chat-contatos'
     },
     cFiltroSelecionado () {
-      const { queuesIds, showAll, withUnreadMessages, isNotAssignedUser } = this.pesquisaTickets
-      return !!(queuesIds?.length || showAll || withUnreadMessages || isNotAssignedUser)
+      const { queuesIds, showAll, withUnreadMessages, isNotAssignedUser, tagsIds } = this.pesquisaTickets
+      return !!(queuesIds?.length || showAll || withUnreadMessages || isNotAssignedUser || tagsIds?.length)
     },
     cIsExtraInfo () {
       return this.ticketFocado?.contact?.extraInfo?.length > 0
@@ -938,16 +1002,13 @@ export default {
         tag: data.ticket.id,
         renotify: true
       }
-
       const notification = new Notification(
         `Mensagem de ${data.ticket.contact.name}`,
         options
       )
-
       setTimeout(() => {
         notification.close()
       }, 10000)
-
       notification.onclick = e => {
         e.preventDefault()
         window.focus()
@@ -955,7 +1016,6 @@ export default {
         this.$router.push({ name: 'atendimento' })
         // history.push(`/tickets/${ticket.id}`);
       }
-
       this.$nextTick(() => {
         // utilizar refs do layout
         this.$refs.audioNotificationPlay.play()
@@ -981,7 +1041,19 @@ export default {
         ...this.pesquisaTickets,
         ...paramsInit
       }
+
+      // Garantir que tagsIds seja um array
+      if (params.tagsIds && !Array.isArray(params.tagsIds)) {
+        params.tagsIds = [params.tagsIds]
+      }
+
+      // Converter tagsIds para array de strings
+      if (params.tagsIds?.length > 0) {
+        params.tags = params.tagsIds.map(id => id.toString())
+      }
+
       try {
+        console.log('Parâmetros enviados:', params) // Debug
         const { data } = await ConsultarTickets(params)
         this.countTickets = data.count // count total de tickets no status
         this.$store.commit('LOAD_TICKETS', data.tickets)
@@ -990,19 +1062,27 @@ export default {
         this.$notificarErro('Algum problema', err)
         console.error(err)
       }
-      // return () => clearTimeout(delayDebounceFn)
     },
     async BuscarTicketFiltro () {
       this.$store.commit('RESET_TICKETS')
       this.loading = true
-      localStorage.setItem('filtrosAtendimento', JSON.stringify(this.pesquisaTickets))
-      this.pesquisaTickets = {
+      // Salvar filtros no localStorage
+      const filtros = {
         ...this.pesquisaTickets,
         pageNumber: 1
       }
-      await this.consultarTickets(this.pesquisaTickets)
-      this.loading = false
-      this.$setConfigsUsuario({ isDark: this.$q.dark.isActive })
+      localStorage.setItem('filtrosAtendimento', JSON.stringify(filtros))
+      // Atualizar pesquisaTickets
+      this.pesquisaTickets = filtros
+
+      try {
+        await this.consultarTickets(this.pesquisaTickets)
+      } catch (error) {
+        console.error('Erro ao buscar tickets:', error)
+      } finally {
+        this.loading = false
+        this.$setConfigsUsuario({ isDark: this.$q.dark.isActive })
+      }
     },
     async onLoadMore () {
       if (this.tickets.length === 0 || !this.hasMore || this.loading) {
@@ -1027,8 +1107,14 @@ export default {
       this.$store.commit('LOAD_WHATSAPPS', data)
     },
     async listarEtiquetas () {
-      const { data } = await ListarEtiquetas(true)
-      this.etiquetas = data
+      try {
+        const { data } = await ListarEtiquetas()
+        console.log('Tags carregadas:', data)
+        this.etiquetas = data
+      } catch (error) {
+        console.error('Erro ao carregar tags:', error)
+        this.$notificarErro('Não foi possível carregar as tags', error)
+      }
     },
     async abrirModalUsuario () {
       // if (!usuario.id) {
@@ -1049,7 +1135,6 @@ export default {
         localStorage.removeItem('queues')
         localStorage.removeItem('usuario')
         localStorage.removeItem('filtrosAtendimento')
-
         this.$router.go({ name: 'login', replace: true })
       } catch (error) {
         this.$notificarErro(
@@ -1131,7 +1216,6 @@ export default {
   },
   beforeMount () {
     this.listarFilas()
-    this.listarEtiquetas()
     this.listarConfiguracoes()
     const filtros = JSON.parse(localStorage.getItem('filtrosAtendimento'))
     if (!filtros?.pageNumber) {
@@ -1147,6 +1231,7 @@ export default {
     await this.listarWhatsapps()
     await this.consultarTickets()
     await this.listarUsuarios()
+    await this.listarEtiquetas()
     const { data } = await ListarMensagensRapidas()
     this.mensagensRapidas = data
     if (!('Notification' in window)) {
@@ -1155,7 +1240,6 @@ export default {
     }
     this.userProfile = localStorage.getItem('profile')
     // this.socketInitial()
-
     // se existir ticket na url, abrir o ticket.
     if (this.$route?.params?.ticketId) {
       const ticketId = this.$route?.params?.ticketId
@@ -1184,67 +1268,54 @@ export default {
   }
 }
 </script>
-
 <style lang="sass">
 .upload-btn-wrapper
   position: relative
   overflow: hidden
   display: inline-block
-
   & input[type="file"]
     font-size: 100px
     position: absolute
     left: 0
     top: 0
     opacity: 0
-
 .WAL
   width: 100%
   height: 100%
-
   &:before
     content: ''
     height: 127px
     position: fixed
     top: 0
     width: 100%
-
   &__layout
     margin: 0 auto
     z-index: 4000
     height: 100%
     width: 100%
-
   &__field.q-field--outlined .q-field__control:before
     border: none
-
   .q-drawer--standard
     .WAL__drawer-close
       display: none
-
 @media (max-width: 850px)
   .WAL
     padding: 0
     &__layout
       width: 100%
       border-radius: 0
-
 @media (min-width: 691px)
   .WAL
     &__drawer-open
       display: none
-
 .conversation__summary
   margin-top: 4px
-
 .conversation__more
   margin-top: 0!important
   font-size: 1.4rem
-
 .tab-container
   overflow-x: auto
   font-size: 0.75rem
-
 .tab-scroll
   white-space: nowrap
 </style>
