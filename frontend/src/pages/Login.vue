@@ -63,6 +63,12 @@
                   <q-spinner-puff class="on-left" />Logando...
                 </span>
               </q-btn>
+              <q-btn class="q-my-lg"
+                style="width: 200px"
+                color="primary"
+                @click="clearCache">
+                Limpar Cache
+              </q-btn>
             </q-card-actions>
 
             <q-inner-loading :showing="loading" />
@@ -115,10 +121,15 @@ export default {
           this.loading = false
         })
     },
-    clear () {
-      this.form.email = ''
-      this.form.password = ''
-      this.$v.form.$reset()
+    clearCache () {
+      if (window.caches) {
+        caches.keys().then(names => {
+          for (const name of names) caches.delete(name)
+        })
+      }
+      localStorage.clear()
+      sessionStorage.clear()
+      this.$q.notify('Cache do navegador limpo.')
     }
   },
   mounted () {

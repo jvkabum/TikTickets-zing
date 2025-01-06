@@ -163,7 +163,8 @@ export default {
         scheduled: 'Programada',
         processing: 'Processando',
         canceled: 'Cancelada',
-        finished: 'Finalizada'
+        finished: 'Finalizada',
+        failed: 'Falhou'
       }
     }
   },

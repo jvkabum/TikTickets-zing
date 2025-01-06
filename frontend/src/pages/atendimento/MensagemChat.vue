@@ -329,6 +329,14 @@
         </q-chat-message>
       </template>
     </transition-group>
+        <!-- Botão flutuante -->
+        <button
+      v-if="showScrollToBottom"
+      class="scroll-to-bottom"
+      @click="scrollToBottom"
+    >
+      ⬇️
+    </button>
 <q-dialog v-model="showModaledit">
   <q-card>
     <q-card-section>
