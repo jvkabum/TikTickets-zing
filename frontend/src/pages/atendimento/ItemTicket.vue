@@ -2,6 +2,7 @@
   <q-list separator
     style="max-width: 370px"
     class="q-px-sm q-py-none q-pt-sm">
+    <!-- :clickable="ticket.status !== 'pending' && (ticket.id !== $store.getters['ticketFocado'].id || $route.name !== 'chat')" -->
     <q-item clickable
       style="height: 95px; max-width: 100%;"
       @click="abrirChatContato(ticket)"
@@ -11,14 +12,15 @@
       :class="{
         'ticketBorderGrey': !$q.dark.isActive,
         'ticket-active-item': ticket.id === $store.getters['ticketFocado'].id,
-        'ticketNotAnswered': ticket.answered == false && ticket.isGroup == false && ticket.status == 'open'
+        'ticketNotAnswered': ticket.answered == false && ticket.isGroup == false && ticket.status == 'open',
+        'ticket-unread': ticket.unreadMessages > 0
       }">
       <q-item-section avatar
         class="q-px-none">
         <q-btn flat
           @click="iniciarAtendimento(ticket)"
           push
-          color="positive"
+          color="primary"
           dense
           round
           v-if="ticket.status === 'pending' || (buscaTicket && ticket.status === 'pending')">
@@ -27,12 +29,12 @@
             class="text-center text-bold"
             floating
             dense
-            text-color="black"
-            color="positive"
+            text-color="white"
+            color="red"
             :label="ticket.unreadMessages" />
           <q-avatar>
             <q-icon size="50px"
-              name="mdi-send-circle" />
+              name="mdi-account-arrow-right" />
           </q-avatar>
           <q-tooltip>
             Atender
@@ -46,8 +48,8 @@
             class="text-center text-bold"
             floating
             dense
-            color="blue-2"
-            text-color="black"
+            text-color="white"
+            color="red"
             :label="ticket.unreadMessages" />
           <img :src="ticket.profilePicUrl"
             onerror="this.style.display='none'"
@@ -82,9 +84,47 @@
         <q-item-label lines="1"
           caption>
           #{{ ticket.id }}
-          <span class="q-ml-sm">
-            {{ `Fila: ${ticket.queue || obterNomeFila(ticket) || ''}` }}
+          <q-icon
+            v-for="tag in tagsDoTicket"
+            :key="tag.tag"
+            :style="{ color: tag.color }"
+            name="mdi-tag"
+            size="1.4em"
+            class="q-mb-sm">
+            <q-tooltip>
+              {{tag && tag.tag}}
+            </q-tooltip>
+          </q-icon>
+          <q-icon
+            v-for="wallet in walletsDoTicket"
+            :key="wallet.wallet"
+            name="mdi-wallet"
+            size="1.4em"
+            class="q-mb-sm">
+            <q-tooltip>
+              {{wallet.wallet}}
+            </q-tooltip>
+          </q-icon>
+          <!-- <span class="q-ml-sm text-bold" :style="{ color: (ticket.queue || obterNomeFila(ticket)) ? 'black' : '' }"
+          :color="$q.dark.isActive ? 'blue-9' : 'blue-2'"
+          > -->
+          <span class="q-ml-sm text-bold"
+          :color="$q.dark.isActive ? 'white ' : 'black'"
+          >
+            {{ `${ticket.queue || obterNomeFila(ticket) || ''}` }}
           </span>
+          <!-- <span class="q-ml-sm text-bold" :style="{ color: 'black' }">
+            Etiquetas:
+          </span> -->
+          <!-- <q-chip
+            v-for="tag in tagsDoTicket"
+            :color="tag.color"
+            :key="tag.tag"
+            dense
+            square
+            :label="tag && tag.tag"
+            size="10px"
+            class="q-mr-md text-bold" /> -->
           <span class="absolute-bottom-right ">
             <q-icon v-if="ticket.status === 'closed'"
               name="mdi-check-circle-outline"
@@ -109,8 +149,8 @@
         </q-item-label>
         <q-item-label class="row col items-center justify-between"
           caption>
-          Usuário: {{ ticket.username }}
-          <q-chip :color="$q.dark.isActive ? 'blue-9' : 'blue-2'"
+          Usuário: {{ ticket.username || '' }}
+          <q-chip :color="$q.dark.isActive ? '$primary' : 'blue-2'"
             dense
             square
             :label="ticket.whatsapp && ticket.whatsapp.name"
@@ -120,15 +160,64 @@
         <!-- <span class="absolute-bottom-right" v-if="ticket.unreadMessages">
           <q-badge style="font-size: .8em; border-radius: 10px;" class="q-py-xs" dense text-color="white" color="green" :label="ticket.unreadMessages" />
         </span> -->
-        <q-item-section avatar class="absolute-right q-pr-xs">
+        </q-item-section>
+        <q-item-section avatar
+        class="q-px-none">
         <q-btn flat
           @click="espiarAtendimento(ticket)"
           push
           color="primary"
           dense
           round
-          v-if="ticket.status === 'pending' || (buscaTicket && ticket.status === 'pending')"
+          v-if="!$q.screen.xs && (ticket.status === 'pending' || (buscaTicket && ticket.status === 'pending'))"
           class="q-mr-md">
+          <q-dialog v-model="isTicketModalOpen">
+            <q-card :style="cardStyle">
+              <q-card-section class="row items-center justify-between">
+                <div class="text-h6">{{ 'Espiar Atendimento: ' + currentTicket.id}}</div>
+                <q-btn icon="close" flat round @click="closeModal" />
+              </q-card-section>
+              <q-card-section>
+                <MensagemChat :mensagens="currentTicket.messages" />
+              </q-card-section>
+            </q-card>
+          </q-dialog>
+          <!-- <q-badge v-if="ticket.unreadMessages"
+            style="border-radius: 10px;"
+            class="text-center text-bold"
+            floating
+            dense
+            text-color="black"
+            color="blue-2"
+            :label="ticket.unreadMessages" /> -->
+          <q-avatar>
+            <q-icon size="20px"
+              name="mdi-eye-outline" />
+          </q-avatar>
+          <q-tooltip>
+            Espiar
+          </q-tooltip>
+        </q-btn>
+
+        <q-btn flat
+          @click="espiarAtendimento(ticket)"
+          push
+          color="primary"
+          dense
+          round
+          v-if="$q.screen.xs && (ticket.status === 'pending' || (buscaTicket && ticket.status === 'pending'))"
+          class="q-mr-md">
+          <q-dialog v-model="isTicketModalOpen">
+            <q-card :style="cardStyle">
+              <q-card-section class="row items-center justify-between">
+                <div class="text-h6">{{ 'Espiar Atendimento: ' + currentTicket.id}}</div>
+                <q-btn icon="close" flat round @click="closeModal" />
+              </q-card-section>
+              <q-card-section>
+                <MensagemChat :mensagens="currentTicket.messages" />
+              </q-card-section>
+            </q-card>
+          </q-dialog>
           <q-badge v-if="ticket.unreadMessages"
             style="border-radius: 10px;"
             class="text-center text-bold"
@@ -146,10 +235,13 @@
           </q-tooltip>
         </q-btn>
 
+        <!-- <span class="absolute-bottom-right" v-if="ticket.unreadMessages">
+          <q-badge style="font-size: .8em; border-radius: 10px;" class="q-py-xs" dense text-color="white" color="green" :label="ticket.unreadMessages" />
+        </span> -->
       </q-item-section>
     </q-item>
-    <q-separator color="grey-2"
-      inset="item" />
+    <!-- <q-separator color="grey-2"
+      inset="item" /> -->
     <!-- <q-separator /> -->
   </q-list>
 </template>
@@ -159,12 +251,27 @@ import { formatDistance, parseJSON } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR'
 import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
 import { outlinedAccountCircle } from '@quasar/extras/material-icons-outlined'
+// import { GetColorName } from 'hex-color-to-color-name';
+import { ObterContato } from 'src/service/contatos'
+import MensagemChat from './MensagemChat.vue'
+import whatsBackground from 'src/assets/wa-background.png'
+import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
 
 export default {
   name: 'ItemTicket',
   mixins: [mixinAtualizarStatusTicket],
+  components: {
+    MensagemChat
+  },
   data () {
     return {
+      whatsBackground: whatsBackground,
+      whatsBackgroundDark: whatsBackgroundDark,
+      isTicketModalOpen: false,
+      currentTicket: {},
+      tagsDoTicket: [],
+      walletsDoTicket: [],
+      // colorName: null,
       outlinedAccountCircle,
       recalcularHora: 1,
       statusAbreviado: {
@@ -202,9 +309,34 @@ export default {
     filas: {
       type: Array,
       default: () => []
+    },
+    etiquetas: {
+      type: Array,
+      default: () => []
     }
   },
+  computed: {
+    cardStyle () {
+      return {
+        backgroundImage: this.$q.dark.isActive ? `url(${this.whatsBackgroundDark})` : `url(${this.whatsBackground})`
+      }
+    }
+  },
+  async mounted () {
+    this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
+    this.walletsDoTicket = await this.obterInformacoes(this.ticket, 'carteiras')
+
+    this.$store.subscribe(async (mutation, state) => {
+      if (mutation.type === 'UPDATE_CONTACT' && mutation.payload.id === this.ticket.contactId) {
+        this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
+        this.walletsDoTicket = await this.obterInformacoes(this.ticket, 'carteiras')
+      }
+    })
+  },
   methods: {
+    closeModal () {
+      this.isTicketModalOpen = false
+    },
     obterNomeFila (ticket) {
       try {
         const fila = this.filas.find(f => f.id === ticket.queueId)
@@ -214,6 +346,24 @@ export default {
         return ''
       } catch (error) {
         return ''
+      }
+    },
+    async obterInformacoes (ticket, tipo) {
+      try {
+        const contato = await ObterContato(ticket.contactId)
+        if (contato) {
+          if (tipo === 'tags') {
+            const tags = contato.data.tags
+            return tags.map(tag => ({ tag: tag.tag, color: tag.color }))
+          } else if (tipo === 'carteiras') {
+            const wallets = contato.data.wallets
+            return wallets.map(wallet => ({ wallet: wallet.name }))
+          }
+        }
+        return []
+      } catch (error) {
+        console.error(`Erro ao obter ${tipo}:`, error)
+        return []
       }
     },
     dataInWords (timestamp, updated) {
@@ -228,7 +378,7 @@ export default {
       if (this.$q.screen.lt.md && ticket.status !== 'pending') {
         this.$root.$emit('infor-cabecalo-chat:acao-menu')
       }
-      if (!((ticket.id !== this.$store.getters.ticketFocado.id || this.$route.name !== 'chat'))) return
+      if (!(ticket.status !== 'pending' && (ticket.id !== this.$store.getters.ticketFocado.id || this.$route.name !== 'chat'))) return
       this.$store.commit('SET_HAS_MORE', true)
       this.$store.dispatch('AbrirChatMensagens', ticket)
     }
@@ -242,15 +392,6 @@ export default {
 </script>
 
 <style lang="sass">
-
-.relative-container
-  position: relative
-
-.absolute-btn
-  position: absolute
-  top: 20px
-  right: 20px
-
 img:after
   content: ""
   vertical-align: middle
@@ -263,7 +404,7 @@ img:after
   width: inherit
   height: inherit
   z-index: 10
-  background: #ebebeb url('http://via.placeholder.com/300?text=PlaceHolder') no-repeat center
+  // background: #ebebeb url('http://via.placeholder.com/300?text=PlaceHolder') no-repeat center
   color: transparent
 
 .ticket-active-item
@@ -291,11 +432,26 @@ img:after
   border-left: 3px solid $positive
 
 .ticketNotAnswered
-  border-left: 5px solid $amber !important
+  border-left: 5px solid $warning !important
 
 .ticketBorder
   border-left: 5px solid $grey-9
 
 .ticketBorderGrey
   border-left: 5px solid $grey-4
+
+.ticket-unread
+  animation: pulse-red 1.5s infinite
+  background-color: rgba(255, 0, 0, 0.1)
+
+@keyframes pulse-red
+  0%
+    background-color: rgba(255, 0, 0, 0.1)
+    transform: scale(1)
+  50%
+    background-color: rgba(255, 0, 0, 0.3)
+    transform: scale(1.02)
+  100%
+    background-color: rgba(255, 0, 0, 0.1)
+    transform: scale(1)
 </style>
