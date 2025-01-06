@@ -20,6 +20,14 @@
           label="Nome da Etiqueta"
         />
         <q-input
+          class="row col"
+          rounded
+          dense
+          outlined
+          v-model="etiqueta.autoTag"
+          label="Auto Tag"
+        />
+        <q-input
           rounded
           outlined
           dense
@@ -78,7 +86,6 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-
 </template>
 
 <script>
@@ -103,7 +110,8 @@ export default {
         id: null,
         tag: null,
         color: '#ffffff',
-        isActive: true
+        isActive: true,
+        autoTag: '' // Alterando para string
       }
     }
   },
@@ -113,7 +121,8 @@ export default {
         id: null,
         tag: null,
         color: '#ffffff',
-        isActive: true
+        isActive: true,
+        autoTag: '' // Resetando para string
       }
     },
     fecharModal () {
@@ -128,7 +137,7 @@ export default {
         this.resetarEtiqueta()
       }
     },
-    async handleEtiqueta () {
+    async handleEtiqueta (message) {
       try {
         this.loading = true
         if (this.etiqueta.id) {
@@ -169,7 +178,6 @@ export default {
       }
     }
   }
-
 }
 </script>
 

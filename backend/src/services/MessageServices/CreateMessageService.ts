@@ -1,6 +1,7 @@
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 import socketEmit from "../../helpers/socketEmit";
+import HandleMessageReceivedService from "./HandleMessageReceivedService";
 
 interface MessageData {
   id?: string;
@@ -13,7 +14,10 @@ interface MessageData {
   mediaType?: string;
   mediaUrl?: string;
   timestamp?: number;
+  quotedMsgId?: string;
+  status?: string;
 }
+
 interface Request {
   messageData: MessageData;
   tenantId: string | number;
@@ -26,11 +30,13 @@ const CreateMessageService = async ({
   const msg = await Message.findOne({
     where: { messageId: messageData.messageId, tenantId }
   });
+
   if (!msg) {
     await Message.create({ ...messageData, tenantId });
   } else {
     await msg.update(messageData);
   }
+
   const message = await Message.findOne({
     where: { messageId: messageData.messageId, tenantId },
     include: [
@@ -50,6 +56,16 @@ const CreateMessageService = async ({
 
   if (!message) {
     throw new Error("ERR_CREATING_MESSAGE");
+  }
+
+  // Processar auto-tag para qualquer mensagem que tenha ticket e contato
+  if (message.ticket && message.ticket.contact) {
+    const handleMessageReceived = new HandleMessageReceivedService();
+    await handleMessageReceived.execute({
+      message,
+      contact: message.ticket.contact,
+      tenantId: Number(tenantId)
+    });
   }
 
   socketEmit({

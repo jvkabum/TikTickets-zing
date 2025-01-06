@@ -41,6 +41,11 @@
           />
         </q-td>
       </template>
+      <template v-slot:body-cell-autoTag="props">
+        <q-td class="text-center">
+          {{ props.row.autoTag }}
+        </q-td>
+      </template>
       <template v-slot:body-cell-acoes="props">
         <q-td class="text-center">
           <q-btn
@@ -92,6 +97,7 @@ export default {
         { name: 'tag', label: 'Etiqueta', field: 'tag', align: 'left' },
         { name: 'color', label: 'Cor', field: 'color', align: 'center' },
         { name: 'isActive', label: 'Ativo', field: 'isActive', align: 'center' },
+        { name: 'autoTag', label: 'Auto Tag', field: 'autoTag', align: 'center' },
         { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
       ]
     }
