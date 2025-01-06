@@ -14,6 +14,7 @@ interface TicketData {
   queueId?: number | null;
   autoReplyId?: number | string | null;
   stepAutoReplyId?: number | string | null;
+  autoClosed?: boolean;
 }
 
 interface Request {

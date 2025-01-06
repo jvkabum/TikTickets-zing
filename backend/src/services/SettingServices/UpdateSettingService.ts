@@ -12,12 +12,16 @@ const UpdateSettingService = async ({
   value,
   tenantId
 }: Request): Promise<Setting | undefined> => {
-  const setting = await Setting.findOne({
+  let setting = await Setting.findOne({
     where: { key, tenantId }
   });
 
   if (!setting) {
-    throw new AppError("ERR_NO_SETTING_FOUND", 404);
+    try {
+      setting = await Setting.create({key, value, tenantId});
+    } catch(err) {
+      throw new AppError("ERR_NO_SETTING_FOUND", 404);
+    }
   }
 
   await setting.update({ value });

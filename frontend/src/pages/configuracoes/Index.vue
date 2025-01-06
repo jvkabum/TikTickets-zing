@@ -171,12 +171,36 @@
           />
         </div>
       </div>
+
+      <!-- Configuração de Fechamento Automático de Tickets -->
+      <q-item
+        tag="label"
+        v-ripple
+      >
+        <q-item-section>
+          <q-item-label>Fechamento Automático de Tickets</q-item-label>
+          <q-item-label caption>Defina o número de dias após os quais os tickets pendentes serão fechados automaticamente.</q-item-label>
+        </q-item-section>
+        <q-item-section avatar>
+          <q-input
+            v-model="daysToClose"
+            type="number"
+            min="1"
+            outlined
+            dense
+            label="Dias para fechar tickets"
+            @input="atualizarConfiguracao('daysToClose')"
+          />
+        </q-item-section>
+      </q-item>
     </q-list>
   </div>
 </template>
+
 <script>
 import { ListarChatFlow } from 'src/service/chatFlow'
 import { ListarConfiguracoes, AlterarConfiguracao } from 'src/service/configuracoes'
+
 export default {
   name: 'IndexConfiguracoes',
   data () {
@@ -190,7 +214,8 @@ export default {
       botTicketActive: null,
       ignoreGroupMsg: null,
       rejectCalls: null,
-      callRejectMessage: ''
+      callRejectMessage: '',
+      daysToClose: 3 // Valor inicial para o fechamento de tickets
     }
   },
   methods: {
@@ -209,16 +234,17 @@ export default {
       const { data } = await ListarChatFlow()
       this.listaChatFlow = data.chatFlow
     },
-    async atualizarConfiguracao (key) {
+    async atualizarConfiguracao (key, value = null) {
       const params = {
         key,
-        value: this.$data[key]
+        value: value !== null ? value : this.$data[key]
       }
       try {
+        // Atualiza a configuração
         await AlterarConfiguracao(params)
         this.$q.notify({
           type: 'positive',
-          message: 'Configuração alterada!',
+          message: 'Configuração alterada com sucesso!',
           progress: true,
           actions: [{
             icon: 'close',
@@ -227,19 +253,21 @@ export default {
           }]
         })
       } catch (error) {
-        console.error('error - AlterarConfiguracao', error)
-        this.$data[key] = this.$data[key] === 'enabled' ? 'disabled' : 'enabled'
-        this.$notificarErro('Ocorreu um erro!', error)
+        console.error('Erro ao alterar configuração:', error)
+
+        // Verificação da estrutura do erro
+        if (error && error.response && error.response.data) {
+          this.$notificarErro('Erro ao alterar configuração', error.response.data.message)
+        } else {
+          this.$notificarErro('Erro desconhecido', 'Ocorreu um erro ao tentar alterar a configuração')
+        }
       }
     }
   },
   async mounted () {
     this.userProfile = localStorage.getItem('profile')
-    await this.listarConfiguracoes()
-    await this.listarChatFlow()
+    this.listarConfiguracoes()
+    this.listarChatFlow()
   }
 }
 </script>
-
-<style lang="scss" scoped>
-</style>
