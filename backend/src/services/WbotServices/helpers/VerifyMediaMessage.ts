@@ -100,7 +100,8 @@ const VerifyMediaMessage = async (
   await ticket.update({
     lastMessage: msg.body,
     lastMessageAt: new Date().getTime(),
-    answered: msg.fromMe || false
+    answered: msg.fromMe || false,
+    unreadMessages: msg.fromMe ? ticket.unreadMessages : ticket.unreadMessages + 1
   });
   const newMessage = await CreateMessageService({
     messageData,

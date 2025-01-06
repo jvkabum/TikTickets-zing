@@ -80,7 +80,7 @@ const HandleMessage = async (
           groupContact = await VerifyContact(msgGroupContact, tenantId);
         }
 
-        const unreadMessages = msg.fromMe ? 0 : chat.unreadCount;
+        const unreadMessages = msg.fromMe ? 0 : (chat.unreadCount || 1);
         if (
           unreadMessages === 0 &&
           farewellMessageEqualsBody(whatsapp.farewellMessage, msg.body)
