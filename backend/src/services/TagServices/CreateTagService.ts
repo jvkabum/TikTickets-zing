@@ -1,4 +1,3 @@
-// import AppError from "../../errors/AppError";
 import Tag from "../../models/Tag";
 
 interface Request {
@@ -7,6 +6,7 @@ interface Request {
   isActive: boolean;
   userId: number;
   tenantId: number | string;
+  autoTag: string; // Adicionando o campo autoTag
 }
 
 const CreateTagService = async ({
@@ -14,14 +14,16 @@ const CreateTagService = async ({
   color,
   isActive,
   userId,
-  tenantId
+  tenantId,
+  autoTag // Adicionando o campo autoTag
 }: Request): Promise<Tag> => {
   const tagData = await Tag.create({
     tag,
     color,
     isActive,
     userId,
-    tenantId
+    tenantId,
+    autoTag // Incluindo o campo autoTag na criação
   });
 
   return tagData;
