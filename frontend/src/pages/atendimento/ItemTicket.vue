@@ -33,8 +33,9 @@
             color="red"
             :label="ticket.unreadMessages" />
           <q-avatar>
-            <q-icon size="50px"
-              name="mdi-account-arrow-right" />
+            <img :src="ticket.profilePicUrl"
+              onerror="this.style.display='none'"
+              style="width: 50px; height: 50px; border-radius: 50%;" />
           </q-avatar>
           <q-tooltip>
             Atender
@@ -256,7 +257,6 @@ import { ObterContato } from 'src/service/contatos'
 import MensagemChat from './MensagemChat.vue'
 import whatsBackground from 'src/assets/wa-background.png'
 import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
-
 export default {
   name: 'ItemTicket',
   mixins: [mixinAtualizarStatusTicket],
@@ -325,7 +325,6 @@ export default {
   async mounted () {
     this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
     this.walletsDoTicket = await this.obterInformacoes(this.ticket, 'carteiras')
-
     this.$store.subscribe(async (mutation, state) => {
       if (mutation.type === 'UPDATE_CONTACT' && mutation.payload.id === this.ticket.contactId) {
         this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
@@ -406,7 +405,6 @@ img:after
   z-index: 10
   // background: #ebebeb url('http://via.placeholder.com/300?text=PlaceHolder') no-repeat center
   color: transparent
-
 .ticket-active-item
   // border: 2px solid rgb(21, 120, 173)
   // border-left: 3px solid $light //rgb(21, 120, 173)
@@ -415,35 +413,27 @@ img:after
   height: 100%
   background: $blue-1 //$active-item-ticket
   // background-color: #e6ebf5
-
 #ListItemsTicket
   .q-item__label + .q-item__label
     margin-top: 1.5px
-
 #item-ticket-houve:hover
   background: $blue-1 //$active-item-ticket
   transition: all .2s
-
 .primary
   border-left: 3px solid $primary
 .negative
   border-left: 3px solid $negative
 .positive
   border-left: 3px solid $positive
-
 .ticketNotAnswered
   border-left: 5px solid $warning !important
-
 .ticketBorder
   border-left: 5px solid $grey-9
-
 .ticketBorderGrey
   border-left: 5px solid $grey-4
-
 .ticket-unread
   animation: pulse-red 1.5s infinite
   background-color: rgba(255, 0, 0, 0.1)
-
 @keyframes pulse-red
   0%
     background-color: rgba(255, 0, 0, 0.1)
