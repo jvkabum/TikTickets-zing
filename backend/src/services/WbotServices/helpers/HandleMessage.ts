@@ -8,14 +8,12 @@ import { logger } from "../../../utils/logger";
 import FindOrCreateTicketService from "../../TicketServices/FindOrCreateTicketService";
 import ShowWhatsAppService from "../../WhatsappService/ShowWhatsAppService";
 import IsValidMsg from "./IsValidMsg";
-// import VerifyAutoReplyActionTicket from "./VerifyAutoReplyActionTicket";
 import VerifyContact from "./VerifyContact";
 import VerifyMediaMessage from "./VerifyMediaMessage";
 import VerifyMessage from "./VerifyMessage";
 import verifyBusinessHours from "./VerifyBusinessHours";
 import VerifyStepsChatFlowTicket from "../../ChatFlowServices/VerifyStepsChatFlowTicket";
 import Queue from "../../../libs/Queue";
-// import isMessageExistsService from "../../MessageServices/isMessageExistsService";
 import Setting from "../../../models/Setting";
 
 interface Session extends Client {
@@ -29,6 +27,7 @@ const farewellMessageEqualsBody = (
   if (!farewellMessage || farewellMessage.trim().length === 0) return false;
   return farewellMessage === body;
 };
+
 const HandleMessage = async (
   msg: WbotMessage,
   wbot: Session
@@ -40,9 +39,9 @@ const HandleMessage = async (
       }
 
       const whatsapp = await ShowWhatsAppService({ id: wbot.id });
-
       const { tenantId } = whatsapp;
       const chat = await msg.getChat();
+
       // IGNORAR MENSAGENS DE GRUPO
       const Settingdb = await Setting.findOne({
         where: { key: "ignoreGroupMsg", tenantId }
@@ -62,18 +61,12 @@ const HandleMessage = async (
         let msgContact: WbotContact;
         let groupContact: Contact | undefined;
 
+        // Verifica se a mensagem é de você e retorna imediatamente
         if (msg.fromMe) {
-          // media messages sent from me from cell phone, first comes with "hasMedia = false" and type = "image/ptt/etc"
-          // the media itself comes on body of message, as base64
-          // if this is the case, return and let this media be handled by media_uploaded event
-          // it should be improoved to handle the base64 media here in future versions
-          if (!msg.hasMedia && msg.type !== "chat" && msg.type !== "vcard" && msg.type !== "location")
-            return;
-
-          msgContact = await wbot.getContactById(msg.to);
-        } else {
-          msgContact = await msg.getContact();
+          return resolve();
         }
+
+        msgContact = await msg.getContact();
 
         if (chat.isGroup) {
           let msgGroupContact;
@@ -92,9 +85,8 @@ const HandleMessage = async (
           unreadMessages === 0 &&
           farewellMessageEqualsBody(whatsapp.farewellMessage, msg.body)
         )
-          return;
+          return resolve();
 
-        // const profilePicUrl = await msgContact.getProfilePicUrl();
         const contact = await VerifyContact(msgContact, tenantId);
         const ticket = await FindOrCreateTicketService({
           contact,
@@ -107,13 +99,11 @@ const HandleMessage = async (
         });
 
         if (ticket?.isCampaignMessage) {
-          resolve();
-          return;
+          return resolve();
         }
 
         if (ticket?.isFarewellMessage) {
-          resolve();
-          return;
+          return resolve();
         }
 
         if (msg.hasMedia) {
@@ -122,9 +112,6 @@ const HandleMessage = async (
           await VerifyMessage(msg, ticket, contact);
         }
 
-
-
-        // await VerifyAutoReplyActionTicket(msg, ticket);
         await VerifyStepsChatFlowTicket(msg, ticket);
 
         const apiConfig: any = ticket.apiConfig || {};
@@ -135,10 +122,16 @@ const HandleMessage = async (
           apiConfig?.externalKey &&
           apiConfig?.urlMessageStatus
         ) {
+          // Validação do ID da mensagem
+          if (!msg.id || !msg.id.id) {
+            logger.error("ID da mensagem inválido:", msg.id);
+            return resolve(); // ou lance um erro
+          }
+
           const payload = {
             timestamp: Date.now(),
             msg,
-            messageId: msg.id.id,
+            messageId: msg.id.id, // Certifique-se de que este ID é válido
             ticketId: ticket.id,
             externalKey: apiConfig?.externalKey,
             authToken: apiConfig?.authToken,

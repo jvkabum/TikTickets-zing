@@ -12,6 +12,7 @@ interface Session extends Client {
 }
 
 const SyncUnreadMessagesWbot = async (
+  markAsRead: boolean = false, // Novo parâmetro para controlar a marcação como lida
   wbot: Session,
   tenantId: number | string
 ): Promise<void> => {

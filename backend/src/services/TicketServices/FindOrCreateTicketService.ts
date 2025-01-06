@@ -1,4 +1,4 @@
-// import { subHours } from "date-fns";
+@ -1,268 +1,194 @@
 import { Op } from "sequelize";
 import { Message } from "whatsapp-web.js";
 import Contact from "../../models/Contact";
@@ -7,7 +7,6 @@ import User from "../../models/User";
 import ShowTicketService from "./ShowTicketService";
 import CampaignContacts from "../../models/CampaignContacts";
 import socketEmit from "../../helpers/socketEmit";
-// import CheckChatBotWelcome from "../../helpers/CheckChatBotWelcome";
 import CheckChatBotFlowWelcome from "../../helpers/CheckChatBotFlowWelcome";
 import CreateLogTicketService from "./CreateLogTicketService";
 import MessageModel from "../../models/Message";
@@ -34,7 +33,7 @@ const FindOrCreateTicketService = async ({
   isSync,
   channel
 }: Data): Promise<Ticket | any> => {
-  // se for uma mensagem de campanha, não abrir tícket
+  // Se for uma mensagem de campanha, não abrir ticket
   if (msg && msg.fromMe) {
     const msgCampaign = await CampaignContacts.findOne({
       where: {
@@ -63,6 +62,7 @@ const FindOrCreateTicketService = async ({
     }
   }
 
+  // Tenta encontrar um ticket aberto ou pendente
   let ticket = await Ticket.findOne({
     where: {
       status: {
@@ -97,6 +97,35 @@ const FindOrCreateTicketService = async ({
     ]
   });
 
+  // Se não encontrar um ticket aberto ou pendente, tenta encontrar um ticket fechado
+  if (!ticket) {
+    ticket = await Ticket.findOne({
+      where: {
+        status: "closed", // Busca tickets fechados
+        tenantId,
+        whatsappId,
+        contactId: groupContact ? groupContact.id : contact.id
+      }
+    });
+
+    // Se encontrar um ticket fechado, reabra-o
+    if (ticket) {
+      await ticket.update({
+        status: "pending", // Ou "open", dependendo da lógica do seu sistema
+        unreadMessages
+      });
+
+      socketEmit({
+        tenantId,
+        type: "ticket:update",
+        payload: ticket
+      });
+
+      return ticket; // Retorna o ticket reaberto
+    }
+  }
+
+  // Se um ticket aberto ou pendente foi encontrado, atualiza o número de mensagens não lidas
   if (ticket) {
     unreadMessages =
       ["telegram", "waba", "instagram", "messenger"].includes(channel) &&
@@ -112,110 +141,7 @@ const FindOrCreateTicketService = async ({
     return ticket;
   }
 
-  if (groupContact) {
-    ticket = await Ticket.findOne({
-      where: {
-        contactId: groupContact.id,
-        tenantId,
-        whatsappId
-      },
-      order: [["updatedAt", "DESC"]],
-      include: [
-        {
-          model: Contact,
-          as: "contact",
-          include: [
-            "extraInfo",
-            "tags",
-            {
-              association: "wallets",
-              attributes: ["id", "name"]
-            }
-          ]
-        },
-        {
-          model: User,
-          as: "user",
-          attributes: ["id", "name"]
-        },
-        {
-          association: "whatsapp",
-          attributes: ["id", "name"]
-        }
-      ]
-    });
-
-    if (ticket) {
-      await ticket.update({
-        status: "pending",
-        userId: null,
-        unreadMessages
-      });
-
-      socketEmit({
-        tenantId,
-        type: "ticket:update",
-        payload: ticket
-      });
-
-      return ticket;
-    }
-  } else {
-    ticket = await Ticket.findOne({
-      where: {
-        // updatedAt: {
-        //   [Op.between]: [+subHours(new Date(), 24), +new Date()]
-        // },
-        status: {
-          [Op.in]: ["open", "pending"]
-        },
-        tenantId,
-        whatsappId,
-        contactId: contact.id
-      },
-      order: [["updatedAt", "DESC"]],
-      include: [
-        {
-          model: Contact,
-          as: "contact",
-          include: [
-            "extraInfo",
-            "tags",
-            {
-              association: "wallets",
-              attributes: ["id", "name"]
-            }
-          ]
-        },
-        {
-          model: User,
-          as: "user",
-          attributes: ["id", "name"]
-        },
-        {
-          association: "whatsapp",
-          attributes: ["id", "name"]
-        }
-      ]
-    });
-
-    if (ticket) {
-      await ticket.update({
-        status: "pending",
-        userId: null,
-        unreadMessages
-      });
-
-      socketEmit({
-        tenantId,
-        type: "ticket:update",
-        payload: ticket
-      });
-
-      return ticket;
-    }
-  }
-
+  // Se não houver tickets, cria um novo
   const DirectTicketsToWallets =
     (await ListSettingsService(tenantId))?.find(
       s => s.key === "DirectTicketsToWallets"
@@ -248,6 +174,7 @@ const FindOrCreateTicketService = async ({
     type: "create"
   });
 
+  // Verifica se a mensagem não é de você ou se o ticket não tem um usuário atribuído
   if ((msg && !msg.fromMe) || !ticketCreated.userId || isSync) {
     await CheckChatBotFlowWelcome(ticketCreated);
   }
