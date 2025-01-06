@@ -1,4 +1,3 @@
-@ -1,268 +1,194 @@
 import { Op } from "sequelize";
 import { Message } from "whatsapp-web.js";
 import Contact from "../../models/Contact";
@@ -127,12 +126,10 @@ const FindOrCreateTicketService = async ({
 
   // Se um ticket aberto ou pendente foi encontrado, atualiza o número de mensagens não lidas
   if (ticket) {
-    unreadMessages =
-      ["telegram", "waba", "instagram", "messenger"].includes(channel) &&
-      unreadMessages > 0
-        ? (unreadMessages += ticket.unreadMessages)
-        : unreadMessages;
-    await ticket.update({ unreadMessages });
+    if (!msg?.fromMe) {
+      unreadMessages = ticket.unreadMessages + 1;
+      await ticket.update({ unreadMessages });
+    }
     socketEmit({
       tenantId,
       type: "ticket:update",
