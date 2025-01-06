@@ -6,6 +6,13 @@
       @scroll="onScroll"
     >
       <!-- <q-separator /> -->
+      <div v-if="cTickets.length === 0" class="text-center q-pa-lg">
+        <q-icon name="mdi-ticket" size="4em" color="grey-5" />
+        <div class="text-h6 text-grey-5">Nenhum ticket encontrado</div>
+        <div class="text-grey-6" v-if="cFiltroSelecionado">
+          Tente remover alguns filtros para ver mais resultados
+        </div>
+      </div>
       <ItemTicket
         v-for="(ticket, key) in cTickets"
         :key="key"
@@ -70,6 +77,10 @@ export default {
       default: true
     },
     queuesIds: {
+      type: Array,
+      default: () => []
+    },
+    tags: {
       type: Array,
       default: () => []
     }
@@ -263,7 +274,8 @@ export default {
       'isNotAssignedUser',
       'includeNotQueueDefined',
       'queuesIds',
-      'searchParam'
+      'searchParam',
+      'tags'
     ])
   },
   beforeDestroy () {

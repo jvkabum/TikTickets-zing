@@ -23,6 +23,7 @@ interface Request {
   includeNotQueueDefined?: string;
   tenantId: string | number;
   profile: string;
+  tags?: string[];
 }
 
 interface Response {
@@ -43,7 +44,8 @@ const ListTicketsService = async ({
   isNotAssignedUser,
   includeNotQueueDefined,
   tenantId,
-  profile
+  profile,
+  tags
 }: Request): Promise<Response> => {
   // check is admin
   const isAdminShowAll = showAll == "true" && profile === "admin";
@@ -193,12 +195,21 @@ const ListTicketsService = async ({
   u."name" as username,
   q.queue,
   jsonb_build_object('id', w.id, 'name', w."name") whatsapp,
-  t.*
+    t.*,
+  json_agg(
+    json_build_object(
+      'id', ct."tagId",
+      'tag', tg.tag,
+      'color', tg.color
+    )
+  ) as tags
   from "Tickets" t
   inner join "Whatsapps" w on (w.id = t."whatsappId")
   left join "Contacts" c on (t."contactId" = c.id)
   left join "Users" u on (u.id = t."userId")
   left join "Queues" q on (t."queueId" = q.id)
+  left join "ContactTags" ct on (ct."contactId" = c.id)
+  left join "Tags" tg on (tg.id = ct."tagId")
   where t."tenantId" = :tenantId
   and c."tenantId" = :tenantId
   and t.status in ( :status )
@@ -213,6 +224,12 @@ const ListTicketsService = async ({
     and upper(m.body) like upper(:searchParam)
     ) or */ (t.id::varchar like :searchParam) or (exists (select 1 from "Contacts" c where c.id = t."contactId" and (upper(c."name") like upper(:searchParam) or c."number" like :searchParam)))) OR (:isSearchParam = 'N'))
   )
+  ${tags && tags.length > 0 ? `and exists (
+    select 1 from "ContactTags" ct 
+    where ct."contactId" = t."contactId" 
+    and ct."tagId" in (:tags)
+  )` : ''}
+  group by t.id, c."profilePicUrl", c."name", u."name", q.queue, w.id, w."name"
   order by 
     CASE 
       WHEN t."unreadMessages" > 0 THEN 0
@@ -224,7 +241,7 @@ const ListTicketsService = async ({
   limit :limit offset :offset ;
 `;
 
-  const limit = 30;
+  const limit = 200;
   const offset = limit * (+pageNumber - 1);
 
   const tickets: any = await Ticket.sequelize?.query(query, {
@@ -241,7 +258,8 @@ const ListTicketsService = async ({
       isSearchParam,
       searchParam: `%${searchParam}%`,
       limit,
-      offset
+      offset,
+      tags: tags || []
     },
     type: QueryTypes.SELECT,
     nest: true

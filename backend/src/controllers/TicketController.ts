@@ -16,28 +16,49 @@ import AppError from "../errors/AppError";
 import CreateMessageSystemService from "../services/MessageServices/CreateMessageSystemService";
 import { pupa } from "../utils/pupa";
 
+/**
+ * Interface para parâmetros de busca e filtro de tickets
+ */
 type IndexQuery = {
-  searchParam: string;
-  pageNumber: string;
-  status: string[];
-  date: string;
-  showAll: string;
-  withUnreadMessages: string;
-  queuesIds: string[];
-  isNotAssignedUser: string;
-  includeNotQueueDefined: string;
+  searchParam: string;         // Termo de busca
+  pageNumber: string;         // Número da página atual
+  status: string[];          // Lista de status para filtrar
+  date: string;             // Data para filtro
+  showAll: string;          // Exibir todos os tickets
+  withUnreadMessages: string; // Apenas com mensagens não lidas
+  queuesIds: string[];      // IDs das filas para filtrar
+  isNotAssignedUser: string; // Não atribuídos a usuários
+  includeNotQueueDefined: string; // Incluir sem fila definida
+  tags: string[];
 };
 
+/**
+ * Interface que define a estrutura de dados de um ticket
+ */
 interface TicketData {
-  contactId: number;
-  status: string;
-  userId: number;
-  isActiveDemand: boolean;
-  tenantId: string | number;
-  channel: string;
-  channelId?: number;
+  contactId: number;         // ID do contato associado
+  status: string;           // Status atual do ticket
+  userId: number;           // ID do usuário responsável
+  isActiveDemand: boolean;  // Se é uma demanda ativa
+  tenantId: string | number; // ID do tenant/organização
+  channel: string;          // Canal de comunicação
+  channelId?: number;       // ID do canal específico
 }
 
+/**
+ * Lista tickets com base nos filtros fornecidos
+ * 
+ * Este endpoint retorna tickets paginados e a contagem total de tickets
+ * que atendem aos critérios de busca especificados.
+ */
+/**
+ * Lista tickets com base nos filtros fornecidos
+ * 
+ * Este endpoint retorna tickets paginados e a contagem total de tickets
+ * que atendem aos critérios de busca especificados. Ele utiliza os parâmetros
+ * de busca fornecidos pelo usuário para filtrar os tickets de acordo com
+ * critérios como status, data e se possuem mensagens não lidas.
+ */
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId, profile } = req.user;
   const {
@@ -49,7 +70,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     withUnreadMessages,
     queuesIds,
     isNotAssignedUser,
-    includeNotQueueDefined
+    includeNotQueueDefined,
+    tags
   } = req.query as IndexQuery;
 
   const userId = req.user.id;
@@ -66,12 +88,24 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     isNotAssignedUser,
     includeNotQueueDefined,
     tenantId,
-    profile
+    profile,
+    tags
   });
 
   return res.status(200).json({ tickets, count, hasMore });
 };
 
+/**
+ * Cria um novo ticket
+ * Se não houver usuário associado, emite evento via socket
+ */
+/**
+ * Cria um novo ticket
+ * 
+ * Este endpoint permite a criação de um novo ticket no sistema. Ele recebe
+ * os dados do ticket através do corpo da requisição e, se não houver um
+ * usuário associado, emite um evento via socket para notificar a criação.
+ */
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   const { contactId, status, userId, channel, channelId }: TicketData =
@@ -98,6 +132,17 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(ticket);
 };
 
+/**
+ * Exibe detalhes de um ticket específico
+ * Inclui mensagens agendadas e registra acesso no log
+ */
+/**
+ * Exibe detalhes de um ticket específico
+ * 
+ * Este endpoint retorna as informações detalhadas de um ticket, incluindo
+ * mensagens agendadas e registra o acesso no log. Ele busca o ticket pelo
+ * ID fornecido na requisição e anexa as mensagens agendadas ao objeto do ticket.
+ */
 export const show = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { tenantId } = req.user;
@@ -143,6 +188,17 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   return res.status(200).json(ticket);
 };
 
+/**
+ * Atualiza um ticket existente
+ * Se fechado, pode enviar mensagem de despedida configurada
+ */
+/**
+ * Atualiza um ticket existente
+ * 
+ * Este endpoint permite modificar a estrutura e configurações de um ticket
+ * existente. Se o ticket estiver fechado, pode enviar uma mensagem de
+ * despedida configurada para o usuário.
+ */
 export const update = async (
   req: Request,
   res: Response
@@ -188,6 +244,17 @@ export const update = async (
   return res.status(200).json(ticket);
 };
 
+/**
+ * Remove um ticket do sistema
+ * Notifica remoção via socket para atualização em tempo real
+ */
+/**
+ * Remove um ticket do sistema
+ * 
+ * Este endpoint exclui permanentemente um ticket do sistema e notifica
+ * a remoção via socket para atualização em tempo real. Isso garante que
+ * todos os usuários conectados recebam a atualização imediatamente.
+ */
 export const remove = async (
   req: Request,
   res: Response
@@ -210,6 +277,16 @@ export const remove = async (
   return res.status(200).json({ message: "ticket deleted" });
 };
 
+/**
+ * Exibe o histórico de logs de um ticket
+ * Útil para auditoria e acompanhamento de mudanças
+ */
+/**
+ * Exibe o histórico de logs de um ticket
+ * 
+ * Este endpoint retorna todos os logs associados a um ticket específico,
+ * permitindo auditoria e acompanhamento de mudanças ao longo do tempo.
+ */
 export const showLogsTicket = async (
   req: Request,
   res: Response
