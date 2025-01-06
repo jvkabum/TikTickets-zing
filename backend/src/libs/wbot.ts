@@ -6,52 +6,18 @@ import { getIO } from "./socket";
 import Whatsapp from "../models/Whatsapp";
 import { logger } from "../utils/logger";
 import SyncUnreadMessagesWbot from "../services/WbotServices/SyncUnreadMessagesWbot";
+import Queue from "./Queue";
 import AppError from "../errors/AppError";
+const minimalArgs = require('./minimalArgs');
 
 interface Session extends Client {
   id: number;
+  checkMessages: any;
 }
 
 const sessions: Session[] = [];
 
-const minimal_args = [
-  "--autoplay-policy=user-gesture-required",
-  "--disable-background-networking",
-  "--disable-background-timer-throttling",
-  "--disable-backgrounding-occluded-windows",
-  "--disable-breakpad",
-  "--disable-client-side-phishing-detection",
-  "--disable-component-update",
-  "--disable-default-apps",
-  "--disable-dev-shm-usage",
-  "--disable-domain-reliability",
-  "--disable-extensions",
-  "--disable-features=AudioServiceOutOfProcess",
-  "--disable-gpu",
-  "--disable-hang-monitor",
-  "--disable-ipc-flooding-protection",
-  "--disable-notifications",
-  "--disable-offer-store-unmasked-wallet-cards",
-  "--disable-popup-blocking",
-  "--disable-print-preview",
-  "--disable-prompt-on-repost",
-  "--disable-renderer-backgrounding",
-  "--disable-setuid-sandbox",
-  "--disable-speech-api",
-  "--disable-sync",
-  "--hide-scrollbars",
-  "--ignore-gpu-blacklist",
-  "--metrics-recording-only",
-  "--mute-audio",
-  "--no-default-browser-check",
-  "--no-first-run",
-  "--no-pings",
-  "--no-sandbox",
-  "--no-zygote",
-  "--password-store=basic",
-  "--use-gl=swiftshader",
-  "--use-mock-keychain"
-];
+const checking: any = {};
 
 export const apagarPastaSessao = async (id: number | string): Promise<void> => {
   const pathRoot = path.resolve(__dirname, "..", "..", ".wwebjs_auth");
@@ -78,9 +44,37 @@ export const removeWbot = (whatsappId: number): void => {
 
 const args: string[] = process.env.CHROME_ARGS
   ? process.env.CHROME_ARGS.split(",")
-  : minimal_args;
+  : minimalArgs;
 
 args.unshift(`--user-agent=${DefaultOptions.userAgent}`);
+const checkMessages = async (wbot: Session, tenantId: number | string) => {
+  try {
+    const isConnectStatus = wbot && (await wbot.getState()) === "CONNECTED"; // getValue(`wbotStatus-${tenantId}`);
+   // logger.info(
+   //   "wbot:checkMessages:status",
+    //  wbot.id,
+    //  tenantId,
+     // isConnectStatus
+   // );
+
+    if (isConnectStatus) {
+   //   logger.info("wbot:connected:checkMessages", wbot, tenantId);
+      Queue.add("SendMessages", { sessionId: wbot.id, tenantId });
+    }
+  } catch (error) {
+    const strError = String(error);
+    // se a sessão tiver sido fechada, limpar a checagem de mensagens e bot
+    if (strError.indexOf("Session closed.") !== -1) {
+      logger.error(
+        `BOT Whatsapp desconectado. Tenant: ${tenantId}:: BOT ID: ${wbot.id}`
+      );
+      clearInterval(wbot.checkMessages);
+      removeWbot(wbot.id);
+      return;
+    }
+    logger.error(`ERROR: checkMessages Tenant: ${tenantId}::`, error);
+  }
+};
 
 export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
   return new Promise((resolve, reject) => {
@@ -101,7 +95,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
           executablePath: process.env.CHROME_BIN || undefined,
           args
         },
-        webVersion: process.env.WEB_VERSION || "2.2409.2",
+        webVersion: process.env.WEB_VERSION || "2.2412.54",
         webVersionCache: {
           type: "remote",
           remotePath:
@@ -199,6 +193,14 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
         SyncUnreadMessagesWbot(wbot, tenantId);
         resolve(wbot);
       });
+
+      wbot.checkMessages = setInterval(
+        checkMessages,
+        +(process.env.CHECK_INTERVAL || 5000),
+        wbot,
+        tenantId
+      );
+      // WhatsappConsumer(tenantId);
     } catch (err) {
       logger.error(`initWbot error | Error: ${err}`);
     }

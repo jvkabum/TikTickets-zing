@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="userProfile === 'admin'">
     <q-list class="text-weight-medium">
       <q-item-label
         header
@@ -172,10 +172,8 @@
         </div>
       </div>
     </q-list>
-
   </div>
 </template>
-
 <script>
 import { ListarChatFlow } from 'src/service/chatFlow'
 import { ListarConfiguracoes, AlterarConfiguracao } from 'src/service/configuracoes'
@@ -183,6 +181,7 @@ export default {
   name: 'IndexConfiguracoes',
   data () {
     return {
+      userProfile: 'user',
       configuracoes: [],
       listaChatFlow: [],
       NotViewAssignedTickets: null,
@@ -235,6 +234,7 @@ export default {
     }
   },
   async mounted () {
+    this.userProfile = localStorage.getItem('profile')
     await this.listarConfiguracoes()
     await this.listarChatFlow()
   }

@@ -29,10 +29,17 @@ const FindUpdateTicketsInactiveChatBot = async (): Promise<void> => {
   const tickets: any = await Ticket.sequelize?.query(query, {
     type: QueryTypes.SELECT
   });
-  Promise.all(
+
+ // console.log("Total de tickets encontrados:", tickets.length); // Log para verificar o número de tickets encontrados
+
+  await Promise.all(
     tickets.map(async (item: any) => {
       // se não houve destino, retornar
-      if (!item.destiny) return;
+      if (!item.destiny) {
+     //   console.log("Ticket sem destino. ID do ticket:", item.id); // Log para tickets sem destino
+        return;
+      }
+
       const ticket = await Ticket.findByPk(item.id);
       if (ticket) {
         const values: any = {
@@ -41,16 +48,22 @@ const FindUpdateTicketsInactiveChatBot = async (): Promise<void> => {
           botRetries: 0,
           lastInteractionBot: new Date()
         };
+
         // instance.type_action: 1 = fila | 2 = usuario
         if (item.type_action == 1) {
           values.queueId = item.destiny;
+        //  console.log("Atualizando fila. ID do ticket:", item.id); // Log para atualização de fila
+		//   console.log("Atualizando fila. ID do ticket:", values.queueId); 
         }
         if (item.type_action == 2) {
           values.userId = item.destiny;
+        //  console.log("Atualizando usuário. ID do ticket:", item.id); // Log para atualização de usuári
+		//  console.log("Atualizando usuário. ID do ticket:", values.userId);
         }
+
         await ticket.update(values);
         socketEmit({
-          tenantId: ticket.tenantId,
+		  tenantId: ticket.tenantId,
           type: "ticket:update",
           payload: ticket
         });

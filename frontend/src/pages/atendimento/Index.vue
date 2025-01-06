@@ -261,12 +261,60 @@
           @scroll="onScroll"
         >
           <!-- <q-separator /> -->
-          <ItemTicket
-            v-for="(ticket, key) in tickets"
-            :key="key"
-            :ticket="ticket"
-            :filas="filas"
-          />
+          <div>
+            <div class="tab-container">
+              <q-tabs v-model="selectedTab" class="tab-scroll">
+                <q-tab name="open" v-if="openTickets.length > 0">
+                  Abertos
+                  <q-badge v-if="openTickets.length > 0" color="red" textColor="white">{{ openTickets.length }}</q-badge>
+                </q-tab>
+                <q-tab name="pending" v-if="pendingTickets.length > 0">
+                  Pendentes
+                  <q-badge v-if="pendingTickets.length > 0" color="red" textColor="white">{{ pendingTickets.length }}</q-badge>
+                </q-tab>
+                <q-tab name="closed" v-if="closedTickets.length > 0">
+                  Fechados
+                  <q-badge v-if="closedTickets.length > 0" color="red" textColor="white">{{ closedTickets.length }}</q-badge>
+                </q-tab>
+                <q-tab name="group" v-if="groupTickets.length > 0">
+                  Grupos
+                  <q-badge v-if="groupTickets.length > 0" color="red" textColor="white">{{ groupTickets.length }}</q-badge>
+                </q-tab>
+              </q-tabs>
+            </div>
+            <div v-if="selectedTab === 'open'">
+              <ItemTicket
+                v-for="(ticket, key) in openTickets"
+                :key="key"
+                :ticket="ticket"
+                :filas="filas"
+              />
+            </div>
+            <div v-if="selectedTab === 'pending'">
+              <ItemTicket
+                v-for="(ticket, key) in pendingTickets"
+                :key="key"
+                :ticket="ticket"
+                :filas="filas"
+              />
+            </div>
+            <div v-if="selectedTab === 'closed'">
+              <ItemTicket
+                v-for="(ticket, key) in closedTickets"
+                :key="key"
+                :ticket="ticket"
+                :filas="filas"
+              />
+            </div>
+            <div v-if="selectedTab === 'group'">
+              <ItemTicket
+                v-for="(ticket, key) in groupTickets"
+                :key="key"
+                :ticket="ticket"
+                :filas="filas"
+              />
+            </div>
+          </div>
           <div v-if="loading">
             <div class="row justify-center q-my-md">
               <q-spinner
@@ -598,11 +646,7 @@
               <q-card-section class="q-pa-none">
                 <template v-if="ticketFocado.scheduledMessages">
                   <q-list>
-                    <q-item
-                      v-for="(message, idx) in ticketFocado.scheduledMessages"
-                      :key="idx"
-                      clickable
-                    >
+                    <q-item v-for="(message, idx) in ticketFocado.scheduledMessages.filter((msg) => !msg.isDeleted)" :key="idx" clickable>
                       <q-item-section>
                         <q-item-label caption>
                           <b>Agendado para:</b> {{ $formatarData(message.scheduleDate, 'dd/MM/yyyy HH:mm') }}
@@ -786,6 +830,7 @@ export default {
       alertSound,
       usuario,
       usuarios: [],
+      selectedTab: 'open',
       username,
       modalUsuario: false,
       toolbarSearch: true,
@@ -803,7 +848,7 @@ export default {
       pesquisaTickets: {
         searchParam: '',
         pageNumber: 1,
-        status: ['open', 'pending'],
+        status: ['open', 'pending', 'closed'],
         showAll: false,
         count: null,
         queuesIds: [],
@@ -870,6 +915,19 @@ export default {
     },
     cIsExtraInfo () {
       return this.ticketFocado?.contact?.extraInfo?.length > 0
+    },
+    openTickets () {
+      console.log(this.tickets)
+      return this.tickets.filter(ticket => ticket.status === 'open' && !ticket.isGroup)
+    },
+    pendingTickets () {
+      return this.tickets.filter(ticket => ticket.status === 'pending' && !ticket.isGroup)
+    },
+    closedTickets () {
+      return this.tickets.filter(ticket => ticket.status === 'closed' && !ticket.isGroup)
+    },
+    groupTickets () {
+      return this.tickets.filter(ticket => ticket.isGroup)
     }
   },
   methods: {
@@ -1030,8 +1088,9 @@ export default {
       }).onOk(() => {
         this.loading = true
         DeletarMensagem(data)
-          .then(res => {
+          .then((res) => {
             this.loading = false
+            mensagem.isDeleted = true
           })
           .catch(error => {
             this.loading = false
@@ -1181,4 +1240,11 @@ export default {
 .conversation__more
   margin-top: 0!important
   font-size: 1.4rem
+
+.tab-container
+  overflow-x: auto
+  font-size: 0.75rem
+
+.tab-scroll
+  white-space: nowrap
 </style>

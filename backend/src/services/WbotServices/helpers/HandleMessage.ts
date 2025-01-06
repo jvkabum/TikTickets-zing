@@ -58,7 +58,7 @@ const HandleMessage = async (
           // the media itself comes on body of message, as base64
           // if this is the case, return and let this media be handled by media_uploaded event
           // it should be improoved to handle the base64 media here in future versions
-          if (!msg.hasMedia && msg.type !== "chat" && msg.type !== "vcard")
+          if (!msg.hasMedia && msg.type !== "chat" && msg.type !== "vcard" && msg.type !== "location")
             return;
 
           msgContact = await wbot.getContactById(msg.to);

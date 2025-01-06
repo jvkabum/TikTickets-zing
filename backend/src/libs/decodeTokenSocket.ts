@@ -30,6 +30,10 @@ const decode = (token: string): Result => {
       tenantId: 0
     }
   };
+  if (!token) {
+    logger.error('Token not provided');
+    return validation;
+  }
   try {
     const decoded = verify(token, authConfig.secret);
     const { id, profile, tenantId } = decoded as TokenPayload;
@@ -44,5 +48,6 @@ const decode = (token: string): Result => {
   }
   return validation;
 };
+
 
 export default decode;

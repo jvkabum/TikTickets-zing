@@ -71,9 +71,6 @@ export default {
         await axios.post(data.url, payload);
       }
 
-      logger.info(
-        `Queue WebHooksAPI success: Data: ${data} Payload: ${payload}`
-      );
       return {
         data,
         payload

@@ -174,6 +174,27 @@
                 @input="(v) => campanha.message1 = v.target.value"
                 :value="campanha.message1"
               />
+              <q-btn round
+                flat
+                dense>
+                <q-icon size="2em"
+                  name="mdi-variable" />
+                <q-tooltip>
+                  Variáveis
+                </q-tooltip>
+                <q-menu touch-position>
+                  <q-list dense
+                    style="min-width: 100px">
+                    <q-item v-for="variavel in variaveis"
+                      :key="variavel.label"
+                      clickable
+                      @click="onInsertSelectVariable(variavel.value, 'message1', 'message1')"
+                      v-close-popup>
+                      <q-item-section>{{ variavel.label }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
               <q-separator class="q-my-md" />
             </div>
           </div>
@@ -224,6 +245,27 @@
                 @input="(v) => campanha.message2 = v.target.value"
                 :value="campanha.message2"
               />
+              <q-btn round
+                flat
+                dense>
+                <q-icon size="2em"
+                  name="mdi-variable" />
+                <q-tooltip>
+                  Variáveis
+                </q-tooltip>
+                <q-menu touch-position>
+                  <q-list dense
+                    style="min-width: 100px">
+                    <q-item v-for="variavel in variaveis"
+                      :key="variavel.label"
+                      clickable
+                      @click="onInsertSelectVariable(variavel.value, 'message2', 'message2')"
+                      v-close-popup>
+                      <q-item-section>{{ variavel.label }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
               <q-separator class="q-my-md" />
             </div>
           </div>
@@ -274,6 +316,27 @@
                 @input="(v) => campanha.message3 = v.target.value"
                 :value="campanha.message3"
               />
+              <q-btn round
+                flat
+                dense>
+                <q-icon size="2em"
+                  name="mdi-variable" />
+                <q-tooltip>
+                  Variáveis
+                </q-tooltip>
+                <q-menu touch-position>
+                  <q-list dense
+                    style="min-width: 100px">
+                    <q-item v-for="variavel in variaveis"
+                      :key="variavel.label"
+                      clickable
+                      @click="onInsertSelectVariable(variavel.value, 'message3', 'message3')"
+                      v-close-popup>
+                      <q-item-section>{{ variavel.label }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
             </div>
           </div>
         </div>
@@ -372,6 +435,10 @@ export default {
   },
   data () {
     return {
+      variaveis: [
+        { label: 'Nome', value: '{{name}}' },
+        { label: 'Saudação', value: '{{greeting}}' }
+      ],
       optRadio: [
         { label: 'Msg.1', value: 'message1' },
         { label: 'Msg. 2', value: 'message2' },
@@ -389,7 +456,7 @@ export default {
         message2: null,
         message3: null,
         sessionId: null,
-        delay: 20
+        delay: 61
       },
       messageTemplate: {
         mediaUrl: null,
@@ -403,7 +470,7 @@ export default {
         createdAt: '2021-02-20T20:09:04.736Z',
         updatedAt: '2021-02-20T23:26:24.311Z',
         quotedMsgId: null,
-        delay: 20,
+        delay: 61,
         ticketId: 0,
         contactId: null,
         userId: null,
@@ -472,6 +539,24 @@ export default {
     }
   },
   methods: {
+    onInsertSelectVariable (variable, ref, messageField) {
+      var tArea = this.$refs[ref]
+      if (!tArea) {
+        return
+      }
+
+      var startPos = tArea.selectionStart
+      var endPos = tArea.selectionEnd
+      var originalText = tArea.value
+
+      if (!variable) {
+        return
+      }
+      var newText = originalText.substring(0, startPos) + variable + originalText.substring(endPos)
+      this.campanha[messageField] = newText
+      var newCursorPos = startPos + variable.length
+      tArea.setSelectionRange(newCursorPos, newCursorPos)
+    },
     onInsertSelectEmoji (emoji, ref) {
       const self = this
       var tArea = this.$refs[ref]
@@ -504,7 +589,7 @@ export default {
         message4: null,
         mediaUrl: null,
         userId: null,
-        delay: 20,
+        delay: 61,
         sessionId: null
       }
     },
@@ -555,6 +640,20 @@ export default {
       this.loading = false
     },
     async handleCampanha () {
+      if (this.campanha.message1 === this.campanha.message2 || this.campanha.message1 === this.campanha.message3 || this.campanha.message2 === this.campanha.message3) {
+        this.$q.notify({
+          type: 'negative',
+          message: 'As mensagens não podem ser iguais'
+        })
+        return
+      }
+      if (this.campanha.delay < 61) {
+        this.$q.notify({
+          type: 'negative',
+          message: 'O campo delay deve ser no mínimo 61'
+        })
+        return
+      }
       this.$v.campanha.$touch()
       if (this.$v.campanha.$error) {
         this.$q.notify({

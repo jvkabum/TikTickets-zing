@@ -27,7 +27,7 @@
           v-if="$q.screen.gt.xs"
         >
           <q-img
-            src="/izing-logo_5_transparent.png"
+            src="/logo.png"
             spinner-color="primary"
             style="height: 50px; width: 140px"
           />
@@ -36,6 +36,7 @@
         <q-space />
 
         <div class="q-gutter-sm row items-center no-wrap">
+        <div v-if="userProfile === 'admin' || userProfile === 'user'">
           <q-btn
             round
             dense
@@ -121,6 +122,7 @@
               {{ usuario.status === 'offline' ? 'Usuário Offiline' : 'Usuário Online' }}
             </q-tooltip>
           </q-avatar>
+          </div>
           <q-btn
             round
             flat
@@ -182,11 +184,9 @@
           padding
           :key="userProfile"
         >
-          <EssentialLink
-            v-for="item in menuData"
-            :key="item.title"
-            v-bind="item"
-          />
+          <div v-if="userProfile === 'admin' || userProfile === 'user'">
+          <EssentialLink v-for="item in menuData" :key="item.title" v-bind="item"/>
+          </div>
           <div v-if="userProfile === 'admin'">
             <q-separator spaced />
             <div class="q-mb-lg"></div>
@@ -196,6 +196,15 @@
                 :key="item.title"
                 v-bind="item"
               />
+            </template>
+          </div>
+          <div v-if="userProfile === 'super'">
+            <!-- <q-separator spaced /> -->
+            <div class="q-mb-lg"></div>
+            <template v-for="item in menuDataSuper">
+              <EssentialLink v-if="exibirMenuBeta(item)"
+                :key="item.title"
+                v-bind="item" />
             </template>
           </div>
 
@@ -230,7 +239,7 @@
         <router-view />
       </q-page>
     </q-page-container>
-    <audio ref="audioNotification">
+    <audio ref="audioNotification" v-if="userProfile === 'admin' || userProfile === 'user'">
       <source
         :src="alertSound"
         type="audio/mp3"
@@ -264,29 +273,29 @@ const socket = socketIO()
 
 const objMenu = [
   {
-    title: 'Dashboard',
+    title: 'Painel de Controle',
     caption: '',
     icon: 'mdi-home',
     routeName: 'home-dashboard'
   },
 
   {
-    title: 'Atendimentos',
+    title: 'Chat',
     caption: 'Lista de atendimentos',
-    icon: 'mdi-forum-outline',
+    icon: 'mdi-whatsapp',
     routeName: 'atendimento'
   },
   {
     title: 'Contatos',
     caption: 'Lista de contatos',
-    icon: 'mdi-card-account-mail',
+    icon: 'mdi-contacts-outline',
     routeName: 'contatos'
   }
 ]
 
 const objMenuAdmin = [
   {
-    title: 'Canais',
+    title: 'Conexões',
     caption: 'Canais de Comunicação',
     icon: 'mdi-cellphone-wireless',
     routeName: 'sessoes'
@@ -304,7 +313,7 @@ const objMenuAdmin = [
     routeName: 'relatorios'
   },
   {
-    title: 'Usuarios',
+    title: 'Usuários ',
     caption: 'Admin de usuários',
     icon: 'mdi-account-group',
     routeName: 'usuarios'
@@ -359,6 +368,27 @@ const objMenuAdmin = [
   }
 ]
 
+const superMenu = [
+  {
+    title: 'Empresas',
+    caption: 'Admin das Empresas',
+    icon: 'mdi-office-building',
+    routeName: 'empresassuper'
+  },
+  {
+    title: 'Usuários',
+    caption: 'Admin de usuários',
+    icon: 'mdi-account-group',
+    routeName: 'usuariossuper'
+  },
+  {
+    title: 'Conexões',
+    caption: 'Canais de Comunicação',
+    icon: 'mdi-cellphone-wireless',
+    routeName: 'sessaosuper'
+  }
+]
+
 export default {
   name: 'MainLayout',
   mixins: [socketInitial],
@@ -375,6 +405,7 @@ export default {
       leftDrawerOpen: false,
       menuData: objMenu,
       menuDataAdmin: objMenuAdmin,
+      menuDataSuper: superMenu,
       countTickets: 0,
       ticketsList: []
     }

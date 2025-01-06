@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="userProfile === 'admin'">
     <q-card class="q-ma-md">
       <q-card-section>
         <div class="text-h6">
@@ -9,6 +9,7 @@
             color="primary"
             rounded
             label="Adicionar"
+            style="margin: 2px;"
             @click="apiEdicao = {}; modalApi = !modalApi;"
           />
         </div>
@@ -117,6 +118,22 @@
                 {{ api.authToken }}
               </p>
             </q-item-label>
+            <q-item-label lines="1"
+              class="q-mt-xs text-body2 text-weight-bold text-primary text-uppercase">
+            </q-item-label>
+            <q-item-label style="word-break: break-all;">
+            <q-btn class="float-right"
+            color="primary"
+            rounded
+            label="POSTMAN"
+            style="margin: 2px;"
+            @click="download" />
+              <p class="text-weight-medium text-nowrap q-pr-md">
+                <span class="text-bold">Baixe o arquivo do postman verifique uso no site
+                </span>
+                <a href="https://www.postman.com/" target="_blank">https://www.postman.com/</a>
+              </p>
+            </q-item-label>
             <q-item-label
               lines="1"
               class="q-mt-xs text-body2 text-weight-bold text-primary text-uppercase"
@@ -124,7 +141,6 @@
             </q-item-label>
           </q-item-section>
         </q-item>
-
       </q-card-section>
     </q-card>
 
@@ -149,6 +165,7 @@ export default {
   },
   data () {
     return {
+      userProfile: 'user',
       apiEdicao: {},
       modalApi: false,
       apis: [],
@@ -172,6 +189,14 @@ export default {
     }
   },
   methods: {
+    download () {
+      const link = document.createElement('a')
+      link.href = 'apiizing.json'
+      link.download = 'apiizing.json'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    },
     montarUrlIntegração (id) {
       return `${this.cBaseUrlIntegração}/${id}`
     },
@@ -262,6 +287,7 @@ export default {
 
   },
   mounted () {
+    this.userProfile = localStorage.getItem('profile')
     this.listarAPIs()
   }
 }

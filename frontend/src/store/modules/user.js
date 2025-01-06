@@ -7,7 +7,7 @@ const socket = socketIO()
 const pesquisaTicketsFiltroPadrao = {
   searchParam: '',
   pageNumber: 1,
-  status: ['open', 'pending'],
+  status: ['open', 'pending', 'closed'],
   showAll: false,
   count: null,
   queuesIds: [],
@@ -73,6 +73,10 @@ const user = {
         if (data.profile === 'admin') {
           this.$router.push({
             name: 'home-dashboard'
+          })
+        } else if (data.profile === 'super') {
+          this.$router.push({
+            name: 'empresassuper'
           })
         } else {
           this.$router.push({

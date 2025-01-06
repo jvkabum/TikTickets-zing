@@ -11,6 +11,8 @@ import ShowUserService from "../services/UserServices/ShowUserService";
 import DeleteUserService from "../services/UserServices/DeleteUserService";
 import UpdateUserConfigsService from "../services/UserServices/UpdateUserConfigsService";
 
+import Tenant from "../models/Tenant"; 
+
 type IndexQuery = {
   searchParam: string;
   pageNumber: string;
@@ -29,13 +31,30 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   return res.json({ users, count, hasMore });
 };
 
+const getTenantMaxUsers = async (tenantId: string): Promise<number> => {
+  try {
+    const tenant = await Tenant.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new AppError("Tenant not found", 404);
+    }
+    return tenant.maxUsers;
+  } catch (error) {
+    throw new AppError("Error fetching maxUsers", 500);
+  }
+};
+
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   const { email, password, name, profile } = req.body;
   const { users } = await ListUsersService({ tenantId });
-
+  
   if (users.length >= Number(process.env.USER_LIMIT)) {
           throw new AppError("ERR_USER_LIMIT_USER_CREATION", 400);
+  }
+ 
+  const maxUsers = await getTenantMaxUsers(String(tenantId));
+  if (users.length >= maxUsers) {
+    throw new AppError("ERR_USER_LIMIT_USER_CREATION", 400);
   }
 
   else if (

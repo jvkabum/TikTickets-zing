@@ -263,7 +263,7 @@
             :max-files="5"
             :max-file-size="15485760"
             :max-total-size="15485760"
-            accept=".txt, .xml, .jpg, .png, image/jpeg, .pdf, .doc, .docx, .mp4, .xls, .xlsx, .jpeg, .zip, .ppt, .pptx, image/*"
+            accept=".txt, .xml, .jpg, .png, image/jpeg, .pdf, .doc, .docx, .mp4, .ogg, .mp3, .xls, .xlsx, .jpeg, .rar, .zip, .ppt, .pptx, image/*"
             @rejected="onRejectedFiles"
           />
           <q-btn

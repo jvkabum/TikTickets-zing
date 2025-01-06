@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="userProfile === 'admin'">
     <div class="row col full-width q-pa-sm">
       <q-card
         flat
@@ -201,6 +201,7 @@ export default {
   },
   data () {
     return {
+      userProfile: 'user',
       loading: false,
       userLogado,
       isAdmin: false,
@@ -399,6 +400,7 @@ export default {
     }
   },
   mounted () {
+    this.userProfile = localStorage.getItem('profile')
     this.isAdmin = localStorage.getItem('profile')
     this.listarWhatsapps()
     this.listarChatFlow()

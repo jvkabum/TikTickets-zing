@@ -18,7 +18,7 @@ const checkTicketFilter = (ticket) => {
   const filtroPadrao = {
     searchParam: '',
     pageNumber: 1,
-    status: ['open', 'pending'],
+    status: ['open', 'pending', 'closed'],
     showAll: false,
     count: null,
     queuesIds: [],
@@ -362,6 +362,30 @@ const atendimentoTicket = {
         const scheduledMessages = [...state.ticketFocado.scheduledMessages]
         const scheduled = scheduledMessages.filter(m => m.id != payload.id)
         state.ticketFocado.scheduledMessages = scheduled
+      }
+    },
+    UPDATE_MESSAGE (state, payload) {
+      // Se ticket não for o focado, não atualizar.
+      if (state.ticketFocado.id != payload.ticketId) {
+        return
+      }
+
+      state.mensagens = state.mensagens.map((m) => {
+        if (m.id == payload.id) {
+          return { ...m, ...payload }
+        }
+
+        return m
+      })
+
+      if (state.ticketFocado?.scheduledMessages) {
+        state.ticketFocado.scheduledMessages = state.ticketFocado.scheduledMessages.map((m) => {
+          if (m.id == payload.id) {
+            return { ...m, ...payload }
+          }
+
+          return m
+        })
       }
     },
     // OK

@@ -3,7 +3,7 @@
     Versão Sistema:
     <q-badge align="middle"
       color="primary">
-      v{{ cVersion }}
+     <a target="_blank" :href="github"> v{{ cVersion }} </a>
     </q-badge>
   </div>
 </template>
@@ -14,6 +14,9 @@ export default {
   computed: {
     cVersion () {
       return packageEnv.version
+    },
+    github () {
+      return packageEnv.github
     }
   }
 }

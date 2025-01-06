@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="userProfile === 'admin'">
     <q-card
       class="q-ma-sm "
       square
@@ -155,6 +155,27 @@
                 />
               </q-menu>
             </q-btn>
+            <q-btn round
+            flat
+            dense>
+            <q-icon size="2em"
+              name="mdi-variable" />
+            <q-tooltip>
+              Variáveis
+            </q-tooltip>
+            <q-menu touch-position>
+              <q-list dense
+                style="min-width: 100px">
+                <q-item v-for="variavel in variaveis"
+                  :key="variavel.label"
+                  clickable
+                  @click="onInsertSelectVariable(variavel.value)"
+                  v-close-popup>
+                  <q-item-section>{{ variavel.label }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
           </div>
           <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
             <textarea
@@ -183,10 +204,15 @@ export default {
   components: { VEmojiPicker },
   data () {
     return {
+      userProfile: 'user',
       optType: [
         { value: 'O', label: 'Aberto' },
         { value: 'C', label: 'Fechado' },
         { value: 'H', label: 'Horário' }
+      ],
+      variaveis: [
+        { label: 'Nome', value: '{{name}}' },
+        { label: 'Saudação', value: '{{greeting}}' }
       ],
       businessHours: [
         { day: 0, label: 'Domingo', type: 'O', hr1: '08:00', hr2: '12:00', hr3: '14:00', hr4: '18:00' },
@@ -201,6 +227,27 @@ export default {
     }
   },
   methods: {
+    onInsertSelectVariable (variable) {
+      const self = this
+      var tArea = this.$refs.inputEnvioMensagem
+      // get cursor's position:
+      var startPos = tArea.selectionStart,
+        endPos = tArea.selectionEnd,
+        cursorPos = startPos,
+        tmpStr = tArea.value
+      // filter:
+      if (!variable) {
+        return
+      }
+      // insert:
+      self.txtContent = this.messageBusinessHours
+      self.txtContent = tmpStr.substring(0, startPos) + variable + tmpStr.substring(endPos, tmpStr.length)
+      this.messageBusinessHours = self.txtContent
+      // move cursor:
+      setTimeout(() => {
+        tArea.selectionStart = tArea.selectionEnd = cursorPos + 1
+      }, 10)
+    },
     onInsertSelectEmoji (emoji) {
       const self = this
       var tArea = this.$refs.inputEnvioMensagem
@@ -239,6 +286,7 @@ export default {
     }
   },
   mounted () {
+    this.userProfile = localStorage.getItem('profile')
     this.listarMensagemHorariosAtendimento()
   }
 }

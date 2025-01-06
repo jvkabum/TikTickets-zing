@@ -84,6 +84,10 @@ class Message extends Model<Message> {
   @Column(DataType.DATE(6))
   updatedAt: Date;
 
+  // Adicionando a nova coluna 'edited'
+  @Column(DataType.TEXT)
+  edited: string;
+
   // @HasOne(() => Message, "messageId")
   @ForeignKey(() => Message)
   @Column
@@ -128,7 +132,7 @@ class Message extends Model<Message> {
   @Default(null)
   @AllowNull
   @Column(
-    DataType.ENUM("campaign", "chat", "external", "schedule", "bot", "sync")
+    DataType.ENUM("campaign", "chat", "external", "schedule", "bot", "sync", "API")
   )
   sendType: string;
 
@@ -144,15 +148,5 @@ class Message extends Model<Message> {
   @Column
   idFront: string;
 }
-
-// Message.sequelize?.define("Message", {
-//   quotedMsgId: {
-//     type: DataType.STRING,
-//     references: {
-//       model: Message,
-//       key: "messageId"
-//     }
-//   }
-// });
 
 export default Message;

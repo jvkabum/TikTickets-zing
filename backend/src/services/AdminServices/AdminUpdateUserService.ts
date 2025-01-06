@@ -50,6 +50,18 @@ const AdminUpdateUserService = async ({
     throw new AppError(err?.message);
   }
 
+  // Verificar se o email já existe
+  if (email && email !== user.email) {
+    const existingUser = await User.findOne({
+      where: { email },
+      attributes: ["id"]
+    });
+
+    if (existingUser && existingUser.id !== userId) {
+      throw new AppError("ERR_EMAIL_ALREADY_REGISTERED");
+    }
+  }
+
   await user.update({
     email,
     password,

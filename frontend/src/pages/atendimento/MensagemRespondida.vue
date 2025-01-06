@@ -46,10 +46,7 @@
               class="full-width"
               controls
             >
-              <source
-                :src="mensagem.mediaUrl"
-                type="audio/ogg"
-              />
+              <source :src="mensagem.mediaUrl" type="audio/mp3" />
             </audio>
           </div>
         </template>

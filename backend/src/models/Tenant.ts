@@ -37,6 +37,12 @@ class Tenant extends Model<Tenant> {
 
   @Column
   messageBusinessHours: string;
+  
+  @Column
+  maxUsers: number;
+
+  @Column
+  maxConnections: number;
 
   @CreatedAt
   createdAt: Date;

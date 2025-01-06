@@ -22,3 +22,40 @@ export function AtualizarMensagemHorariosAtendiemento (data) {
     data
   })
 }
+
+export function AdminListarEmpresas () {
+  return request({
+    url: '/admin/tenants/',
+    method: 'get'
+  })
+}
+
+export function CriarTenant (data) {
+  return request({
+    url: '/admin/tenants/',
+    method: 'post',
+    data
+  })
+}
+
+export function AlterarTenant (data) {
+  return request({
+    url: `/admin/tenantsUpdate/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+export function ListarTenants () {
+  return request({
+    url: '/admin/tenants/',
+    method: 'get'
+  })
+}
+
+export function DeletarTenant (data) {
+  return request({
+    url: `/admin/tenants/${data.id}`,
+    method: 'delete'
+  })
+}

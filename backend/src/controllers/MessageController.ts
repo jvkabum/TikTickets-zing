@@ -17,6 +17,7 @@ import DeleteWhatsAppMessage from "../services/WbotServices/DeleteWhatsAppMessag
 import { logger } from "../utils/logger";
 // import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
 // import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
+import EditWhatsAppMessage from "../services/WbotServices/EditWhatsAppMessage";
 
 type IndexQuery = {
   pageNumber: string;
@@ -90,7 +91,7 @@ export const remove = async (
   try {
     await DeleteMessageSystem(req.body.id, messageId, tenantId);
   } catch (error) {
-    logger.error(`ERR_DELETE_SYSTEM_MSG: ${error}`);
+    console.error("ERR_DELETE_SYSTEM_MSG", error.message);
     throw new AppError("ERR_DELETE_SYSTEM_MSG");
   }
 
@@ -112,6 +113,25 @@ export const forward = async (
       contact: data.contact,
       ticketIdOrigin: message.ticketId
     });
+  }
+
+  return res.send();
+};
+
+export const edit = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { messageId } = req.params;
+  const { tenantId } = req.user;
+  const { body }: MessageData = req.body;
+  try {
+    await EditWhatsAppMessage(req.body.id, messageId, tenantId, body);
+  } catch (error) {
+    if (error instanceof AppError && error.message === "ERR_EDITING_WAPP_MSG") {
+      return res.status(400).json({ error: error.message });
+    }
+    throw error;
   }
 
   return res.send();

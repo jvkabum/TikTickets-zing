@@ -1,13 +1,19 @@
-import "reflect-metadata";
-import "express-async-errors";
-import { Application, json, urlencoded } from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import helmet from "helmet";
-import { logger } from "../utils/logger";
+import 'reflect-metadata';
+import 'express-async-errors';
+
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import {
+  Application,
+  json,
+  urlencoded,
+} from 'express';
+import helmet from 'helmet';
+
+import { logger } from '../utils/logger';
 
 export default async function express(app: Application): Promise<void> {
-  const origin = [process.env.FRONTEND_URL || "https://app.izing.io"];
+  const origin = [process.env.FRONTEND_URL || "https://app.flowdeskpro.io"];
   app.use(
     cors({
       origin,

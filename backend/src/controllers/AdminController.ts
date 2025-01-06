@@ -10,6 +10,10 @@ import AdminUpdateUserService from "../services/AdminServices/AdminUpdateUserSer
 import UpdateSettingService from "../services/SettingServices/UpdateSettingService";
 import AppError from "../errors/AppError";
 import CreateWhatsAppService from "../services/WhatsappService/CreateWhatsAppService";
+import AdminCreateUserService from "../services/AdminServices/AdminCreateUserService";
+import AdminUpdateTenantService from "../services/AdminServices/AdminUpdateTenentService";
+import AdminCreateTenantService from "../services/AdminServices/AdminCreateTenantService";
+import AdminDeleteTenantService from "../services/AdminServices/AdminDeleteTenantService";
 
 type IndexQuery = {
   searchParam: string;
@@ -71,6 +75,40 @@ export const indexTenants = async (
 ): Promise<Response> => {
   const tenants = await AdminListTenantsService();
   return res.status(200).json(tenants);
+};
+
+export const updateTenant = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const tenantData = req.body;
+  const { tenantId } = req.params;
+
+  const tenant = await AdminUpdateTenantService({ tenantData, tenantId });
+
+  return res.status(200).json(tenant);
+};
+
+export const createTenant = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const tenantData = req.body;
+
+  const tenant = await AdminCreateTenantService({ tenantData });
+
+  return res.status(201).json(tenant);
+};
+
+export const deleteTenant = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { tenantId } = req.params;
+
+  await AdminDeleteTenantService({ tenantId });
+
+  return res.status(204).send();
 };
 
 export const indexChatFlow = async (
@@ -153,3 +191,31 @@ export const storeChannel = async (
   const channels = await CreateWhatsAppService(data);
   return res.status(200).json(channels);
 };
+
+export const storeUser = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { tenantId, email, password, name, profile } = req.body;
+
+    const user = await AdminCreateUserService({
+      email,
+      password,
+      name,
+      profile,
+      tenantId
+    });
+
+    const io = getIO();
+    io.emit(`${tenantId}:user`, {
+      action: "create",
+      user
+    });
+
+    return res.status(200).json(user);
+  } catch (error) {
+    if (error instanceof AppError && error.message === "ERR_EMAIL_ALREADY_REGISTERED") {
+      return res.status(400).json({ error: error.message });
+    }
+    throw error;
+  }
+};
+

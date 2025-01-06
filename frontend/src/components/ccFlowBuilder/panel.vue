@@ -231,36 +231,6 @@ export default {
         })
         return false
       }
-      if (this.hasLine(from, to)) {
-        this.$q.notify({
-          type: 'negative',
-          progress: true,
-          position: 'top',
-          timeout: 2500,
-          message: 'Não é possível realizar loop entre os elementos.',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-        return false
-      }
-      if (this.hashOppositeLine(from, to)) {
-        this.$q.notify({
-          type: 'negative',
-          progress: true,
-          position: 'top',
-          timeout: 2500,
-          message: 'Não é possível realizar loop entre os elementos.',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-        return false
-      }
       this.$notificarSucesso('Conexão realizada.')
       return true
     },
@@ -270,7 +240,7 @@ export default {
         this.jsPlumb.setSuspendDrawing(false, true)
         this.loadEasyFlow()
         this.jsPlumb.bind('click', (conn, originalEvent) => {
-          this.activeElement.type = 'line'
+          // this.activeElement.type = 'line'
           this.activeElement.sourceId = conn.sourceId
           this.activeElement.targetId = conn.targetId
           this.$refs.nodeForm.lineInit({

@@ -210,6 +210,11 @@ const errors = [
     detail: 'Usuários que possuem conversas não são possiveis de apagar.'
   },
   {
+    error: 'ERR_COMPANY_NOT_ACTIVE',
+    description: 'Não foi possivel fazer login empresa Inativa.',
+    detail: 'Verique com o administrador do sistema.'
+  },
+  {
     error: 'ERR_NO_PERMISSION',
     description: 'Usuário sem permissão.',
     detail: 'Seu usuário não possui permissão para executar a ação.'

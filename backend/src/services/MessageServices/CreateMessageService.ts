@@ -49,7 +49,6 @@ const CreateMessageService = async ({
   });
 
   if (!message) {
-    // throw new AppError("ERR_CREATING_MESSAGE", 501);
     throw new Error("ERR_CREATING_MESSAGE");
   }
 
