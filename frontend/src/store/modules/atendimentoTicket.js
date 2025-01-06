@@ -10,8 +10,13 @@ const orderMessages = (messages) => {
 }
 
 const orderTickets = (tickets) => {
-  const newTickes = orderBy(tickets, (obj) => parseISO(obj.lastMessageAt || obj.updatedAt), ['asc'])
-  return [...newTickes]
+  const newTickets = orderBy(tickets, [
+    // Primeiro ordena por mensagens não lidas (desc para colocar tickets com unreadMessages > 0 no topo)
+    ticket => ticket.unreadMessages > 0,
+    // Depois ordena por data da última mensagem
+    ticket => parseISO(ticket.lastMessageAt || ticket.updatedAt)
+  ], ['desc', 'asc'])
+  return [...newTickets]
 }
 
 const checkTicketFilter = (ticket) => {

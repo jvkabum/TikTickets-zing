@@ -41,11 +41,20 @@ const VerifyMessage = async (
         : msg.body
   });
 
-  await ticket.update({
-    lastMessage: msg.body,
-    lastMessageAt: new Date().getTime(),
-    answered: msg.fromMe || false
-  });
+  if (!msg.fromMe) {
+    await ticket.update({
+      lastMessage: msg.body,
+      lastMessageAt: new Date().getTime(),
+      answered: false,
+      unreadMessages: ticket.unreadMessages + 1
+    });
+  } else {
+    await ticket.update({
+      lastMessage: msg.body,
+      lastMessageAt: new Date().getTime(),
+      answered: true
+    });
+  }
   await CreateMessageService({ messageData, tenantId: ticket.tenantId });
 };
 
