@@ -42,6 +42,25 @@ class FastReply extends Model<FastReply> {
   @BelongsTo(() => Tenant)
   tenant: Tenant;
 
+  // Adicionando a coluna 'medias'
+  @AllowNull(true)
+  @Column({
+    type: DataType.JSON,
+    validate: {
+      isArrayOfStrings(value: string[]) {
+        if (!Array.isArray(value)) {
+          throw new Error('Medias must be an array.');
+        }
+        value.forEach((item) => {
+          if (typeof item !== 'string') {
+            throw new Error('Each media must be a string.');
+          }
+        });
+      }
+    }
+  })
+  medias: string[];
+
   @CreatedAt
   createdAt: Date;
 

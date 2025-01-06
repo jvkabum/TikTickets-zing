@@ -1,4 +1,4 @@
-import { verify } from "jsonwebtoken";
+import { verify, JsonWebTokenError } from "jsonwebtoken";
 import authConfig from "../config/auth";
 import { logger } from "../utils/logger";
 
@@ -16,13 +16,14 @@ interface Data {
   profile: string;
   tenantId: number | string;
 }
+
 interface Result {
   isValid: boolean;
   data: Data;
 }
 
 const decode = (token: string): Result => {
-  const validation = {
+  const validation: Result = {
     isValid: false,
     data: {
       id: "",
@@ -30,24 +31,34 @@ const decode = (token: string): Result => {
       tenantId: 0
     }
   };
+
+  // Verifica se o token é fornecido
   if (!token) {
-    logger.error('Token not provided');
-    return validation;
+    logger.error("JWT must be provided");
+    return validation; // Retorna sem validar
   }
+
   try {
-    const decoded = verify(token, authConfig.secret);
-    const { id, profile, tenantId } = decoded as TokenPayload;
+    // Decodifica o token e valida
+    const decoded = verify(token, authConfig.secret) as TokenPayload;
+    const { id, profile, tenantId } = decoded;
+
     validation.isValid = true;
     validation.data = {
       id,
       profile,
-      tenantId
+      tenantId,
     };
   } catch (err) {
-    logger.error(err);
+    // Trata os erros de verificação do JWT
+    if (err instanceof JsonWebTokenError) {
+      logger.error(`JWT verification error: ${err.message}`);
+    } else {
+      logger.error(`Unexpected error: ${err}`);
+    }
   }
+  
   return validation;
 };
-
 
 export default decode;

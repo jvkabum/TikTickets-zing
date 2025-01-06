@@ -46,7 +46,7 @@
               :key="resposta.key"
               clickable
               v-close-popup
-              @click="mensagemRapidaSelecionada(resposta.message)"
+              @click="mensagemRapidaSelecionada(resposta)"
             >
               <q-item-section>
                 <q-item-label class="text-bold"> {{ resposta.key }} </q-item-label>
@@ -486,7 +486,21 @@ export default {
       }
     },
     mensagemRapidaSelecionada (mensagem) {
-      this.textChat = mensagem
+      console.log('mensagem', mensagem)
+
+      // Verifica se há um ID associado à mensagem
+      if (mensagem.id) {
+        // Remove qualquer ID e delimitador anterior da mensagem, se houver
+        mensagem.message = mensagem.message.replace(/^\[\d+\] - /, '')
+
+        // Adiciona o ID antes da mensagem
+        mensagem.message = `[${mensagem.id}] - ` + mensagem.message
+      }
+
+      // Define a mensagem no campo de entrada
+      this.textChat = mensagem.message
+
+      // Foca no campo de mensagem após o processamento
       setTimeout(() => {
         this.$refs.inputEnvioMensagem.focus()
       }, 300)

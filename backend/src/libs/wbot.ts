@@ -49,21 +49,22 @@ const args: string[] = process.env.CHROME_ARGS
 args.unshift(`--user-agent=${DefaultOptions.userAgent}`);
 const checkMessages = async (wbot: Session, tenantId: number | string) => {
   try {
-    const isConnectStatus = wbot && (await wbot.getState()) === "CONNECTED"; // getValue(`wbotStatus-${tenantId}`);
-   // logger.info(
-   //   "wbot:checkMessages:status",
-    //  wbot.id,
-    //  tenantId,
-     // isConnectStatus
-   // );
+    const isConnectStatus = wbot && (await wbot.getState()) === "CONNECTED";
+    // getValue(`wbotStatus-${tenantId}`);
+   logger.info(
+   "wbot:checkMessages:status",
+   wbot.id,
+    tenantId,
+    isConnectStatus
+   );
 
     if (isConnectStatus) {
-   //   logger.info("wbot:connected:checkMessages", wbot, tenantId);
+   logger.info("wbot:connected:checkMessages", wbot, tenantId);
       Queue.add("SendMessages", { sessionId: wbot.id, tenantId });
     }
   } catch (error) {
     const strError = String(error);
-    // se a sess„o tiver sido fechada, limpar a checagem de mensagens e bot
+    // se a sess√£o tiver sido fechada, limpar a checagem de mensagens e bot
     if (strError.indexOf("Session closed.") !== -1) {
       logger.error(
         `BOT Whatsapp desconectado. Tenant: ${tenantId}:: BOT ID: ${wbot.id}`
@@ -95,12 +96,8 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
           executablePath: process.env.CHROME_BIN || undefined,
           args
         },
-        webVersion: process.env.WEB_VERSION || "2.2412.54",
-        webVersionCache: {
-          type: "remote",
-          remotePath:
-            "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html"
-        },
+        webVersion: process.env.WEB_VERSION || "2.2412.54v2",
+        webVersionCache: { type: "local" },
         qrMaxRetries: 5
       }) as Session;
 

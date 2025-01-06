@@ -1,16 +1,13 @@
 import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
-
 import CheckSettingsHelper from "../helpers/CheckSettings";
 import AppError from "../errors/AppError";
-
 import CreateUserService from "../services/UserServices/CreateUserService";
 import ListUsersService from "../services/UserServices/ListUsersService";
 import UpdateUserService from "../services/UserServices/UpdateUserService";
 import ShowUserService from "../services/UserServices/ShowUserService";
 import DeleteUserService from "../services/UserServices/DeleteUserService";
 import UpdateUserConfigsService from "../services/UserServices/UpdateUserConfigsService";
-
 import Tenant from "../models/Tenant"; 
 
 type IndexQuery = {
@@ -49,7 +46,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { users } = await ListUsersService({ tenantId });
   
   if (users.length >= Number(process.env.USER_LIMIT)) {
-          throw new AppError("ERR_USER_LIMIT_USER_CREATION", 400);
+    throw new AppError("ERR_USER_LIMIT_USER_CREATION", 400);
   }
  
   const maxUsers = await getTenantMaxUsers(String(tenantId));
@@ -57,8 +54,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     throw new AppError("ERR_USER_LIMIT_USER_CREATION", 400);
   }
 
-  else if (
-    
+  if (
     req.url === "/signup" &&
     (await CheckSettingsHelper("userCreation")) === "disabled"
   ) {
@@ -97,10 +93,6 @@ export const update = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  // if (req.user.profile !== "admin") {
-  //   throw new AppError("ERR_NO_PERMISSION", 403);
-  // }
-
   const { userId } = req.params;
   const userData = req.body;
   const { tenantId } = req.user;
@@ -120,10 +112,6 @@ export const updateConfigs = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  // if (req.user.profile !== "admin") {
-  //   throw new AppError("ERR_NO_PERMISSION", 403);
-  // }
-
   const { userId } = req.params;
   const userConfigs = req.body;
   const { tenantId } = req.user;
@@ -145,7 +133,7 @@ export const remove = async (
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
-  await DeleteUserService(userId, tenantId, userIdRequest);
+  await DeleteUserService(userId, tenantId, userIdRequest); // Passando todos os argumentos necessários
 
   const io = getIO();
   io.emit(`${tenantId}:user`, {

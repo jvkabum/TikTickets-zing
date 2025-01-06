@@ -32,12 +32,6 @@ export default async function modules(app): Promise<void> {
       statusService: checkConnection
     });
   });
-  
-  app.get('/', (req, res) => {
-      res.send(`Backend está funcionando corretamente. Acesse o frontend: <a href="${env.FRONTEND_URL}">${env.FRONTEND_URL}</a>`);
-  });
-
-  
   app.use(Sentry.Handlers.requestHandler());
 
   app.use("/public", expressInstance.static(uploadConfig.directory));
@@ -62,4 +56,3 @@ export default async function modules(app): Promise<void> {
   });
 
   logger.info("modules routes already in server!");
-}

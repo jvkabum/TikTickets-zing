@@ -31,6 +31,10 @@ module.exports = {
         allowNull: false,
         defaultValue: 1
       },
+      medias: {
+        type: DataTypes.JSON,  // Definindo o tipo como JSON para armazenar dados de mídia
+        allowNull: true
+      },
       createdAt: {
         type: DataTypes.DATE(6),
         allowNull: false

@@ -1,29 +1,26 @@
-import 'reflect-metadata';
-import 'express-async-errors';
-
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
-import {
-  Application,
-  json,
-  urlencoded,
-} from 'express';
-import helmet from 'helmet';
-
-import { logger } from '../utils/logger';
+import "reflect-metadata"; // Importa metadados para TypeScript
+import "express-async-errors"; // Para tratar erros assíncronos
+import { Application, json, urlencoded, Request, Response, NextFunction } from "express"; // Importa módulos do Express
+import cors from "cors"; // Middleware para CORS
+import cookieParser from "cookie-parser"; // Middleware para manipulação de cookies
+import helmet from "helmet"; // Middleware para segurança
+import { logger } from "../utils/logger"; // Importa o logger
 
 export default async function express(app: Application): Promise<void> {
-  const origin = [process.env.FRONTEND_URL || "https://app.flowdeskpro.io"];
+  const origin = [process.env.FRONTEND_URL || "https://app.tikanais.com.br"];
+  // Configuração do CORS
   app.use(
     cors({
       origin,
-      credentials: true
+      credentials: true // Permite cookies e cabeçalhos de autenticação
     })
   );
 
+  // Configurações de segurança se não estiver no ambiente de desenvolvimento
   if (process.env.NODE_ENV !== "dev") {
     app.use(helmet());
-    // Sets all of the defaults, but overrides script-src
+    
+    // Configuração da política de segurança de conteúdo
     app.use(
       helmet.contentSecurityPolicy({
         directives: {
@@ -36,19 +33,18 @@ export default async function express(app: Application): Promise<void> {
           "script-src-attr": ["'none'"],
           "style-src": ["'self'", "https:", "'unsafe-inline'"],
           "upgrade-insecure-requests": [],
-          // ...helmet.contentSecurityPolicy.getDefaultDirectives(),
           scriptSrc: [
             "'self'",
-            `*${process.env.FRONTEND_URL || "localhost: 3101"}`
-            // "localhost"
+            `*${process.env.FRONTEND_URL || "localhost:3101"}`
           ],
           frameAncestors: [
             "'self'",
-            `* ${process.env.FRONTEND_URL || "localhost: 3101"}`
+            `* ${process.env.FRONTEND_URL || "localhost:3101"}`
           ]
         }
       })
     );
+    // Adiciona políticas de recursos cruzados
     app.use(
       helmet({
         crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -57,13 +53,22 @@ export default async function express(app: Application): Promise<void> {
     );
   }
 
-  console.info("cors domain ======>>>>", process.env.FRONTEND_URL);
+  console.info("cors domain ======>>>>", process.env.FRONTEND_URL); // Log do domínio CORS
 
+  // Configuração de middleware
   app.use(cookieParser());
-  app.use(json({ limit: "50MB" }));
+  app.use(json({ limit: "100MB" })); // Limite para o corpo JSON
   app.use(
-    urlencoded({ extended: true, limit: "50MB", parameterLimit: 200000 })
+    urlencoded({ extended: true, limit: "100MB", parameterLimit: 200000 }) // Limite para dados URL-encoded
   );
 
-  logger.info("express already in server!");
+  // Middleware de tratamento de erros
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    logger.error("Erro ocorrido:", err.message); // Log do erro
+    res.status(500).json({
+      message: "Ocorreu um erro interno no servidor",
+      stack: process.env.NODE_ENV === "dev" ? err.stack : undefined // Inclui o stack trace para depuração, se não estiver em produção
+    });
+  });
+  logger.info("express already in server!"); // Log para indicar que o Express foi configurado
 }

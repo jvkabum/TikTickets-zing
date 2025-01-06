@@ -41,9 +41,8 @@ const SyncContactsWhatsappInstanceService = async (
       const query = `INSERT INTO "Contacts" (number, name, "tenantId", "createdAt", "updatedAt") VALUES
         ${dataArray
           .map((e: any) => {
-		    const cleanedName = e.name.replace(/[^a-zA-Z0-9 ]+/g, '');
             return `('${e.number}',
-			'${cleanedName}',
+            '${e.name}',
             '${e.tenantId}',
             '${d}'::timestamp,
             '${d}'::timestamp)`;
