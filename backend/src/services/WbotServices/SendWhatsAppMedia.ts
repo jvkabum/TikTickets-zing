@@ -21,11 +21,15 @@ const SendWhatsAppMedia = async ({
     const wbot = await GetTicketWbot(ticket);
 
     const newMedia = MessageMedia.fromFilePath(media.path);
+    const isAudio = media.mimetype.startsWith('audio/') || media.mimetype === 'application/ogg';
 
     const sendMessage = await wbot.sendMessage(
       `${ticket.contact.number}@${ticket.isGroup ? "g" : "c"}.us`,
       newMedia,
-      { sendAudioAsVoice: true }
+      { 
+        sendAudioAsVoice: isAudio,
+        caption: isAudio ? undefined : ticket.lastMessage
+      }
     );
 
     await ticket.update({

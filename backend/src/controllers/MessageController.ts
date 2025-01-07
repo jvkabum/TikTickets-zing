@@ -105,29 +105,19 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
           if (mediaFile) {
             medias.push(mediaFile); // Adiciona o arquivo diretamente na lista de mídias
           }
+
+          // Atualiza o texto do ticket para ser usado como legenda
+          if (fastReply.message) {
+            await ticket.update({
+              lastMessage: fastReply.message
+            });
+          }
+
           // Envia a mensagem com ou sem mídias
           await CreateMessageSystemService({
             msg: messageData,
             tenantId,
             medias, // Enviando as mídias atualizadas (incluso o arquivo do fastReply se houver)
-            ticket,
-            userId,
-            scheduleDate: messageData.scheduleDate,
-            sendType: messageData.sendType || "chat",
-            status: "pending",
-            idFront: messageData.idFront
-          });
-          // Separando o corpo da mensagem em caso de mensagem com ID
-          if (messageData.body.includes("] - ")) {
-            const idPattern = /^\[\d+\]\s-\s/; // Regex para capturar o padrão "[ID] - "
-            if (idPattern.test(messageData.body)) {
-              // Remove o ID e o separador " - " da mensagem
-              messageData.body = messageData.body.replace(idPattern, "").trim(); // Remove o ID e ajusta o corpo
-            }
-          }
-          await CreateMessageSystemService({
-            msg: messageData,
-            tenantId,
             ticket,
             userId,
             scheduleDate: messageData.scheduleDate,

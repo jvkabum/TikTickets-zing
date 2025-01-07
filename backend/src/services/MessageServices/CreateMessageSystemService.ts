@@ -201,7 +201,7 @@ const CreateMessageSystemService = async ({
             id: messageData.id,
             userId,
             messageId: message.id?.id || message.messageId || null,
-            body: media.originalname,
+            body: messageData.body || media.originalname,
             mediaUrl: media.filename,
             mediaType:
               media.mediaType ||
