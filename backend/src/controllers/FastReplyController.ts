@@ -31,7 +31,7 @@ const ensureUploadDir = (dir: string) => {
  */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.resolve(__dirname, "..", "..", "public", "uploads");
+    const uploadDir = path.resolve(__dirname, "..", "..", "public"); // Salva diretamente em "backend/public"
     ensureUploadDir(uploadDir);
     console.log(`Tentando salvar arquivos em: ${uploadDir}`);
     cb(null, uploadDir);
@@ -82,7 +82,7 @@ export const store = [
 
     if (mediaFiles && mediaFiles.length > 0) {
       mediaPaths = mediaFiles.map(
-        file => `${baseUrl}/public/uploads/${file.filename}`
+        file => `${baseUrl}/public/${file.filename}` // Caminho dos arquivos agora em "public"
       );
       console.log("Caminhos dos arquivos:", mediaPaths);
     }
@@ -149,7 +149,7 @@ export const update = [
 
     if (mediaFiles && mediaFiles.length > 0) {
       mediaPaths = mediaFiles.map(
-        file => `${baseUrl}/public/uploads/${file.filename}`
+        file => `${baseUrl}/public/${file.filename}` // Caminho dos arquivos agora em "public"
       );
       console.log("Caminhos dos arquivos atualizados:", mediaPaths);
     }

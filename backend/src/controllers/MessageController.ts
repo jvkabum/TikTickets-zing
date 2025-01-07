@@ -243,14 +243,13 @@ export const getMediaFileFromServer = async (
   mediaUrl: string
 ): Promise<any> => {
   try {
-    // Supondo que o caminho do arquivo já seja relativo à pasta `public/uploads`
+    // Supondo que o caminho do arquivo já seja relativo à pasta `public`
     const fileName = path.basename(mediaUrl); // Extrai o nome do arquivo da URL
     const filePath = path.join(
       __dirname,
       "..",
       "..",
       "public",
-      "uploads",
       fileName
     ); // Monta o caminho completo do arquivo no servidor
 
