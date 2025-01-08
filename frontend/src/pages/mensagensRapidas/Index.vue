@@ -31,6 +31,41 @@
           />
         </q-td>
       </template>
+      <template v-slot:body-cell-hasAttachment="props">
+        <q-td class="text-center">
+          <div class="cursor-pointer" @mouseenter="showPopup = true" @mouseleave="showPopup = false">
+            <q-icon
+              v-if="props.value"
+              name="mdi-attachment"
+              size="24px"
+              color="primary"
+            >
+              <q-popup-proxy hover escape-key>
+                <q-card class="preview-card">
+                  <q-card-section>
+                    <div class="text-subtitle2">Anexos:</div>
+                    <div v-for="(media, index) in props.row.medias" :key="index" class="q-mt-sm">
+                      <div v-if="isImage(media)" class="row items-center justify-center preview-container">
+                        <q-img
+                          :src="getMediaUrl(media)"
+                          class="preview-image"
+                          fit="contain"
+                        />
+                      </div>
+                      <div v-else-if="isVideo(media)" class="row items-center justify-center">
+                        <q-icon name="movie" size="200px" color="primary"/>
+                      </div>
+                      <div v-else class="row items-center justify-center">
+                        <q-icon :name="getFileIcon(media)" size="200px" color="primary"/>
+                      </div>
+                    </div>
+                  </q-card-section>
+                </q-card>
+              </q-popup-proxy>
+            </q-icon>
+          </div>
+        </q-td>
+      </template>
       <template v-slot:body-cell-acoes="props">
         <q-td class="text-center">
           <q-btn
@@ -69,12 +104,20 @@ export default {
       mensagensRapidas: [],
       modalMensagemRapida: false,
       mensagemRapidaEmEdicao: {},
+      showPopup: false,
       columns: [
         { name: 'id', label: '#', field: 'id', align: 'left' },
         { name: 'key', label: 'Chave', field: 'key', align: 'left' },
         { name: 'message', label: 'Mensagem', field: 'message', align: 'left', classes: 'ellipsis', style: 'max-width: 400px;' },
+        {
+          name: 'hasAttachment',
+          label: '',
+          field: row => row.medias && row.medias.length > 0,
+          align: 'center',
+          format: val => val ? 'mdi-attachment' : '',
+          style: 'width: 50px'
+        },
         { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
-
       ],
       pagination: {
         rowsPerPage: 40,
@@ -140,6 +183,34 @@ export default {
           })
         this.loading = false
       })
+    },
+    isImage (media) {
+      return media.endsWith('.jpg') || media.endsWith('.jpeg') || media.endsWith('.png') || media.endsWith('.gif')
+    },
+    isVideo (media) {
+      return media.endsWith('.mp4') || media.endsWith('.webm') || media.endsWith('.ogg')
+    },
+    getFileIcon (media) {
+      if (media.endsWith('.pdf')) return 'picture_as_pdf'
+      if (media.endsWith('.mp3') || media.endsWith('.wav')) return 'audio_file'
+      if (this.isVideo(media)) return 'video_file'
+      if (this.isImage(media)) return 'image'
+      if (media.endsWith('.apk')) return 'android'
+      return 'insert_drive_file'
+    },
+    getFileType (media) {
+      if (this.isImage(media)) return 'Imagem'
+      if (this.isVideo(media)) return 'Vídeo'
+      if (media.endsWith('.pdf')) return 'PDF'
+      if (media.endsWith('.mp3') || media.endsWith('.wav')) return 'Áudio'
+      if (media.endsWith('.apk')) return 'APK'
+      return 'Arquivo'
+    },
+    getMediaUrl (media) {
+      if (media instanceof File) {
+        return URL.createObjectURL(media)
+      }
+      return media
     }
   },
   mounted () {
@@ -149,4 +220,35 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.preview-card {
+  min-width: 300px;
+  max-width: 600px;
+  min-height: 200px;
+  padding: 10px;
+}
+
+.preview-container {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  max-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.q-img {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  max-height: 400px;
+}
 </style>
