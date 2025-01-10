@@ -176,7 +176,7 @@
           <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
             <q-card flat bordered class="my-card full-height" style="background-color: #fc5881ff; color: white">
               <q-card-section class="text-center">
-                <p class="text-h5 text-bold text-center"></p>
+                <p class="text-h5 text-bold text-center">
                   <q-icon name="mdi-timer-sand" size="lg" color="white" class="text-white" />
                   {{ cTmeFormat }}
                   </p>
