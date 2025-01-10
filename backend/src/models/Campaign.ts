@@ -20,7 +20,9 @@ import Whatsapp from "./Whatsapp";
 
 // Modelo para campanhas de mensagens
 // Gerencia campanhas de envio em massa de mensagens
-@Table
+@Table({
+  tableName: "Campaigns"
+})
 class Campaign extends Model<Campaign> {
   // ID único da campanha
   @PrimaryKey
