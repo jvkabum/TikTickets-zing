@@ -7,7 +7,7 @@ interface TagData {
   isActive: boolean;
   userId: number;
   tenantId: number | string;
-  autoTag: string;
+  autoTag: string; // Adicionando o campo autoTag
 }
 
 interface Request {
@@ -16,7 +16,7 @@ interface Request {
 }
 
 const UpdateTagService = async ({ tagData, tagId }: Request): Promise<Tag> => {
-  const { tag, color, isActive, userId, tenantId, autoTag } = tagData;
+  const { tag, color, isActive, userId, tenantId, autoTag } = tagData; // Incluindo autoTag
 
   const tagModel = await Tag.findOne({
     where: { id: tagId, tenantId },
@@ -32,11 +32,11 @@ const UpdateTagService = async ({ tagData, tagId }: Request): Promise<Tag> => {
     color,
     isActive,
     userId,
-    autoTag
+    autoTag // Incluindo autoTag na atualização
   });
 
   await tagModel.reload({
-    attributes: ["id", "tag", "color", "isActive", "userId"]
+    attributes: ["id", "tag", "color", "isActive", "userId", "autoTag"] // Incluindo autoTag no reload
   });
 
   return tagModel;

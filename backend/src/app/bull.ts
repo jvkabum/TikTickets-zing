@@ -9,10 +9,6 @@ export default async function bullMQ(app) {
 
   // Inicia o processamento das filas definidas
   await Queue.process();
-
-  // Adiciona tarefas programadas às filas
-  await Queue.add("SendMessageWhatsappCampaign", {}); // Adicionando o job aqui
-  
   
   // Adiciona tarefa para verificar tickets inativos do chatbot
   await Queue.add("VerifyTicketsChatBotInactives", {});

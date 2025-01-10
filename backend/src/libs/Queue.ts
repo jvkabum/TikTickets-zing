@@ -6,54 +6,66 @@ import * as jobs from "../jobs/Index";
 
 // Cria uma lista de filas a partir dos jobs importados
 const queues = Object.values(jobs).map((job: any) => ({
-  bull: new Queue(job.key, { // Cria uma nova fila Bull com a chave do job
+  bull: new Queue(job.key, {
     redis: {
-      host: process.env.IO_REDIS_SERVER, // Host do servidor Redis
-      port: +(process.env.IO_REDIS_PORT || "6379"), // Porta do servidor Redis, padrão 6379
-      password: process.env.IO_REDIS_PASSWORD || undefined, // Senha do Redis, se houver
-      db: 3 // Seleciona o banco de dados 3 do Redis
+      host: process.env.IO_REDIS_SERVER,
+      port: +(process.env.IO_REDIS_PORT || "6379"),
+      password: process.env.IO_REDIS_PASSWORD || undefined,
+      db: 3
+    },
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: 'fixed',
+        delay: 60000
+      },
+      removeOnComplete: true,
+      removeOnFail: false
+    },
+    limiter: {
+      max: 200, // Máximo de jobs por intervalo
+      duration: 1000 // Intervalo em ms (1 segundo)
     }
   }),
-  name: job.key, // Nome da fila
-  handle: job.handle, // Função de manipulação do job
-  options: job.options // Opções do job
+  name: job.key,
+  handle: job.handle,
+  options: job.options
 }));
 
 export default {
-  queues, // Exporta as filas
-  async add(name: string, data: any | any[]) { // Função para adicionar um job à fila
-    const queue = this.queues.find((q: any) => q.name === name); // Busca a fila pelo nome
+  queues,
+  async add(name: string, data: any | any[]) {
+    const queue = this.queues.find((q: any) => q.name === name);
     if (!queue) {
-      throw new Error(`Queue ${name} not exists`); // Lança erro se a fila não existir
+      throw new Error(`Queue ${name} not exists`);
     }
-    if (Array.isArray(data)) { // Verifica se os dados são um array
+    if (Array.isArray(data)) {
       const parsedJobs = data.map((jobData: any) => {
         return {
-          data: jobData, // Dados do job
+          data: jobData,
           opts: {
-            ...queue.options, // Opções da fila
-            ...jobData?.options // Opções específicas do job
+            ...queue.options,
+            ...jobData?.options
           }
         };
       });
-      return queue.bull.addBulk(parsedJobs); // Adiciona múltiplos jobs à fila
+      return queue.bull.addBulk(parsedJobs);
     }
-    return queue.bull.add(data, { ...queue.options, ...data.options }); // Adiciona um único job à fila
+    return queue.bull.add(data, { ...queue.options, ...data.options });
   },
-  process() { // Função para processar os jobs nas filas
+  process() {
     return this.queues.forEach(queue => {
-      queue.bull.process(200, queue.handle); // Processa até 200 jobs de cada vez
+      queue.bull.process(200, queue.handle); // Mantendo 200 jobs simultâneos
 
-      // Registra ouvintes de eventos para a fila
       queue.bull
-        .on("active", QueueListeners.onActive) // Evento quando um job se torna ativo
-        .on("error", QueueListeners.onError) // Evento de erro
-        .on("waiting", QueueListeners.onWaiting) // Evento quando um job está aguardando
-        .on("completed", QueueListeners.onCompleted) // Evento quando um job é concluído
-        .on("stalled", QueueListeners.onStalled) // Evento quando um job é travado
-        .on("failed", QueueListeners.onFailed) // Evento quando um job falha
-        .on("cleaned", QueueListeners.onClean) // Evento quando um job é limpo
-        .on("removed", QueueListeners.onRemoved); // Evento quando um job é removido
+        .on("active", QueueListeners.onActive)
+        .on("error", QueueListeners.onError)
+        .on("waiting", QueueListeners.onWaiting)
+        .on("completed", QueueListeners.onCompleted)
+        .on("stalled", QueueListeners.onStalled)
+        .on("failed", QueueListeners.onFailed)
+        .on("cleaned", QueueListeners.onClean)
+        .on("removed", QueueListeners.onRemoved);
     });
   }
 };

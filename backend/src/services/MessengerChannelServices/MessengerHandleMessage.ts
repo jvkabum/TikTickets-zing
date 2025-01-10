@@ -1,4 +1,5 @@
 import { logger } from "../../utils/logger";
+import UpdateContactTagsService from "../ContactServices/UpdateContactTagsService"; // Importando o serviço
 import FindOrCreateTicketService from "../TicketServices/FindOrCreateTicketService";
 import { MessengerRequestBody } from "./MessengerTypes";
 import { getMessengerBot } from "../../libs/messengerBot";
@@ -88,7 +89,6 @@ const MessengerHandleMessage = async (
           await MessengerVerifyMessage(msgData, ticket, contact);
         }
         await VerifyStepsChatFlowTicket(msgData, ticket);
-        
         await verifyBusinessHours(msgData, ticket);
         resolve();
       } catch (error) {

@@ -19,6 +19,7 @@ import Campaign from "../../models/Campaign";
 import AppError from "../../errors/AppError";
 import CampaignContacts from "../../models/CampaignContacts";
 import Queue from "../../libs/Queue";
+import { getIO } from "../../libs/socket";
 
 // Interface que define os parâmetros necessários para iniciar uma campanha
 // Inclui identificadores e opções de configuração do job
@@ -133,6 +134,7 @@ const StartCampaignService = async ({
   tenantId,
   options
 }: Request): Promise<void> => {
+  const io = getIO();
   const campaign = await Campaign.findOne({
     where: { id: campaignId, tenantId },
     include: ["session"]
@@ -141,7 +143,6 @@ const StartCampaignService = async ({
   if (!campaign) {
     throw new AppError("ERROR_CAMPAIGN_NOT_EXISTS", 404);
   }
-
 
   const campaignContacts = await CampaignContacts.findAll({
     where: { campaignId },
@@ -159,15 +160,35 @@ const StartCampaignService = async ({
     dateDelay = addSeconds(dateDelay, timeDelay / 1000);
     return mountMessageData(campaign, campaignContact, {
       ...options,
-      jobId: `campaginId_${campaign.id}_contact_${campaignContact.contactId}_id_${campaignContact.id}`,
+      jobId: `campaignId_${campaign.id}_contact_${campaignContact.contactId}_id_${campaignContact.id}`,
       delay: calcDelay(dateDelay, timeDelay)
     });
   });
 
-  Queue.add("SendMessageWhatsappCampaign", data);
-
+  // Atualiza para processing imediatamente após scheduled
   await campaign.update({
-    status: "scheduled"
+    status: "scheduled",
+    totalMessages: campaignContacts.length,
+    sentMessages: 0,
+    failedMessages: 0
+  });
+
+  // Emite evento de atualização para scheduled
+  io.emit(`${tenantId}:campaign`, {
+    action: "update",
+    campaign: campaign
+  });
+
+  // Adiciona os jobs na fila
+  await Queue.add("SendMessageWhatsappCampaign", data);
+
+  // Atualiza para processing após adicionar na fila
+  await campaign.update({ status: "processing" });
+  
+  // Emite evento de atualização para processing
+  io.emit(`${tenantId}:campaign`, {
+    action: "update",
+    campaign: { ...campaign.toJSON(), status: "processing" }
   });
 };
 
