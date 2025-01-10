@@ -151,6 +151,10 @@ Este módulo é parte do sistema TikTickets e está sob a licença proprietária
 
 ### 1. Interface do Chat
 - Adicionar indicador de digitação (quando o cliente está digitando)
+  - Exibir indicador visual quando o cliente está digitando
+  - Atualização em tempo real via WebSocket
+  - Ícone animado de digitação
+  - Timeout automático após inatividade
 - Implementar preview de links compartilhados
 - Adicionar suporte para temas escuros mais consistente
 - Melhorar a visualização de mensagens longas
