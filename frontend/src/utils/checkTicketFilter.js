@@ -8,8 +8,7 @@ const checkTicketFilter = (ticket) => {
     queuesIds: [],
     withUnreadMessages: false,
     isNotAssignedUser: false,
-    includeNotQueueDefined: true,
-    tags: []
+    includeNotQueueDefined: true
     // date: new Date(),
   }
 
@@ -133,9 +132,7 @@ const checkTicketFilter = (ticket) => {
 
   // verificar se há filtro de tags ativo
   if (filtros.tags && filtros.tags.length > 0) {
-    console.log('Verificando tags do ticket:', ticket?.contact?.tags)
-    console.log('Tags do filtro:', filtros.tags)
-    const ticketTags = ticket?.contact?.tags?.map(t => t.id) || []
+    const ticketTags = ticket.contact?.tags?.map(t => t.id) || []
     const hasMatchingTag = filtros.tags.some(tagId => ticketTags.includes(tagId))
     if (!hasMatchingTag) {
       console.log('Ticket não possui as tags filtradas', filtros.tags, ticketTags)

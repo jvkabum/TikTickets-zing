@@ -97,7 +97,7 @@ export default {
         { name: 'tag', label: 'Etiqueta', field: 'tag', align: 'left' },
         { name: 'color', label: 'Cor', field: 'color', align: 'center' },
         { name: 'isActive', label: 'Ativo', field: 'isActive', align: 'center' },
-        { name: 'autoTag', label: 'Auto Tag', field: 'autoTag', align: 'center' },
+        { name: 'autoTag', label: 'Auto Tag', field: 'autoTag', align: 'center' }, // Nova coluna
         { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
       ]
     }
