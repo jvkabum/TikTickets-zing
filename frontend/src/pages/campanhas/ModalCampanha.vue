@@ -75,6 +75,19 @@
             label="Delay"
             error-message="Obrigatório"
           />
+          <q-select
+            outlined
+            dense
+            rounded
+            label="Status"
+            v-model="campanha.status"
+            :options="[
+              { label: 'Pendente', value: 'pending' },
+              { label: 'Programada', value: 'scheduled' }
+            ]"
+            :rules="[val => !!val || 'O status é obrigatório']"
+            style="width: 200px"
+          />
           <q-file
             dense
             rounded

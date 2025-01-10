@@ -122,6 +122,9 @@
 import { CancelarCampanha, DeletarCampanha, IniciarCampanha, ListarCampanhas } from 'src/service/campanhas'
 import ModalCampanha from './ModalCampanha'
 import { format, parseISO, startOfDay } from 'date-fns'
+import { socketIO } from 'src/utils/socket'
+const socket = socketIO()
+const usuario = JSON.parse(localStorage.getItem('usuario'))
 
 export default {
   name: 'Campanhas',
@@ -188,8 +191,8 @@ export default {
       }
       this.campanhaEdicao = {
         ...campanha,
-        start: campanha.start, // format(parseISO(campanha.start), 'yyyy-MM-dd'),
-        end: campanha.start // format(parseISO(campanha.start), 'yyyy-MM-dd')
+        start: campanha.start,
+        end: campanha.start
       }
       this.modalCampanha = true
     },
@@ -276,11 +279,25 @@ export default {
       }).catch(err => {
         this.$notificarErro('Não foi possível iniciar a campanha.', err)
       })
+    },
+    socketInit () {
+      socket.on(`${usuario.tenantId}:campaign`, data => {
+        if (data.action === 'update') {
+          const idx = this.campanhas.findIndex(c => c.id === data.campaign.id)
+          if (idx !== -1) {
+            this.campanhas[idx] = data.campaign
+          }
+        }
+      })
     }
   },
   mounted () {
     this.userProfile = localStorage.getItem('profile')
     this.listarCampanhas()
+    this.socketInit()
+  },
+  beforeDestroy () {
+    socket.off(`${usuario.tenantId}:campaign`)
   }
 }
 
