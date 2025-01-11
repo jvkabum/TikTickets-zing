@@ -1,7 +1,7 @@
 #!/bin/bash
-echo  "Updating FlowDeskPro, aguarde."
+echo  "Updating WhapichatPro, aguarde."
 cd  ~
-cd flowdeskpro
+cd Whapichatpro
 git checkout master
 git pull
 cd backend
@@ -11,7 +11,7 @@ npx sequelize db:migrate
 npx sequelize db:seed
 pm2 restart all
 cd  ~
-cd flowdeskpro
+cd Whapichatpro
 cd frontend
 npm install --force
 export NODE_OPTIONS=--openssl-legacy-provider

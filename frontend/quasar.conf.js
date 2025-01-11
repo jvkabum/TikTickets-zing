@@ -127,8 +127,8 @@ module.exports = function (ctx) {
       workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
       workboxOptions: {maximumFileSizeToCacheInBytes: 5000000,}, // only for GenerateSW
       manifest: {
-        name: 'FlowDeskPro',
-        short_name: 'FlowDeskPro',
+        name: 'WhapichatPro',
+        short_name: 'WhapichatPro',
         description: 'Bot Multi-atendimento para whatsapp',
         display: 'standalone',
         orientation: 'portrait',
@@ -193,7 +193,7 @@ module.exports = function (ctx) {
 
       builder: {
         // https://www.electron.build/configuration/configuration
-        appId: 'FlowDeskPro'
+        appId: 'WhapichatPro'
       },
 
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration

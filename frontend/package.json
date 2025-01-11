@@ -1,20 +1,20 @@
 {
-  "name": "izing-flow",
+  "name": "Whapichat",
   "version": "2.7.0",
   "description": "Bot Multiatendimento, multicanais e multiempresas.",
-  "productName": "izingFlow",
-  "author": "Durans/FlowDeskPro/TiOKaBuM",
+  "productName": "Whapichat",
+  "author": "Durans/WhapichatPro/TiOKaBuM",
   "private": false,
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jvkabum/Izingflow"
+    "url": "https://github.com/jvkabum/Whapichat"
   },
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
     "test": "echo \"No test specified\" && exit 0",
-    "start": "pm2 start server.js --name FlowDeskPro-frontend",
-    "stop": "pm2 stop server.js --name FlowDeskPro-frontend",
+    "start": "pm2 start server.js --name WhapichatPro-frontend",
+    "stop": "pm2 stop server.js --name WhapichatPro-frontend",
     "build": "export NODE_OPTIONS=--openssl-legacy-provider && npx quasar build -P -m pwa"
   },
   "dependencies": {

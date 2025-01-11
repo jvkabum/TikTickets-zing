@@ -1,7 +1,7 @@
 module.exports = [
   {
     script: "dist/server.js",
-    name: "flowdeskpro-backend",
+    name: "Whapichatpro-backend",
     exec_mode: "cluster",
     cron_restart: "00 00 * * *",
     instances: 1,
