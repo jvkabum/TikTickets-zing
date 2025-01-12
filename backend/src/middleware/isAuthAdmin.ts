@@ -1,74 +1,57 @@
-/* eslint-disable no-unused-vars */
-import { verify } from "jsonwebtoken";
-import { Request, Response, NextFunction } from "express";
+import { verify } from "jsonwebtoken"; // Importa a função verify do jsonwebtoken para validar tokens.
+import { Request, Response, NextFunction } from "express"; // Importa tipos para requisição, resposta e função next do Express.
 
-import AppError from "../errors/AppError";
-import authConfig from "../config/auth";
-import User from "../models/User";
+import AppError from "../errors/AppError"; // Importa a classe de tratamento de erros personalizada.
+import authConfig from "../config/auth"; // Importa a configuração de autenticação.
+import User from "../models/User"; // Importa o modelo de Usuário para operações no banco de dados.
 
-// ====================
-// Definição da Interface
-// ====================
-
-// Interface que define a estrutura do payload do token
-interface TokenPayload {
-  id: string; // ID do usuário
-  username: string; // Nome de usuário
-  profile: string; // Perfil do usuário
-  tenantId: number; // ID do inquilino
-  iat: number; // Timestamp de quando o token foi emitido
-  exp: number; // Timestamp de quando o token expira
+interface TokenPayload { // Define a estrutura do payload do token.
+  id: string; // ID do usuário.
+  username: string; // Nome de usuário.
+  profile: string; // Tipo de perfil do usuário.
+  tenantId: number; // ID do inquilino associado ao usuário.
+  iat: number; // Timestamp de emissão.
+  exp: number; // Timestamp de expiração.
 }
 
-// Middleware que verifica se o usuário tem permissões de administrador
-// Ele valida o token JWT e verifica se o email do usuário pertence ao domínio admin
+// Função middleware para verificar se o usuário é um administrador.
 const isAuthAdmin = async (req: Request, res: Response, next: NextFunction) => {
-  // Busca o token de autorização do cabeçalho
-  const authHeader = req.headers.authorization;
-  // Busca o domínio admin das variáveis de ambiente
-  const adminDomain = process.env.ADMIN_DOMAIN;
+  const authHeader = req.headers.authorization; // Obtém o cabeçalho de autorização da requisição.
+  const adminDomain = process.env.ADMIN_DOMAIN; // Obtém o domínio do administrador das variáveis de ambiente.
 
-  // Verifica se o token existe, caso contrário retorna erro
-  // Isso é necessário pois todas as rotas admin precisam de autenticação
+  // Verifica se o cabeçalho de autorização foi fornecido.
   if (!authHeader) {
-    throw new AppError("Token was not provided.", 403); // Lança um erro se o token não estiver presente
+    throw new AppError("Token não foi fornecido.", 403); // Lança um erro se nenhum token for fornecido.
   }
-
-  // Verifica se existe um domínio admin configurado
-  // Sem essa configuração não é possível validar permissões admin
+  // Verifica se o domínio do administrador está definido.
   if (!adminDomain) {
-    throw new AppError("Not exists admin domains defined.", 403); // Lança um erro se o domínio admin não estiver definido
+    throw new AppError("Não existem domínios de administrador definidos.", 403); // Lança um erro se nenhum domínio de administrador estiver definido.
   }
 
-  // Extrai o token do cabeçalho Bearer
-  const [, token] = authHeader.split(" ");
+  const [, token] = authHeader.split(" "); // Extrai o token do cabeçalho de autorização.
 
   try {
-    // Decodifica o token e extrai as informações do usuário
-    const decoded = verify(token, authConfig.secret); // Verifica a validade do token usando a chave secreta
-    const { id, profile, tenantId } = decoded as TokenPayload; // Desestrutura os dados do token
-
-    // Busca o usuário no banco de dados para verificar o email
-    const user = await User.findByPk(id); // Busca o usuário pelo ID
-
-    // Verifica se o usuário existe e se seu email pertence ao domínio admin
-    // Caso contrário, significa que não tem permissão de administrador
-    if (!user || user.email.indexOf(adminDomain) === -1) { // Corrigido para verificar se o domínio está presente
-      throw new AppError("Not admin permission", 403); // Lança um erro se o usuário não for administrador
+    // Verifica o token usando o segredo da authConfig.
+    const decoded = verify(token, authConfig.secret);
+    const { id, profile, tenantId } = decoded as TokenPayload; // Desestrutura o payload do token decodificado.
+    const user = await User.findByPk(id); // Encontra o usuário no banco de dados pelo ID.
+    
+    // Verifica se o usuário existe e se seu e-mail corresponde ao domínio do administrador.
+    if (!user || user.email.indexOf(adminDomain) === 1) {
+      throw new AppError("Sem permissão de administrador", 403); // Lança um erro se o usuário não for um administrador.
     }
 
-    // Anexa os dados do usuário à requisição para uso posterior
+    // Anexa informações do usuário ao objeto de requisição para uso posterior.
     req.user = {
       id,
       profile,
       tenantId
     };
   } catch (err) {
-    throw new AppError("Invalid token or not Admin", 403); // Lança um erro se o token for inválido ou se não for administrador
+    throw new AppError("Token inválido ou não é Administrador", 403); // Lança um erro se o token for inválido ou o usuário não for um administrador.
   }
 
-  // Se passou por todas as verificações, permite o acesso
-  return next(); // Chama o próximo middleware
+  return next(); // Chama a próxima função middleware se o usuário estiver autenticado como administrador.
 };
 
-export default isAuthAdmin;
+export default isAuthAdmin; // Exporta a função middleware isAuthAdmin.
