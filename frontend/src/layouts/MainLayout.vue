@@ -362,8 +362,8 @@ const objMenuAdmin = [
   },
   {
     title: 'API',
-    caption: 'Integração sistemas externos',
     icon: 'mdi-api', // Ícone mais moderno para API
+    icon: 'mdi-call-split',
     routeName: 'api-service'
   }
 ]

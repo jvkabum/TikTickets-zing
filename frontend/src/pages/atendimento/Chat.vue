@@ -43,7 +43,7 @@
         :replyingMessage.sync="replyingMessage"
         :mensagens="cMessages"
         v-if="cMessages.length && ticketFocado.id"
-        @mensagem-chat:encaminhar-mensagem="abrirModalEncaminharMensagem" :ativarMultiEncaminhamento.sync="ativarMultiEncaminhamento" :mensagensParaEncaminhar.sync="mensagensParaEncaminhar" />
+        @mensagem-chat:encaminhar-mensagem="abrirModalEncaminharMensagem":ativarMultiEncaminhamento.sync="ativarMultiEncaminhamento" :mensagensParaEncaminhar.sync="mensagensParaEncaminhar" />
         <!-- Marcador para rolagem até o início da lista de mensagens -->
       <div id="inicioListaMensagensChat"></div>
     </q-scroll-area>
@@ -54,7 +54,7 @@
         'full-width text-center': $q.screen.xs
       }"
       v-if="!ticketFocado.id">
-
+      
       <q-icon
         style="margin-left: 30vw"
         size="6em"

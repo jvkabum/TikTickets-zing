@@ -69,17 +69,7 @@
 
             </q-list>
           </q-btn-dropdown>
-        </q-tooltip>
-          </q-btn>
-          <q-btn flat class=" bg-padrao btn-rounded" icon="mdi-book-account-outline"
-            @click="$q.screen.lt.md ? modalNovoTicket = true : $router.push({ name: 'chat-contatos' })">
-            <q-tooltip content-class="bg-padrao text-grey-9 text-bold">
-              Contatos
-            </q-tooltip>
-          </q-btn>
-        </q-toolbar>
-        <!-- fim dos icones rapidos -->
-          <!-- <q-space /> -->
+          <q-space />
           <q-btn
             color="black"
             class="btn-rounded"
