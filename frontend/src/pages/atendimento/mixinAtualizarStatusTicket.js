@@ -85,7 +85,8 @@ export default {
         persistent: true
       }).onOk(() => {
         this.loading = true
-        AtualizarStatusTicket(ticketId, status, userId)
+        const userIdToUpdate = status === 'pending' ? null : userId
+        AtualizarStatusTicket(ticketId, status, userIdToUpdate)
           .then(res => {
             this.loading = false
             this.$q.notify({
