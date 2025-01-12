@@ -13,7 +13,7 @@
           round
           @click="leftDrawerOpen = !leftDrawerOpen"
           aria-label="Menu"
-          icon="menu"
+          icon="mdi-menu"
         >
           <q-tooltip>Menu</q-tooltip>
         </q-btn>
@@ -42,7 +42,7 @@
             dense
             flat
             color="grey-8"
-            icon="notifications"
+            icon="mdi-bell-outline"
           >
             <q-badge
               color="red"
@@ -275,20 +275,20 @@ const objMenu = [
   {
     title: 'Painel de Controle',
     caption: '',
-    icon: 'mdi-home',
+    icon: 'mdi-view-dashboard', // Ícone mais moderno para Dashboard
     routeName: 'home-dashboard'
   },
 
   {
-    title: 'Chat',
+    title: 'Atendimento',
     caption: 'Lista de atendimentos',
-    icon: 'mdi-whatsapp',
+    icon: 'mdi-headphones', // Ícone mais moderno para Atendimentos
     routeName: 'atendimento'
   },
   {
     title: 'Contatos',
     caption: 'Lista de contatos',
-    icon: 'mdi-contacts-outline',
+    icon: 'mdi-account-multiple', // Ícone mais moderno para Contatos
     routeName: 'contatos'
   }
 ]
@@ -297,72 +297,72 @@ const objMenuAdmin = [
   {
     title: 'Conexões',
     caption: 'Canais de Comunicação',
-    icon: 'mdi-cellphone-wireless',
+    icon: 'mdi-connection', // Ícone mais moderno para Canais
     routeName: 'sessoes'
   },
   {
     title: 'Painel Atendimentos',
     caption: 'Visão geral dos atendimentos',
-    icon: 'mdi-view-dashboard-variant',
+    icon: 'mdi-monitor-dashboard', // Ícone mais moderno para Painel Atendimentos
     routeName: 'painel-atendimentos'
   },
   {
     title: 'Relatórios',
     caption: 'Relatórios gerais',
-    icon: 'mdi-file-chart',
+    icon: 'mdi-chart-bar', // Ícone mais moderno para Relatórios
     routeName: 'relatorios'
   },
   {
     title: 'Usuários ',
     caption: 'Admin de usuários',
-    icon: 'mdi-account-group',
+    icon: 'mdi-account-group', // Ícone mais moderno para Usuários
     routeName: 'usuarios'
   },
   {
     title: 'Filas',
     caption: 'Cadastro de Filas',
-    icon: 'mdi-arrow-decision-outline',
+    icon: 'mdi-playlist-edit', // Ícone mais moderno para Filas
     routeName: 'filas'
   },
   {
     title: 'Mensagens Rápidas',
     caption: 'Mensagens pré-definidas',
-    icon: 'mdi-reply-all-outline',
+    icon: 'mdi-message-reply-text', // Ícone mais moderno para Mensagens Rápidas
     routeName: 'mensagens-rapidas'
   },
   {
     title: 'Chatbot',
     caption: 'Robô de atendimento',
-    icon: 'mdi-robot',
+    icon: 'mdi-robot-outline', // Ícone mais moderno para Chatbot
     routeName: 'chat-flow'
   },
   {
     title: 'Etiquetas',
     caption: 'Cadastro de etiquetas',
-    icon: 'mdi-tag-text',
+    icon: 'mdi-tag', // Ícone mais moderno para Etiquetas
     routeName: 'etiquetas'
   },
   {
     title: 'Horário de Atendimento',
     caption: 'Horário de funcionamento',
-    icon: 'mdi-calendar-clock',
+    icon: 'mdi-clock-time-eight-outline', // Ícone mais moderno para Horário de Atendimento
     routeName: 'horarioAtendimento'
   },
   {
     title: 'Configurações',
     caption: 'Configurações gerais',
-    icon: 'mdi-cog',
+    icon: 'mdi-cog-outline', // Ícone mais moderno para Configurações
     routeName: 'configuracoes'
   },
   {
     title: 'Campanha',
     caption: 'Campanhas de envio',
-    icon: 'mdi-message-bookmark-outline',
+    icon: 'mdi-bullhorn-outline', // Ícone mais moderno para Campanha
     routeName: 'campanhas'
   },
   {
     title: 'API',
-    caption: 'Integração sistemas externos',
+    icon: 'mdi-api', // Ícone mais moderno para API
     icon: 'mdi-call-split',
     routeName: 'api-service'
   }
@@ -615,5 +615,16 @@ export default {
 <style scoped>
 .q-img__image {
   background-size: contain;
+}
+.q-drawer {
+  transition: transform 0.3s ease;
+}
+.q-list .q-item {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.q-list .q-item:hover {
+  background-color: transparent;
+  color: darkgreen;
 }
 </style>
