@@ -54,7 +54,6 @@
         <q-space />
         <div class="q-gutter-xs q-pr-sm"
           v-if="Value(cticket.contact, 'name')">
-          <--! início dos botões oculto -->
           <template v-if="!$q.screen.xs">
       <q-btn @click="sairConversa" flat icon="mdi-exit-to-app" color="grey" class="bg-padrao btn-rounded">
         <q-tooltip content-class="bg-grey text-bold">
