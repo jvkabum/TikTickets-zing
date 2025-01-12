@@ -11,7 +11,8 @@ const isValidMsg = (msg: WbotMessage): boolean => {
     msg.type === "document" ||
     msg.type === "vcard" ||
     msg.type === "sticker" ||
-	msg.type === "location"
+    msg.message?.documentWithCaptionMessage?.message?.documentMessage || // mensagem com legenda
+	  msg.type === "location"
   )
     return true;
   return false;
