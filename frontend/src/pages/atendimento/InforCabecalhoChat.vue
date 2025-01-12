@@ -55,6 +55,22 @@
         <div class="q-gutter-xs q-pr-sm"
           v-if="Value(cticket.contact, 'name')">
           <template v-if="!$q.screen.xs">
+            <q-btn @click="sairConversa" flat icon="mdi-exit-to-app" color="grey"
+                class="bg-padrao btn-rounded">
+                <q-tooltip content-class="bg-grey text-bold">
+                  Sair da Conversa
+                </q-tooltip>
+            </q-btn>
+            <q-btn @click="$emit('updateTicket:resolver')"
+             color="green"
+             flat
+             class="bg-padrao btn-rounded"
+             icon="mdi-comment-check"
+             :disable="cticket.status == 'closed'">
+            <q-tooltip content-class="bg-primary text-bold">
+              Resolver
+            </q-tooltip>
+            </q-btn>
             <q-btn @click="$emit('updateTicket:reabrir')"
               flat
               autofocus
@@ -87,18 +103,6 @@
                 Retornar Ticket para a Fila
               </q-tooltip>
             </q-btn>
-            <q-btn @click="$emit('updateTicket:resolver')"
-             color="green"
-             flat
-             class="bg-padrao btn-rounded"
-             icon="mdi-comment-check"
-             label="Resolver"
-             :disable="cticket.status == 'closed'">
-            <q-tooltip content-class="bg-primary text-bold">
-              Resolver
-            </q-tooltip>
-            </q-btn>
-
             <q-btn @click="listarFilas"
               flat
               color="primary"
@@ -405,6 +409,10 @@ export default {
       })
       this.modalTransferirTicket = false
       this.$store.commit('TICKET_FOCADO', {})
+    },
+    sairConversa () {
+    // Logic to remove focus from the chat
+      this.$emit('removeFocusFromChat')
     }
   }
 }

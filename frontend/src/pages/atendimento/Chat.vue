@@ -436,6 +436,13 @@ export default {
     scrollToBottom () {
       document.getElementById('inicioListaMensagensChat').scrollIntoView()
     },
+    // Função para sair da conversa
+    sairConversa () {
+    // Função para sair da conversa e retornar à lista de chats abertos
+    //  this.$store.commit('TICKET_FOCADO', {})
+    // },
+      this.$store.commit('TICKET_FOCADO', {})
+    },
     abrirModalEncaminharMensagem (msg) {
       this.mensagemEncaminhamento = msg
       this.modalEncaminhamentoMensagem = true
