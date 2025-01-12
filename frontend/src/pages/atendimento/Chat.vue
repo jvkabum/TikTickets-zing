@@ -1,61 +1,60 @@
 <template>
+  <!-- Container principal do chat com background personalizado -->
   <div
     class="bg-white no-scroll hide-scrollbar overflow-hidden"
     :style="style"
   >
+  <!-- Cabeçalho do chat com ações de gerenciamento de tickets:
+      - Resolver: fecha o ticket
+      - Retornar: retorna para pendente
+      - Reabrir: reabre o ticket
+      - Modal: abre agendamento -->
     <InforCabecalhoChat
       @updateTicket:resolver="atualizarStatusTicket('closed')"
       @updateTicket:retornar="atualizarStatusTicket('pending')"
       @updateTicket:reabrir="atualizarStatusTicket('open')"
       @abrir:modalAgendamentoMensagem="modalAgendamentoMensagem = true"
-    />
+      @removeFocusFromChat="sairConversa" />
 
-    <q-scroll-area
-      ref="scrollContainer"
-      class="scroll-y "
-      :style="cStyleScroll"
-      @scroll="scrollArea"
-    >
+    <!-- Área de rolagem principal que contém as mensagens -->
+    <q-scroll-area ref="scrollContainer" class="scroll-y" :style="cStyleScroll" @scroll="scrollArea">
+      <!-- Sistema de carregamento infinito de mensagens com animação -->
       <transition
         appear
         enter-active-class="animated fadeIn"
         leave-active-class="animated fadeOut"
       >
-        <infinite-loading
-          v-if="cMessages.length"
-          @infinite="onLoadMore"
-          direction="top"
-          :identificador="ticketFocado.id"
-          spinner="spiral"
-        >
+      <infinite-loading v-if="cMessages.length" @infinite="onLoadMore" direction="top"
+          :identificador="ticketFocado.id" spinner="spiral">
+          <!-- Mensagem quando não há resultados -->
           <div slot="no-results">
             <div v-if="!cMessages.length">
               Sem resultados :(
             </div>
           </div>
+          <!-- Mensagem quando não há mais mensagens para carregar -->
           <div slot="no-more">
             Nada mais a carregar :)
           </div>
         </infinite-loading>
       </transition>
+      <!-- Componente que renderiza as mensagens do chat -->
       <MensagemChat
         :replyingMessage.sync="replyingMessage"
         :mensagens="cMessages"
         v-if="cMessages.length && ticketFocado.id"
-        @mensagem-chat:encaminhar-mensagem="abrirModalEncaminharMensagem"
-        :ativarMultiEncaminhamento.sync="ativarMultiEncaminhamento"
-        :mensagensParaEncaminhar.sync="mensagensParaEncaminhar"
-      />
+        @mensagem-chat:encaminhar-mensagem="abrirModalEncaminharMensagem":ativarMultiEncaminhamento.sync="ativarMultiEncaminhamento" :mensagensParaEncaminhar.sync="mensagensParaEncaminhar" />
+        <!-- Marcador para rolagem até o início da lista de mensagens -->
       <div id="inicioListaMensagensChat"></div>
     </q-scroll-area>
-    <div
-      class="absolute-center items-center"
+   <!-- Mensagem central exibida quando nenhum ticket está selecionado -->
+   <div class="absolute-center items-center"
       :class="{
-          'row col text-center q-col-gutter-lg': !$q.screen.xs,
-          'full-width text-center': $q.screen.xs
-        }"
-      v-if="!ticketFocado.id"
-    >
+        'row col text-center q-col-gutter-lg': !$q.screen.xs,
+        'full-width text-center': $q.screen.xs
+      }"
+      v-if="!ticketFocado.id">
+      
       <q-icon
         style="margin-left: 30vw"
         size="6em"
@@ -77,6 +76,7 @@
         Selecione um ticket!
       </h1>
     </div>
+    <!-- Botão de rolagem para o final do chat -->
     <div
       v-if="cMessages.length"
       class="relative-position"
@@ -101,7 +101,7 @@
         </div>
       </transition>
     </div>
-
+    <!-- Rodapé do chat contendo área de input e funcionalidades relacionadas -->
     <q-footer class="bg-white">
       <q-separator class="bg-grey-4" />
       <q-list
