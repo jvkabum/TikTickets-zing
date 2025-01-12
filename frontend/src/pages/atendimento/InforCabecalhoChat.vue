@@ -189,6 +189,11 @@
                   Agendamento de mensagem
                 </q-tooltip>
               </q-fab-action>
+              <q-btn @click="sairConversa" flat icon="mdi-exit-to-app" color="grey" class="bg-padrao btn-rounded">
+                <q-tooltip content-class="bg-grey text-bold">
+                  Sair da Conversa
+                </q-tooltip>
+              </q-btn>
             </q-fab>
           </template>
 
