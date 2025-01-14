@@ -1,10 +1,60 @@
 import request from 'src/service/request'
 
-export function ConsultarTickets (params) {
+// Consultar tickets com paginação
+export const ConsultarTickets = async (params) => {
+  const queryParams = new URLSearchParams()
+  // Adicionar apenas parâmetros não nulos
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if (Array.isArray(value)) {
+        value.forEach(v => queryParams.append(key + '[]', v))
+      } else {
+        queryParams.append(key, value)
+      }
+    }
+  })
+
+  return request({
+    url: `/tickets?${queryParams.toString()}`,
+    method: 'get',
+    headers: {
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache'
+    }
+  })
+}
+
+// Atualizar status do ticket
+export const AtualizarStatusTicket = async (ticketId, status) => {
+  return request({
+    url: `/tickets/${ticketId}`,
+    method: 'put',
+    data: { status }
+  })
+}
+
+// Criar novo ticket
+export const CriarTicket = async (data) => {
   return request({
     url: '/tickets',
-    method: 'get',
-    params
+    method: 'post',
+    data
+  })
+}
+
+// Deletar ticket
+export const DeletarTicket = async (ticketId) => {
+  return request({
+    url: `/tickets/${ticketId}`,
+    method: 'delete'
+  })
+}
+
+// Buscar ticket por ID
+export const BuscarTicketPorId = async (ticketId) => {
+  return request({
+    url: `/tickets/${ticketId}`,
+    method: 'get'
   })
 }
 
@@ -24,17 +74,6 @@ export function ConsultarLogsTicket (params) {
   })
 }
 
-export function AtualizarStatusTicket (ticketId, status, userId) {
-  return request({
-    url: `/tickets/${ticketId}`,
-    method: 'put',
-    data: {
-      status,
-      userId
-    }
-  })
-}
-
 export function AtualizarTicket (ticketId, data) {
   return request({
     url: `/tickets/${ticketId}`,
@@ -44,10 +83,19 @@ export function AtualizarTicket (ticketId, data) {
 }
 
 export function LocalizarMensagens (params) {
+  const queryParams = new URLSearchParams()
+  if (params.ticketId) queryParams.append('ticketId', params.ticketId)
+  if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber)
+  if (params.pageSize) queryParams.append('pageSize', params.pageSize || 20)
   return request({
-    url: `/messages/${params.ticketId}`,
+    url: `/messages/${params.ticketId}?${queryParams.toString()}`,
     method: 'get',
-    params
+    headers: {
+      'Cache-Control': 'max-age=300',
+      Pragma: 'no-cache',
+      'If-None-Match': params.etag || '',
+      'X-Priority': params.pageNumber === 1 ? 'high' : 'normal'
+    }
   })
 }
 
@@ -55,7 +103,11 @@ export function EnviarMensagemTexto (ticketId, data) {
   return request({
     url: `/messages/${ticketId}`,
     method: 'post',
-    data
+    data,
+    // Não cachear requisições POST
+    headers: {
+      'Cache-Control': 'no-store'
+    }
   })
 }
 
@@ -76,14 +128,6 @@ export function DeletarMensagem (mensagem) {
     url: `/messages/${mensagem.messageId}`,
     method: 'delete',
     data: mensagem
-  })
-}
-
-export function CriarTicket (data) {
-  return request({
-    url: '/tickets',
-    method: 'post',
-    data
   })
 }
 

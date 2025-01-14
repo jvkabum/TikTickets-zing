@@ -359,6 +359,13 @@ export default {
   },
   data () {
     return {
+      megaCache: {
+        tickets: new Map(),
+        mensagens: new Map(),
+        contatos: new Map(),
+        estados: new Map(),
+        ultimaAtualizacao: new Map()
+      },
       scrollIcon: false,
       loading: false,
       exibirContato: false,
@@ -403,7 +410,95 @@ export default {
       return `min-height: calc(100vh - ${62 + add}px); height: calc(100vh - ${62 + add}px); width: 100%`
     }
   },
+  watch: {
+    'ticketFocado.id': {
+      immediate: true,
+      handler (newId) {
+        if (newId) {
+          this.carregarMensagensTicket(newId)
+        }
+      }
+    },
+    tickets: {
+      handler () {
+        this.preCarregarTodosTickets()
+      },
+      deep: true
+    }
+  },
   methods: {
+    async preCarregarTodosTickets () {
+      try {
+        const tickets = this.$store.state.tickets || []
+        if (!Array.isArray(tickets)) return
+
+        for (const ticket of tickets) {
+          if (!this.megaCache.mensagens.has(ticket.id)) {
+            const response = await this.$store.dispatch('LocalizarMensagensTicket', {
+              ticketId: ticket.id,
+              pageNumber: 1,
+              pageSize: 20
+            })
+            if (response && Array.isArray(response)) {
+              this.megaCache.mensagens.set(ticket.id, new Map(response.map(m => [m.id, m])))
+              this.megaCache.ultimaAtualizacao.set(`mensagens_${ticket.id}`, Date.now())
+              this.preCarregarMaisMensagens(ticket.id)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao pré-carregar tickets:', error)
+      }
+    },
+    async preCarregarMaisMensagens (ticketId) {
+      try {
+        const response = await this.$store.dispatch('LocalizarMensagensTicket', {
+          ticketId,
+          pageNumber: 2,
+          pageSize: 50
+        })
+        if (response && Array.isArray(response)) {
+          const cacheTicket = this.megaCache.mensagens.get(ticketId)
+          if (cacheTicket) {
+            response.forEach(msg => {
+              if (!cacheTicket.has(msg.id)) {
+                cacheTicket.set(msg.id, msg)
+              }
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao pré-carregar mais mensagens:', error)
+      }
+    },
+    async carregarMensagensTicket (ticketId) {
+      if (!ticketId) return
+      try {
+        this.loading = true
+        if (this.megaCache.mensagens.has(ticketId)) {
+          const mensagens = Array.from(this.megaCache.mensagens.get(ticketId).values())
+          this.$store.commit('SET_MESSAGES', mensagens)
+          this.loading = false
+          return
+        }
+
+        const response = await this.$store.dispatch('LocalizarMensagensTicket', {
+          ticketId,
+          pageNumber: 1,
+          pageSize: 20
+        })
+        if (response && Array.isArray(response)) {
+          this.megaCache.mensagens.set(ticketId, new Map(response.map(m => [m.id, m])))
+          this.megaCache.ultimaAtualizacao.set(`mensagens_${ticketId}`, Date.now())
+          this.$store.commit('SET_MESSAGES', response)
+          this.preCarregarMaisMensagens(ticketId)
+        }
+        this.loading = false
+      } catch (error) {
+        console.error('Erro ao carregar mensagens:', error)
+        this.loading = false
+      }
+    },
     async onResizeInputMensagem (size) {
       this.heigthInputMensagem = size.height
     },
@@ -416,9 +511,21 @@ export default {
 
       try {
         this.loading = true
-        this.params.ticketId = this.ticketFocado.id
+        const ticketId = this.ticketFocado.id
+        const cacheKey = `mensagens_${ticketId}_${this.params.pageNumber}`
+
+        if (this.cacheMensagens.has(ticketId) && this.cacheValido(cacheKey)) {
+          const mensagens = Array.from(this.cacheMensagens.get(ticketId).values())
+          this.$store.commit('SET_MESSAGES', mensagens)
+          this.loading = false
+          infiniteState.loaded()
+          return
+        }
+
+        this.params.ticketId = ticketId
         this.params.pageNumber += 1
-        await this.$store.dispatch('LocalizarMensagensTicket', this.params)
+        const resultado = await this.$store.dispatch('LocalizarMensagensTicket', this.params)
+        await this.gerenciarCacheMensagens(ticketId, resultado)
         this.loading = false
         infiniteState.loaded()
       } catch (error) {
@@ -428,10 +535,8 @@ export default {
     },
     scrollArea (e) {
       this.hideOptions = true
-      setTimeout(() => {
-        if (!e) return
-        this.scrollIcon = (e.verticalSize - (e.verticalPosition + e.verticalContainerSize)) > 2000 // e.verticalPercentage < 0.8
-      }, 200)
+      if (!e) return
+      this.scrollIcon = (e.verticalSize - (e.verticalPosition + e.verticalContainerSize)) > 2000
     },
     scrollToBottom () {
       document.getElementById('inicioListaMensagensChat').scrollIntoView()
@@ -447,25 +552,43 @@ export default {
       this.mensagemEncaminhamento = msg
       this.modalEncaminhamentoMensagem = true
     },
+    async gerenciarCacheContatos (search) {
+      const cacheKey = `contatos_${search}`
+
+      if (this.cacheContatos.has(search) && this.cacheValido(cacheKey)) {
+        return Array.from(this.cacheContatos.get(search).values())
+      }
+
+      const { data } = await ListarContatos({ searchParam: search })
+
+      if (data.contacts.length) {
+        this.cacheContatos.set(search, new Map(data.contacts.map(c => [c.id, c])))
+        this.ultimaAtualizacao.set(cacheKey, Date.now())
+      }
+
+      return data.contacts
+    },
     async localizarContato (search, update, abort) {
       if (search.length < 2) {
         if (this.contatos.length) update(() => { this.contatos = [...this.contatos] })
         abort()
         return
       }
-      this.loading = true
-      const { data } = await ListarContatos({
-        searchParam: search
-      })
 
-      update(() => {
-        if (data.contacts.length) {
-          this.contatos = data.contacts
-        } else {
-          this.contatos = [{}]
-          // this.$refs.selectAutoCompleteContato.toggleOption({}, true)
-        }
-      })
+      this.loading = true
+      try {
+        const contatosCached = await this.gerenciarCacheContatos(search)
+        update(() => {
+          if (contatosCached.length) {
+            this.contatos = contatosCached
+          } else {
+            this.contatos = [{}]
+          }
+        })
+      } catch (error) {
+        console.error('Erro ao buscar contatos:', error)
+        this.contatos = [{}]
+      }
       this.loading = false
     },
     cancelarMultiEncaminhamento () {
@@ -486,11 +609,63 @@ export default {
         .catch(e => {
           this.$notificarErro('Não foi possível encaminhar mensagem. Tente novamente em alguns minutos!', e)
         })
+    },
+    cacheValido (chave, tempoLimite = 5 * 60 * 1000) {
+      const ultimaAtualizacao = this.ultimaAtualizacao.get(chave)
+      return ultimaAtualizacao && (Date.now() - ultimaAtualizacao) < tempoLimite
+    },
+    async gerenciarCacheMensagens (ticketId, mensagens) {
+      if (!this.cacheMensagens.has(ticketId)) {
+        this.cacheMensagens.set(ticketId, new Map())
+      }
+      const cacheTicket = this.cacheMensagens.get(ticketId)
+      mensagens.forEach(msg => {
+        if (!cacheTicket.has(msg.id)) {
+          cacheTicket.set(msg.id, msg)
+        }
+      })
+      this.ultimaAtualizacao.set(`mensagens_${ticketId}`, Date.now())
+      this.$nextTick(() => {
+        this.scrollToBottom()
+      })
+    },
+    limparCacheAntigo (tempoLimite = 30 * 60 * 1000) {
+      const agora = Date.now()
+      this.ultimaAtualizacao.forEach((timestamp, chave) => {
+        if (agora - timestamp > tempoLimite) {
+          const [tipo, id] = chave.split('_')
+          switch (tipo) {
+            case 'mensagens':
+              this.cacheMensagens.delete(id)
+              break
+            case 'contatos':
+              this.cacheContatos.delete(id)
+              break
+            case 'estados':
+              this.cacheEstados.delete(id)
+              break
+          }
+          this.ultimaAtualizacao.delete(chave)
+        }
+      })
     }
   },
   created () {
     this.$root.$on('scrollToBottomMessageChat', this.scrollToBottom)
     this.socketTicket()
+    this.preCarregarTodosTickets()
+    setInterval(() => {
+      const agora = Date.now()
+      this.megaCache.ultimaAtualizacao.forEach((timestamp, chave) => {
+        if (agora - timestamp > 30 * 60 * 1000) {
+          const [tipo, id] = chave.split('_')
+          if (this.megaCache[tipo]) {
+            this.megaCache[tipo].delete(id)
+          }
+          this.megaCache.ultimaAtualizacao.delete(chave)
+        }
+      })
+    }, 15 * 60 * 1000)
   },
   mounted () {
     this.socketMessagesList()

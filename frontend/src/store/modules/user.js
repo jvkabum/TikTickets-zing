@@ -1,6 +1,7 @@
 import { RealizarLogin } from '../../service/login'
 import { Notify, Dark } from 'quasar'
 import { socketIO } from 'src/utils/socket'
+import axios from 'axios'
 
 const socket = socketIO()
 
@@ -21,7 +22,9 @@ const user = {
   state: {
     token: null,
     isAdmin: false,
-    isSuporte: false
+    isSuporte: false,
+    profilePicCache: new Map(),
+    whatsappPicCache: new Map()
   },
   mutations: {
     SET_IS_SUPORTE (state, payload) {
@@ -36,6 +39,15 @@ const user = {
     },
     SET_IS_ADMIN (state, payload) {
       state.isAdmin = !!((state.isSuporte || payload.profile === 'admin'))
+    },
+    CACHE_PROFILE_PIC (state, { whatsappId, profilePicUrl }) {
+      state.profilePicCache.set(whatsappId, profilePicUrl)
+    },
+    CACHE_WHATSAPP_PIC (state, { url, cachedUrl }) {
+      state.whatsappPicCache.set(url, {
+        url: cachedUrl,
+        timestamp: Date.now()
+      })
     }
   },
   actions: {
@@ -85,6 +97,43 @@ const user = {
         }
       } catch (error) {
         console.error(error, error.data.error === 'ERROR_NO_PERMISSION_API_ADMIN')
+      }
+    },
+    async fetchProfilePicUrl ({ commit, state }, whatsappId) {
+      if (state.profilePicCache.has(whatsappId)) {
+        return state.profilePicCache.get(whatsappId)
+      }
+
+      try {
+        const response = await axios.get(`/whatsapp/${whatsappId}/profile-pic`)
+        const profilePicUrl = response.data.profilePicUrl
+
+        if (profilePicUrl && profilePicUrl.includes('pps.whatsapp.net')) {
+          const cachedPic = state.whatsappPicCache.get(profilePicUrl)
+          if (cachedPic && (Date.now() - cachedPic.timestamp) < 24 * 60 * 60 * 1000) {
+            commit('CACHE_PROFILE_PIC', { whatsappId, profilePicUrl: cachedPic.url })
+            return cachedPic.url
+          }
+
+          try {
+            const imgResponse = await axios.get(profilePicUrl, { responseType: 'arraybuffer' })
+            const base64 = Buffer.from(imgResponse.data, 'binary').toString('base64')
+            const cachedUrl = `data:${imgResponse.headers['content-type']};base64,${base64}`
+            commit('CACHE_WHATSAPP_PIC', { url: profilePicUrl, cachedUrl })
+            commit('CACHE_PROFILE_PIC', { whatsappId, profilePicUrl: cachedUrl })
+            return cachedUrl
+          } catch (error) {
+            console.error('Erro ao fazer cache da imagem do WhatsApp:', error)
+            commit('CACHE_PROFILE_PIC', { whatsappId, profilePicUrl })
+            return profilePicUrl
+          }
+        }
+
+        commit('CACHE_PROFILE_PIC', { whatsappId, profilePicUrl })
+        return profilePicUrl
+      } catch (error) {
+        console.error('Erro ao buscar foto de perfil:', error)
+        return null
       }
     }
   }

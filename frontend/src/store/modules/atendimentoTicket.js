@@ -153,7 +153,8 @@ const atendimentoTicket = {
   state: {
     chatTicketDisponivel: false,
     tickets: [],
-    ticketsLocalizadosBusca: [],
+    ticketsCache: new Map(),
+    mensagensCache: new Map(), // Cache para mensagens
     ticketFocado: {
       contacts: {
         tags: [],
@@ -172,20 +173,32 @@ const atendimentoTicket = {
     },
     // OK
     LOAD_TICKETS (state, payload) {
-      const newTickets = orderTickets(payload)
-      newTickets.forEach(ticket => {
-        const ticketIndex = state.tickets.findIndex(t => t.id === ticket.id)
-        if (ticketIndex !== -1) {
-          state.tickets[ticketIndex] = ticket
-          if (ticket.unreadMessages > 0) {
-            state.tickets.unshift(state.tickets.splice(ticketIndex, 1)[0])
-          }
-        } else {
-          if (checkTicketFilter(ticket)) {
-            state.tickets.push(ticket)
+      const newTickets = []
+      // Atualizar cache e verificar tickets existentes
+      payload.forEach(ticket => {
+        if (checkTicketFilter(ticket)) {
+          // Atualizar cache
+          state.ticketsCache.set(ticket.id, ticket)
+          const existingIndex = state.tickets.findIndex(t => t.id === ticket.id)
+          if (existingIndex !== -1) {
+            // Atualizar ticket existente
+            if (ticket.unreadMessages > 0) {
+              // Mover para o topo se tiver mensagens não lidas
+              newTickets.push(ticket)
+            } else {
+              Object.assign(state.tickets[existingIndex], ticket)
+            }
+          } else {
+            // Adicionar novo ticket
+            newTickets.push(ticket)
           }
         }
       })
+
+      // Filtrar tickets existentes removendo os que foram movidos para o topo
+      const existingTickets = state.tickets.filter(t => !newTickets.find(nt => nt.id === t.id))
+      // Combinar e ordenar tickets
+      state.tickets = orderTickets([...newTickets, ...existingTickets])
     },
     RESET_TICKETS (state) {
       state.hasMore = true
@@ -203,49 +216,49 @@ const atendimentoTicket = {
     },
     // OK
     UPDATE_TICKET (state, payload) {
+      // Atualizar cache
+      state.ticketsCache.set(payload.id, payload)
       const ticketIndex = state.tickets.findIndex(t => t.id === payload.id)
       if (ticketIndex !== -1) {
-        // atualizar ticket se encontrado
+        // Atualizar ticket existente
         const tickets = [...state.tickets]
         tickets[ticketIndex] = {
           ...tickets[ticketIndex],
           ...payload,
-          // ajustar informações por conta das mudanças no front
           username: payload?.user?.name || payload?.username || tickets[ticketIndex].username,
           profilePicUrl: payload?.contact?.profilePicUrl || payload?.profilePicUrl || tickets[ticketIndex].profilePicUrl,
           name: payload?.contact?.name || payload?.name || tickets[ticketIndex].name
         }
         state.tickets = tickets.filter(t => checkTicketFilter(t))
 
-        // atualizar se ticket focado
-        if (state.ticketFocado.id == payload.id) {
+        // Atualizar ticket focado
+        if (state.ticketFocado.id === payload.id) {
           state.ticketFocado = {
             ...state.ticketFocado,
             ...payload
-            // conservar as informações do contato
-            // contact: state.ticketFocado.contact
           }
         }
       } else {
+        // Adicionar novo ticket
         const tickets = [...state.tickets]
-        tickets.unshift({
+        const newTicket = {
           ...payload,
-          // ajustar informações por conta das mudanças no front
           username: payload?.user?.name || payload?.username,
           profilePicUrl: payload?.contact?.profilePicUrl || payload?.profilePicUrl,
           name: payload?.contact?.name || payload?.name
-        })
+        }
+        tickets.unshift(newTicket)
         state.tickets = tickets.filter(t => checkTicketFilter(t))
       }
     },
 
     DELETE_TICKET (state, payload) {
-      const ticketId = payload
-      const ticketIndex = state.tickets.findIndex(t => t.id === ticketId)
+      // Remover do cache
+      state.ticketsCache.delete(payload)
+      const ticketIndex = state.tickets.findIndex(t => t.id === payload)
       if (ticketIndex !== -1) {
         state.tickets.splice(ticketIndex, 1)
       }
-      // return state.tickets
     },
 
     // UPDATE_TICKET_MESSAGES_COUNT (state, payload) {
@@ -290,7 +303,12 @@ const atendimentoTicket = {
     LOAD_INITIAL_MESSAGES (state, payload) {
       const { messages, messagesOffLine } = payload
       state.mensagens = []
-      const newMessages = orderMessages([...messages, ...messagesOffLine])
+      // Atualizar cache de mensagens
+      const allMessages = [...messages, ...messagesOffLine]
+      allMessages.forEach(msg => {
+        state.mensagensCache.set(msg.id, msg)
+      })
+      const newMessages = orderMessages(allMessages)
       state.mensagens = newMessages
     },
     // OK
@@ -298,11 +316,12 @@ const atendimentoTicket = {
       const { messages, messagesOffLine } = payload
       const arrayMessages = [...messages, ...messagesOffLine]
       const newMessages = []
-      arrayMessages.forEach((message, index) => {
+      // Verificar cache e atualizar mensagens
+      arrayMessages.forEach(message => {
+        state.mensagensCache.set(message.id, message)
         const messageIndex = state.mensagens.findIndex(m => m.id === message.id)
         if (messageIndex !== -1) {
           state.mensagens[messageIndex] = message
-          arrayMessages.splice(index, 1)
         } else {
           newMessages.push(message)
         }
@@ -312,8 +331,9 @@ const atendimentoTicket = {
     },
     // OK
     UPDATE_MESSAGES (state, payload) {
-      // Se ticket não for o focado, não atualizar.
       if (state.ticketFocado.id === payload.ticket.id) {
+        // Atualizar cache
+        state.mensagensCache.set(payload.id, payload)
         const messageIndex = state.mensagens.findIndex(m => m.id === payload.id)
         const mensagens = [...state.mensagens]
         if (messageIndex !== -1) {
@@ -329,7 +349,7 @@ const atendimentoTicket = {
           }
         }
       }
-
+      // Atualizar ticket
       const TicketIndexUpdate = state.tickets.findIndex(t => t.id == payload.ticket.id)
       if (TicketIndexUpdate !== -1) {
         const tickets = [...state.tickets]
@@ -391,19 +411,33 @@ const atendimentoTicket = {
     // OK
     RESET_MESSAGE (state) {
       state.mensagens = []
-      // return state.mensagens
+      state.mensagensCache.clear() // Limpar cache ao resetar
     }
   },
   actions: {
-    async LocalizarMensagensTicket ({ commit, dispatch }, params) {
-      const mensagens = await LocalizarMensagens(params)
-      // commit('TICKET_FOCADO', mensagens.data.ticket)
-      commit('SET_HAS_MORE', mensagens.data.hasMore)
-      // commit('UPDATE_TICKET_CONTACT', mensagens.data.ticket.contact)
-      if (params.pageNumber === 1) {
-        commit('LOAD_INITIAL_MESSAGES', mensagens.data)
-      } else {
-        commit('LOAD_MORE_MESSAGES', mensagens.data)
+    async LocalizarMensagensTicket ({ commit, state }, params) {
+      try {
+        // Verificar cache primeiro
+        if (params.pageNumber === 1) {
+          const cachedMessages = Array.from(state.mensagensCache.values())
+          if (cachedMessages.length > 0) {
+            commit('LOAD_INITIAL_MESSAGES', {
+              messages: cachedMessages,
+              messagesOffLine: []
+            })
+            return
+          }
+        }
+        const mensagens = await LocalizarMensagens(params)
+        commit('SET_HAS_MORE', mensagens.data.hasMore)
+        if (params.pageNumber === 1) {
+          commit('LOAD_INITIAL_MESSAGES', mensagens.data)
+        } else {
+          commit('LOAD_MORE_MESSAGES', mensagens.data)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar mensagens:', error)
+        throw error
       }
     },
     async AbrirChatMensagens ({ commit, dispatch }, data) {
