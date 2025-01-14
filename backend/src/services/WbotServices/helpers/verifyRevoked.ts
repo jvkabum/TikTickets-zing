@@ -2,6 +2,7 @@ import { Message as WbotMessage } from "whatsapp-web.js";
 import Message from "../../../models/Message";
 import Ticket from "../../../models/Ticket";
 import socketEmit from "../../../helpers/socketEmit";
+import { logger } from "../../../utils/logger";
 
 const verifyRevoked = async (msgBody?: string): Promise<void> => {
   await new Promise(r => setTimeout(r, 500));
@@ -52,11 +53,34 @@ const verifyRevoked = async (msgBody?: string): Promise<void> => {
       if (!msgIsDeleted) {
         return;
       }
-	    const { ticket } = message;
-	    socketEmit({
-        tenantId: ticket.tenantId,
+	     // Busca a mensagem atualizada com todas as relações
+       const updatedMessage = await Message.findByPk(message.id, {
+        include: [
+          {
+            model: Ticket,
+            as: "ticket",
+            attributes: ["id", "tenantId", "status"],
+            required: true
+          },
+          {
+            model: Message,
+            as: "quotedMsg",
+            include: ["contact"]
+          }
+        ]
+      });
+  
+      if (!updatedMessage?.ticket) {
+        logger.error(`Ticket não encontrado para mensagem: ${message.id}`);
+        return;
+      }
+      socketEmit({
+        tenantId: updatedMessage.ticket.tenantId,
         type: "chat:update",
-        payload: message
+        payload: {
+          ...updatedMessage.toJSON(),
+          isRevoked: true
+        }
       });
 //socket nao funciona descobrir motivo
     }
