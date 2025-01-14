@@ -119,8 +119,7 @@
               <MensagemRespondida
                 style="max-width: 240px; max-height: 150px"
                 class="row justify-center"
-                @mensagem-respondida:focar-mensagem="f
-                                                                                                                carMensagem"
+                @mensagem-respondida:focar-mensagem="focarMensagem"
                 :mensagem="mensagem.quotedMsg"
               />
             </div>
@@ -534,13 +533,46 @@ export default {
     encaminharMensagem (mensagem) {
       this.$emit('mensagem-chat:encaminhar-mensagem', mensagem)
     },
-    deletarMensagem (mensagem) {
-      if (this.isDesactivatDelete(mensagem)) {
-        this.$notificarErro('Não foi possível apagar mensagem com mais de 5min do envio.')
+    async deletarMensagem (mensagem) {
+      // Verifica se a mensagem tem mais de 48 horas
+      const msgTime = new Date(mensagem.createdAt || mensagem.timestamp)
+      const horasPassadas = (Date.now() - msgTime.getTime()) / (1000 * 60 * 60)
+      if (horasPassadas > 48) {
+        this.$q.notify({
+          type: 'warning',
+          message: 'Não é possível apagar mensagens com mais de 48 horas do envio',
+          position: 'top',
+          timeout: 3000,
+          color: 'warning'
+        })
+        return
       }
+
+      if (mensagem.isSystem) {
+        this.$q.notify({
+          type: 'warning',
+          message: 'Não é possível apagar mensagens do sistema',
+          position: 'top',
+          timeout: 3000,
+          color: 'warning'
+        })
+        return
+      }
+
+      if (this.isDesactivatDelete(mensagem)) {
+        this.$q.notify({
+          type: 'warning',
+          message: 'Não foi possível apagar mensagem com mais de 5min do envio',
+          position: 'top',
+          timeout: 3000,
+          color: 'warning'
+        })
+        return
+      }
+
       const data = { ...mensagem }
       this.$q.dialog({
-        title: 'Atenção!! Deseja realmente deletar a mensagem? ',
+        title: 'Atenção!! Deseja realmente deletar a mensagem?',
         message: 'Mensagens antigas não serão apagadas no cliente.',
         cancel: {
           label: 'Não',
@@ -556,16 +588,32 @@ export default {
       }).onOk(() => {
         this.loading = true
         DeletarMensagem(data)
-          .then((res) => {
+          .then(() => {
             this.loading = false
             mensagem.isDeleted = true
+            this.$q.notify({
+              type: 'positive',
+              message: 'Mensagem apagada com sucesso',
+              position: 'top',
+              timeout: 2000
+            })
           })
           .catch(error => {
             this.loading = false
-            console.error(error)
-            this.$notificarErro('Não foi possível apagar a mensagem', error)
+            console.error('Erro ao deletar mensagem:', error)
+            let mensagemErro = 'Não foi possível apagar a mensagem'
+            if (error.response?.data?.error === 'ERR_DELETE_SYSTEM_MSG' ||
+                error.response?.data?.message?.includes('48 hours')) {
+              mensagemErro = 'Não é possível apagar mensagens com mais de 48 horas do envio'
+            }
+            this.$q.notify({
+              type: 'warning',
+              message: mensagemErro,
+              position: 'top',
+              timeout: 3000,
+              color: 'warning'
+            })
           })
-      }).onCancel(() => {
       })
     },
     focarMensagem (mensagem) {

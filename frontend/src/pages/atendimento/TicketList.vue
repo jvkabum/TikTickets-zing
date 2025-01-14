@@ -38,7 +38,7 @@
 
 <script>
 import ItemTicket from './ItemTicket.vue'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import { ConsultarTickets } from 'src/service/tickets'
 import { socketIO } from '../../utils/socket'
 
@@ -104,6 +104,9 @@ export default {
       'ticketFocado',
       'whatsapps'
     ]),
+    ...mapState({
+      profilePicCache: state => state.user.profilePicCache
+    }),
     cTickets () {
       return this.getTickets(this.status)
     }
@@ -262,6 +265,9 @@ export default {
           this.consultarTickets({ pageNumber: 1 })
         })
       })
+    },
+    async getProfilePic(whatsappId) {
+      return await this.$store.dispatch('fetchProfilePicUrl', whatsappId)
     }
   },
   mounted () {

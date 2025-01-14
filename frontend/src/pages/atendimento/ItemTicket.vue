@@ -257,6 +257,8 @@ import { ObterContato } from 'src/service/contatos'
 import MensagemChat from './MensagemChat.vue'
 import whatsBackground from 'src/assets/wa-background.png'
 import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
+import defaultAvatar from 'src/assets/avatar.png'
+
 export default {
   name: 'ItemTicket',
   mixins: [mixinAtualizarStatusTicket],
@@ -293,7 +295,9 @@ export default {
         open: 'primary',
         pending: 'negative',
         closed: 'positive'
-      }
+      },
+      defaultAvatar,
+      profilePicUrl: null
     }
   },
   props: {
@@ -325,6 +329,9 @@ export default {
   async mounted () {
     this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
     this.walletsDoTicket = await this.obterInformacoes(this.ticket, 'carteiras')
+    if (this.ticket.contact?.number) {
+      this.profilePicUrl = await this.$parent.getProfilePic(this.ticket.contact.number)
+    }
     this.$store.subscribe(async (mutation, state) => {
       if (mutation.type === 'UPDATE_CONTACT' && mutation.payload.id === this.ticket.contactId) {
         this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
@@ -380,6 +387,14 @@ export default {
       if (!(ticket.status !== 'pending' && (ticket.id !== this.$store.getters.ticketFocado.id || this.$route.name !== 'chat'))) return
       this.$store.commit('SET_HAS_MORE', true)
       this.$store.dispatch('AbrirChatMensagens', ticket)
+    },
+    onImageError () {
+      this.profilePicUrl = this.defaultAvatar
+    },
+    async loadProfilePic () {
+      if (this.ticket.contact?.number) {
+        this.profilePicUrl = await this.$parent.getProfilePic(this.ticket.contact.number)
+      }
     }
   },
   created () {
