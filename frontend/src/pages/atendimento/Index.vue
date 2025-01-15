@@ -21,7 +21,7 @@
       >
         <q-toolbar
           class="q-gutter-xs full-width"
-          style="height: 64px"
+          style="height: 14px"
         >
           <q-btn-dropdown
             no-caps
@@ -29,14 +29,23 @@
             class="text-bold btn-rounded"
             ripple
           >
-            <template v-slot:label>
-              <div
-                :style="{ maxWidth: $q.screen.lt.sm ? '120px' : '' }"
-                class="ellipsis"
-              >
-                {{ username }}
-              </div>
-            </template>
+          <template v-slot:label>
+  <div
+    :style="{
+      maxWidth: $q.screen.lt.sm ? '10px' : '70px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
+    }"
+    class="ellipsis"
+  >
+  <q-tooltip content-class="bg-padrao text-grey-9 text-bold">
+    Usuário: {{  username }}
+            </q-tooltip>
+    {{ username }}
+  </div>
+</template>
+
             <q-list style="min-width: 100px">
               <!-- <q-item
                 clickable
@@ -65,205 +74,64 @@
               >
                 <q-item-section>Sair</q-item-section>
               </q-item>
+              <q-item
+                clickable
+                v-close-popup
+                @click="() => $router.push({ name: 'home-dashboard' })"
+              >
+              <q-tooltip content-class="bg-padrao text-grey-9 text-bold">
+              Voltar ao menu principal
+            </q-tooltip>
+                <q-item-section>Dashborad</q-item-section>
+              </q-item>
+
               <q-separator />
 
             </q-list>
           </q-btn-dropdown>
-          <q-space />
-          <q-btn
-            color="black"
-            class="btn-rounded"
-            icon="mdi-home"
-            @click="() => $router.push({ name: 'home-dashboard' })"
-          >
-            <q-tooltip content-class="bg-padrao text-grey-9 text-bold">
-              Retornar ao menu
-            </q-tooltip>
-          </q-btn>
-        </q-toolbar>
-        <StatusWhatsapp
-          v-if="false"
-          class="q-mx-sm full-width"
-        />
-        <q-toolbar
-          v-show="toolbarSearch"
-          class="row q-gutter-sm q-py-sm items-center"
-        >
+          <!-- icoes opções -->
+        <q-toolbar v-show="toolbarSearch" class="row q-gutter-sm q-py-sm items-center">
           <q-separator class="absolute-top" />
-          <q-btn
-            :icon="!cFiltroSelecionado ? 'mdi-filter-outline' : 'mdi-filter-plus'"
-            class="btn-rounded "
-            :color="cFiltroSelecionado ? 'deep-orange-9' : 'primary'"
-          >
-            <q-menu
-              content-class="shadow-10 no-scroll"
-              square
-            >
-              <div
-                class="row q-pa-sm"
-                style="min-width: 350px; max-width: 350px"
-              >
-                <div class="q-ma-sm full-width">
-                  <div class="row items-center justify-between q-mb-md relative-position">
-                    <div class="text-h6">Filtros Avançados</div>
-                    <q-btn
-                      color="negative"
-                      icon="close"
-                      flat
-                      round
-                      v-close-popup
-                      class="absolute-top-right q-mr-xs"
-                      size="md"
-                      style="margin-top: -2px"
-                    >
-                      <q-tooltip>Fechar</q-tooltip>
-                    </q-btn>
-                  </div>
-                  <q-scroll-area style="height: 450px;">
-                    <q-toggle
-                      v-if="profile === 'admin'"
-                      class="q-ml-lg q-mb-md"
-                      v-model="pesquisaTickets.showAll"
-                      label="(Admin) - Visualizar Todos"
-                      @input="debounce(BuscarTicketFiltro(), 700)"
-                    />
-                    <q-separator class="q-mb-md" />
-                    <q-select
-                      :disable="pesquisaTickets.showAll"
-                      rounded
-                      dense
-                      outlined
-                      hide-bottom-space
-                      emit-value
-                      map-options
-                      multiple
-                      options-dense
-                      use-chips
-                      label="Filas"
-                      color="primary"
-                      v-model="pesquisaTickets.queuesIds"
-                      :options="cUserQueues"
-                      :input-debounce="700"
-                      option-value="id"
-                      option-label="queue"
-                      @input="debounce(BuscarTicketFiltro(), 700)"
-                      input-style="width: 300px; max-width: 300px;"
-                    />
+          <q-btn :icon="!cFiltroSelecionado ? 'mdi-filter-outline' : 'mdi-filter-plus'" flat
+            class="bg-padrao btn-rounded " :color="cFiltroSelecionado ? 'deep-orange-9' : 'primary'">
+            <q-menu content-class="shadow-10 no-scroll" square>
+              <div class="row q-pa-sm" style="min-width: 350px; max-width: 350px">
+                <div class="q-ma-sm">
+                  <div class="text-h6 q-mb-md">Filtros Avançados</div>
+                  <q-toggle v-if="profile === 'admin'" class="q-ml-lg" v-model="pesquisaTickets.showAll"
+                    label="(Admin) - Visualizar Todos" :class="{ 'q-mb-lg': pesquisaTickets.showAll }"
+                    @input="handleShowAllChange" />
+                  <q-separator class="q-mb-md" v-if="!pesquisaTickets.showAll" />
+                  <div v-if="!pesquisaTickets.showAll">
+                    <q-select :disable="pesquisaTickets.showAll" square dense outlined hide-bottom-space emit-value
+                      map-options multiple options-dense use-chips label="Filas" color="primary"
+                      v-model="pesquisaTickets.queuesIds" :options="cUserQueues" :input-debounce="700" option-value="id"
+                      option-label="queue" @input="debounce(BuscarTicketFiltro(), 700)"
+                      input-style="width: 300px; max-width: 300px;" />
 
-                    <q-select
-                      rounded
-                      dense
-                      outlined
-                      hide-bottom-space
-                      emit-value
-                      map-options
-                      multiple
-                      options-dense
-                      use-chips
-                      label="Tags"
-                      color="primary"
-                      v-model="pesquisaTickets.tagsIds"
-                      :options="etiquetas"
-                      :input-debounce="700"
-                      option-value="id"
-                      option-label="tag"
-                      @input="debounce(BuscarTicketFiltro(), 700)"
-                      input-style="width: 300px; max-width: 300px;"
-                      class="q-mt-sm"
-                    >
-                      <template v-slot:option="{ opt, itemProps, itemEvents }">
-                        <q-item
-                          v-bind="itemProps"
-                          v-on="itemEvents"
-                        >
-                          <q-item-section>
-                            <q-item-label>
-                              <div class="row items-center">
-                                <q-icon :style="`color: ${opt.color}`" name="mdi-pound-box-outline" size="28px" class="q-mr-sm"/>
-                                <span>{{ opt.tag }}</span>
-                              </div>
-                            </q-item-label>
-                          </q-item-section>
-                        </q-item>
-                      </template>
-                      <template v-slot:selected-item="{ opt }">
-                        <q-chip
-                          dense
-                          square
-                          :style="`border: 1px solid ${opt.color}`"
-                          text-color="primary"
-                          class="q-ma-xs"
-                        >
-                          <q-icon
-                            :style="`color: ${opt.color}`"
-                            name="mdi-pound-box-outline"
-                            size="18px"
-                            class="q-mr-xs"
-                          />
-                          {{ opt.tag }}
-                        </q-chip>
-                      </template>
-                      <template v-slot:no-option>
-                        <q-item>
-                          <q-item-section>
-                            <q-item-label class="text-negative">
-                              Nenhuma tag encontrada
-                            </q-item-label>
-                          </q-item-section>
-                        </q-item>
-                      </template>
-                    </q-select>
-
-                    <q-list
-                      dense
-                      class="q-my-md"
-                    >
-                      <q-item
-                        tag="label"
-                        v-ripple
-                      >
+                    <q-list dense class="q-my-md">
+                      <q-item tag="label" v-ripple>
                         <q-item-section avatar>
-                          <q-checkbox
-                            v-model="pesquisaTickets.status"
-                            val="open"
-                            color="primary"
-                            keep-color
-                            @input="debounce(BuscarTicketFiltro(), 700)"
-                          />
+                          <q-checkbox v-model="pesquisaTickets.status" val="open" color="primary" keep-color
+                            @input="handleFilterStatusChange" />
                         </q-item-section>
                         <q-item-section>
                           <q-item-label>Abertos</q-item-label>
                         </q-item-section>
                       </q-item>
-                      <q-item
-                        tag="label"
-                        v-ripple
-                      >
+                      <q-item tag="label" v-ripple>
                         <q-item-section avatar>
-                          <q-checkbox
-                            v-model="pesquisaTickets.status"
-                            val="pending"
-                            color="negative"
-                            keep-color
-                            @input="debounce(BuscarTicketFiltro(), 700)"
-                          />
+                          <q-checkbox v-model="pesquisaTickets.status" val="pending" color="negative" keep-color
+                            @input="handleFilterStatusChange" />
                         </q-item-section>
                         <q-item-section>
                           <q-item-label>Pendentes</q-item-label>
                         </q-item-section>
                       </q-item>
-                      <q-item
-                        tag="label"
-                        v-ripple
-                      >
+                      <q-item tag="label" v-ripple>
                         <q-item-section avatar>
-                          <q-checkbox
-                            v-model="pesquisaTickets.status"
-                            val="closed"
-                            color="positive"
-                            keep-color
-                            @input="debounce(BuscarTicketFiltro(), 700)"
-                          />
+                          <q-checkbox v-model="pesquisaTickets.status" val="closed" color="positive" keep-color
+                            @input="handleFilterStatusChange" />
                         </q-item-section>
                         <q-item-section>
                           <q-item-label>Resolvidos</q-item-label>
@@ -271,17 +139,14 @@
                       </q-item>
                     </q-list>
                     <q-separator class="q-mb-md" />
-                    <q-toggle
-                      v-model="pesquisaTickets.withUnreadMessages"
-                      label="Somente Tickets com mensagens não lidas"
-                      @input="debounce(BuscarTicketFiltro(), 700)"
-                    />
-                    <q-toggle
-                      v-model="pesquisaTickets.isNotAssignedUser"
+                    <q-toggle v-model="pesquisaTickets.withUnreadMessages" label="Somente Tickets com mensagens não lidas"
+                      @input="debounce(BuscarTicketFiltro(), 700)" />
+                    <q-toggle v-model="pesquisaTickets.isNotAssignedUser"
                       label="Somente Tickets não atribuidos (sem usuário definido)"
-                      @input="debounce(BuscarTicketFiltro(), 700)"
-                    />
-                  </q-scroll-area>
+                      @input="debounce(BuscarTicketFiltro(), 700)" />
+                  </div>
+                  <q-separator class="q-my-md" spaced v-if="!pesquisaTickets.showAll" />
+                  <q-btn class="float-right q-my-md" color="primary" label="Fechar" push v-close-popup />
                 </div>
               </div>
             </q-menu>
@@ -289,33 +154,38 @@
               Filtro Avançado
             </q-tooltip>
           </q-btn>
-          <q-input
-            v-model="pesquisaTickets.searchParam"
-            dense
-            outlined
-            rounded
-            type="search"
-            class="col-grow"
-            :debounce="700"
-            @input="BuscarTicketFiltro()"
-          >
-            <template v-slot:append>
-              <q-icon name="search" />
-            </template>
-          </q-input>
-          <q-btn
-            color="primary"
-            class="btn-rounded"
-            icon="mdi-book-account-outline"
-            @click="$q.screen.lt.md ? modalNovoTicket = true : $router.push({ name: 'chat-contatos' })"
-          >
+          <!-- botão de pesquisa suspenso -->
+          <q-btn flat class="bg-padrao btn-rounded" icon="search">
+            <q-menu content-class="shadow-10" square anchor="bottom middle" self="top middle">
+              <q-input v-model="pesquisaTickets.searchParam" dense outlined rounded type="search"
+                :debounce="700" @input="handleSearchInput" style="width: 300px"
+                class="q-pa-sm">
+                <template v-slot:append>
+                  <q-icon name="search" />
+                </template>
+              </q-input>
+            </q-menu>
+            <q-tooltip content-class="bg-padrao text-grey-9 text-bold">
+              Pesquisar
+            </q-tooltip>
+          </q-btn>
+          <q-btn flat class=" bg-padrao btn-rounded" icon="mdi-book-account-outline"
+            @click="$q.screen.lt.md ? modalNovoTicket = true : $router.push({ name: 'chat-contatos' })">
             <q-tooltip content-class="bg-padrao text-grey-9 text-bold">
               Contatos
             </q-tooltip>
           </q-btn>
-          <q-separator class="absolute-bottom" />
         </q-toolbar>
+        <!-- fim dos icones rapidos -->
+          <!-- <q-space /> -->
+        </q-toolbar>
+        <StatusWhatsapp
+          v-if="false"
+          class="q-mx-sm full-width"
+        />
+          <q-separator class="absolute-bottom" />
 
+        <q-separator class="absolute-bottom" />
         <q-scroll-area
           ref="scrollAreaTickets"
           style="height: calc(100% - 180px)"
