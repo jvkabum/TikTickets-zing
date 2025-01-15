@@ -5,7 +5,7 @@
       enter-active-class="animated fadeIn"
       leave-active-class="animated fadeOut"
     >
-      <template v-for="(mensagem, index) in       mensagens      ">
+      <template v-for="(mensagem, index) in mensagens">
         <hr
           v-if="isLineDate"
           :key="'hr-' + index"
@@ -33,11 +33,13 @@
           :bg-color="mensagem.fromMe ? 'grey-2' : $q.dark.isActive ? 'blue-2' : 'blue-1'"
           :class="{ pulseIdentications: identificarMensagem == `chat-message-${mensagem.id}` }"
         >
-          <!-- :bg-color="mensagem.fromMe ? 'grey-2' : 'secondary' " -->
-          <div
-            style="min-width: 100px; max-width: 350px;"
-            :style="mensagem.isDeleted ? 'color: rgba(0, 0, 0, 0.36) !important;' : ''"
-          >
+        <div
+  style="min-width: 100px; max-width: 350px;"
+  :style="{
+    color: mensagem.isDeleted || mensagem.edited ? 'rgba(0, 0, 0, 0.36) !important' : '',
+    display: hideOriginalMessage ? 'none' : 'block'
+  }"
+>
             <q-checkbox
               v-if="ativarMultiEncaminhamento"
               :key="`cheked-chat-message-${mensagem.id}`"
@@ -93,17 +95,59 @@
                 </div>
               </q-tooltip>
             </q-icon>
-            <div v-if="mensagem.edited" class="text-italic">
-            Editada: {{ mensagem.edited }}
+            <!-- Mensagem Editada -->
+            <div v-if="mensagem.edited" class="edited-message">
+              <span class="edited-message-text">
+                {{ mensagem.edited }}<br>
+              </span>
+              <span class="edited-message-container">O conteúdo original foi alterado.</span>
+              <q-btn
+                flat
+                dense
+                size="sm"
+                color="blue"
+                icon="mdi-history"
+                class="q-ml-xs"
+                title="Ver informações"
+              >
+                <q-menu anchor="bottom left">
+                  <q-item>
+                    <q-item-section>
+                      <div class="edited-message-previous">
+                        Mensagem anterior: <i>{{ mensagem.body }}</i>
+                      </div>
+                    </q-item-section>
+                  </q-item>
+                </q-menu>
+              </q-btn>
             </div>
-            <div v-if="mensagem.edited" class="text-italic">
-             Mensagem anterior:<br>
-            </div>
-            <div
-              v-if="mensagem.isDeleted"
-              class="text-italic"
-            >
-              Mensagem apagada em {{ formatarData(mensagem.updatedAt, 'dd/MM/yyyy') }}.
+
+            <!-- Mensagem Apagada -->
+            <div v-if="mensagem.isDeleted" class="deleted-message">
+              <span class="deleted-message-text">Mensagem apagada</span>
+              <span class="deleted-message-container">
+                {{ formatarData(mensagem.updatedAt, 'dd/MM/yyyy') }}
+              </span>
+              <q-btn
+                flat
+                dense
+                size="sm"
+                color="grey"
+                icon="mdi-history"
+                class="q-ml-xs"
+                title="Ver mensagem original"
+              >
+                <q-menu anchor="bottom left">
+                  <q-item>
+                    <q-item-section>
+                      <div class="deleted-message-previous">
+                        Mensagem original:
+                        <div class="previous-text">{{ mensagem.body }}</div>
+                      </div>
+                    </q-item-section>
+                  </q-item>
+                </q-menu>
+              </q-btn>
             </div>
             <div
               v-if="isGroupLabel(mensagem)"
@@ -119,8 +163,7 @@
               <MensagemRespondida
                 style="max-width: 240px; max-height: 150px"
                 class="row justify-center"
-                @mensagem-respondida:focar-mensagem="f
-                                                                                                                carMensagem"
+                @mensagem-respondida:focar-mensagem="focarMensagem"
                 :mensagem="mensagem.quotedMsg"
               />
             </div>
@@ -232,7 +275,6 @@
               <VueEasyLightbox moveDisabled :visible="abrirModalImagem" :imgs="urlMedia" :index="mensagem.ticketId || 1" @hide="abrirModalImagem = false" />
               </template>
             <template v-if=" mensagem.mediaType === 'image' ">
-              <!-- @click="buscarImageCors(mensagem.mediaUrl)" -->
               <q-img
                 @click=" urlMedia = mensagem.mediaUrl; abrirModalImagem = true "
                 :src=" mensagem.mediaUrl "
@@ -283,7 +325,6 @@
                   id="frame-pdf"
                 >
                   Faça download do PDF
-                  <!-- alt : <a href="mensagem.mediaUrl"></a> -->
                 </iframe>
                 <q-btn
                   type="a"
@@ -329,28 +370,27 @@
         </q-chat-message>
       </template>
     </transition-group>
-        <!-- Botão flutuante -->
-        <button
+    <button
       v-if="showScrollToBottom"
       class="scroll-to-bottom"
       @click="scrollToBottom"
     >
       ⬇️
     </button>
-<q-dialog v-model="showModaledit">
-  <q-card>
-    <q-card-section>
-      <div class="text-h6">Editar Mensagem</div>
-    </q-card-section>
-    <q-card-section>
-      <q-input filled v-model="mensagemAtual.body" label="Mensagem" />
-    </q-card-section>
-    <q-card-actions align="right">
-      <q-btn label="Cancelar" color="negative" v-close-popup />
-      <q-btn label="Salvar" color="primary" @click="salvarMensagem" />
-    </q-card-actions>
-  </q-card>
-</q-dialog>
+    <q-dialog v-model="showModaledit">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">Editar Mensagem</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input filled v-model="mensagemAtual.body" label="Mensagem" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn label="Cancelar" color="negative" v-close-popup />
+          <q-btn label="Salvar" color="primary" @click="salvarMensagem" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -416,7 +456,7 @@ export default {
       abrirModalImagem: false,
       urlMedia: '',
       identificarMensagem: null,
-      ackIcons: { // Se ACK == 3 ou 4 entao color green
+      ackIcons: {
         0: 'mdi-clock-outline',
         1: 'mdi-check',
         2: 'mdi-check-all',
@@ -432,6 +472,10 @@ export default {
     ContatoModal
   },
   methods: {
+    // tentativa de ocultar a mensagem original mas nao funcionou
+    shouldHideMessage () {
+      return !!this.mensagem.body // Retorna true se a mensagem foi editada
+    },
     openContactModal (contact) {
       this.currentContact = contact
       this.modalContato = true
@@ -441,7 +485,6 @@ export default {
     },
     saveContact (contact) {
       console.log('Contato salvo:', contact)
-      // Aqui você pode adicionar a lógica para salvar o contato
     },
     async salvarMensagem () {
       try {
@@ -486,7 +529,6 @@ export default {
     marcarMensagensParaEncaminhar (mensagem) {
       this.$emit('update:mensagensParaEncaminhar', [])
       this.$emit('update:ativarMultiEncaminhamento', !this.ativarMultiEncaminhamento)
-      // this.verificarEncaminharMensagem(mensagem)
     },
     isPDF (url) {
       if (!url) return false
@@ -501,11 +543,7 @@ export default {
         return ''
       }
     },
-    // cUrlMediaCors () {
-    //   return this.urlMedia
-    // },
     returnCardContato (str) {
-      // return btoa(str)
       return Base64.encode(str)
     },
     isDesactivatDelete (msg) {
@@ -589,6 +627,67 @@ export default {
 </script>
 
 <style lang="scss">
+// Estilos existentes
+.edited-message {
+  display: inline;
+  align-items: center;
+  gap: 4px;
+}
+
+.edited-message-text {
+  flex: 1;
+  color: #000000;
+}
+
+.edited-message-container {
+  display: inline;
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
+.edited-message-previous {
+  font-size: 0.75rem;
+  color: #3b82f6;
+
+  .previous-text {
+    text-decoration: line-through;
+    display: block;
+    margin-top: 4px;
+    font-style: italic;
+  }
+}
+
+// Novos estilos para mensagens apagadas
+.deleted-message {
+  display: inline;
+  align-items: center;
+  gap: 4px;
+  font-style: italic;
+}
+
+.deleted-message-text {
+  flex: 1;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.deleted-message-container {
+  display: inline;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.deleted-message-previous {
+  font-size: 0.75rem;
+  color: #9ca3af;
+
+  .previous-text {
+    text-decoration: line-through;
+    display: block;
+    margin-top: 4px;
+    color: rgba(0, 0, 0, 0.5);
+  }
+}
+
 .frame-pdf {
   overflow: hidden;
 }
