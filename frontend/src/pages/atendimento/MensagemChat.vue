@@ -576,7 +576,7 @@ export default {
       // Verifica se a mensagem tem mais de 48 horas
       const msgTime = new Date(mensagem.createdAt || mensagem.timestamp)
       const horasPassadas = (Date.now() - msgTime.getTime()) / (1000 * 60 * 60)
-      
+
       if (horasPassadas > 48) {
         this.$q.notify({
           type: 'warning',
@@ -642,12 +642,12 @@ export default {
             this.loading = false
             console.error('Erro ao deletar mensagem:', error)
             let mensagemErro = 'Não foi possível apagar a mensagem'
-            
+
             if (error.response?.data?.error === 'ERR_DELETE_SYSTEM_MSG' ||
                 error.response?.data?.message?.includes('48 hours')) {
               mensagemErro = 'Não é possível apagar mensagens com mais de 48 horas do envio'
             }
-            
+
             this.$q.notify({
               type: 'warning',
               message: mensagemErro,
