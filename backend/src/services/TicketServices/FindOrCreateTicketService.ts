@@ -32,7 +32,18 @@ const FindOrCreateTicketService = async ({
   isSync,
   channel
 }: Data): Promise<Ticket | any> => {
-  // Se for uma mensagem de campanha, não abrir ticket
+  // Obtém as configurações do banco de dados
+  const settings = await ListSettingsService(tenantId);
+  const ticketAction = settings?.find((s) => s.key === "ticketAction")?.value || "reopen"; // Padrão: reabrir tickets
+  const ignoreGroupMsg =
+    settings?.find((s) => s.key === "ignoreGroupMsg")?.value === "enabled";
+
+  // Ignorar mensagens de grupos, se configurado
+  if (ignoreGroupMsg && groupContact) {
+    return { isIgnored: true, message: "Mensagens de grupo estão desativadas." };
+  }
+
+  // Verificar se é uma mensagem de campanha
   if (msg && msg.fromMe) {
     const msgCampaign = await CampaignContacts.findOne({
       where: {
@@ -45,23 +56,7 @@ const FindOrCreateTicketService = async ({
     }
   }
 
-  if (msg && msg.fromMe) {
-    const farewellMessage = await MessageModel.findOne({
-      where: { messageId: msg.id?.id || msg.message_id || msg.item_id },
-      include: ["ticket"]
-    });
-
-    if (
-      farewellMessage?.ticket?.status === "closed" &&
-      farewellMessage?.ticket.lastMessage === msg.body
-    ) {
-      const ticket = farewellMessage.ticket as any;
-      ticket.isFarewellMessage = true;
-      return ticket;
-    }
-  }
-
-  // Tenta encontrar um ticket aberto ou pendente
+  // Procurar tickets existentes
   let ticket = await Ticket.findOne({
     where: {
       status: {
@@ -75,75 +70,64 @@ const FindOrCreateTicketService = async ({
       {
         model: Contact,
         as: "contact",
-        include: [
-          "extraInfo",
-          "tags",
-          {
-            association: "wallets",
-            attributes: ["id", "name"]
-          }
-        ]
+        include: ["extraInfo", "tags"]
       },
       {
         model: User,
         as: "user",
         attributes: ["id", "name"]
-      },
-      {
-        association: "whatsapp",
-        attributes: ["id", "name"]
       }
     ]
   });
 
-  // Se não encontrar um ticket aberto ou pendente, tenta encontrar um ticket fechado
-  if (!ticket) {
-    ticket = await Ticket.findOne({
-      where: {
-        status: "closed", // Busca tickets fechados
-        tenantId,
-        whatsappId,
-        contactId: groupContact ? groupContact.id : contact.id
+  // Verifica a lógica configurada: reabrir ou criar novo ticket
+  if (ticketAction === "reopen") {
+    // Se não encontrar tickets abertos ou pendentes, tenta encontrar tickets fechados
+    if (!ticket) {
+      ticket = await Ticket.findOne({
+        where: {
+          status: "closed", // Busca tickets fechados
+          tenantId,
+          whatsappId,
+          contactId: groupContact ? groupContact.id : contact.id
+        }
+      });
+
+      // Reabre ticket fechado
+      if (ticket) {
+        await ticket.update({
+          status: "pending",
+          unreadMessages
+        });
+
+        socketEmit({
+          tenantId,
+          type: "ticket:update",
+          payload: ticket
+        });
+
+        return ticket;
       }
-    });
-
-    // Se encontrar um ticket fechado, reabra-o
-    if (ticket) {
-      await ticket.update({
-        status: "pending", // Ou "open", dependendo da lógica do seu sistema
-        unreadMessages
-      });
-
-      socketEmit({
-        tenantId,
-        type: "ticket:update",
-        payload: ticket
-      });
-
-      return ticket; // Retorna o ticket reaberto
     }
   }
 
-  // Se um ticket aberto ou pendente foi encontrado, atualiza o número de mensagens não lidas
+  // Se encontrar um ticket, atualiza o número de mensagens não lidas
   if (ticket) {
     if (!msg?.fromMe) {
       unreadMessages = ticket.unreadMessages + 1;
       await ticket.update({ unreadMessages });
     }
+
     socketEmit({
       tenantId,
       type: "ticket:update",
       payload: ticket
     });
+
     return ticket;
   }
 
-  // Se não houver tickets, cria um novo
-  const DirectTicketsToWallets =
-    (await ListSettingsService(tenantId))?.find(
-      s => s.key === "DirectTicketsToWallets"
-    )?.value === "enabled" || false;
-
+  // Lógica para criar um novo ticket
   const ticketObj: any = {
     contactId: groupContact ? groupContact.id : contact.id,
     status: "pending",
@@ -154,16 +138,6 @@ const FindOrCreateTicketService = async ({
     channel
   };
 
-  if (DirectTicketsToWallets && contact.id) {
-    const wallet: any = contact;
-    const wallets = await wallet.getWallets();
-    if (wallets && wallets[0]?.id) {
-      ticketObj.status = "open";
-      ticketObj.userId = wallets[0].id;
-      ticketObj.startedAttendanceAt = new Date().getTime();
-    }
-  }
-
   const ticketCreated = await Ticket.create(ticketObj);
 
   await CreateLogTicketService({
@@ -171,8 +145,8 @@ const FindOrCreateTicketService = async ({
     type: "create"
   });
 
-  // Verifica se a mensagem não é de você ou se o ticket não tem um usuário atribuído
-  if ((msg && !msg.fromMe) || !ticketCreated.userId || isSync) {
+  // Inicia o fluxo do chatbot se necessário
+  if ((msg && !msg.fromMe) || isSync) {
     await CheckChatBotFlowWelcome(ticketCreated);
   }
 

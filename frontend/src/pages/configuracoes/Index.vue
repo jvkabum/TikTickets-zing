@@ -1,24 +1,15 @@
 <template>
   <div v-if="userProfile === 'admin'">
     <q-list class="text-weight-medium">
-      <q-item-label
-        header
-        class="text-bold text-h6 q-mb-lg"
-      >Configurações</q-item-label>
+      <q-item-label header class="text-bold text-h6 q-mb-lg">Configurações</q-item-label>
 
-      <q-item-label
-        caption
-        class="q-mt-lg q-pl-sm"
-      >Módulo: Atendimento</q-item-label>
-      <q-separator spaced />
-
-      <q-item
-        tag="label"
-        v-ripple
-      >
+      <!-- Configuração: Não visualizar Tickets já atribuídos -->
+      <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>Não visualizar Tickets já atribuidos à outros usuários</q-item-label>
-          <q-item-label caption>Somente o usuário responsável pelo ticket e/ou os administradores visualizarão a atendimento.</q-item-label>
+          <q-item-label>Não visualizar Tickets já atribuídos a outros usuários</q-item-label>
+          <q-item-label caption>
+            Somente o usuário responsável pelo ticket e/ou os administradores visualizarão o atendimento.
+          </q-item-label>
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
@@ -35,13 +26,13 @@
         </q-item-section>
       </q-item>
 
-      <q-item
-        tag="label"
-        v-ripple
-      >
+      <!-- Configuração: Não visualizar Tickets no ChatBot -->
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>Não visualizar Tickets no ChatBot</q-item-label>
-          <q-item-label caption>Somente administradores poderão visualizar tickets que estivem interagindo com o ChatBot.</q-item-label>
+          <q-item-label caption>
+            Somente administradores poderão visualizar tickets que estivem interagindo com o ChatBot.
+          </q-item-label>
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
@@ -58,13 +49,13 @@
         </q-item-section>
       </q-item>
 
-      <q-item
-        tag="label"
-        v-ripple
-      >
+      <!-- Configuração: Forçar atendimento via Carteira -->
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>Forçar atendimento via Carteira</q-item-label>
-          <q-item-label caption>Caso o contato tenha carteira vínculada, o sistema irá direcionar o atendimento somente para os donos da carteira de clientes.</q-item-label>
+          <q-item-label caption>
+            Caso o contato tenha carteira vinculada, o sistema irá direcionar o atendimento somente para os donos da carteira de clientes.
+          </q-item-label>
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
@@ -81,13 +72,11 @@
         </q-item-section>
       </q-item>
 
-      <q-item
-        tag="label"
-        v-ripple
-      >
+      <!-- Configuração: Fluxo ativo para o Bot de atendimento -->
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>Fluxo ativo para o Bot de atendimento</q-item-label>
-          <q-item-label caption>Fluxo a ser utilizado pelo Bot para os novos atendimentos</q-item-label>
+          <q-item-label caption>Fluxo a ser utilizado pelo Bot para os novos atendimentos.</q-item-label>
         </q-item-section>
         <q-item-section avatar>
           <q-select
@@ -106,13 +95,13 @@
         </q-item-section>
       </q-item>
 
-      <q-item
-        tag="label"
-        v-ripple
-      >
+      <!-- Configuração: Ignorar Mensagens de Grupo -->
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>Ignorar Mensagens de Grupo</q-item-label>
-          <q-item-label caption>Habilitando esta opção o sistema não abrirá ticket para grupos</q-item-label>
+          <q-item-label caption>
+            Habilitando esta opção o sistema não abrirá ticket para grupos.
+          </q-item-label>
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
@@ -129,13 +118,13 @@
         </q-item-section>
       </q-item>
 
-      <q-item
-        tag="label"
-        v-ripple
-      >
+      <!-- Configuração: Recusar chamadas no WhatsApp -->
+      <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>Recusar chamadas no Whatsapp</q-item-label>
-          <q-item-label caption>Quando ativo, as ligações de aúdio e vídeo serão recusadas, automaticamente.</q-item-label>
+          <q-item-label>Recusar chamadas no WhatsApp</q-item-label>
+          <q-item-label caption>
+            Quando ativo, as ligações de áudio e vídeo serão recusadas automaticamente.
+          </q-item-label>
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
@@ -152,10 +141,8 @@
         </q-item-section>
       </q-item>
 
-      <div
-        class="row q-px-md"
-        v-if="rejectCalls === 'enabled'"
-      >
+      <!-- Configuração: Mensagem ao rejeitar ligação -->
+      <div class="row q-px-md" v-if="rejectCalls === 'enabled'">
         <div class="col-12">
           <q-input
             rounded
@@ -172,14 +159,13 @@
         </div>
       </div>
 
-      <!-- Configuração de Fechamento Automático de Tickets -->
-      <q-item
-        tag="label"
-        v-ripple
-      >
+      <!-- Configuração: Fechamento Automático de Tickets -->
+      <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>Fechamento Automático de Tickets</q-item-label>
-          <q-item-label caption>Defina o número de dias após os quais os tickets pendentes serão fechados automaticamente.</q-item-label>
+          <q-item-label caption>
+            Defina o número de dias após os quais os tickets pendentes serão fechados automaticamente.
+          </q-item-label>
         </q-item-section>
         <q-item-section avatar>
           <q-input
@@ -190,6 +176,51 @@
             dense
             label="Dias para fechar tickets"
             @input="atualizarConfiguracao('daysToClose')"
+          />
+        </q-item-section>
+      </q-item>
+
+      <!-- Configuração: Gerar novo ticket ou reabrir ticket -->
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>Gerar novo ticket ou reabrir ticket</q-item-label>
+          <q-item-label caption>Escolhe entre reabrir tickets ou iniciar novo ticket.</q-item-label>
+        </q-item-section>
+        <q-item-section avatar>
+          <q-select
+            style="width: 300px"
+            outlined
+            dense
+            rounded
+            v-model="ticketAction"
+            :options="[
+              { label: 'Abrir Novo Ticket', value: 'new' },
+              { label: 'Reabrir Ticket Existente', value: 'reopen' }
+            ]"
+            emit-value
+            @input="atualizarConfiguracao('ticketAction')"
+          />
+        </q-item-section>
+      </q-item>
+       <!-- Configuração: Historico de tickets -->
+       <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>Manter histórico de mensagens</q-item-label>
+          <q-item-label caption>
+            Mantém o histórico de todas as mensagnes do contato.
+          </q-item-label>
+        </q-item-section>
+        <q-item-section avatar>
+          <q-toggle
+            v-model="manterHistorico"
+            false-value="disabled"
+            true-value="enabled"
+            checked-icon="check"
+            keep-color
+            :color="manterHistorico === 'enabled' ? 'green' : 'negative'"
+            size="md"
+            unchecked-icon="clear"
+            @input="atualizarConfiguracao('manterHistorico')"
           />
         </q-item-section>
       </q-item>
@@ -215,14 +246,15 @@ export default {
       ignoreGroupMsg: null,
       rejectCalls: null,
       callRejectMessage: '',
-      daysToClose: 3 // Valor inicial para o fechamento de tickets
+      daysToClose: 3,
+      ticketAction: 'new'
     }
   },
   methods: {
     async listarConfiguracoes () {
       const { data } = await ListarConfiguracoes()
       this.configuracoes = data
-      this.configuracoes.forEach(el => {
+      this.configuracoes.forEach((el) => {
         let value = el.value
         if (el.key === 'botTicketActive' && el.value) {
           value = +el.value
@@ -235,39 +267,19 @@ export default {
       this.listaChatFlow = data.chatFlow
     },
     async atualizarConfiguracao (key, value = null) {
-      const params = {
-        key,
-        value: value !== null ? value : this.$data[key]
-      }
+      const params = { key, value: value !== null ? value : this.$data[key] }
       try {
-        // Atualiza a configuração
         await AlterarConfiguracao(params)
-        this.$q.notify({
-          type: 'positive',
-          message: 'Configuração alterada com sucesso!',
-          progress: true,
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
+        this.$q.notify({ type: 'positive', message: 'Configuração alterada com sucesso!' })
       } catch (error) {
-        console.error('Erro ao alterar configuração:', error)
-
-        // Verificação da estrutura do erro
-        if (error && error.response && error.response.data) {
-          this.$notificarErro('Erro ao alterar configuração', error.response.data.message)
-        } else {
-          this.$notificarErro('Erro desconhecido', 'Ocorreu um erro ao tentar alterar a configuração')
-        }
+        console.error('Erro:', error)
       }
     }
   },
   async mounted () {
     this.userProfile = localStorage.getItem('profile')
-    this.listarConfiguracoes()
-    this.listarChatFlow()
+    await this.listarConfiguracoes()
+    await this.listarChatFlow()
   }
 }
 </script>
