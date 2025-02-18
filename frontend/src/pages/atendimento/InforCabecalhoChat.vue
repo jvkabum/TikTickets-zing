@@ -66,6 +66,18 @@
                 Reabrir Ticket
               </q-tooltip>
             </q-btn>
+            <q-btn
+              flat
+              icon="sync"
+              color="primary"
+              class="bg-padrao btn-rounded"
+              :loading="sincronizando"
+              :disable="cticket.status == 'closed'"
+              @click="sincronizarMensagens">
+              <q-tooltip content-class="bg-primary text-bold">
+                Sincronizar Mensagens
+              </q-tooltip>
+            </q-btn>
             <q-btn @click="$emit('abrir:modalAgendamentoMensagem')"
               v-if="ticketFocado.channel !== 'instagram' && ticketFocado.channel !== 'telegram'"
               flat
@@ -135,6 +147,19 @@
                 }">
                 <q-tooltip content-class="bg-primary text-bold">
                   Resolver
+                </q-tooltip>
+              </q-fab-action>
+              <q-fab-action @click="sincronizarMensagens"
+                flat
+                icon="sync"
+                color="primary"
+                class="bg-padrao q-pa-xs"
+                :loading="sincronizando"
+                :class="{
+                  'bg-black': $q.dark.isActive
+                }">
+                <q-tooltip content-class="bg-primary text-bold">
+                  Sincronizar Mensagens
                 </q-tooltip>
               </q-fab-action>
               <q-fab-action @click="$emit('updateTicket:retornar')"
@@ -281,7 +306,7 @@ const userId = +localStorage.getItem('userId')
 import { mapGetters } from 'vuex'
 import { ListarUsuarios } from 'src/service/user'
 import { ListarFilas } from 'src/service/filas'
-import { AtualizarTicket } from 'src/service/tickets'
+import { AtualizarTicket, SincronizarMensagensTicket } from 'src/service/tickets'
 export default {
   name: 'InfoCabecalhoMensagens',
   data () {
@@ -290,7 +315,8 @@ export default {
       usuarioSelecionado: null,
       filaSelecionada: null,
       usuarios: [],
-      filas: []
+      filas: [],
+      sincronizando: false
     }
   },
   computed: {
@@ -405,6 +431,23 @@ export default {
       })
       this.modalTransferirTicket = false
       this.$store.commit('TICKET_FOCADO', {})
+    },
+    async sincronizarMensagens() {
+      try {
+        this.sincronizando = true
+        await SincronizarMensagensTicket(this.ticketFocado.id)
+        this.$q.notify({
+          message: 'Mensagens sincronizadas com sucesso',
+          type: 'positive'
+        })
+      } catch (err) {
+        this.$q.notify({
+          message: 'Erro ao sincronizar mensagens: ' + (err.response?.data?.error || err.message),
+          type: 'negative'
+        })
+      } finally {
+        this.sincronizando = false
+      }
     }
   }
 }

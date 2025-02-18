@@ -21,4 +21,10 @@ ticketRoutes.get(
   TicketController.showLogsTicket
 );
 
+ticketRoutes.post(
+  "/tickets/:ticketId/sync",
+  isAuth,
+  TicketController.syncMessages
+);
+
 export default ticketRoutes;

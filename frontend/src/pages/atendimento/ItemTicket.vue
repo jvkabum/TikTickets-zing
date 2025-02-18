@@ -82,9 +82,27 @@
           caption>
           {{ ticket.lastMessage }}
         </q-item-label>
-        <q-item-label lines="1"
-          caption>
-          #{{ ticket.id }}
+        <div class="row items-center q-gutter-xs">
+          <q-btn
+            flat
+            dense
+            round
+            size="xs"
+            icon="sync"
+            color="primary"
+            @click.stop="sincronizarMensagens"
+            :loading="sincronizando"
+          >
+            <q-tooltip>Sincronizar mensagens do WhatsApp</q-tooltip>
+          </q-btn>
+          <q-badge dense
+            style="font-size: .7em;"
+            transparent
+            square
+            text-color="grey-10"
+            color="secondary"
+            :label="dataInWords(ticket.lastMessageAt, ticket.updatedAt)"
+            :key="recalcularHora" />
           <q-icon
             v-for="tag in tagsDoTicket"
             :key="tag.tag"
@@ -147,7 +165,7 @@
               </q-tooltip>
             </q-icon>
           </span>
-        </q-item-label>
+        </div>
         <q-item-label class="row col items-center justify-between"
           caption>
           Usuário: {{ ticket.username || '' }}
@@ -258,6 +276,7 @@ import MensagemChat from './MensagemChat.vue'
 import whatsBackground from 'src/assets/wa-background.png'
 import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
 import defaultAvatar from 'src/assets/avatar.png'
+import { SincronizarMensagensTicket } from 'src/service/tickets'
 
 export default {
   name: 'ItemTicket',
@@ -297,7 +316,8 @@ export default {
         closed: 'positive'
       },
       defaultAvatar,
-      profilePicUrl: null
+      profilePicUrl: null,
+      sincronizando: false
     }
   },
   props: {
@@ -394,6 +414,23 @@ export default {
     async loadProfilePic () {
       if (this.ticket.contact?.number) {
         this.profilePicUrl = await this.$parent.getProfilePic(this.ticket.contact.number)
+      }
+    },
+    async sincronizarMensagens() {
+      try {
+        this.sincronizando = true
+        await SincronizarMensagensTicket(this.ticket.id)
+        this.$q.notify({
+          message: 'Mensagens sincronizadas com sucesso',
+          type: 'positive'
+        })
+      } catch (err) {
+        this.$q.notify({
+          message: 'Erro ao sincronizar mensagens: ' + (err.response?.data?.error || err.message),
+          type: 'negative'
+        })
+      } finally {
+        this.sincronizando = false
       }
     }
   },

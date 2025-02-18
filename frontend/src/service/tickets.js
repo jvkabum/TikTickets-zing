@@ -138,3 +138,11 @@ export function EditarMensagem (mensagem) {
     data: mensagem
   })
 }
+
+// Sincronizar mensagens do ticket
+export const SincronizarMensagensTicket = async (ticketId) => {
+  return request({
+    url: `/tickets/${ticketId}/sync`,
+    method: 'post'
+  })
+}
