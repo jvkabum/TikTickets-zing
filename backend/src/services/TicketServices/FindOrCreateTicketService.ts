@@ -107,10 +107,9 @@ const FindOrCreateTicketService = async ({
       }
     });
 
-    // Se encontrar um ticket fechado, reabra-o
-    if (ticket) {
+    // Se encontrar um ticket fechado e a mensagem for minha (fromMe), mantém o status
+    if (ticket && msg?.fromMe) {
       await ticket.update({
-        status: "pending", // Ou "open", dependendo da lógica do seu sistema
         unreadMessages
       });
 
@@ -120,7 +119,23 @@ const FindOrCreateTicketService = async ({
         payload: ticket
       });
 
-      return ticket; // Retorna o ticket reaberto
+      return ticket;
+    }
+
+    // Se encontrar um ticket fechado e a mensagem não for minha, reabre como pending
+    if (ticket && !msg?.fromMe) {
+      await ticket.update({
+        status: "pending",
+        unreadMessages
+      });
+
+      socketEmit({
+        tenantId,
+        type: "ticket:update",
+        payload: ticket
+      });
+
+      return ticket;
     }
   }
 
@@ -146,13 +161,17 @@ const FindOrCreateTicketService = async ({
 
   const ticketObj: any = {
     contactId: groupContact ? groupContact.id : contact.id,
-    status: "pending",
+    status: msg?.fromMe ? "closed" : "pending",
     isGroup: !!groupContact,
     unreadMessages,
     whatsappId,
     tenantId,
     channel
   };
+
+  if (msg?.fromMe) {
+    ticketObj.closedAt = new Date().getTime();
+  }
 
   if (DirectTicketsToWallets && contact.id) {
     const wallet: any = contact;
@@ -170,6 +189,13 @@ const FindOrCreateTicketService = async ({
     ticketId: ticketCreated.id,
     type: "create"
   });
+
+  if (msg?.fromMe) {
+    await CreateLogTicketService({
+      ticketId: ticketCreated.id,
+      type: "closed"
+    });
+  }
 
   // Verifica se a mensagem não é de você ou se o ticket não tem um usuário atribuído
   if ((msg && !msg.fromMe) || !ticketCreated.userId || isSync) {

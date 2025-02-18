@@ -2,6 +2,7 @@ import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 import socketEmit from "../../helpers/socketEmit";
 import HandleMessageReceivedService from "./HandleMessageReceivedService";
+import ManageTicketStatusService from "../TicketServices/ManageTicketStatusService";
 
 interface MessageData {
   id?: string;
@@ -56,6 +57,15 @@ const CreateMessageService = async ({
 
   if (!message) {
     throw new Error("ERR_CREATING_MESSAGE");
+  }
+
+  // Gerenciar status do ticket apenas se a mensagem tiver um ticket associado
+  if (message.ticket) {
+    const manageTicketStatus = new ManageTicketStatusService();
+    await manageTicketStatus.execute({
+      messageId: message.messageId,
+      tenantId: Number(tenantId)
+    });
   }
 
   // Processar auto-tag para qualquer mensagem que tenha ticket e contato
