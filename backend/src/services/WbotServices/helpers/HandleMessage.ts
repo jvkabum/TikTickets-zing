@@ -8,25 +8,19 @@ import { logger } from "../../../utils/logger";
 import FindOrCreateTicketService from "../../TicketServices/FindOrCreateTicketService";
 import ShowWhatsAppService from "../../WhatsappService/ShowWhatsAppService";
 import IsValidMsg from "./IsValidMsg";
+// import VerifyAutoReplyActionTicket from "./VerifyAutoReplyActionTicket";
 import VerifyContact from "./VerifyContact";
 import VerifyMediaMessage from "./VerifyMediaMessage";
 import VerifyMessage from "./VerifyMessage";
 import verifyBusinessHours from "./VerifyBusinessHours";
 import VerifyStepsChatFlowTicket from "../../ChatFlowServices/VerifyStepsChatFlowTicket";
 import Queue from "../../../libs/Queue";
+// import isMessageExistsService from "../../MessageServices/isMessageExistsService";
 import Setting from "../../../models/Setting";
 
 interface Session extends Client {
   id: number;
 }
-
-const farewellMessageEqualsBody = (
-  farewellMessage: string,
-  body: string
-): boolean => {
-  if (!farewellMessage || farewellMessage.trim().length === 0) return false;
-  return farewellMessage === body;
-};
 
 const HandleMessage = async (
   msg: WbotMessage,
@@ -39,21 +33,19 @@ const HandleMessage = async (
       }
 
       const whatsapp = await ShowWhatsAppService({ id: wbot.id });
+
       const { tenantId } = whatsapp;
       const chat = await msg.getChat();
-
       // IGNORAR MENSAGENS DE GRUPO
       const Settingdb = await Setting.findOne({
         where: { key: "ignoreGroupMsg", tenantId }
       });
-      if (Settingdb?.value == "enabled") {
-        if (
-          msg.from === "status@broadcast" ||
-          msg.to.endsWith("@g.us") ||
-          msg.from.endsWith("@g.us")
-        ) {
-          return;
-        }
+
+      if (
+        Settingdb?.value === "enabled" &&
+        (chat.isGroup || msg.from === "status@broadcast")
+      ) {
+        return;
       }
       // IGNORAR MENSAGENS DE GRUPO
 
@@ -61,12 +53,18 @@ const HandleMessage = async (
         let msgContact: WbotContact;
         let groupContact: Contact | undefined;
 
-        // Verifica se a mensagem é de você e retorna imediatamente
         if (msg.fromMe) {
-          return resolve();
-        }
+          // media messages sent from me from cell phone, first comes with "hasMedia = false" and type = "image/ptt/etc"
+          // the media itself comes on body of message, as base64
+          // if this is the case, return and let this media be handled by media_uploaded event
+          // it should be improoved to handle the base64 media here in future versions
+          if (!msg.hasMedia && msg.type !== "chat" && msg.type !== "vcard" && msg.type !== "location")
+            return;
 
-        msgContact = await msg.getContact();
+          msgContact = await wbot.getContactById(msg.to);
+        } else {
+          msgContact = await msg.getContact();
+        }
 
         if (chat.isGroup) {
           let msgGroupContact;
@@ -80,13 +78,9 @@ const HandleMessage = async (
           groupContact = await VerifyContact(msgGroupContact, tenantId);
         }
 
-        const unreadMessages = msg.fromMe ? 0 : (chat.unreadCount || 1);
-        if (
-          unreadMessages === 0 &&
-          farewellMessageEqualsBody(whatsapp.farewellMessage, msg.body)
-        )
-          return resolve();
+        const unreadMessages = msg.fromMe ? 0 : chat.unreadCount;
 
+        // const profilePicUrl = await msgContact.getProfilePicUrl();
         const contact = await VerifyContact(msgContact, tenantId);
         const ticket = await FindOrCreateTicketService({
           contact,
@@ -99,11 +93,13 @@ const HandleMessage = async (
         });
 
         if (ticket?.isCampaignMessage) {
-          return resolve();
+          resolve();
+          return;
         }
 
         if (ticket?.isFarewellMessage) {
-          return resolve();
+          resolve();
+          return;
         }
 
         if (msg.hasMedia) {
@@ -112,7 +108,10 @@ const HandleMessage = async (
           await VerifyMessage(msg, ticket, contact);
         }
 
-        await VerifyStepsChatFlowTicket(msg, ticket);
+        const isBusinessHours = await verifyBusinessHours(msg, ticket);
+
+        // await VerifyAutoReplyActionTicket(msg, ticket);
+        if (isBusinessHours) await VerifyStepsChatFlowTicket(msg, ticket);
 
         const apiConfig: any = ticket.apiConfig || {};
         if (
@@ -122,12 +121,6 @@ const HandleMessage = async (
           apiConfig?.externalKey &&
           apiConfig?.urlMessageStatus
         ) {
-          // Validação do ID da mensagem
-          if (!msg.id || !msg.id.id) {
-            logger.error("ID da mensagem inválido:", msg.id);
-            return resolve(); // ou lance um erro
-          }
-
           const payload = {
             timestamp: Date.now(),
             msg,
@@ -144,7 +137,6 @@ const HandleMessage = async (
           });
         }
 
-        await verifyBusinessHours(msg, ticket);
         resolve();
       } catch (err) {
         logger.error(err);

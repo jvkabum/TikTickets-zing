@@ -199,7 +199,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
         }
 
         wbot.sendPresenceAvailable(); // Envia presença disponível
-        SyncUnreadMessagesWbot(false, wbot, tenantId); // Sincroniza mensagens não lidas (corrigido)
+        SyncUnreadMessagesWbot(wbot, tenantId); // Sincroniza mensagens não lidas (corrigido)
         resolve(wbot); // Retorna a sessão
       });
 
