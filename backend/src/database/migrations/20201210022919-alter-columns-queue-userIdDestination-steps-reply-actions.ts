@@ -1,43 +1,58 @@
 import { QueryInterface, DataTypes } from "sequelize";
+import { Promise as SequelizePromise } from "sequelize";
+
+interface TableInfo {
+  [key: string]: {
+    type: string;
+    allowNull: boolean;
+  };
+}
 
 module.exports = {
-  up: (queryInterface: QueryInterface) => {
-    return Promise.all([
-      queryInterface.removeColumn("StepsReplyActions", "queue"),
-      queryInterface.addColumn("StepsReplyActions", "queueId", {
-        type: DataTypes.INTEGER,
-        references: { model: "Queues", key: "id" },
-        onUpdate: "CASCADE",
-        onDelete: "restrict",
-        defaultValue: null,
-        allowNull: true
-      }),
-      queryInterface.removeColumn("StepsReplyActions", "userIdDestination"),
-      queryInterface.addColumn("StepsReplyActions", "userIdDestination", {
-        type: DataTypes.INTEGER,
-        references: { model: "Users", key: "id" },
-        onUpdate: "CASCADE",
-        onDelete: "restrict",
-        defaultValue: null,
-        allowNull: true
-      })
-    ]);
+  up: async (queryInterface: QueryInterface) => {
+    const tableInfo = (await queryInterface.describeTable("StepsReplyActions")) as TableInfo;
+    
+    const actions: SequelizePromise<void>[] = [];
+    
+    if (tableInfo.queue) {
+      actions.push(queryInterface.removeColumn("StepsReplyActions", "queue"));
+    }
+    
+    if (!tableInfo.queueId) {
+      actions.push(
+        queryInterface.addColumn("StepsReplyActions", "queueId", {
+          type: DataTypes.INTEGER,
+          references: { model: "Queues", key: "id" },
+          onUpdate: "CASCADE",
+          onDelete: "restrict",
+          defaultValue: null,
+          allowNull: true
+        })
+      );
+    }
+
+    return Promise.all(actions);
   },
 
-  down: (queryInterface: QueryInterface) => {
-    return Promise.all([
-      queryInterface.removeColumn("StepsReplyActions", "queueId"),
-      queryInterface.addColumn("StepsReplyActions", "queue", {
-        type: DataTypes.INTEGER,
-        defaultValue: null,
-        allowNull: true
-      }),
-      queryInterface.removeColumn("StepsReplyActions", "userIdDestination"),
-      queryInterface.addColumn("StepsReplyActions", "userIdDestination", {
-        type: DataTypes.INTEGER,
-        defaultValue: null,
-        allowNull: true
-      })
-    ]);
+  down: async (queryInterface: QueryInterface) => {
+    const tableInfo = (await queryInterface.describeTable("StepsReplyActions")) as TableInfo;
+    
+    const actions: SequelizePromise<void>[] = [];
+    
+    if (tableInfo.queueId) {
+      actions.push(queryInterface.removeColumn("StepsReplyActions", "queueId"));
+    }
+    
+    if (!tableInfo.queue) {
+      actions.push(
+        queryInterface.addColumn("StepsReplyActions", "queue", {
+          type: DataTypes.INTEGER,
+          defaultValue: null,
+          allowNull: true
+        })
+      );
+    }
+
+    return Promise.all(actions);
   }
 };
