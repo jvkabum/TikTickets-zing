@@ -17,6 +17,22 @@ interface MessageData {
   timestamp?: number;
   quotedMsgId?: string;
   status?: string;
+  pollData?: {
+    name: string;
+    options: Array<{
+      name: string;
+      localId?: string;
+      votes?: number;
+    }>;
+    selectionAmount?: number;
+    allowMultipleAnswers?: boolean;
+    votes?: Array<{
+      selectedOptions: string[];
+      sender: string;
+      parentMessageId?: string;
+      timestamp?: number;
+    }>;
+  };
 }
 
 interface Request {
@@ -28,13 +44,17 @@ const CreateMessageService = async ({
   messageData,
   tenantId
 }: Request): Promise<Message> => {
+  // Removido: console.log("Iniciando CreateMessageService:", {...});
+
   const msg = await Message.findOne({
     where: { messageId: messageData.messageId, tenantId }
   });
 
   if (!msg) {
+    // Removido: console.log("Criando nova mensagem...");
     await Message.create({ ...messageData, tenantId });
   } else {
+    // Removido: console.log("Atualizando mensagem existente...");
     await msg.update(messageData);
   }
 
@@ -56,11 +76,15 @@ const CreateMessageService = async ({
   });
 
   if (!message) {
+    console.error("Mensagem não encontrada após criação");
     throw new Error("ERR_CREATING_MESSAGE");
   }
 
+  // Removido: console.log("Mensagem salva:", {...});
+
   // Gerenciar status do ticket apenas se a mensagem tiver um ticket associado
   if (message.ticket) {
+    // Removido: console.log("Gerenciando status do ticket...");
     const manageTicketStatus = new ManageTicketStatusService();
     await manageTicketStatus.execute({
       messageId: message.messageId,
@@ -70,6 +94,7 @@ const CreateMessageService = async ({
 
   // Processar auto-tag para qualquer mensagem que tenha ticket e contato
   if (message.ticket && message.ticket.contact) {
+    // Removido: console.log("Processando auto-tag...");
     const handleMessageReceived = new HandleMessageReceivedService();
     await handleMessageReceived.execute({
       message,
@@ -78,6 +103,7 @@ const CreateMessageService = async ({
     });
   }
 
+  // Removido: console.log("Emitindo evento socket...");
   socketEmit({
     tenantId,
     type: "chat:create",

@@ -10,7 +10,8 @@ type Events =
   | "ticket:create"  // Criação de ticket
   | "contact:update" // Atualização de contato
   | "contact:delete" // Deleção de contato
-  | "notification:new"; // Nova notificação
+  | "notification:new" // Nova notificação
+  | "pollVoteUpdate";   // Atualização de votos em enquetes
 
 // Interface para o objeto de evento
 interface ObjEvent {

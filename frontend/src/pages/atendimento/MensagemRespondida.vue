@@ -144,9 +144,22 @@
                 Visualizar
               </q-btn> -->
         </template>
+        <template v-if="mensagem.mediaType === 'poll_creation'">
+          <div class="poll-container">
+            <div class="poll-header">
+              <q-icon name="poll" size="20px" class="q-mr-sm" />
+              <div class="poll-title">
+                {{ mensagem.pollData?.name || 'Enquete' }}
+              </div>
+            </div>
+            <div class="poll-subtitle">
+              {{ mensagem.pollData?.options?.length || 0 }} opções
+            </div>
+          </div>
+        </template>
         <div
           v-linkified
-          v-if="!['vcard', 'application', 'audio', 'image', 'video' ].includes(mensagem.mediaType)"
+          v-if="!['vcard', 'application', 'audio', 'image', 'video', 'poll_creation'].includes(mensagem.mediaType)"
           :class="{'q-mt-sm': mensagem.mediaType !== 'chat'}"
           class="q-message-container row items-end no-wrap ellipsis-3-lines"
         >
@@ -190,7 +203,7 @@ export default {
     return {
       abrirModalImagem: false,
       urlMedia: '',
-
+      selectedPollOption: null,
       ackIcons: { // Se ACK == 3 ou 4 entao color green
         0: 'mdi-clock-outline',
         1: 'mdi-check',
@@ -233,4 +246,58 @@ export default {
 //   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14),
 //     0 2px 1px -1px rgba(0, 0, 0, 0.12);
 // }
+
+.poll-container {
+  padding: 8px;
+  border-radius: 6px;
+  background: #202C33;
+  min-width: 200px;
+  color: white;
+  font-size: 0.9em;
+}
+
+.poll-header {
+  display: flex;
+  align-items: center;
+}
+
+.poll-title {
+  font-weight: 500;
+  color: white;
+}
+
+.poll-subtitle {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4px;
+}
+
+.poll-button {
+  margin-top: 4px;
+  :deep(.q-btn) {
+    min-height: 20px;
+    padding: 4px 0;
+    font-size: 0.9em;
+  }
+}
+
+.poll-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.poll-option {
+  .q-radio {
+    width: 100%;
+    :deep(.q-radio__label) {
+      color: white;
+      font-size: 0.9em;
+    }
+    :deep(.q-radio__inner) {
+      color: white;
+    }
+  }
+}
 </style>

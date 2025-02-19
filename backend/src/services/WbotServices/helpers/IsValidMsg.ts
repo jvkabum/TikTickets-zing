@@ -1,20 +1,24 @@
 import { Message as WbotMessage } from "whatsapp-web.js";
+import { CustomMessageTypes } from "../WbotMessagePoll";
 
-const isValidMsg = (msg: WbotMessage): boolean => {
+const isValidMsg = (msg: WbotMessage & { type: CustomMessageTypes }): boolean => {
   if (msg.from === "status@broadcast") return false;
-  if (
-    msg.type === "chat" ||
-    msg.type === "audio" ||
-    msg.type === "ptt" ||
-    msg.type === "video" ||
-    msg.type === "image" ||
-    msg.type === "document" ||
-    msg.type === "vcard" ||
-    msg.type === "sticker" ||
-	msg.type === "location"
-  )
-    return true;
-  return false;
+  
+  const validTypes = [
+    "chat",
+    "audio",
+    "ptt",
+    "video",
+    "image",
+    "document",
+    "vcard",
+    "sticker",
+    "location",
+    "poll_creation",
+    "poll_vote"
+  ];
+
+  return validTypes.includes(msg.type as string);
 };
 
 export default isValidMsg;

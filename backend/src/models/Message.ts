@@ -177,6 +177,25 @@ class Message extends Model<Message> {
   @AllowNull
   @Column
   idFront: string;
+
+  // Dados da enquete
+  @Default(null)
+  @AllowNull
+  @Column(DataType.JSONB)
+  pollData: {
+    name: string;
+    options: Array<{
+      name: string;
+      localId?: string;
+      votes: number;
+    }>;
+    selectionAmount?: number;
+    votes?: Array<{
+      selectedOptions: string[];
+      sender: string;
+      parentMessageId?: string;
+    }>;
+  };
 }
 
 export default Message;
