@@ -5,7 +5,7 @@
       enter-active-class="animated fadeIn"
       leave-active-class="animated fadeOut"
     >
-      <template v-for="(mensagem, index) in       mensagens      ">
+      <div v-for="(mensagem, index) in mensagens" :key="index">
         <hr
           v-if="isLineDate"
           :key="'hr-' + index"
@@ -13,14 +13,13 @@
           :data-content="formatarData(mensagem.createdAt)"
           v-show="index === 0 || formatarData(mensagem.createdAt) !== formatarData(mensagens[index - 1].createdAt)"
         >
-        <template v-if="mensagens.length && index === mensagens.length - 1">
-          <div
-            :key="`ref-${mensagem.createdAt}`"
-            ref="lastMessageRef"
-            id="lastMessageRef"
-            style="float: 'left', background: 'black', clear: 'both'"
-          />
-        </template>
+        <div
+          v-if="mensagens.length && index === mensagens.length - 1"
+          :key="`ref-${mensagem.createdAt}`"
+          ref="lastMessageRef"
+          id="lastMessageRef"
+          style="float: left; background: black; clear: both;"
+        />
         <div
           :key="`chat-message-${mensagem.id}`"
           :id="`chat-message-${mensagem.id}`"
@@ -315,9 +314,50 @@
                 </q-btn>
               </div>
             </template>
+            <template v-if="mensagem.mediaType === 'poll_creation'">
+              <div class="poll-container">
+                <div class="poll-header">
+                  <q-icon name="poll" size="24px" class="q-mr-sm" />
+                  <div class="poll-title">
+                    {{ mensagem.pollData?.name || 'Enquete' }}
+                  </div>
+                </div>
+                <div class="poll-subtitle">
+                  {{ mensagem.pollData?.options?.length || 0 }} opções disponíveis
+                  <span v-if="totalVotes > 0" class="poll-total-votes">
+                    • {{ totalVotes }} {{ totalVotes === 1 ? 'voto' : 'votos' }}
+                  </span>
+                </div>
+                <div v-if="mensagem.pollData?.options?.length > 0" class="poll-options">
+                  <div v-for="(option, index) in mensagem.pollData.options" :key="index" class="poll-option">
+                    <div class="poll-option-content">
+                      <div class="poll-option-info">
+                        <span class="poll-option-text">{{ option.name }}</span>
+                        <span class="poll-option-votes">{{ option.votes || 0 }} {{ (option.votes || 0) === 1 ? 'voto' : 'votos' }}</span>
+                      </div>
+                      <div class="poll-option-progress" :style="{ width: `${getVotePercentage(option, mensagem.pollData.options)}%` }" />
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="poll-no-options">
+                  Nenhuma opção disponível
+                </div>
+                <div class="poll-footer">
+                  <q-btn
+                    flat
+                    color="white"
+                    :label="mensagem.pollData?.options?.length > 0 ? 'Mostrar votos' : 'Enquete sem opções'"
+                    no-caps
+                    class="full-width"
+                    align="left"
+                    icon="mdi-chart-bar"
+                  />
+                </div>
+              </div>
+            </template>
             <div
               v-linkified
-              v-if=" !['vcard', 'application', 'audio'].includes(mensagem.mediaType) "
+              v-if=" !['vcard', 'application', 'audio', 'poll_creation'].includes(mensagem.mediaType) "
               :class=" { 'q-mt-sm': mensagem.mediaType !== 'chat' } "
               class="q-message-container row items-end no-wrap"
             >
@@ -326,7 +366,7 @@
             </div>
           </div>
         </q-chat-message>
-      </template>
+      </div>
     </transition-group>
         <!-- Botão flutuante -->
         <button
@@ -360,6 +400,8 @@ import VueEasyLightbox from 'vue-easy-lightbox'
 import MensagemRespondida from './MensagemRespondida'
 import ContatoCard from './ContatoCard.vue'
 import ContatoModal from './ContatoModal.vue'
+import { DeletarMensagem, EditarMensagem } from 'src/service/tickets'
+import { Base64 } from 'js-base64'
 const downloadImageCors = axios.create({
   baseURL: process.env.VUE_URL_API,
   timeout: 20000,
@@ -367,8 +409,6 @@ const downloadImageCors = axios.create({
     responseType: 'blob'
   }
 })
-import { DeletarMensagem, EditarMensagem } from 'src/service/tickets'
-import { Base64 } from 'js-base64'
 export default {
   name: 'MensagemChat',
   mixins: [mixinCommon],
@@ -415,7 +455,8 @@ export default {
       abrirModalImagem: false,
       urlMedia: '',
       identificarMensagem: null,
-      ackIcons: { // Se ACK == 3 ou 4 entao color green
+      selectedPollOption: null,
+      ackIcons: {
         0: 'mdi-clock-outline',
         1: 'mdi-check',
         2: 'mdi-check-all',
@@ -522,7 +563,7 @@ export default {
         this.urlMedia = url
         this.abrirModalImagem = true
       } catch (error) {
-        this.$notificarErro('Ocorreu um erro!', error)
+        this.$notificarErro('Ocorreu um erro', error)
       }
       this.loading = false
     },
@@ -626,6 +667,15 @@ export default {
       setTimeout(() => {
         this.identificarMensagem = null
       }, 5000)
+    },
+    getVotePercentage (option, options) {
+      const totalVotes = options.reduce((sum, opt) => sum + (opt.votes || 0), 0)
+      if (totalVotes === 0) return 0
+      return Math.round((option.votes || 0) * 100 / totalVotes)
+    },
+    totalVotes () {
+      if (!this.mensagem.pollData?.options) return 0
+      return this.mensagem.pollData.options.reduce((sum, opt) => sum + (opt.votes || 0), 0)
     }
   },
   mounted () {
@@ -649,5 +699,103 @@ export default {
 .checkbox-encaminhar-left {
   left: -35px;
   z-index: 99999;
+}
+
+.poll-container {
+  padding: 12px;
+  border-radius: 8px;
+  background: #202C33;
+  min-width: 250px;
+  color: white;
+}
+
+.poll-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.poll-title {
+  font-weight: 500;
+  font-size: 1em;
+  color: white;
+}
+
+.poll-subtitle {
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 12px;
+}
+
+.poll-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.poll-option {
+  position: relative;
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.poll-option-content {
+  position: relative;
+  z-index: 1;
+}
+
+.poll-option-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.poll-option-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(0, 150, 136, 0.2);
+  transition: width 0.3s ease;
+  z-index: 0;
+  border-radius: 4px;
+}
+
+.poll-option-text {
+  font-weight: 500;
+  color: white;
+}
+
+.poll-option-votes {
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 8px;
+}
+
+.poll-footer {
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 8px;
+
+  :deep(.q-btn) {
+    min-height: 32px;
+    font-size: 0.9em;
+  }
+}
+
+.poll-no-options {
+  text-align: center;
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
+.poll-total-votes {
+  margin-left: 4px;
+  color: rgba(255, 255, 255, 0.7);
 }
 </style>

@@ -17,6 +17,14 @@ interface MessageData {
   timestamp?: number;
   quotedMsgId?: string;
   status?: string;
+  pollData?: {
+    name: string;
+    options: Array<{
+      name: string;
+      localId?: string;
+    }>;
+    selectionAmount?: number;
+  };
 }
 
 interface Request {

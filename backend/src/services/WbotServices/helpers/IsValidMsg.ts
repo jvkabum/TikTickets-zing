@@ -11,7 +11,9 @@ const isValidMsg = (msg: WbotMessage): boolean => {
     msg.type === "document" ||
     msg.type === "vcard" ||
     msg.type === "sticker" ||
-	msg.type === "location"
+    msg.type === "location" ||
+    msg.type === "poll_creation" ||
+    msg.type === "poll_vote"
   )
     return true;
   return false;
