@@ -22,6 +22,7 @@ import tenantRoutes from "./tenantRoutes";
 import WebHooksRoutes from "./WebHooksRoutes";
 import adminRoutes from "./adminRoutes";
 import facebookRoutes from "./facebookRoutes";
+import protocolRoutes from "./protocolRoutes";
 
 const routes = Router();
 
@@ -32,11 +33,10 @@ routes.use(contactRoutes);
 routes.use(ticketRoutes);
 routes.use(whatsappRoutes);
 routes.use(messageRoutes);
-routes.use(messageRoutes);
 routes.use(whatsappSessionRoutes);
 routes.use(autoReplyRoutes);
-routes.use(queueRoutes);
 routes.use(fastReplyRoutes);
+routes.use(queueRoutes);
 routes.use(statisticsRoutes);
 routes.use(tagRoutes);
 routes.use(campaignRoutes);
@@ -48,5 +48,6 @@ routes.use(tenantRoutes);
 routes.use(WebHooksRoutes);
 routes.use(adminRoutes);
 routes.use(facebookRoutes);
+routes.use("/protocols", protocolRoutes);
 
 export default routes;

@@ -223,8 +223,11 @@ export const update = async (
       where: { id: ticket.whatsappId, tenantId }
     });
     if (whatsapp?.farewellMessage) {
+      const lastProtocol = ticket.protocols && ticket.protocols.length > 0 
+        ? ticket.protocols[ticket.protocols.length - 1].protocolNumber 
+        : '';
       const body = pupa(whatsapp.farewellMessage || "", {
-        protocol: ticket.protocol,
+        protocol: lastProtocol,
         name: ticket.contact.name
       });
       const messageData = {

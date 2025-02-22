@@ -25,6 +25,7 @@ import ApiConfig from "../models/ApiConfig";
 import ApiMessage from "../models/ApiMessage"; 
 import LogTicket from "../models/LogTicket"; 
 import ChatFlow from "../models/ChatFlow"; 
+import Protocol from "../models/Protocol"; 
 import * as QueueJobs from "../libs/Queue"; 
 import { logger } from "../utils/logger"; 
 
@@ -36,6 +37,7 @@ import { logger } from "../utils/logger";
 interface CustomSequelize extends Sequelize {
   afterConnect?: any; // Função a ser chamada após a conexão
   afterDisconnect?: any; // Função a ser chamada após a desconexão
+  addModels: (models: any[]) => void;  // Adicione esta linha
 }
 
 // Configurações do banco de dados
@@ -70,7 +72,8 @@ const models = [
   ApiConfig, // Modelo de Configuração de API
   ApiMessage, // Modelo de Mensagem de API
   LogTicket, // Modelo de Log de Ticket
-  ChatFlow // Modelo de Fluxo de Chat
+  ChatFlow, // Modelo de Fluxo de Chat
+  Protocol // Modelo de Protocolo
 ];
 
 // Adiciona os modelos ao Sequelize

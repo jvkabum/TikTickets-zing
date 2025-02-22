@@ -11,7 +11,8 @@ import {
   AutoIncrement,
   Default,
   DataType,
-  AllowNull
+  AllowNull,
+  BeforeCreate
 } from "sequelize-typescript";
 
 import { format } from "date-fns";
@@ -25,6 +26,7 @@ import Queue from "./Queue";
 import Tenant from "./Tenant";
 import MessagesOffLine from "./MessageOffLine";
 import ChatFlow from "./ChatFlow";
+import Protocol from "./Protocol";
 
 // Modelo para tickets (atendimentos)
 // Gerencia todas as conversas/atendimentos do sistema
@@ -34,190 +36,192 @@ class Ticket extends Model<Ticket> {
   @PrimaryKey
   @AutoIncrement
   @Column
-  id: number;
+  id!: number;
 
   // Status do ticket (pending, open, closed, etc)
   @Column({ defaultValue: "pending" })
-  status: string;
+  status!: string;
 
   // Número de mensagens não lidas
   @Column
-  unreadMessages: number;
+  unreadMessages!: number;
 
   // Última mensagem do ticket
   @Column
-  lastMessage: string;
+  lastMessage!: string;
 
   // Canal de comunicação (whatsapp, telegram, etc)
   @Column
-  channel: string;
+  channel!: string;
 
   // Indica se o ticket foi respondido
   @Default(true)
   @Column
-  answered: boolean;
+  answered!: boolean;
 
   // Indica se é um grupo
   @Default(false)
   @Column
-  isGroup: boolean;
+  isGroup!: boolean;
 
   // Indica se é uma demanda ativa
   @Default(false)
   @Column
-  isActiveDemand: boolean;
+  isActiveDemand!: boolean;
 
   // Indica se é uma mensagem de despedida
   @Default(false)
   @Column
-  isFarewellMessage: boolean;
+  isFarewellMessage!: boolean;
 
   // Data de criação do registro
   @CreatedAt
-  createdAt: Date;
+  createdAt!: Date;
 
   // Data da última atualização
   @UpdatedAt
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // Última interação com o chatbot
   @Column(DataType.DATE)
-  lastInteractionBot: Date;
+  lastInteractionBot!: Date;
 
   // Número de tentativas do bot
   @Column(DataType.INTEGER)
-  botRetries: number;
+  botRetries!: number;
 
   // Timestamp de fechamento
   @Column(DataType.BIGINT)
-  closedAt: number;
+  closedAt!: number;
 
   // Timestamp da última mensagem
   @Column(DataType.BIGINT)
-  lastMessageAt: number;
+  lastMessageAt!: number;
 
   // Timestamp do início do atendimento
   @Column(DataType.BIGINT)
-  startedAttendanceAt: number;
+  startedAttendanceAt!: number;
 
   // ID do usuário atendente
   @ForeignKey(() => User)
   @Column
-  userId: number;
+  userId!: number;
 
   // Relacionamento com o usuário
   @BelongsTo(() => User)
-  user: User;
+  user!: User;
 
   // ID do contato
   @ForeignKey(() => Contact)
   @Column
-  contactId: number;
+  contactId!: number;
 
   // Relacionamento com o contato
   @BelongsTo(() => Contact)
-  contact: Contact;
+  contact!: Contact;
 
   // ID da conexão WhatsApp
   @ForeignKey(() => Whatsapp)
   @Column
-  whatsappId: number;
+  whatsappId!: number;
 
   // Relacionamento com o WhatsApp
   @BelongsTo(() => Whatsapp)
-  whatsapp: Whatsapp;
+  whatsapp!: Whatsapp;
 
   // Mensagens do ticket
   @HasMany(() => Message)
-  messages: Message[];
+  messages!: Message[];
 
   // ID da resposta automática
   @ForeignKey(() => AutoReply)
   @Column
-  autoReplyId: number;
+  autoReplyId!: number;
 
   // Relacionamento com resposta automática
   @BelongsTo(() => AutoReply)
-  autoReply: AutoReply;
+  autoReply!: AutoReply;
 
   // ID do passo da resposta automática
   @ForeignKey(() => StepsReply)
   @Column
-  stepAutoReplyId: number;
+  stepAutoReplyId!: number;
 
   // Relacionamento com o passo
   @BelongsTo(() => StepsReply)
-  stepsReply: StepsReply;
+  stepsReply!: StepsReply;
 
   // ID do fluxo de chat
   @ForeignKey(() => ChatFlow)
   @Column
-  chatFlowId: number;
+  chatFlowId!: number;
 
   // Relacionamento com o fluxo
   @BelongsTo(() => ChatFlow)
-  chatFlow: ChatFlow;
+  chatFlow!: ChatFlow;
 
   // Passo atual do fluxo de chat
   @Default(null)
   @AllowNull
   @Column(DataType.INTEGER)
-  stepChatFlow: number;
+  stepChatFlow!: number;
 
   // ID da fila
   @ForeignKey(() => Queue)
   @Default(null)
   @AllowNull
   @Column
-  queueId: number;
+  queueId!: number;
 
   // Relacionamento com a fila
   @BelongsTo(() => Queue)
-  queue: Queue;
+  queue!: Queue;
 
   // ID do tenant
   @ForeignKey(() => Tenant)
   @Column
-  tenantId: number;
+  tenantId!: number;
 
   // Indica se é uma transferência
   @Default(null)
   @Column(DataType.VIRTUAL)
-  isTransference: string | boolean | null;
+  isTransference!: string | boolean | null;
 
   // Indica se acabou de ser criado
   @Default(null)
   @Column(DataType.VIRTUAL)
-  isCreated: boolean | null;
+  isCreated!: boolean | null;
 
   // Mensagens agendadas
   @Default([])
   @Column(DataType.VIRTUAL)
-  scheduledMessages: Message[];
+  scheduledMessages!: Message[];
 
   // Relacionamento com o tenant
   @BelongsTo(() => Tenant)
-  tenant: Tenant;
+  tenant!: Tenant;
 
   // Mensagens offline
   @HasMany(() => MessagesOffLine)
-  messagesOffLine: MessagesOffLine[];
+  messagesOffLine!: MessagesOffLine[];
+
+  // Relacionamento com o protocolo
+  @HasMany(() => Protocol)
+  protocols!: Protocol[];
 
   // Configurações da API
   @Default(null)
   @AllowNull
   @Column(DataType.JSONB)
-  apiConfig: object;
+  apiConfig!: object;
 
-  // Número de protocolo do ticket
-  // Formato: yyyyddMMHHmmss + id
-  @Column(DataType.VIRTUAL)
-  get protocol(): string {
-    const date = this.getDataValue("createdAt");
-    const formatDate = format(new Date(date), "yyyyddMMHHmmss");
-    const id = this.getDataValue("id");
-    return `${formatDate}${id}`;
-  }
+  // Contagem de atendimentos
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    defaultValue: 0 // Valor padrão para novos tickets
+  })
+  attendanceCount!: number;
 }
 
 export default Ticket;

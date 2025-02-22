@@ -6,9 +6,17 @@
       leave-active-class="animated fadeOut"
     >
       <div v-for="(mensagem, index) in mensagens" :key="index">
+        <!-- Divisor de protocolo -->
+        <hr
+          v-if="mostrarDivisorProtocolo(mensagem, index)"
+          :key="'hr-protocol-' + index"
+          class="hr-text q-mt-lg q-mb-md"
+          :data-content="obterTextoProtocolo(mensagem)"
+        >
+        <!-- Divisor de data -->
         <hr
           v-if="isLineDate"
-          :key="'hr-' + index"
+          :key="'hr-date-' + index"
           class="hr-text q-mt-lg q-mb-md"
           :data-content="formatarData(mensagem.createdAt)"
           v-show="index === 0 || formatarData(mensagem.createdAt) !== formatarData(mensagens[index - 1].createdAt)"
@@ -401,6 +409,7 @@ import MensagemRespondida from './MensagemRespondida'
 import ContatoCard from './ContatoCard.vue'
 import ContatoModal from './ContatoModal.vue'
 import { DeletarMensagem, EditarMensagem } from 'src/service/tickets'
+import { ListarProtocolos } from 'src/service/protocols'
 import { Base64 } from 'js-base64'
 const downloadImageCors = axios.create({
   baseURL: process.env.VUE_URL_API,
@@ -444,6 +453,10 @@ export default {
     replyingMessage: {
       type: Object,
       default: () => { }
+    },
+    ticketId: {
+      type: [String, Number],
+      required: true
     }
   },
   data () {
@@ -456,6 +469,7 @@ export default {
       urlMedia: '',
       identificarMensagem: null,
       selectedPollOption: null,
+      protocolos: [],
       ackIcons: {
         0: 'mdi-clock-outline',
         1: 'mdi-check',
@@ -676,12 +690,112 @@ export default {
     totalVotes () {
       if (!this.mensagem.pollData?.options) return 0
       return this.mensagem.pollData.options.reduce((sum, opt) => sum + (opt.votes || 0), 0)
+    },
+    async carregarProtocolos () {
+      try {
+        if (!this.ticketId) {
+          console.error('ticketId não definido')
+          return
+        }
+
+        const ticketIdNumber = parseInt(this.ticketId, 10)
+        if (isNaN(ticketIdNumber)) {
+          console.error('ticketId inválido:', this.ticketId)
+          return
+        }
+
+        console.log('Carregando protocolos para ticket:', ticketIdNumber)
+        const response = await ListarProtocolos(ticketIdNumber)
+        console.log('Protocolos carregados:', response.data)
+        this.protocolos = response.data || []
+        console.log('Protocolos armazenados:', this.protocolos)
+      } catch (error) {
+        console.error('Erro ao carregar protocolos:', error)
+        this.$notificarErro('Erro ao carregar protocolos')
+      }
+    },
+    mostrarDivisorProtocolo (mensagem, index) {
+      if (!this.protocolos || !this.protocolos.length) {
+        console.log('Sem protocolos para mostrar')
+        return false
+      }
+
+      const msgDate = new Date(mensagem.createdAt)
+      const protocoloAtual = this.getProtocoloMensagem(msgDate)
+
+      if (!protocoloAtual) {
+        console.log('Nenhum protocolo encontrado para a mensagem')
+        return false
+      }
+
+      // Se for a primeira mensagem, sempre mostra o divisor
+      if (index === 0) {
+        console.log('Primeira mensagem, mostrando divisor')
+        return true
+      }
+
+      // Para as demais mensagens, verifica se houve mudança de protocolo
+      const mensagemAnterior = this.mensagens[index - 1]
+      if (!mensagemAnterior) return false
+
+      const dataAnterior = new Date(mensagemAnterior.createdAt)
+      const protocoloAnterior = this.getProtocoloMensagem(dataAnterior)
+
+      // Se não houver protocolo anterior, mas houver atual, mostra o divisor
+      if (!protocoloAnterior && protocoloAtual) {
+        return true
+      }
+
+      // Se houver mudança de protocolo ou status, mostra o divisor
+      return protocoloAnterior && (
+        protocoloAtual.protocolNumber !== protocoloAnterior.protocolNumber ||
+        protocoloAtual.status !== protocoloAnterior.status
+      )
+    },
+    getProtocoloMensagem (msgDate) {
+      if (!this.protocolos || !this.protocolos.length) {
+        console.log('Sem protocolos disponíveis')
+        return null
+      }
+
+      // Garante que msgDate seja um objeto Date
+      msgDate = new Date(msgDate)
+
+      // Ordena os protocolos por data de criação (mais recente primeiro)
+      const protocolosOrdenados = [...this.protocolos].sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt)
+      })
+
+      // Encontra o protocolo mais recente que seja anterior ou igual à data da mensagem
+      const protocoloEncontrado = protocolosOrdenados.find(p => {
+        const protocolDate = new Date(p.createdAt)
+        return protocolDate <= msgDate
+      })
+
+      return protocoloEncontrado || null
+    },
+    obterTextoProtocolo (mensagem) {
+      const protocolo = this.getProtocoloMensagem(new Date(mensagem.createdAt))
+
+      if (!protocolo) {
+        return ''
+      }
+
+      const status = protocolo.status === 'ABER' ? '🟢 Abertura' : '🔴 Fechamento'
+      const dataFormatada = this.formatarData(protocolo.createdAt, 'dd/MM/yyyy HH:mm')
+      const texto = `Protocolo ${protocolo.protocolNumber} • ${status} • ${dataFormatada}`
+      return texto
     }
   },
-  mounted () {
+  async mounted () {
+    await this.carregarProtocolos()
     this.scrollToBottom()
   },
-  destroyed () {
+  watch: {
+    ticketId: {
+      immediate: true,
+      handler: 'carregarProtocolos'
+    }
   }
 }
 </script>
@@ -797,5 +911,53 @@ export default {
 .poll-total-votes {
   margin-left: 4px;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.hr-text {
+  line-height: 1em;
+  position: relative;
+  outline: 0;
+  border: 0;
+  color: black;
+  text-align: center;
+  height: 1.5em;
+  opacity: 0.8;
+  margin: 20px 0;
+  width: 100%;
+
+  &:before {
+    content: '';
+    background: linear-gradient(to right, transparent, #818078, transparent);
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+  }
+
+  &:after {
+    content: attr(data-content);
+    position: relative;
+    display: inline-block;
+    padding: 0 0.5em;
+    line-height: 1.5em;
+    color: #818078;
+    background-color: #fcfcfa;
+    font-weight: 500;
+    border-radius: 4px;
+  }
+}
+
+.body--dark {
+  .hr-text {
+    color: white;
+    &:after {
+      color: #fcfcfa;
+      background-color: #1d1d1d;
+    }
+    &:before {
+      background: linear-gradient(to right, transparent, #fcfcfa, transparent);
+    }
+  }
 }
 </style>
