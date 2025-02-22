@@ -151,7 +151,9 @@ const CreateMessageSystemService = async ({
     // Alter template message
     if (msg.body && !Array.isArray(msg.body)) {
       messageData.body = pupa(msg.body || "", {
-        protocol: ticket.protocol,
+        protocol: ticket.protocols && ticket.protocols.length > 0 
+          ? ticket.protocols[ticket.protocols.length - 1].protocolNumber 
+          : '',
         name: ticket.contact.name
       });
     }
