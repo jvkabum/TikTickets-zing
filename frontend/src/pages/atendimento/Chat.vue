@@ -41,6 +41,7 @@
       <MensagemChat
         :replyingMessage.sync="replyingMessage"
         :mensagens="cMessages"
+        :ticketId="ticketFocado.id"
         v-if="cMessages.length && ticketFocado.id"
         @mensagem-chat:encaminhar-mensagem="abrirModalEncaminharMensagem"
         :ativarMultiEncaminhamento.sync="ativarMultiEncaminhamento"
