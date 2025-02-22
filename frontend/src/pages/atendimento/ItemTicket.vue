@@ -416,7 +416,7 @@ export default {
         this.profilePicUrl = await this.$parent.getProfilePic(this.ticket.contact.number)
       }
     },
-    async sincronizarMensagens() {
+    async sincronizarMensagens () {
       try {
         this.sincronizando = true
         await SincronizarMensagensTicket(this.ticket.id)

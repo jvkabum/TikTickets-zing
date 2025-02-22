@@ -65,6 +65,14 @@ class Message extends Model<Message> {
   @Column(DataType.TEXT)
   body: string;
 
+  // Número do protocolo associado à mensagem
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    defaultValue: ""
+  })
+  protocolNumber: string;
+
   // Nome do arquivo de mídia
   @Column(DataType.VIRTUAL)
   get mediaName(): string | null {

@@ -142,7 +142,9 @@ const BuildSendMessageService = async ({
       // Alter template message
       msg.data.message = pupa(msg.data.message || "", {
         // greeting: será considerado conforme data/hora da mensagem internamente na função pupa
-        protocol: ticket.protocol,
+        protocol: ticket.protocols && ticket.protocols.length > 0 
+          ? ticket.protocols[ticket.protocols.length - 1].protocolNumber 
+          : '',
         name: ticket.contact.name
       });
 

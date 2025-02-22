@@ -432,7 +432,7 @@ export default {
       this.modalTransferirTicket = false
       this.$store.commit('TICKET_FOCADO', {})
     },
-    async sincronizarMensagens() {
+    async sincronizarMensagens () {
       try {
         this.sincronizando = true
         await SincronizarMensagensTicket(this.ticketFocado.id)
