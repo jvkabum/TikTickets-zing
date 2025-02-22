@@ -12,10 +12,10 @@ interface HandleMessageReceivedData {
 class HandleMessageReceivedService {
   public async execute({ message, contact, tenantId }: HandleMessageReceivedData): Promise<void> {
     try {
-      console.log("\n=== Iniciando HandleMessageReceivedService ===");
-      console.log("Mensagem recebida:", message.body);
-      console.log("Contact ID:", contact.id);
-      console.log("Tenant ID:", tenantId);
+      // console.log("\n=== Iniciando HandleMessageReceivedService ===");
+      // console.log("Mensagem recebida:", message.body);
+      // console.log("Contact ID:", contact.id);
+      // console.log("Tenant ID:", tenantId);
 
       // Buscar todas as tags ativas
       const tags = await Tags.findAll({
@@ -27,14 +27,14 @@ class HandleMessageReceivedService {
 
       // Filtrar tags que têm autoTag configurado e processar
       const tagsWithAutoTag = tags.filter(tag => tag.autoTag !== null && tag.autoTag !== '');
-      console.log("\nTags com autoTag configurado:", tagsWithAutoTag.map(t => ({
-        id: t.id,
-        tag: t.tag,
-        autoTag: t.autoTag
-      })));
+      // console.log("\nTags com autoTag configurado:", tagsWithAutoTag.map(t => ({
+      //   id: t.id,
+      //   tag: t.tag,
+      //   autoTag: t.autoTag
+      // })));
       
       for (const tag of tagsWithAutoTag) {
-        console.log(`\nProcessando tag "${tag.tag}":`);
+        // console.log(`\nProcessando tag "${tag.tag}":`);
         
         // Função para normalizar texto
         const normalizeText = (text: string) => {
@@ -50,10 +50,10 @@ class HandleMessageReceivedService {
         const messageText = normalizeText(message.body || '');
         const autoTagText = normalizeText(tag.autoTag || '');
 
-        console.log("Texto original da mensagem:", message.body);
-        console.log("AutoTag original:", tag.autoTag);
-        console.log("Texto da mensagem normalizado:", messageText);
-        console.log("AutoTag normalizado:", autoTagText);
+        // console.log("Texto original da mensagem:", message.body);
+        // console.log("AutoTag original:", tag.autoTag);
+        // console.log("Texto da mensagem normalizado:", messageText);
+        // console.log("AutoTag normalizado:", autoTagText);
 
         if (messageText && autoTagText) {
           // Primeiro tenta comparação exata
@@ -64,7 +64,7 @@ class HandleMessageReceivedService {
             isMatch = messageText.includes(autoTagText);
           }
 
-          console.log(`Tipo de comparação: ${isMatch ? (messageText === autoTagText ? 'MATCH EXATO' : 'MATCH PARCIAL') : 'Sem correspondência'}`);
+          // console.log(`Tipo de comparação: ${isMatch ? (messageText === autoTagText ? 'MATCH EXATO' : 'MATCH PARCIAL') : 'Sem correspondência'}`);
 
           if (isMatch) {
             // Verificar se o contato já tem esta tag
@@ -76,25 +76,25 @@ class HandleMessageReceivedService {
             });
 
             if (!existingTag) {
-              console.log(`Adicionando tag "${tag.tag}" ao contato ${contact.id}`);
+              // console.log(`Adicionando tag "${tag.tag}" ao contato ${contact.id}`);
               try {
                 const newContactTag = await ContactTag.create({
                   contactId: contact.id,
                   tagId: tag.id,
                   tenantId
                 });
-                console.log("Tag adicionada com sucesso:", newContactTag.id);
+                // console.log("Tag adicionada com sucesso:", newContactTag.id);
               } catch (createError) {
                 console.error("Erro ao criar ContactTag:", createError);
                 throw createError;
               }
             } else {
-              console.log(`Contato já possui a tag "${tag.tag}"`);
+              // console.log(`Contato já possui a tag "${tag.tag}"`);
             }
           }
         }
       }
-      console.log("\n=== Fim do processamento ===\n");
+      // console.log("\n=== Fim do processamento ===\n");
     } catch (error) {
       console.error("Erro ao processar auto-tag:", error);
       throw error;

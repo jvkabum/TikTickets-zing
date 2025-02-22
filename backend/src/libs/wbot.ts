@@ -57,30 +57,24 @@ args.unshift(`--user-agent=${DefaultOptions.userAgent}`); // Adiciona o user-age
 // Função para verificar mensagens
 const checkMessages = async (wbot: Session, tenantId: number | string) => {
   try {
-    const isConnectStatus = wbot && (await wbot.getState()) === "CONNECTED"; // Verifica o status de conexão
-    logger.info( // Registra informações de verificação de mensagens
-      "wbot:checkMessages:status",
-      wbot.id,
-      tenantId,
-      isConnectStatus
-    );
+    const isConnectStatus = wbot && (await wbot.getState()) === "CONNECTED";
+    // logger.info("wbot:checkMessages:status", wbot.id, tenantId, isConnectStatus);
 
     if (isConnectStatus) {
-      logger.info("wbot:connected:checkMessages", wbot, tenantId); // Registra que o bot está conectado
-      Queue.add("SendMessages", { sessionId: wbot.id, tenantId }); // Adiciona job para enviar mensagens
+      // logger.info("wbot:connected:checkMessages", wbot, tenantId);
+      Queue.add("SendMessages", { sessionId: wbot.id, tenantId });
     }
   } catch (error) {
-    const strError = String(error); // Converte o erro para string
-    // se a sessão tiver sido fechada, limpar a checagem de mensagens e bot
+    const strError = String(error);
     if (strError.indexOf("Session closed.") !== -1) {
-      logger.error( // Registra erro de desconexão
+      logger.error(
         `BOT Whatsapp desconectado. Tenant: ${tenantId}:: BOT ID: ${wbot.id}`
       );
-      clearInterval(wbot.checkMessages); // Limpa o intervalo de verificação de mensagens
-      removeWbot(wbot.id); // Remove a sessão do bot
+      clearInterval(wbot.checkMessages);
+      removeWbot(wbot.id);
       return;
     }
-    logger.error(`ERROR: checkMessages Tenant: ${tenantId}::`, error); // Registra erro no logger
+    logger.error(`ERROR: checkMessages Tenant: ${tenantId}::`, error);
   }
 };
 
@@ -113,68 +107,64 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
 
       wbot.initialize(); // Inicializa o bot
 
-      wbot.on("qr", async qr => { // Evento para quando o QR code é gerado
-        if (whatsapp.status === "CONNECTED") return; // Se já estiver conectado, não faz nada
-        logger.info( // Registra informações do QR code
-          `Session QR CODE: ${sessionName}-ID: ${whatsapp.id}-${whatsapp.status}`
-        );
+      wbot.on("qr", async qr => {
+        if (whatsapp.status === "CONNECTED") return;
+        // logger.info(`Session QR CODE: ${sessionName}-ID: ${whatsapp.id}-${whatsapp.status}`);
 
-        await whatsapp.update({ // Atualiza o status da conexão
-          qrcode: qr, // Armazena o QR code
-          status: "qrcode", // Atualiza o status para "qrcode"
-          retries: 0 // Reseta o número de tentativas
+        await whatsapp.update({
+          qrcode: qr,
+          status: "qrcode",
+          retries: 0
         });
-        const sessionIndex = sessions.findIndex(s => s.id === whatsapp.id); // Verifica se a sessão já existe
+        const sessionIndex = sessions.findIndex(s => s.id === whatsapp.id);
         if (sessionIndex === -1) {
-          wbot.id = whatsapp.id; // Atribui o ID da conexão à sessão
-          sessions.push(wbot); // Adiciona a nova sessão à lista de sessões
+          wbot.id = whatsapp.id;
+          sessions.push(wbot);
         }
 
-        io.emit(`${tenantId}:whatsappSession`, { // Emite evento de atualização de sessão
+        io.emit(`${tenantId}:whatsappSession`, {
           action: "update",
-          session: whatsapp // Dados da conexão
+          session: whatsapp
         });
       });
 
-      wbot.on("authenticated", async () => { // Evento quando a autenticação é bem-sucedida
-        logger.info(`Session: ${sessionName} AUTHENTICATED`); // Registra que a sessão foi autenticada
+      wbot.on("authenticated", async () => {
+        // logger.info(`Session: ${sessionName} AUTHENTICATED`);
       });
 
-      wbot.on("auth_failure", async msg => { // Evento quando a autenticação falha
-        logger.error( // Registra erro de autenticação
-          `Session: ${sessionName}-AUTHENTICATION FAILURE :: ${msg}`
-        );
+      wbot.on("auth_failure", async msg => {
+        logger.error(`Session: ${sessionName}-AUTHENTICATION FAILURE :: ${msg}`);
         if (whatsapp.retries > 1) {
-          await whatsapp.update({ // Reseta a sessão se houver muitas tentativas
+          await whatsapp.update({
             retries: 0,
             session: ""
           });
         }
 
-        const retry = whatsapp.retries; // Armazena o número de tentativas
-        await whatsapp.update({ // Atualiza o status da conexão
+        const retry = whatsapp.retries;
+        await whatsapp.update({
           status: "DISCONNECTED",
-          retries: retry + 1 // Incrementa o número de tentativas
+          retries: retry + 1
         });
 
-        io.emit(`${tenantId}:whatsappSession`, { // Emite evento de atualização de sessão
+        io.emit(`${tenantId}:whatsappSession`, {
           action: "update",
-          session: whatsapp // Dados da conexão
+          session: whatsapp
         });
-        reject(new Error("Error starting whatsapp session.")); // Lança erro se a sessão não puder ser iniciada
+        reject(new Error("Error starting whatsapp session."));
       });
 
-      wbot.on("ready", async () => { // Evento quando o bot está pronto
-        logger.info(`Session: ${sessionName}-READY`); // Registra que a sessão está pronta
+      wbot.on("ready", async () => {
+        // logger.info(`Session: ${sessionName}-READY`);
 
-        const info: any = wbot?.info; // Armazena informações do bot
-        const wbotVersion = await wbot.getWWebVersion(); // Obtém a versão do WhatsApp Web
-        const wbotBrowser = await wbot.pupBrowser?.version(); // Obtém a versão do navegador
-        await whatsapp.update({ // Atualiza o status da conexão
+        const info: any = wbot?.info;
+        const wbotVersion = await wbot.getWWebVersion();
+        const wbotBrowser = await wbot.pupBrowser?.version();
+        await whatsapp.update({
           status: "CONNECTED",
           qrcode: "",
           retries: 0,
-          number: wbot?.info?.wid?.user, // || wbot?.info?.me?.user,
+          number: wbot?.info?.wid?.user,
           phone: {
             ...(info || {}),
             wbotVersion,
@@ -182,36 +172,35 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
           }
         });
 
-        io.emit(`${tenantId}:whatsappSession`, { // Emite evento de atualização de sessão
+        io.emit(`${tenantId}:whatsappSession`, {
           action: "update",
-          session: whatsapp // Dados da conexão
+          session: whatsapp
         });
 
-        io.emit(`${tenantId}:whatsappSession`, { // Emite evento de sessão pronta
+        io.emit(`${tenantId}:whatsappSession`, {
           action: "readySession",
-          session: whatsapp // Dados da conexão
+          session: whatsapp
         });
 
-        const sessionIndex = sessions.findIndex(s => s.id === whatsapp.id); // Verifica se a sessão já existe
+        const sessionIndex = sessions.findIndex(s => s.id === whatsapp.id);
         if (sessionIndex === -1) {
-          wbot.id = whatsapp.id; // Atribui o ID da conexão à sessão
-          sessions.push(wbot); // Adiciona a nova sessão à lista de sessões
+          wbot.id = whatsapp.id;
+          sessions.push(wbot);
         }
 
-        wbot.sendPresenceAvailable(); // Envia presença disponível
-        SyncUnreadMessagesWbot(wbot, tenantId); // Sincroniza mensagens não lidas (corrigido)
-        resolve(wbot); // Retorna a sessão
+        wbot.sendPresenceAvailable();
+        SyncUnreadMessagesWbot(wbot, tenantId);
+        resolve(wbot);
       });
 
-      wbot.checkMessages = setInterval( // Define um intervalo para verificar mensagens
+      wbot.checkMessages = setInterval(
         checkMessages,
-        +(process.env.CHECK_INTERVAL || 5000), // Intervalo de verificação
+        +(process.env.CHECK_INTERVAL || 5000),
         wbot,
         tenantId
       );
-      // WhatsappConsumer(tenantId); // (Comentado, não utilizado)
     } catch (err) {
-      logger.error(`initWbot error | Error: ${err}`); // Registra erro no logger
+      logger.error(`initWbot error | Error: ${err}`);
     }
   });
 };

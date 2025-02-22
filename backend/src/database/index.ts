@@ -78,14 +78,14 @@ sequelize.addModels(models);
 
 // Função chamada após a conexão com o banco de dados
 sequelize.afterConnect(() => {
-  logger.info("DATABASE CONNECT"); // Registra que a conexão com o banco de dados foi estabelecida
+  // logger.info("DATABASE CONNECT"); // Registra que a conexão com o banco de dados foi estabelecida
   QueueJobs.default.add("VerifyTicketsChatBotInactives", {}); // Adiciona job para verificar tickets inativos
   QueueJobs.default.add("SendMessageSchenduled", {}); // Adiciona job para enviar mensagens agendadas
 });
 
 // Função chamada após a desconexão do banco de dados
 sequelize.afterDisconnect(() => {
-  logger.info("DATABASE DISCONNECT"); // Registra que a desconexão com o banco de dados ocorreu
+  // logger.info("DATABASE DISCONNECT"); // Registra que a desconexão com o banco de dados ocorreu
 });
 
 export default sequelize; // Exporta a instância do Sequelize

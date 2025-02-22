@@ -32,13 +32,13 @@ export default {
   // Garante que apenas um processo de envio ocorra por tenant
   async handle({ data }: any) {
     try {
-      logger.info(`Sending Tenant Initiated: ${data.tenantId}`);
+      // logger.info(`Sending Tenant Initiated: ${data.tenantId}`);
       if (sending[data.tenantId]) return;
       const wbot = getWbot(data.sessionId);
       sending[data.tenantId] = true;
       await SendMessagesSystemWbot(wbot, data.tenantId);
       sending[data.tenantId] = false;
-      logger.info(`Finalized Sending Tenant: ${data.tenantId}`);
+      // logger.info(`Finalized Sending Tenant: ${data.tenantId}`);
     } catch (error) {
       logger.error({ message: "Error send messages", error });
       sending[data.tenantId] = false;
