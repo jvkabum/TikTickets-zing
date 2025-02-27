@@ -42,7 +42,7 @@
           :class="{ pulseIdentications: identificarMensagem == `chat-message-${mensagem.id}` }"
         >
           <div
-            style="min-width: 100px; max-width: 350px;"
+            style="min-width: 100px; max-width: 500px;"
             :style="mensagem.isDeleted ? 'color: rgba(0, 0, 0, 0.36) !important;' : ''"
           >
             <q-checkbox
@@ -133,6 +133,7 @@
             <q-btn
               v-if="!mensagem.isDeleted && isShowOptions"
               class="absolute-top-right mostar-btn-opcoes-chat"
+              style="right: 4px; top: 4px;"
               dense
               flat
               ripple
@@ -200,16 +201,11 @@
               :color="mensagem.ack >= 3 ? 'blue-12' : ''"
             />
             <template v-if="mensagem.mediaType === 'audio'">
-              <div style="width: 400px;">
-                <audio
-                  class="q-mt-sm full-width"
-                  controls
-                  ref="audioMessage"
-                  controlsList="nodownload volume novolume"
-                >
-                  <source :src="mensagem.mediaUrl" type="audio/mp3" />
-                </audio>
-              </div>
+              <AudioVisualizer
+                :url="mensagem.mediaUrl"
+                :contact="mensagem.contact"
+                :avatar-src="mensagem.fromMe ? $store.state.usuario?.profileImage : mensagem.contact?.profilePicUrl"
+              />
             </template>
             <template v-if="mensagem.mediaType === 'vcard'">
               <div style="min-width: 250px;">
@@ -238,29 +234,39 @@
               <VueEasyLightbox moveDisabled :visible="abrirModalImagem" :imgs="urlMedia" :index="mensagem.ticketId || 1" @hide="abrirModalImagem = false" />
             </template>
             <template v-if="mensagem.mediaType === 'image'">
-              <q-img
-                @click="urlMedia = mensagem.mediaUrl; abrirModalImagem = true"
-                :src="mensagem.mediaUrl"
-                spinner-color="primary"
-                height="150px"
-                width="330px"
-                class="q-mt-md"
-                style="cursor: pointer;"
-              />
-              <VueEasyLightbox
-                moveDisabled
-                :visible="abrirModalImagem"
-                :imgs="urlMedia"
-                :index="mensagem.ticketId || 1"
-                @hide="abrirModalImagem = false"
-              />
+              <div class="q-mt-md" style="max-width: 400px;">
+                <q-img
+                  @click="urlMedia = mensagem.mediaUrl; abrirModalImagem = true"
+                  :src="mensagem.mediaUrl"
+                  spinner-color="primary"
+                  style="width: 100%; border-radius: 8px; cursor: pointer;"
+                  :ratio="16/9"
+                  fit="contain"
+                >
+                  <template v-slot:loading>
+                    <q-spinner-dots color="primary" />
+                  </template>
+                  <template v-slot:error>
+                    <div class="absolute-full flex flex-center bg-negative text-white">
+                      Erro ao carregar imagem
+                    </div>
+                  </template>
+                </q-img>
+                <VueEasyLightbox
+                  moveDisabled
+                  :visible="abrirModalImagem"
+                  :imgs="urlMedia"
+                  :index="mensagem.ticketId || 1"
+                  @hide="abrirModalImagem = false"
+                />
+              </div>
             </template>
             <template v-if="mensagem.mediaType === 'video'">
               <video
                 :src="mensagem.mediaUrl"
                 controls
                 class="q-mt-md"
-                style="object-fit: cover; width: 330px; height: 150px; border-radius: 8px;"
+                style="max-width: 400px; max-height: 300px; width: auto; object-fit: contain; border-radius: 8px;"
               >
               </video>
             </template>
@@ -396,6 +402,7 @@ import ContatoModal from './ContatoModal.vue'
 import { DeletarMensagem, EditarMensagem } from 'src/service/tickets'
 import { ListarProtocolos } from 'src/service/protocols'
 import { Base64 } from 'js-base64'
+import AudioVisualizer from '../../components/AudioVisualizer.vue'
 
 const downloadImageCors = axios.create({
   baseURL: process.env.VUE_URL_API,
@@ -484,7 +491,8 @@ export default {
     VueEasyLightbox,
     MensagemRespondida,
     ContatoCard,
-    ContatoModal
+    ContatoModal,
+    AudioVisualizer
   },
   computed: {
     ticketIdValido () {

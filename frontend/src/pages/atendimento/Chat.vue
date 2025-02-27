@@ -672,20 +672,63 @@ export default {
 
 <style lang="scss">
 audio {
-  height: 40px;
-  width: 400px;
+  height: 36px;
+  width: 100%;
+  border-radius: 18px;
+  outline: none;
+
+  &::-webkit-media-controls-panel {
+    background-color: transparent !important;
+    padding: 0 8px;
+  }
+
+  &::-webkit-media-controls-current-time-display,
+  &::-webkit-media-controls-time-remaining-display {
+    color: #000;
+    font-size: 12px;
+  }
+
+  &::-webkit-media-controls-play-button {
+    opacity: 0.9;
+  }
+
+  &::-webkit-media-controls-timeline {
+    background-color: #e6e6e6;
+    border-radius: 2px;
+    height: 4px;
+    margin: 0 8px;
+  }
+
+  &::-webkit-media-controls-timeline-container {
+    padding: 0;
+  }
+
+  &::-webkit-media-controls-volume-slider {
+    display: none;
+  }
+
+  &::-webkit-media-controls-mute-button {
+    display: none;
+  }
+
+  &::-webkit-media-controls-current-time-display {
+    margin-left: 8px;
+  }
+
+  &::-webkit-media-controls-time-remaining-display {
+    margin-right: 8px;
+  }
 }
 
 .mostar-btn-opcoes-chat {
   display: none;
-  transition: width 2s transform 2s;
+  transition: opacity 0.2s ease;
+  z-index: 2;
 }
 
 .q-message-text:hover .mostar-btn-opcoes-chat {
   display: block;
-  float: right;
-  position: absolute;
-  z-index: 999;
+  opacity: 1;
 }
 
 .hr-text {
@@ -793,5 +836,19 @@ audio {
 
 /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;
+}
+
+.q-message-text {
+  &:has(.audio-container) {
+    .q-message-stamp {
+      position: absolute;
+      right: 27px;
+      bottom: 10px;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      z-index: 2;
+      top: 37px;
+    }
+  }
 }
 </style>

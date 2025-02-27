@@ -46,6 +46,7 @@
     "vuedraggable": "^2.24.3",
     "vuelidate": "^0.7.7",
     "vuelidate-error-extractor": "^2.4.1",
+    "wavesurfer.js": "^6.6.4",
     "xlsx": "^0.16.9"
   },
   "devDependencies": {
