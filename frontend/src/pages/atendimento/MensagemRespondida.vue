@@ -40,9 +40,9 @@
           {{ mensagem.contact && mensagem.contact.name }}
         </div>
         <template v-if="mensagem.mediaType === 'audio'">
-          <div style="width: 200px; heigth: 300px">
+          <div style="width: 400px;">
             <audio
-              style="max-width: 200px;"
+              style="max-width: 400px;"
               class="full-width"
               controls
             >

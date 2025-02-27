@@ -673,7 +673,7 @@ export default {
 <style lang="scss">
 audio {
   height: 40px;
-  width: 264px;
+  width: 400px;
 }
 
 .mostar-btn-opcoes-chat {

@@ -200,9 +200,9 @@
               :color="mensagem.ack >= 3 ? 'blue-12' : ''"
             />
             <template v-if="mensagem.mediaType === 'audio'">
-              <div style="width: 330px; height: 300px">
+              <div style="width: 400px;">
                 <audio
-                  class="q-mt-md full-width"
+                  class="q-mt-sm full-width"
                   controls
                   ref="audioMessage"
                   controlsList="nodownload volume novolume"
