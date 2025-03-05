@@ -41,9 +41,44 @@
           :bg-color="mensagem.fromMe ? 'grey-2' : $q.dark.isActive ? 'blue-2' : 'blue-1'"
           :class="{ pulseIdentications: identificarMensagem == `chat-message-${mensagem.id}` }"
         >
+          <template v-slot:stamp>
+            <div class="row items-center no-wrap">
+              <span>{{ dataInWords(mensagem.createdAt) }}</span>
+              <template v-if="!['audio', 'vcard', 'image', 'video'].includes(mensagem.mediaType) && mensagem.mediaUrl">
+                <div class="document-stamp-actions">
+                  <q-btn
+                    flat
+                    dense
+                    color="primary"
+                    icon="open_in_new"
+                    size="xs"
+                    :href="mensagem.mediaUrl"
+                    target="_blank"
+                  >
+                    <q-tooltip>Abrir em nova aba</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    flat
+                    dense
+                    color="primary"
+                    icon="download"
+                    size="xs"
+                    :href="mensagem.mediaUrl"
+                    download
+                  >
+                    <q-tooltip>Baixar arquivo</q-tooltip>
+                  </q-btn>
+                </div>
+              </template>
+            </div>
+          </template>
           <div
-            style="min-width: 100px; max-width: 500px;"
-            :style="mensagem.isDeleted ? 'color: rgba(0, 0, 0, 0.36) !important;' : ''"
+            :style="[
+              mensagem.isDeleted ? 'color: rgba(0, 0, 0, 0.36) !important;' : '',
+              mensagem.mediaType === 'image' || mensagem.mediaType === 'video'
+                ? 'min-width: 100px;'
+                : 'min-width: 100px; max-width: 700px;'
+            ]"
           >
             <q-checkbox
               v-if="ativarMultiEncaminhamento"
@@ -204,7 +239,7 @@
               <AudioVisualizer
                 :url="mensagem.mediaUrl"
                 :contact="mensagem.contact"
-                :avatar-src="mensagem.fromMe ? $store.state.usuario?.profileImage : mensagem.contact?.profilePicUrl"
+                :avatar-src="mensagem.fromMe ? ticketFocado?.whatsapp?.profilePicUrl : mensagem.contact?.profilePicUrl"
               />
             </template>
             <template v-if="mensagem.mediaType === 'vcard'">
@@ -231,87 +266,41 @@
                 class="q-mt-md"
                 style="cursor: pointer;"
               />
-              <VueEasyLightbox moveDisabled :visible="abrirModalImagem" :imgs="urlMedia" :index="mensagem.ticketId || 1" @hide="abrirModalImagem = false" />
             </template>
-            <template v-if="mensagem.mediaType === 'image'">
-              <div class="q-mt-md" style="max-width: 400px;">
-                <q-img
-                  @click="urlMedia = mensagem.mediaUrl; abrirModalImagem = true"
-                  :src="mensagem.mediaUrl"
-                  spinner-color="primary"
-                  style="width: 100%; border-radius: 8px; cursor: pointer;"
-                  :ratio="16/9"
-                  fit="contain"
-                >
-                  <template v-slot:loading>
-                    <q-spinner-dots color="primary" />
-                  </template>
-                  <template v-slot:error>
-                    <div class="absolute-full flex flex-center bg-negative text-white">
-                      Erro ao carregar imagem
-                    </div>
-                  </template>
-                </q-img>
-                <VueEasyLightbox
-                  moveDisabled
-                  :visible="abrirModalImagem"
-                  :imgs="urlMedia"
-                  :index="mensagem.ticketId || 1"
-                  @hide="abrirModalImagem = false"
+            <template v-if="mensagem.mediaType === 'code' || isCodeFile(mensagem.mediaUrl)">
+              <div class="media-container">
+                <CodeViewer
+                  :code="mensagem.mediaType === 'code' ? mensagem.body : mensagem.mediaUrl"
+                  :file-name="mensagem.fileName || mensagem.mediaUrl?.split('/')?.pop() || ''"
+                  :file-type="getFileExtension(mensagem.fileName || mensagem.mediaUrl)"
                 />
               </div>
             </template>
-            <template v-if="mensagem.mediaType === 'video'">
-              <video
-                :src="mensagem.mediaUrl"
-                controls
-                class="q-mt-md"
-                style="max-width: 400px; max-height: 300px; width: auto; object-fit: contain; border-radius: 8px;"
-              >
-              </video>
+            <template v-else-if="mensagem.mediaType === 'image'">
+              <div class="media-container">
+                <MediaViewer
+                  mediaType="image"
+                  :mediaUrl="mensagem.mediaUrl"
+                  :mediaName="mensagem.mediaName || mensagem.body"
+                />
+              </div>
             </template>
-            <template v-if="!['audio', 'vcard', 'image', 'video'].includes(mensagem.mediaType) && mensagem.mediaUrl">
-              <div class="text-center full-width hide-scrollbar no-scroll">
-                <iframe
-                  v-if="isPDF(mensagem.mediaUrl)"
-                  frameBorder="0"
-                  scrolling="no"
-                  style="width: 330px; height: 150px; overflow-y: hidden;"
-                  class="no-scroll hide-scrollbar"
-                  :src="mensagem.mediaUrl"
-                  id="frame-pdf"
-                >
-                  Faça download do PDF
-                </iframe>
-                <q-btn
-                  type="a"
-                  :color="$q.dark.isActive ? '' : 'grey-3'"
-                  no-wrap
-                  no-caps
-                  stack
-                  dense
-                  class="q-mt-sm text-center text-black btn-rounded text-grey-9 ellipsis"
-                  download
-                  :target="isPDF(mensagem.mediaUrl) ? '_blank' : ''"
-                  :href="mensagem.mediaUrl"
-                >
-                  <q-tooltip
-                    v-if="mensagem.mediaUrl"
-                    content-class="text-bold"
-                  >
-                    Baixar: {{ mensagem.mediaName }}
-                    {{ mensagem.body }}
-                  </q-tooltip>
-                  <div class="row items-center q-ma-xs">
-                    <div
-                      class="ellipsis col-grow q-pr-sm"
-                      style="max-width: 290px"
-                    >
-                      {{ farmatarMensagemWhatsapp(mensagem.body || mensagem.mediaName) }}
-                    </div>
-                    <q-icon name="mdi-download" />
-                  </div>
-                </q-btn>
+            <template v-else-if="mensagem.mediaType === 'video' && !isCodeFile(mensagem.mediaUrl)">
+              <div class="media-container">
+                <MediaViewer
+                  mediaType="video"
+                  :mediaUrl="mensagem.mediaUrl"
+                  :mediaName="mensagem.mediaName || mensagem.body"
+                />
+              </div>
+            </template>
+            <template v-else-if="!['audio', 'vcard', 'image', 'video', 'code'].includes(mensagem.mediaType) && mensagem.mediaUrl && !isCodeFile(mensagem.mediaUrl)">
+              <div class="media-container">
+                <MediaViewer
+                  mediaType="document"
+                  :mediaUrl="mensagem.mediaUrl"
+                  :mediaName="mensagem.mediaName || mensagem.body"
+                />
               </div>
             </template>
             <template v-if="mensagem.mediaType === 'poll_creation'">
@@ -361,7 +350,7 @@
               :class="{ 'q-mt-sm': mensagem.mediaType !== 'chat' }"
               class="q-message-container row items-end no-wrap"
             >
-              <div v-html="farmatarMensagemWhatsapp(mensagem.body)"></div>
+              <div v-html="formatarMensagemWhatsapp(mensagem.body)"></div>
             </div>
           </div>
         </q-chat-message>
@@ -393,16 +382,19 @@
 </template>
 
 <script>
-import mixinCommon from './mixinCommon'
+import { mapGetters } from 'vuex'
 import axios from 'axios'
-import VueEasyLightbox from 'vue-easy-lightbox'
+import { Base64 } from 'js-base64'
+import AudioVisualizer from '../../components/AudioVisualizer.vue'
+import MediaViewer from '../../components/MediaViewer'
 import MensagemRespondida from './MensagemRespondida'
 import ContatoCard from './ContatoCard.vue'
 import ContatoModal from './ContatoModal.vue'
 import { DeletarMensagem, EditarMensagem } from 'src/service/tickets'
 import { ListarProtocolos } from 'src/service/protocols'
-import { Base64 } from 'js-base64'
-import AudioVisualizer from '../../components/AudioVisualizer.vue'
+import mixinCommon from './mixinCommon'
+import CodeViewer from '../../components/CodeViewer.vue'
+import { formatarMensagemWhatsapp } from '../../utils/format'
 
 const downloadImageCors = axios.create({
   baseURL: process.env.VUE_URL_API,
@@ -471,8 +463,6 @@ export default {
       currentContact: {},
       mensagemAtual: { body: '' },
       showModaledit: false,
-      abrirModalImagem: false,
-      urlMedia: '',
       identificarMensagem: null,
       selectedPollOption: null,
       protocolos: [],
@@ -488,13 +478,15 @@ export default {
     }
   },
   components: {
-    VueEasyLightbox,
+    AudioVisualizer,
+    MediaViewer,
     MensagemRespondida,
     ContatoCard,
     ContatoModal,
-    AudioVisualizer
+    CodeViewer
   },
   computed: {
+    ...mapGetters(['ticketFocado']),
     ticketIdValido () {
       if (!this.ticketId) return false
       const numero = parseInt(this.ticketId, 10)
@@ -522,6 +514,7 @@ export default {
     }
   },
   methods: {
+    formatarMensagemWhatsapp,
     async checkTicketIdStatus () {
       if (!this.ticketId) {
         this.protocolos = []
@@ -598,12 +591,6 @@ export default {
     marcarMensagensParaEncaminhar (mensagem) {
       this.$emit('update:mensagensParaEncaminhar', [])
       this.$emit('update:ativarMultiEncaminhamento', !this.ativarMultiEncaminhamento)
-    },
-    isPDF (url) {
-      if (!url) return false
-      const split = url.split('.')
-      const ext = split[split.length - 1]
-      return ext === 'pdf'
     },
     isGroupLabel (mensagem) {
       try {
@@ -891,6 +878,28 @@ export default {
       } catch (error) {
         return null
       }
+    },
+    isCodeFile (url) {
+      if (!url) return false
+      const codeExtensions = [
+        'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'php', 'rb', 'go', 'rs',
+        'css', 'scss', 'json', 'yaml', 'yml', 'md', 'sql', 'sh', 'bash',
+        'vue', 'html', 'xml', 'c', 'cpp', 'cs', 'swift', 'kt', 'r'
+      ]
+      try {
+        const extension = url.split('.').pop().toLowerCase()
+        return codeExtensions.includes(extension)
+      } catch (error) {
+        return false
+      }
+    },
+    getFileExtension (filename) {
+      if (!filename) return 'plaintext'
+      try {
+        return filename.split('.').pop().toLowerCase()
+      } catch (error) {
+        return 'plaintext'
+      }
     }
   },
   created () {
@@ -1103,6 +1112,64 @@ export default {
       --protocolo-texto: #FFCDD2;
       --protocolo-fundo: #B71C1C;
     }
+  }
+}
+
+.media-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  margin: 8px 0;
+  border-radius: 8px;
+  background: #1e1e1e;
+
+  :deep(.media-viewer) {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    
+    img, video {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .document-preview {
+      padding: 16px;
+      background: #1e1e1e;
+      border-radius: 8px;
+      
+      .document-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #abb2bf;
+        
+        .document-name {
+          font-size: 0.9em;
+          font-weight: 500;
+          word-break: break-all;
+        }
+      }
+    }
+  }
+}
+
+.document-stamp-actions {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  .q-btn {
+    min-height: 20px;
+    padding: 0 4px;
   }
 }
 </style>

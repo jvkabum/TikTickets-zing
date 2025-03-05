@@ -32,7 +32,7 @@ const ShowTicketService = async ({
       },
       {
         association: "whatsapp",
-        attributes: ["id", "name"]
+        attributes: ["id", "name", "profilePicUrl"]
       }
     ]
   });

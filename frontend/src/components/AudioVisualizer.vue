@@ -3,12 +3,12 @@
     <div class="photo-container">
       <q-avatar size="45px" class="q-mr-sm">
         <img
-          :src="profilePicUrl || contact?.profilePicUrl"
-          v-show="profilePicUrl || contact?.profilePicUrl"
+          :src="avatarSrc || contact?.profilePicUrl"
+          v-show="avatarSrc || contact?.profilePicUrl"
           @error="$event.target.style.display='none'"
         >
         <q-icon
-          v-if="!profilePicUrl && !contact?.profilePicUrl"
+          v-if="!avatarSrc && !contact?.profilePicUrl"
           name="person"
           size="45px"
           color="grey-5"
@@ -108,33 +108,10 @@ export default {
       formattedCurrentTime: '0:00',
       formattedDuration: '0:00',
       showRateControl: false,
-      wavesurfer: null,
-      profilePicUrl: null
-    }
-  },
-  watch: {
-    avatarSrc: {
-      immediate: true,
-      handler (newVal) {
-        if (newVal) {
-          this.profilePicUrl = newVal
-        }
-      }
+      wavesurfer: null
     }
   },
   methods: {
-    async loadProfilePic () {
-      if (!this.contact?.number) return
-
-      try {
-        const profilePicUrl = await this.$store.dispatch('profilePicUrl', this.contact.number)
-        if (profilePicUrl) {
-          this.$set(this.contact, 'profilePicUrl', profilePicUrl)
-        }
-      } catch (error) {
-        console.error('Erro ao carregar foto de perfil:', error)
-      }
-    },
     formatRate (rate) {
       return rate
     },
@@ -244,7 +221,6 @@ export default {
   },
   async mounted () {
     this.initWaveSurfer()
-    await this.loadProfilePic()
   },
   beforeDestroy () {
     if (this.wavesurfer) {

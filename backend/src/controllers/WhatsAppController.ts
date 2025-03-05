@@ -9,6 +9,7 @@ import ListWhatsAppsService from "../services/WhatsappService/ListWhatsAppsServi
 import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
 import UpdateWhatsAppService from "../services/WhatsappService/UpdateWhatsAppService";
 import CreateWhatsAppService from "../services/WhatsappService/CreateWhatsAppService";
+import { getWbot } from "../libs/wbot";
 
 /**
  * Lista todas as conexões WhatsApp do tenant
@@ -122,4 +123,31 @@ export const remove = async (
   });
 
   return res.status(200).json({ message: "Whatsapp deleted." });
+};
+
+export const getProfilePic = async (req: Request, res: Response): Promise<Response> => {
+  const { whatsappId } = req.params;
+  const { tenantId } = req.user;
+
+  const whatsapp = await ShowWhatsAppService({ id: whatsappId, tenantId });
+  
+  try {
+    const wbot = getWbot(whatsapp.id);
+    const profilePicUrl = await wbot.getProfilePicUrl(`${whatsapp.number}@c.us`);
+    
+    if (!profilePicUrl) {
+      return res.status(404).json({ error: "Profile picture not found" });
+    }
+    
+    // Atualiza a URL no banco de dados
+    await whatsapp.update({ profilePicUrl });
+    
+    return res.status(200).json({ profilePicUrl });
+  } catch (error) {
+    // Se houver erro ao buscar a foto atual, retorna a URL salva no banco
+    if (whatsapp.profilePicUrl) {
+      return res.status(200).json({ profilePicUrl: whatsapp.profilePicUrl });
+    }
+    return res.status(404).json({ error: "Profile picture not found" });
+  }
 };

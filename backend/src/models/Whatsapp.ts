@@ -62,6 +62,11 @@ class Whatsapp extends Model<Whatsapp> {
   @Column
   plugged: boolean;
 
+  // URL da foto de perfil do WhatsApp
+  @AllowNull
+  @Column(DataType.TEXT)
+  profilePicUrl: string;
+
   // Status de ativação
   @Default(true)
   @Column

@@ -59,10 +59,35 @@ export const BuscarTicketPorId = async (ticketId) => {
 }
 
 export function ConsultarDadosTicket (params) {
+  // Parâmetros permitidos e necessários
+  const allowedParams = {
+    count: params.count,
+    profilePicUrl: params.profilePicUrl,
+    name: params.name,
+    username: params.username,
+    queue: params.queue,
+    'whatsapp[id]': params.whatsapp?.id,
+    'whatsapp[name]': params.whatsapp?.name,
+    id: params.id,
+    status: params.status,
+    contactId: params.contactId,
+    userId: params.userId,
+    createdAt: params.createdAt,
+    updatedAt: params.updatedAt,
+    whatsappId: params.whatsappId
+  }
+
+  // Criar URLSearchParams e adicionar apenas os parâmetros permitidos
+  const queryParams = new URLSearchParams()
+  Object.entries(allowedParams).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      queryParams.append(key, value)
+    }
+  })
+
   return request({
-    url: `/tickets/${params.id}`,
-    method: 'get',
-    params
+    url: `/tickets/${params.id}?${queryParams.toString()}`,
+    method: 'get'
   })
 }
 

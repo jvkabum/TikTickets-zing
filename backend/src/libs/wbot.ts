@@ -155,16 +155,25 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
       });
 
       wbot.on("ready", async () => {
-        // logger.info(`Session: ${sessionName}-READY`);
-
         const info: any = wbot?.info;
         const wbotVersion = await wbot.getWWebVersion();
         const wbotBrowser = await wbot.pupBrowser?.version();
+        
+        // Obtém a foto de perfil
+        let profilePicUrl: string | null = null;
+        try {
+          const profilePic = await wbot.getProfilePicUrl(wbot.info.wid._serialized);
+          profilePicUrl = profilePic;
+        } catch (error) {
+          logger.error(`Error getting profile picture: ${error}`);
+        }
+
         await whatsapp.update({
           status: "CONNECTED",
           qrcode: "",
           retries: 0,
           number: wbot?.info?.wid?.user,
+          profilePicUrl,
           phone: {
             ...(info || {}),
             wbotVersion,

@@ -299,10 +299,13 @@ const atendimentoTicket = {
     TICKET_FOCADO (state, payload) {
       const params = {
         ...payload,
-        status: payload.status == 'pending' ? 'open' : payload.status
+        status: payload.status == 'pending' ? 'open' : payload.status,
+        whatsapp: {
+          ...payload.whatsapp,
+          profilePicUrl: payload.whatsapp?.profilePicUrl || state.ticketFocado?.whatsapp?.profilePicUrl
+        }
       }
       state.ticketFocado = params
-      // return state.ticketFocado
     },
     // OK
     LOAD_INITIAL_MESSAGES (state, payload) {
