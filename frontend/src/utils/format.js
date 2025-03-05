@@ -18,4 +18,4 @@ export function formatarMensagemWhatsapp (body) {
   formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>')
 
   return formattedText
-} 
+}

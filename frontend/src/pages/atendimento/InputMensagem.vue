@@ -179,9 +179,6 @@
             :value="textChat"
             @paste="handleInputPaste"
           >
-            <!-- <template v-slot:hint>
-          "Quebra linha: Shift + Enter"
-        </template> -->
             <template
               v-slot:prepend
               v-if="$q.screen.width < 500"
@@ -248,7 +245,7 @@
             :disable="cDisableActions"
             ref="PickerFileMessage"
             id="PickerFileMessage"
-            v-show="cMostrarEnvioArquivo"
+            v-show="false"
             v-model="arquivos"
             class="col-grow q-mx-xs PickerFileMessage"
             bg-color="blue-grey-1"
@@ -266,8 +263,20 @@
             accept=".txt, .xml, .jpg, .png, image/jpeg, .pdf, .doc, .docx, .mp4, .ogg, .mp3, .xls, .xlsx, .jpeg, .rar, .zip, .ppt, .pptx, image/*"
             @rejected="onRejectedFiles"
           />
+
+          <!-- Preview de arquivo -->
+          <div
+            v-if="arquivos.length > 0"
+            class="arquivo-preview q-mr-sm"
+          >
+            <MediaPreview
+              :file="arquivos[0]"
+              @close="hideModalPreviewImagem"
+            />
+          </div>
+
           <q-btn
-            v-if="textChat || cMostrarEnvioArquivo"
+            v-if="textChat || arquivos.length > 0"
             ref="btnEnviarMensagem"
             @click="enviarMensagem"
             :disabled="ticketFocado.status !== 'open'"
@@ -351,12 +360,10 @@
                 />
               </div>
             </q-card-section>
-            <q-card-section>
-              <q-img
-                :src="urlMediaPreview.src"
-                spinner-color="white"
-                class="img-responsive mdi-image-auto-adjust q-uploader__file--img"
-                style="height: 60vh; min-width: 55vw; max-width: 55vw"
+            <q-card-section class="preview-container">
+              <MediaPreview
+                v-if="arquivos.length > 0"
+                :file="arquivos[0]"
               />
             </q-card-section>
             <q-card-actions align="center">
@@ -408,6 +415,7 @@ import { VEmojiPicker } from 'v-emoji-picker'
 import { mapGetters } from 'vuex'
 import RecordingTimer from './RecordingTimer'
 import MicRecorder from 'mic-recorder-to-mp3'
+import MediaPreview from 'src/components/MediaPreview'
 const Mp3Recorder = new MicRecorder({ bitRate: 128 })
 import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
 
@@ -430,7 +438,8 @@ export default {
   },
   components: {
     VEmojiPicker,
-    RecordingTimer
+    RecordingTimer,
+    MediaPreview
   },
   data () {
     return {
@@ -477,12 +486,6 @@ export default {
       if (e.clipboardData.files[0]) {
         this.textChat = ''
         this.arquivos = [e.clipboardData.files[0]]
-        this.abrirModalPreviewImagem = true
-        this.urlMediaPreview = {
-          title: `Enviar imagem para ${this.ticketFocado?.contact?.name}`,
-          src: this.openFilePreview(e)
-        }
-        this.$refs.inputEnvioMensagem.focus()
       }
     },
     mensagemRapidaSelecionada (mensagem) {
@@ -529,7 +532,6 @@ export default {
       }, 10)
     },
     abrirEnvioArquivo (event) {
-      this.textChat = ''
       this.abrirFilePicker = true
       this.$refs.PickerFileMessage.pickFiles(event)
     },
@@ -777,4 +779,35 @@ export default {
   .inputEnvioMensagem,
   .PickerFileMessage
     width: 200px !important
+
+.arquivo-preview
+  width: 250px
+  height: 250px
+  border-radius: 8px
+  overflow: hidden
+  border: 1px solid #e0e0e0
+  background: #f0f2f5
+  margin-right: 8px
+  position: relative
+  display: inline-block
+  vertical-align: middle
+
+.preview-container
+  width: 250px
+  height: 250px
+  border-radius: 8px
+  overflow: hidden
+  border: 1px solid #e0e0e0
+  background: #f0f2f5
+  margin-right: 8px
+  position: relative
+
+  .q-img
+    width: 100%
+    height: 100%
+    object-fit: contain
+
+.inputEnvioMensagem
+  :deep(.q-field__before)
+    padding-right: 0
 </style>

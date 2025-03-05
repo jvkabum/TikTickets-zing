@@ -1128,7 +1128,7 @@ export default {
     max-width: 100%;
     border-radius: 8px;
     overflow: hidden;
-    
+
     img, video {
       max-width: 100%;
       height: auto;
@@ -1139,13 +1139,13 @@ export default {
       padding: 16px;
       background: #1e1e1e;
       border-radius: 8px;
-      
+
       .document-info {
         display: flex;
         align-items: center;
         gap: 8px;
         color: #abb2bf;
-        
+
         .document-name {
           font-size: 0.9em;
           font-weight: 500;
