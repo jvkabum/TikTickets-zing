@@ -66,7 +66,14 @@ Módulo responsável pelo chat e gestão de tickets de atendimento.
 - Upload de arquivos
 - Gravação de áudio
 - Envio de imagens e vídeos
-- Preview de mídia
+- Preview de mídia centralizado (400px x 350px)
+- Fechamento do preview com ESC ou clique fora da área
+
+### Emojis
+- Seletor de emoji centralizado na tela
+- Tamanho do seletor: 400px de largura (90% da tela em dispositivos menores)
+- Fechamento com ESC, botão de fechar ou clique fora da área
+- Suporte completo ao modo escuro
 
 ## 🚀 Como Usar
 
@@ -91,7 +98,7 @@ Módulo responsável pelo chat e gestão de tickets de atendimento.
 - `Enter` - Enviar mensagem
 - `Shift + Enter` - Nova linha
 - `/` - Abrir menu de mensagens rápidas
-- `Esc` - Fechar modais
+- `Esc` - Fechar modais, preview de mídia e seletor de emoji
 
 ## 🔄 Ciclo de Vida do Ticket
 
@@ -352,3 +359,39 @@ As melhorias serão implementadas na seguinte ordem:
 ## 📞 Contato
 
 Para dúvidas ou sugestões, entre em contato com a equipe de desenvolvimento.
+
+# Componentes de Atendimento
+
+## InputMensagem.vue
+
+Este componente é responsável pela interface de envio de mensagens no chat de atendimento.
+
+### Funcionalidades
+
+#### Preview de Mídia
+- O preview de mídia é exibido centralizado na tela quando um arquivo é selecionado
+- Tamanho do preview: 400px x 350px
+- Fechamento do preview:
+  - Clicando no botão de fechar
+  - Pressionando a tecla ESC
+  - Clicando fora da área do preview
+
+#### Seletor de Emoji
+- O seletor de emoji é exibido centralizado na tela
+- Tamanho do seletor: 400px de largura (90% da tela em dispositivos menores)
+- Fechamento do seletor:
+  - Clicando no botão de fechar
+  - Pressionando a tecla ESC
+  - Clicando fora da área do seletor
+
+#### Atalhos de Teclado
+- ESC: Fecha o preview de mídia ou o seletor de emoji
+- ENTER: Envia a mensagem (quando o campo de texto está focado)
+
+### Estilos
+- O preview de mídia e o seletor de emoji utilizam um overlay semi-transparente para destacar o conteúdo
+- Ambos possuem bordas arredondadas e sombras para melhor visualização
+- O cabeçalho do preview e do seletor de emoji possuem estilos consistentes
+
+### Modo Escuro
+- Suporte completo ao modo escuro com cores adaptadas para melhor visualização

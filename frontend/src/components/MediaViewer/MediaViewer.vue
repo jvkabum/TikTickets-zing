@@ -78,25 +78,31 @@ export default {
 <style lang="scss" scoped>
 .media-viewer {
   width: 100%;
-  margin: 20px 0;
+  min-width: 400px;
+  max-width: 600px;
+  margin: 10px auto;
   display: flex;
   justify-content: center;
+  align-items: center;
   overflow: visible;
 }
 
 .unknown-media {
-  width: 100%;
-  max-width: 700px;
-  min-width: 500px;
-  padding: 50px;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  background-color: #f5f5f5;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  color: #666;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background-color: #f5f5f5;
+  min-height: 40vh;
+  max-height: 75vh;
+  width: 100%;
+  min-width: 400px;
+  max-width: 600px;
+  overflow: hidden;
   margin: 0 auto;
 }
 
@@ -107,10 +113,20 @@ export default {
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 500px) {
+  .media-viewer {
+    margin: 5px auto;
+    width: 100%;
+    min-width: 200px;
+  }
+
   .unknown-media {
-    max-width: 100%;
-    padding: 30px;
+    min-height: 30vh;
+    max-height: 65vh;
+    width: 100%;
+    min-width: 200px;
+    padding: 20px;
+    border-radius: 8px;
   }
 }
 </style>
