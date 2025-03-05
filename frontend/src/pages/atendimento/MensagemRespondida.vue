@@ -10,7 +10,7 @@
       :sent="mensagem.fromMe"
       class="text-weight-medium fit q-ma-none"
       id="chat-message-resp"
-      style="min-width: 100px; max-width: 350px"
+      style="min-width: 200px; max-width: 400px"
       :bg-color="mensagem.fromMe ? 'grey-2' : $q.dark.isActive ? 'blue-2' : 'blue-1' "
     >
       <!-- @click="focarElemento(mensagem)" -->
@@ -40,10 +40,9 @@
           {{ mensagem.contact && mensagem.contact.name }}
         </div>
         <template v-if="mensagem.mediaType === 'audio'">
-          <div style="width: 400px;">
+          <div class="column items-center q-my-sm full-width">
             <audio
-              style="max-width: 400px;"
-              class="full-width"
+              style="max-width: 400px; margin: 0 auto; width: 100%;"
               controls
             >
               <source :src="mensagem.mediaUrl" type="audio/mp3" />
@@ -51,28 +50,33 @@
           </div>
         </template>
         <template v-if="mensagem.mediaType === 'vcard'">
-          <q-btn
-            type="a"
-            color="black"
-            outline
-            dense
-            class="q-px-sm text-center"
-            download="vCard"
-            :href="`data:text/x-vcard;charset=utf-8;base64,${returnCardContato(mensagem.body)}`"
-          >
-            Download Contato
-          </q-btn>
+          <div class="column items-center q-my-sm full-width">
+            <q-btn
+              type="a"
+              color="black"
+              outline
+              dense
+              class="q-px-sm text-center"
+              download="vCard"
+              :href="`data:text/x-vcard;charset=utf-8;base64,${returnCardContato(mensagem.body)}`"
+            >
+              Download Contato
+            </q-btn>
+          </div>
         </template>
         <template v-if="mensagem.mediaType === 'image'">
           <!-- @click="buscarImageCors(mensagem.mediaUrl)" -->
-          <q-img
-            @click="urlMedia=mensagem.mediaUrl; abrirModalImagem=true"
-            :src="mensagem.mediaUrl"
-            spinner-color="primary"
-            height="60px"
-            width="130px"
-            style="cursor: pointer;"
-          />
+          <div class="column items-center q-my-sm full-width">
+            <q-img
+              @click="urlMedia=mensagem.mediaUrl; abrirModalImagem=true"
+              :src="mensagem.mediaUrl"
+              spinner-color="primary"
+              height="auto"
+              width="200px"
+              style="cursor: pointer; margin: 0 auto;"
+              class="rounded-borders"
+            />
+          </div>
           <VueEasyLightbox
             moveDisabled
             :visible="abrirModalImagem"
@@ -82,22 +86,24 @@
           />
         </template>
         <template v-if="mensagem.mediaType === 'video'">
-          <video
-            :src="mensagem.mediaUrl"
-            controls
-            style="objectFit: cover;
-                  width: 130px;
-                  height: 60px;
-                  borderTopLeftRadius: 8px;
-                  borderTopRightRadius: 8px;
-                  borderBottomLeftRadius: 8px;
-                  borderBottomRightRadius: 8px;
-                "
+          <div class="column items-center q-my-sm full-width">
+            <video
+              :src="mensagem.mediaUrl"
+              controls
+              style="objectFit: cover;
+                    width: 200px;
+                    height: auto;
+                    margin: 0 auto;
+                    borderTopLeftRadius: 8px;
+                    borderTopRightRadius: 8px;
+                    borderBottomLeftRadius: 8px;
+                    borderBottomRightRadius: 8px;"
             >
-          </video>
+            </video>
+          </div>
         </template>
         <template v-if="mensagem.mediaType === 'application'">
-          <div class="text-center ">
+          <div class="column items-center q-my-sm full-width">
             <q-btn
               type="a"
               color="grey-3"
@@ -105,6 +111,7 @@
               no-caps
               stack
               class="q-my-sm text-center text-black btn-rounded text-grey-9 ellipsis"
+              style="max-width: 400px; margin: 0 auto;"
               download
               :target="isPDF(mensagem.mediaUrl) ? '_blank' : ''"
               :href="mensagem.mediaUrl"
@@ -118,7 +125,7 @@
               <template slot>
                 <div
                   class="row items-center q-my-sm"
-                  style="max-width: 180px"
+                  style="max-width: 400px"
                 >
                   <div class="ellipsis col-grow q-pr-sm">
                     {{ farmatarMensagemWhatsapp(mensagem.body) }}
@@ -128,32 +135,22 @@
                     name="mdi-download"
                   />
                 </div>
-
               </template>
             </q-btn>
           </div>
-          <!-- <q-btn
-                type="a"
-                color="primary"
-                outline
-                dense
-                class="q-px-sm text-center"
-                target="_blank"
-                :href="`http://docs.google.com/gview?url=${mensagem.mediaUrl}&embedded=true`"
-              >
-                Visualizar
-              </q-btn> -->
         </template>
         <template v-if="mensagem.mediaType === 'poll_creation'">
-          <div class="poll-container">
-            <div class="poll-header">
-              <q-icon name="poll" size="20px" class="q-mr-sm" />
-              <div class="poll-title">
-                {{ mensagem.pollData?.name || 'Enquete' }}
+          <div class="column items-center q-my-sm full-width">
+            <div class="poll-container" style="margin: 0 auto;">
+              <div class="poll-header">
+                <q-icon name="poll" size="20px" class="q-mr-sm" />
+                <div class="poll-title">
+                  {{ mensagem.pollData?.name || 'Enquete' }}
+                </div>
               </div>
-            </div>
-            <div class="poll-subtitle">
-              {{ mensagem.pollData?.options?.length || 0 }} opções
+              <div class="poll-subtitle">
+                {{ mensagem.pollData?.options?.length || 0 }} opções
+              </div>
             </div>
           </div>
         </template>
@@ -252,6 +249,7 @@ export default {
   border-radius: 6px;
   background: #202C33;
   min-width: 200px;
+  max-width: 600px;
   color: white;
   font-size: 0.9em;
 }
@@ -298,6 +296,31 @@ export default {
     :deep(.q-radio__inner) {
       color: white;
     }
+  }
+}
+
+// Estilos de alinhamento para todos os tipos de mídia
+.q-chat-message {
+  .q-message-text {
+    .column.items-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    img, video, audio {
+      display: block;
+      margin: 0 auto;
+    }
+  }
+}
+
+@media (max-width: 400px) {
+  .poll-container {
+    min-width: 200px;
+    max-width: 100%;
   }
 }
 </style>
