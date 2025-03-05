@@ -176,7 +176,7 @@
 
 <script>
 import ccPrintModelLandscape from './ccPrintModelLandscape'
-import XLSX from 'xlsx'
+import * as XLSX from 'xlsx'
 import { RelatorioContatos } from 'src/service/estatisticas'
 import { ListarEtiquetas } from 'src/service/etiquetas'
 import { estadoPorDdd, estadosBR } from 'src/utils/constants'

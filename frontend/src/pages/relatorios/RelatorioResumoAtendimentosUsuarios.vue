@@ -150,7 +150,7 @@
 <script>
 import { format, sub } from 'date-fns'
 import ccPrintModelLandscape from './ccPrintModelLandscape'
-import XLSX from 'xlsx'
+import * as XLSX from 'xlsx'
 import { RelatorioResumoAtendimentosUsuarios } from 'src/service/estatisticas'
 
 export default {
