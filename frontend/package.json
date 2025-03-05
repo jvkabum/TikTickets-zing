@@ -26,6 +26,7 @@
     "date-fns": "^2.30.0",
     "dotenv": "^16.0.3",
     "drawflow": "0.0.59",
+    "highlight.js": "^11.11.1",
     "js-base64": "^3.7.5",
     "lodash": "^4.17.21",
     "mic-recorder-to-mp3": "^2.2.2",
@@ -40,6 +41,7 @@
     "vue-codemirror": "^4.0.6",
     "vue-easy-lightbox": "^0.14.0",
     "vue-facebook-login-component": "^4.0.2",
+    "vue-highlightjs": "^1.3.3",
     "vue-infinite-loading": "^2.4.5",
     "vue-linkify": "^1.0.1",
     "vue-loader": "^15.10.1",
@@ -47,7 +49,7 @@
     "vuelidate": "^0.7.7",
     "vuelidate-error-extractor": "^2.4.1",
     "wavesurfer.js": "^6.6.4",
-    "xlsx": "^0.16.9"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/plugin-proposal-optional-chaining": "^7.21.0",
