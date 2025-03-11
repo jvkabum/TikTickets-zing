@@ -1,15 +1,30 @@
 <template>
   <div class="document-viewer">
-    <div v-if="isPDF" class="pdf-container">
-      <iframe
-        :src="pdfSrcWithoutScrollbar"
-        class="pdf-frame"
-        frameborder="0"
-        allowfullscreen
-        scrolling="no"
-      ></iframe>
+    <div v-if="isPDF" class="pdf-viewer-container">
+      <!-- Visualizador de PDF -->
+      <div
+        ref="pdfViewerContainer"
+        class="pdf-viewer"
+      >
+        <object
+          ref="pdfObject"
+          :data="currentPdfSrc"
+          type="application/pdf"
+          class="pdf-object"
+          @load="onPdfLoad"
+        >
+          <p>Seu navegador não suporta a visualização de PDF. <a :href="src" target="_blank">Clique aqui para baixar o arquivo</a>.</p>
+        </object>
+
+        <!-- Spinner de carregamento -->
+        <div v-if="loading" class="pdf-loading">
+          <q-spinner color="primary" size="3em" />
+          <div class="pdf-loading-text">Carregando documento...</div>
+        </div>
+      </div>
     </div>
 
+    <!-- Visualizador de Excel -->
     <div v-else-if="isExcel" class="file-container" :data-file-type="fileExtension" @click="showExcelPreview = true">
       <div class="preview-container">
         <div class="file-icon" :style="{ color: fileColor }">
@@ -47,6 +62,7 @@
       </div>
     </div>
 
+    <!-- Visualizador de outros arquivos -->
     <div v-else class="file-container" :data-file-type="fileExtension">
       <div class="file-icon" :style="{ color: fileColor }">
         <q-icon :name="fileIcon" />
@@ -107,15 +123,19 @@ export default {
       showExcelPreview: false,
       excelData: [],
       excelHeaders: [],
-      loading: false
+      loading: true,
+      pdfDocument: null
     }
   },
   watch: {
     src: {
       handler () {
         if (this.isPDF) {
+          this.loading = true
           this.$nextTick(() => {
-            setTimeout(this.adjustPdfHeight, 500)
+            setTimeout(() => {
+              this.onPdfLoad()
+            }, 500)
           })
         } else if (this.isExcel) {
           this.loadExcelFile()
@@ -146,14 +166,8 @@ export default {
         return extension || 'desconhecido'
       }
     },
-    pdfSrcWithoutScrollbar () {
-      if (this.isPDF && this.src) {
-        if (this.src.includes('#')) {
-          return this.src + '&toolbar=0&navpanes=0&scrollbar=0'
-        } else {
-          return this.src + '#toolbar=0&navpanes=0&scrollbar=0'
-        }
-      }
+    currentPdfSrc () {
+      if (!this.isPDF || !this.src) return ''
       return this.src
     },
     fileIcon () {
@@ -211,18 +225,97 @@ export default {
     }
   },
   methods: {
+    onPdfLoad () {
+      try {
+        this.loading = false
+        this.adjustPdfHeight()
+        this.removeHorizontalScrollbars()
+      } catch (error) {
+        console.warn('Erro ao carregar PDF:', error)
+        this.loading = false
+      }
+    },
     adjustPdfHeight () {
       try {
-        const frame = this.$refs.pdfFrame
-        if (frame) {
-          const doc = frame.contentDocument || frame.contentWindow.document
-          if (doc) {
-            const height = doc.documentElement.scrollHeight
-            frame.style.height = Math.min(Math.max(height, 300), 900) + 'px'
+        const container = this.$refs.pdfViewerContainer
+        const object = this.$refs.pdfObject
+
+        if (!container || !object) return
+
+        // Obtém a largura real disponível
+        const containerWidth = container.clientWidth
+
+        // Garante que o objeto não ultrapasse a largura do contêiner
+        object.style.width = '100%'
+        object.style.maxWidth = `${containerWidth}px`
+
+        // Calcula a altura proporcional mantendo a proporção de página A4
+        const aspectRatio = 1.414 // Proporção A4 (297/210)
+        let calculatedHeight = containerWidth * aspectRatio
+
+        // Limites de altura baseados no viewport
+        const viewportHeight = window.innerHeight
+        const minHeight = Math.round(viewportHeight * 0.4)
+        const maxHeight = Math.round(viewportHeight * 0.8)
+
+        // Aplica os limites
+        calculatedHeight = Math.min(Math.max(calculatedHeight, minHeight), maxHeight)
+
+        // Define a altura
+        object.style.height = `${calculatedHeight}px`
+        container.style.height = `${calculatedHeight}px`
+      } catch (error) {
+        console.warn('Erro ao ajustar altura do PDF:', error)
+      }
+    },
+    openInNewTab () {
+      window.open(this.src, '_blank')
+    },
+    // Método para remover barras de rolagem horizontais
+    removeHorizontalScrollbars () {
+      try {
+        // Obtém o elemento visualizador de PDF
+        const pdfViewer = this.$refs.pdfViewerContainer
+        if (!pdfViewer) return
+
+        // Procura por todos os elementos pais até o body
+        let parent = pdfViewer.parentElement
+        while (parent && parent !== document.body) {
+          // Aplica overflow-x hidden
+          parent.style.overflowX = 'hidden'
+          // Vai para o próximo pai
+          parent = parent.parentElement
+        }
+
+        // Ajusta o PDF object
+        const object = this.$refs.pdfObject
+        if (!object) return
+
+        // Aplicar estilos diretamente para garantir
+        object.style.overflow = 'hidden'
+        object.style.maxWidth = '100%'
+        object.style.width = '100%'
+
+        // Tentativa de acessar o conteúdo interno
+        try {
+          if (object.contentDocument) {
+            const style = document.createElement('style')
+            style.textContent = `
+              body, html, div, embed, object {
+                overflow-x: hidden !important;
+                max-width: 100% !important;
+              }
+              embed[type="application/pdf"] {
+                object-fit: contain !important;
+              }
+            `
+            object.contentDocument.head.appendChild(style)
           }
+        } catch (e) {
+          console.warn('Acesso ao conteúdo do PDF bloqueado por segurança do navegador')
         }
       } catch (error) {
-        console.warn('Não foi possível ajustar altura do PDF:', error)
+        console.warn('Erro ao remover barras de rolagem horizontais:', error)
       }
     },
     async loadExcelFile () {
@@ -236,7 +329,6 @@ export default {
         const workbook = XLSX.read(buffer, { type: 'array' })
 
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-
         const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
 
         if (data.length > 0) {
@@ -249,6 +341,12 @@ export default {
         this.loading = false
       }
     }
+  },
+  mounted () {
+    window.addEventListener('resize', this.adjustPdfHeight)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.adjustPdfHeight)
   }
 }
 </script>
@@ -256,122 +354,183 @@ export default {
 <style lang="scss" scoped>
 .document-viewer {
   width: 100%;
-  max-width: 700px;
-  min-width: 500px;
-  margin: 10px auto;
-  overflow: visible;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  overflow-x: hidden;
 }
 
-.pdf-container {
+.pdf-viewer-container {
   width: 100%;
-  max-width: 700px;
-  min-width: 500px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  background-color: #f5f5f5;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow-x: hidden;
+  margin: 0;
 }
 
-.pdf-frame {
+.pdf-viewer {
+  position: relative;
   width: 100%;
   height: auto;
-  min-height: 500px;
-  max-height: 700px;
+  min-height: 50vh;
+  max-height: 80vh;
+  overflow-x: hidden !important;
+  overflow-y: auto;
+  background-color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pdf-object {
+  width: 100%;
+  height: 100%;
   border: none;
-  overflow: hidden;
-  transition: height 0.3s ease;
   background-color: white;
+  min-height: 50vh;
+  max-height: 80vh;
+  overflow: hidden !important;
+}
+
+.pdf-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 1;
 }
 
 .file-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 30px;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 16px;
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   background-color: #f5f5f5;
-  min-height: 350px;
-  max-height: 500px;
   width: 100%;
-  max-width: 500px;
-  min-width: 350px;
+  max-width: 400px;
   overflow: hidden;
   margin: 0 auto;
+  gap: 16px;
 }
 
 .file-icon {
-  margin-bottom: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.1));
 }
 
 .file-details {
-  max-width: 100%;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  flex: 1;
+  min-width: 0;
 }
 
 .file-container .q-icon {
-  font-size: 100px;
+  font-size: 40px;
 }
 
 .file-container[data-file-type="xlsx"] .q-icon,
 .file-container[data-file-type="xls"] .q-icon {
-  font-size: 120px;
-  color: #1D6F42;
+  font-size: 40px;
+  color: #1d6f42;
 }
 
 .file-name {
   font-weight: 600;
-  font-size: 18px;
+  font-size: 14px;
   color: #333;
   word-break: break-word;
   margin-bottom: 4px;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .file-type {
-  font-size: 14px;
+  font-size: 12px;
   color: #666;
-  margin-bottom: 16px;
+  margin: 0;
 }
 
 .body--dark {
-  .pdf-container, .file-container {
+  .pdf-viewer-container {
+    background-color: #1d1d1d;
+  }
+
+  .pdf-viewer {
+    background-color: #333;
+  }
+
+  .pdf-loading {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+
+  .file-container {
     background-color: #2d2d2d;
   }
-  .pdf-tools {
-    background-color: #333;
-    border-top-color: rgba(255, 255, 255, 0.1);
-  }
+
   .file-name {
     color: #eee;
   }
+
   .file-type {
     color: #bbb;
   }
 }
 
-@media (max-width: 700px) {
-  .document-viewer,
-  .pdf-container,
-  .file-container {
-    min-width: 100%;
+@media (max-width: 500px) {
+  .pdf-viewer-container {
     max-width: 100%;
-    margin: 5px auto;
+    border-radius: 0;
+    margin: 0;
   }
 
-  .pdf-frame {
-    min-height: 300px;
-    max-height: 600px;
+  .pdf-viewer {
+    min-height: 40vh;
+    height: auto;
+    border-radius: 0;
+  }
+
+  .file-container {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .file-container .q-icon {
+    font-size: 32px;
+  }
+
+  .file-container[data-file-type="xlsx"] .q-icon,
+  .file-container[data-file-type="xls"] .q-icon {
+    font-size: 32px;
+  }
+
+  .file-name {
+    font-size: 13px;
+  }
+
+  .file-type {
+    font-size: 11px;
   }
 }
 
@@ -385,7 +544,7 @@ export default {
 .excel-preview {
   margin-top: 20px;
   width: 100%;
-  max-height: 200px;
+  max-height: 60vh;
   overflow: hidden;
   position: relative;
   border-radius: 8px;
@@ -415,24 +574,24 @@ export default {
   left: 0;
   right: 0;
   height: 60px;
-  background: linear-gradient(transparent, rgba(255,255,255,0.9));
+  background: linear-gradient(transparent, rgba(255, 255, 255, 0.9));
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .preview-expand-btn {
-  background: rgba(255,255,255,0.9);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .excel-preview-modal {
   max-width: 90vw;
-  max-height: 90vh;
+  max-height: 80vh;
 }
 
 .excel-preview-content {
-  height: calc(90vh - 50px);
+  height: calc(80vh - 50px);
   padding: 0;
 }
 
@@ -476,10 +635,29 @@ export default {
     }
   }
   .preview-overlay {
-    background: linear-gradient(transparent, rgba(45,45,45,0.9));
+    background: linear-gradient(transparent, rgba(45, 45, 45, 0.9));
   }
   .preview-expand-btn {
-    background: rgba(45,45,45,0.9);
+    background: rgba(45, 45, 45, 0.9);
+  }
+}
+
+@media (max-width: 500px) {
+  .excel-preview-modal {
+    max-width: 95vw;
+  }
+
+  .excel-preview {
+    max-height: 50vh;
+  }
+
+  .excel-preview table,
+  .excel-table-container table {
+    font-size: 11px;
+
+    th, td {
+      padding: 6px;
+    }
   }
 }
 </style>

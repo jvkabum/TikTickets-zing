@@ -1,5 +1,5 @@
 <template>
-  <div class="image-viewer" :class="{ 'vertical-media': isVertical }">
+  <div class="image-viewer">
     <div class="image-container">
       <q-img
         @click="openLightbox"
@@ -63,8 +63,7 @@ export default {
     return {
       isLightboxOpen: false,
       imageWidth: 0,
-      imageHeight: 0,
-      isVertical: false
+      imageHeight: 0
     }
   },
   computed: {
@@ -73,10 +72,6 @@ export default {
       return this.imageWidth / this.imageHeight
     },
     imageRatio () {
-      // Se a imagem é vertical (mais alta que larga), usamos proporção diferente
-      if (this.isVertical) {
-        return 9 / 16
-      }
       return 16 / 9
     }
   },
@@ -90,7 +85,6 @@ export default {
       img.onload = () => {
         this.imageWidth = img.width
         this.imageHeight = img.height
-        this.isVertical = img.height > img.width
       }
       img.src = this.src
     }
@@ -101,43 +95,36 @@ export default {
 <style lang="scss" scoped>
 .image-viewer {
   width: 100%;
-  max-width: 700px; /* Dobrado de 650px */
-  min-width: 500px;
-  margin: 10px auto;
+  max-width: 600px;
+  margin: 0 auto;
   overflow: visible;
-}
-
-.image-viewer.vertical-media {
-  max-width: 700px; /* Dobrado de 400px */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .image-container {
   border-radius: 12px;
-  overflow: visible;
+  overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   background-color: #f5f5f5;
   position: relative;
   display: flex;
   justify-content: center;
   width: 100%;
+  max-width: 600px;
 }
 
 .viewer-image {
   width: 100%;
-  max-width: 100%;
-  min-height: 500px; /* Dobrado de 250px */
-  max-height: 700px; /* Dobrado de 600px */
+  max-width: 600px;
+  max-height: 70vh;
   cursor: pointer;
   transition: transform 0.3s ease;
 
   &:hover {
     transform: scale(1.02);
   }
-}
-
-.vertical-media .viewer-image {
-  min-height: 500px; /* Dobrado de 350px */
-  max-height: 700px; /* Dobrado de 650px */
 }
 
 .image-actions {
@@ -168,38 +155,20 @@ export default {
   }
 }
 
-@media (max-width: 900px) {
-  .image-viewer {
-    max-width: 700px;
-  }
-
-  .image-viewer.vertical-media {
-    max-width: 700px;
-  }
-
-  .viewer-image {
-    min-height: 500px;
-    max-height: 700px;
-  }
-
-  .vertical-media .viewer-image {
-    min-height: 500px;
-    max-height: 700px;
-  }
-}
-
-@media (max-width: 700px) {
+@media (max-width: 500px) {
   .image-viewer {
     max-width: 100%;
-  }
-
-  .image-viewer.vertical-media {
-    max-width: 90%;
+    margin: 5px auto;
   }
 
   .viewer-image {
-    min-height: 500px;
-    max-height: 700px;
+    max-height: 60vh;
+  }
+
+  .image-actions {
+    opacity: 1;
+    bottom: 10px;
+    right: 10px;
   }
 }
 </style>

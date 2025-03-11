@@ -77,7 +77,7 @@
               mensagem.isDeleted ? 'color: rgba(0, 0, 0, 0.36) !important;' : '',
               mensagem.mediaType === 'image' || mensagem.mediaType === 'video'
                 ? 'min-width: 100px;'
-                : 'min-width: 100px; max-width: 700px;'
+                : 'min-width: 100px; max-width: 500px;'
             ]"
           >
             <q-checkbox
@@ -159,7 +159,7 @@
               :class="{ 'textContentItem': !mensagem.isDeleted, 'textContentItemDeleted': mensagem.isDeleted }"
             >
               <MensagemRespondida
-                style="max-width: 240px; max-height: 150px"
+                style="max-width: 400px; max-height: 600px"
                 class="row justify-center"
                 @mensagem-respondida:focar-mensagem="focarMensagem"
                 :mensagem="mensagem.quotedMsg"
@@ -281,7 +281,6 @@
                 <MediaViewer
                   mediaType="image"
                   :mediaUrl="mensagem.mediaUrl"
-                  :mediaName="mensagem.mediaName || mensagem.body"
                 />
               </div>
             </template>
@@ -290,7 +289,6 @@
                 <MediaViewer
                   mediaType="video"
                   :mediaUrl="mensagem.mediaUrl"
-                  :mediaName="mensagem.mediaName || mensagem.body"
                 />
               </div>
             </template>
@@ -299,7 +297,7 @@
                 <MediaViewer
                   mediaType="document"
                   :mediaUrl="mensagem.mediaUrl"
-                  :mediaName="mensagem.mediaName || mensagem.body"
+                  :mediaName="isPDF(mensagem.mediaUrl) ? '' : (mensagem.mediaName || mensagem.body)"
                 />
               </div>
             </template>
@@ -346,7 +344,7 @@
             </template>
             <div
               v-linkified
-              v-if="!['vcard', 'application', 'audio', 'poll_creation'].includes(mensagem.mediaType)"
+              v-if="!['vcard', 'application', 'audio'].includes(mensagem.mediaType) && !isFileNameOnly(mensagem)"
               :class="{ 'q-mt-sm': mensagem.mediaType !== 'chat' }"
               class="q-message-container row items-end no-wrap"
             >
@@ -515,6 +513,112 @@ export default {
   },
   methods: {
     formatarMensagemWhatsapp,
+    isPDF (url) {
+      if (!url || typeof url !== 'string') return false
+      try {
+        return url.toLowerCase().endsWith('.pdf')
+      } catch (error) {
+        return false
+      }
+    },
+    isFileNameOnly (mensagem) {
+      if (!mensagem || !mensagem.body || mensagem.body.trim() === '') return false
+
+      // Verifica se é um tipo de mídia que queremos esconder o nome
+      const isMediaType = ['image', 'video'].includes(mensagem.mediaType) || this.isPDF(mensagem.mediaUrl)
+      if (!isMediaType) return false
+
+      try {
+        // NOVA VERIFICAÇÃO: Verifica se o texto é igual ao de mensagens anteriores recentes
+        // Isso evita a duplicação de textos de mensagens anteriores como legendas
+        if (this.mensagens && this.mensagens.length > 0) {
+          const index = this.mensagens.findIndex(m => m.id === mensagem.id)
+          if (index > 0) {
+            // Verifica as últimas 3 mensagens anteriores
+            const maxCheck = Math.min(3, index)
+            for (let i = 1; i <= maxCheck; i++) {
+              const prevMsg = this.mensagens[index - i]
+              // Se o texto da mensagem atual for igual ao de uma mensagem anterior recente
+              if (prevMsg && prevMsg.body && prevMsg.body.trim() === mensagem.body.trim()) {
+                return true // Oculta o texto, pois é uma duplicação
+              }
+            }
+          }
+        }
+
+        // Para textos curtos (menos de 50 caracteres) em mensagens de mídia
+        if (mensagem.body.length < 50 && !mensagem.body.includes('\n')) {
+          if (!/(📱|💬|🗨️|📢|📣|📊|🎉|🎊|🎯|🏆|🔔|⚡|💥|👉|👆|👇|👈|⭐|🌟|💫)/u.test(mensagem.body) &&
+              !/(olá|ola|bom dia|boa tarde|boa noite|veja|confira|assista|confere|vê|obrigado|obrigada|valeu|beleza|ok)/i.test(mensagem.body)) {
+            return true
+          }
+        }
+
+        // Padrões para detectar nomes de arquivo
+        const patterns = [
+          // DALL·E e variações
+          /^DALL·E/i,
+          /^DALL-E/i,
+          /^DALLE/i,
+
+          // Imagens: extensões comuns
+          /\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg)$/i,
+
+          // Vídeos: extensões comuns
+          /\.(mp4|mov|avi|mkv|wmv|flv|webm|m4v)$/i,
+
+          // PDFs
+          /\.pdf$/i,
+
+          // Padrões de nomenclatura de arquivos
+          /^\d{10,14}\.(jpg|jpeg|png|mp4|pdf)/i,
+          /^IMG_\d{4,}\.(?:jpg|png|jpeg)/i,
+          /^VID_\d{4,}\.(?:mp4|mov)/i,
+          /^image_\d+\.(?:jpg|png|jpeg)/i,
+          /^video_\d+\.(?:mp4|mov)/i,
+
+          // Padrões para nomes de arquivo criados por IA
+          /creative alternative to a standard/i,
+          /placeholder profile picture/i,
+          /design includes/i
+        ]
+
+        // Verifica se o texto corresponde a algum dos padrões de nome de arquivo
+        for (const pattern of patterns) {
+          if (pattern.test(mensagem.body)) {
+            return true
+          }
+        }
+
+        // Se tiver URL de mídia, compara com o nome do arquivo
+        if (mensagem.mediaUrl) {
+          const fileName = mensagem.mediaUrl.split('/').pop()
+          const bodyWithoutExtension = mensagem.body.replace(/\.[^.]+$/, '')
+          const fileNameWithoutExtension = fileName.replace(/\.[^.]+$/, '')
+
+          if (mensagem.body === fileName ||
+              bodyWithoutExtension === fileNameWithoutExtension ||
+              mensagem.body.includes(fileNameWithoutExtension) ||
+              fileNameWithoutExtension.includes(bodyWithoutExtension)) {
+            return true
+          }
+        }
+
+        // Se for muito longo, provavelmente não é apenas um nome de arquivo
+        if (mensagem.body.split('\n').length > 1) {
+          return false
+        }
+
+        // Se tiver emojis comuns de mensagens (não de nomes de arquivo), provavelmente é mensagem
+        if (/(📱|💬|🗨️|📢|📣|📊|🎉|🎊|🎯|🏆|🔔|⚡|💥|👉|👆|👇|👈|⭐|🌟|💫)/u.test(mensagem.body)) {
+          return false
+        }
+
+        return false
+      } catch (error) {
+        return false
+      }
+    },
     async checkTicketIdStatus () {
       if (!this.ticketId) {
         this.protocolos = []
@@ -1117,7 +1221,8 @@ export default {
 
 .media-container {
   width: 100%;
-  max-width: 100%;
+  min-width: 200px;
+  max-width: 600px;
   overflow: visible;
   margin: 8px 0;
   border-radius: 8px;
@@ -1125,10 +1230,11 @@ export default {
 
   :deep(.media-viewer) {
     width: 100%;
-    max-width: 100%;
+    min-width: 200px;
+    max-width: 600px;
     border-radius: 8px;
     overflow: hidden;
-    
+
     img, video {
       max-width: 100%;
       height: auto;
@@ -1139,19 +1245,31 @@ export default {
       padding: 16px;
       background: #1e1e1e;
       border-radius: 8px;
-      
+
       .document-info {
         display: flex;
         align-items: center;
         gap: 8px;
         color: #abb2bf;
-        
+
         .document-name {
           font-size: 0.9em;
           font-weight: 500;
           word-break: break-all;
         }
       }
+    }
+  }
+}
+
+@media (max-width: 500px) {
+  .media-container {
+    min-width: 200px;
+    max-width: 100%;
+
+    :deep(.media-viewer) {
+      min-width: 200px;
+      max-width: 100%;
     }
   }
 }

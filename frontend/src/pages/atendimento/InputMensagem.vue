@@ -118,7 +118,8 @@
             <q-menu
               anchor="top right"
               self="bottom middle"
-              :offset="[5, 40]"
+              :offset="[380, 40]"
+              class="emoji-menu"
             >
               <VEmojiPicker
                 style="width: 40vw"
@@ -179,9 +180,6 @@
             :value="textChat"
             @paste="handleInputPaste"
           >
-            <!-- <template v-slot:hint>
-          "Quebra linha: Shift + Enter"
-        </template> -->
             <template
               v-slot:prepend
               v-if="$q.screen.width < 500"
@@ -200,7 +198,7 @@
                 <q-menu
                   anchor="top right"
                   self="bottom middle"
-                  :offset="[5, 40]"
+                  :offset="[380, 40]"
                 >
                   <VEmojiPicker
                     style="width: 40vw"
@@ -265,9 +263,31 @@
             :max-total-size="15485760"
             accept=".txt, .xml, .jpg, .png, image/jpeg, .pdf, .doc, .docx, .mp4, .ogg, .mp3, .xls, .xlsx, .jpeg, .rar, .zip, .ppt, .pptx, image/*"
             @rejected="onRejectedFiles"
+            @keyup.enter.native="enviarMensagem"
+            @keyup.esc.native="hideModalPreviewImagem"
           />
+
+          <!-- Preview de arquivo -->
+          <div
+            v-if="arquivos.length > 0"
+            class="preview-inline"
+            tabindex="0"
+            ref="previewContainer"
+            @keyup.enter="enviarMensagem"
+            @keyup.esc="hideModalPreviewImagem"
+          >
+            <div class="preview-header">
+              <div class="preview-info">
+                <span>{{ arquivos[0].name }}</span>
+                <span class="file-size">{{ formatFileSize(arquivos[0].size) }}</span>
+              </div>
+              <q-btn flat round dense icon="close" @click="hideModalPreviewImagem" />
+            </div>
+            <MediaPreview :file="arquivos[0]" />
+          </div>
+
           <q-btn
-            v-if="textChat || cMostrarEnvioArquivo"
+            v-if="textChat || arquivos.length > 0"
             ref="btnEnviarMensagem"
             @click="enviarMensagem"
             :disabled="ticketFocado.status !== 'open'"
@@ -351,12 +371,10 @@
                 />
               </div>
             </q-card-section>
-            <q-card-section>
-              <q-img
-                :src="urlMediaPreview.src"
-                spinner-color="white"
-                class="img-responsive mdi-image-auto-adjust q-uploader__file--img"
-                style="height: 60vh; min-width: 55vw; max-width: 55vw"
+            <q-card-section class="preview-container">
+              <MediaPreview
+                v-if="arquivos.length > 0"
+                :file="arquivos[0]"
               />
             </q-card-section>
             <q-card-actions align="center">
@@ -408,6 +426,7 @@ import { VEmojiPicker } from 'v-emoji-picker'
 import { mapGetters } from 'vuex'
 import RecordingTimer from './RecordingTimer'
 import MicRecorder from 'mic-recorder-to-mp3'
+import MediaPreview from 'src/components/MediaPreview'
 const Mp3Recorder = new MicRecorder({ bitRate: 128 })
 import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
 
@@ -430,7 +449,8 @@ export default {
   },
   components: {
     VEmojiPicker,
-    RecordingTimer
+    RecordingTimer,
+    MediaPreview
   },
   data () {
     return {
@@ -477,12 +497,6 @@ export default {
       if (e.clipboardData.files[0]) {
         this.textChat = ''
         this.arquivos = [e.clipboardData.files[0]]
-        this.abrirModalPreviewImagem = true
-        this.urlMediaPreview = {
-          title: `Enviar imagem para ${this.ticketFocado?.contact?.name}`,
-          src: this.openFilePreview(e)
-        }
-        this.$refs.inputEnvioMensagem.focus()
       }
     },
     mensagemRapidaSelecionada (mensagem) {
@@ -529,7 +543,6 @@ export default {
       }, 10)
     },
     abrirEnvioArquivo (event) {
-      this.textChat = ''
       this.abrirFilePicker = true
       this.$refs.PickerFileMessage.pickFiles(event)
     },
@@ -598,11 +611,12 @@ export default {
       this.arquivos.forEach(media => {
         formData.append('medias', media)
         formData.append('body', media.name)
-        // formData.append('idFront', uid())
         if (this.isScheduleDate) {
           formData.append('scheduleDate', this.scheduleDate)
         }
       })
+      // Limpa o texto do chat ao enviar mídia
+      this.textChat = ''
       return formData
     },
     prepararMensagemTexto () {
@@ -652,12 +666,14 @@ export default {
       }
       this.loading = true
       const ticketId = this.ticketFocado.id
-      const message = !this.cMostrarEnvioArquivo
-        ? this.prepararMensagemTexto()
-        : this.prepararUploadMedia()
       try {
-        if (!this.cMostrarEnvioArquivo && !this.textChat) return
-        await EnviarMensagemTexto(ticketId, message)
+        if (this.cMostrarEnvioArquivo) {
+          const message = this.prepararUploadMedia()
+          await EnviarMensagemTexto(ticketId, message)
+        } else if (this.textChat) {
+          const message = this.prepararMensagemTexto()
+          await EnviarMensagemTexto(ticketId, message)
+        }
         this.arquivos = []
         this.textChat = ''
         this.$emit('update:replyingMessage', null)
@@ -725,6 +741,7 @@ export default {
       this.arquivos = []
       this.urlMediaPreview = {}
       this.abrirModalPreviewImagem = false
+      this.$refs.inputEnvioMensagem.focus()
     },
     onRejectedFiles (rejectedEntries) {
       this.$q.notify({
@@ -747,6 +764,17 @@ export default {
     handleSign (state) {
       this.sign = state
       LocalStorage.set('sign', this.sign)
+    },
+    formatFileSize (size) {
+      if (size < 1024) {
+        return size + ' bytes'
+      } else if (size < 1024 * 1024) {
+        return (size / 1024).toFixed(2) + ' KB'
+      } else if (size < 1024 * 1024 * 1024) {
+        return (size / (1024 * 1024)).toFixed(2) + ' MB'
+      } else {
+        return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
+      }
     }
   },
   mounted () {
@@ -756,6 +784,15 @@ export default {
     if (![null, undefined].includes(LocalStorage.getItem('sign'))) {
       this.handleSign(LocalStorage.getItem('sign'))
     }
+    this.$watch('arquivos', (newVal) => {
+      if (newVal.length > 0) {
+        this.$nextTick(() => {
+          if (this.$refs.previewContainer) {
+            this.$refs.previewContainer.focus()
+          }
+        })
+      }
+    })
   },
   beforeDestroy () {
     const self = this
@@ -777,4 +814,132 @@ export default {
   .inputEnvioMensagem,
   .PickerFileMessage
     width: 200px !important
+
+.arquivo-preview
+  width: 500px
+  height: 500px
+  border-radius: 8px
+  overflow: hidden
+  border: 1px solid #e0e0e0
+  background: #f0f2f5
+  margin-right: 8px
+  position: relative
+  display: inline-block
+  vertical-align: middle
+
+.preview-container
+  width: 500px
+  height: 500px
+  border-radius: 8px
+  overflow: hidden
+  border: 1px solid #e0e0e0
+  background: #f0f2f5
+  margin-right: 8px
+  position: relative
+
+  .q-img
+    width: 100%
+    height: 100%
+    object-fit: contain
+
+.inputEnvioMensagem
+  :deep(.q-field__before)
+    padding-right: 0
+
+.preview-inline
+  position: absolute
+  bottom: 85px
+  left: 10px
+  width: 500px
+  height: auto
+  border-radius: 8px
+  background: #fff
+  z-index: 1000
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15)
+  border: 1px solid #e0e0e0
+  outline: none
+  &:focus
+    border-color: var(--q-primary)
+
+.preview-header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  padding: 8px 12px
+  border-bottom: 1px solid #e0e0e0
+  background: #f0f2f5
+
+.preview-info
+  display: flex
+  flex-direction: column
+  overflow: hidden
+  max-width: 280px
+
+  span
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+    font-size: 13px
+
+  .file-size
+    font-size: 12px
+    color: #666
+
+.preview-container
+  display: flex
+  justify-content: center
+  align-items: center
+  width: 100%
+  height: 60vh
+  overflow: hidden
+
+  .q-img
+    width: 100%
+    height: 100%
+    object-fit: contain
+
+.preview-header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  padding: 8px 12px
+  border-bottom: 1px solid #e0e0e0
+  background: #f0f2f5
+
+.preview-info
+  display: flex
+  flex-direction: column
+  overflow: hidden
+
+  span
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+
+  .file-size
+    font-size: 12px
+    color: #666
+
+.emoji-menu
+  :deep(.q-menu)
+    display: flex
+    justify-content: center
+    align-items: center
+    padding: 8px
+    border-radius: 8px
+    background: #fff
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15)
+    border: 1px solid #e0e0e0
+    position: absolute
+    bottom: 100%
+    margin-bottom: 200px
+    z-index: 1000
+
+  :deep(.emoji-picker)
+    display: flex
+    flex-direction: column
+    height: auto
+    max-height: 400px
+    overflow-y: auto
+    width: 100%
 </style>
