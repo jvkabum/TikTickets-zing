@@ -16,4 +16,4 @@ module.exports = {
       ALTER COLUMN "protocolNumber" SET DEFAULT 0
     `)
   }
-} 
+}
