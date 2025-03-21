@@ -18,6 +18,7 @@ import ListMessagesService from "../services/MessageServices/ListMessagesService
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import DeleteWhatsAppMessage from "../services/WbotServices/DeleteWhatsAppMessage";
 import { logger } from "../utils/logger";
+import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
 // import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
 // import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
 import EditWhatsAppMessage from "../services/WbotServices/EditWhatsAppMessage";
@@ -61,7 +62,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   try {
     SetTicketMessagesAsRead(ticket);
   } catch (error) {
-    console.log("SetTicketMessagesAsRead", error);
+    logger.error(`Erro ao marcar mensagens como lidas no ticket ${ticketId}: ${error}`);
   }
 
   return res.json({ count, messages, messagesOffLine, ticket, hasMore });
@@ -78,6 +79,13 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const messageData: MessageData = req.body; // Pegando a mensagem completa do corpo da requisição
   const medias = (req.files as Express.Multer.File[]) || [];
   const ticket = await ShowTicketService({ id: ticketId, tenantId });
+
+  // Verifica se a sessão do whatsapp está conectada
+  const whatsapp = await ShowWhatsAppService({ id: ticket.whatsappId, tenantId });
+  if (whatsapp.status !== "CONNECTED") {
+    logger.error(`Sessão do WhatsApp ${ticket.whatsappId} não está conectada.`);
+    throw new AppError("A sessão do WhatsApp não está conectada. Por favor, reconecte a sessão.", 400);
+  }
 
   // Extraindo o ID da mensagem do corpo (assumindo o formato "[ID] mensagem")
   let idMessagem = messageData.body.split("] - ")[0];
@@ -129,7 +137,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
         }
       }
     } catch (error) {
-      console.error("Erro ao buscar FastReply:", error);
+      logger.error(`Erro ao buscar FastReply: ${error}`);
     }
   }
 
@@ -155,7 +163,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
     return res.send();
   } catch (error) {
-    console.error("Erro ao criar a mensagem:", error);
+    logger.error(`Erro ao criar a mensagem: ${error}`);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
     return res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -173,8 +184,8 @@ export const remove = async (
   try {
     await DeleteMessageSystem(req.body.id, messageId, tenantId);
   } catch (error) {
-    console.error("ERR_DELETE_SYSTEM_MSG", error.message);
-    throw new AppError("ERR_DELETE_SYSTEM_MSG");
+    logger.error(`Erro ao deletar mensagem do sistema: ${error}`);
+    throw new AppError("Erro ao deletar mensagem do sistema");
   }
 
   return res.send();
@@ -259,7 +270,7 @@ export const getMediaFileFromServer = async (
       mimetype: mimetype || "application/octet-stream" // Tipo do arquivo
     };
   } catch (error) {
-    console.error(`Erro ao buscar o arquivo no servidor: ${error.message}`);
+    logger.error(`Erro ao buscar o arquivo no servidor: ${error.message}`);
     throw new Error(`Erro ao buscar o arquivo no servidor: ${error.message}`);
   }
 };
