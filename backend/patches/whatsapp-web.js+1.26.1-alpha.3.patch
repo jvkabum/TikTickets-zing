@@ -1,0 +1,16 @@
+diff --git a/node_modules/whatsapp-web.js/src/structures/Message.js b/node_modules/whatsapp-web.js/src/structures/Message.js
+index 6013063..d3f40a9 100644
+--- a/node_modules/whatsapp-web.js/src/structures/Message.js
++++ b/node_modules/whatsapp-web.js/src/structures/Message.js
+@@ -444,6 +444,11 @@ class Message extends Base {
+      * @returns {Promise<MessageMedia>}
+      */
+     async downloadMedia() {
++        if (this.type === 'interactive' || this.type === 'poll_creation' || this.type === 'poll_vote') {
++            console.log(`[whatsapp-web.js] Tipo de mensagem "${this.type}" não suporta download de mídia.`);
++            return undefined;
++        }
++
+         if (!this.hasMedia) {
+             return undefined;
+         }
