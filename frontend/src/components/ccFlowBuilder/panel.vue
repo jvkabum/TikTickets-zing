@@ -30,6 +30,69 @@
         @click="isFullScreen = !isFullScreen"
       />
 
+      <q-btn-dropdown
+        color="primary"
+        push
+        glossy
+        icon="mdi-arrange-send-backward"
+        class="q-ml-sm"
+        :disable="!data.nodeList || data.nodeList.length < 2"
+        label="Organizar"
+      >
+        <q-tooltip>Escolha um layout para organizar os nós automaticamente</q-tooltip>
+        <q-list>
+          <q-item clickable v-close-popup @click="autoOrganizeNodes('hubRadial')">
+            <q-item-section avatar>
+              <q-icon color="primary" name="mdi-chart-bubble" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Layout Hub Radial</q-item-label>
+              <q-item-label caption>Fluxos complexos com vários níveis (como chatbots)</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item clickable v-close-popup @click="autoOrganizeNodes('tree')">
+            <q-item-section avatar>
+              <q-icon color="primary" name="mdi-file-tree" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Layout em árvore</q-item-label>
+              <q-item-label caption>Organiza os nós em estrutura hierárquica</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item clickable v-close-popup @click="autoOrganizeNodes('level')">
+            <q-item-section avatar>
+              <q-icon color="primary" name="mdi-view-sequential" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Layout em níveis</q-item-label>
+              <q-item-label caption>Organiza os nós horizontalmente em linhas por níveis</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item clickable v-close-popup @click="autoOrganizeNodes('circle')">
+            <q-item-section avatar>
+              <q-icon color="primary" name="mdi-chart-arc" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Layout circular</q-item-label>
+              <q-item-label caption>Organiza os nós em círculo (bom para fluxos cíclicos)</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item clickable v-close-popup @click="autoOrganizeNodes('grid')">
+            <q-item-section avatar>
+              <q-icon color="primary" name="mdi-grid" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>Layout em grade</q-item-label>
+              <q-item-label caption>Organiza os nós em uma grade uniforme</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+
     </q-toolbar>
     <q-separator color="text-grey-3" />
     <div
@@ -100,6 +163,7 @@ import FlowNodeForm from './node_form'
 import { merge, cloneDeep } from 'lodash'
 import './index.css'
 import { uid } from 'quasar'
+import { ForceDirected } from './force-directed'
 
 import { UpdateChatFlow } from '../../service/chatFlow'
 
@@ -573,6 +637,58 @@ export default {
       this.flowHelpVisible = true
       this.$nextTick(function () {
         this.$refs.flowHelp.init()
+      })
+    },
+    autoOrganizeNodes (layout) {
+      if (!this.data.nodeList || this.data.nodeList.length < 2) {
+        this.$notificarErro('Não há nós suficientes para organizar.')
+        return
+      }
+
+      // Define mensagem personalizada para cada layout
+      let layoutName = ''
+      switch (layout) {
+        case 'hubRadial':
+          layoutName = 'Layout Hub Radial'
+          break
+        case 'tree':
+          layoutName = 'Layout em árvore'
+          break
+        case 'level':
+          layoutName = 'Layout em níveis'
+          break
+        case 'circle':
+          layoutName = 'Layout circular'
+          break
+        case 'grid':
+          layoutName = 'Layout em grade'
+          break
+        default:
+          layoutName = 'Layout automático'
+      }
+
+      // Mostra um aviso de processamento
+      this.$q.notify({
+        type: 'ongoing',
+        message: `Aplicando ${layoutName}, aguarde...`,
+        timeout: 1000
+      })
+
+      // Aplica o algoritmo para reorganizar os nós
+      const organizedData = ForceDirected(cloneDeep(this.data), layout)
+
+      // Atualiza as posições dos nós
+      this.data.nodeList.forEach((node, index) => {
+        if (organizedData.nodeList[index]) {
+          node.left = organizedData.nodeList[index].left
+          node.top = organizedData.nodeList[index].top
+        }
+      })
+
+      // Redesenha as conexões
+      this.$nextTick(() => {
+        this.jsPlumb.repaintEverything()
+        this.$notificarSucesso(`${layoutName} aplicado com sucesso!`)
       })
     }
   },
