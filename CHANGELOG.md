@@ -1,3 +1,16 @@
+## [2.7.1](https://github.com/ldurans/izing.io/compare/v2.7.0...v2.7.1) (2024-07-01)
+
+
+### Melhorias
+
+* Atualiza configuração do ambiente e melhorias no servidor ([ef36938](https://github.com/ldurans/izing.io/commit/ef369382166312504abcba764c1e5918c03c358d))
+  * Adicionada variável VUE_APP_BACKEND_URL no arquivo .env.example para facilitar configuração do backend no frontend
+  * Alterada a URL do BACKEND_URL e FRONTEND_URL para usar HTTPS
+  * Implementada função de limpeza de recursos antigos antes da inicialização do servidor
+  * Adicionada verificação de conexão do WhatsApp no MessageController
+  * Melhorias na lógica de reconexão e gerenciamento de sessões do WhatsApp
+  * Ajustes em diversos serviços para otimizar comunicação com WhatsApp
+
 ## [2.0.1](https://github.com/ldurans/izing.io/compare/v2.0.0...v2.0.1) (2024-02-11)
 
 

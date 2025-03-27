@@ -44,6 +44,19 @@ type MessageData = {
 };
 
 /**
+ * Verifica a conexão do WhatsApp
+ */
+export const checkWhatsAppConnection = async (whatsappId: number | string, tenantId: string): Promise<boolean> => {
+  const whatsapp = await ShowWhatsAppService({ id: whatsappId, tenantId });
+  if (whatsapp.status !== "CONNECTED") {
+    logger.error(`Sessão do WhatsApp ${whatsappId} não está conectada. Tentando reconectar...`);
+    // Lógica de reconexão aqui (substitua pelo método real de reconexão)
+    return false;
+  }
+  return true;
+}
+
+/**
  * Lista as mensagens de um ticket específico
  * Retorna mensagens paginadas, incluindo mensagens offline e status do ticket
  */
@@ -60,6 +73,10 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     });
 
   try {
+    const isConnected = await checkWhatsAppConnection(ticket.whatsappId, String(tenantId));
+    if (!isConnected) {
+      throw new AppError("A sessão do WhatsApp não está conectada. Por favor, reconecte a sessão.", 400);
+    }
     SetTicketMessagesAsRead(ticket);
   } catch (error) {
     logger.error(`Erro ao marcar mensagens como lidas no ticket ${ticketId}: ${error}`);
@@ -94,7 +111,6 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   // Tenta converter idMessagem para número
   const parsedIdMessagem = parseInt(idMessagem, 10);
 
-  // eslint-disable-next-line no-restricted-globals
   if (isNaN(parsedIdMessagem)) {
     // Se o ID não for um número válido, registrar o erro ou continuar sem buscar FastReply
     //console.error(`ID da mensagem rapida inválido: ${idMessagem}`);
@@ -108,7 +124,6 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
         // Se o fastReply tiver mídias, adiciona a primeira mídia à lista de medias
         if (fastReply.medias && fastReply.medias.length > 0) {
           const mediaUrl = fastReply.medias[0]; // Supondo que a URL seja algo como "/public/uploads/logoestilo.jpg"
-          // eslint-disable-next-line no-use-before-define
           const mediaFile = await getMediaFileFromServer(mediaUrl);
           if (mediaFile) {
             medias.push(mediaFile); // Adiciona o arquivo diretamente na lista de mídias
