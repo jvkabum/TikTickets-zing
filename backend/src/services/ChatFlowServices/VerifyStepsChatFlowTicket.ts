@@ -7,6 +7,7 @@ import CreateLogTicketService from "../TicketServices/CreateLogTicketService";
 import BuildSendMessageService from "./BuildSendMessageService";
 import DefinedUserBotService from "./DefinedUserBotService";
 import IsContactTest from "./IsContactTest";
+import User from "../../models/User";
 
 const isNextSteps = async (
   ticket: Ticket,
@@ -168,8 +169,15 @@ const isRetriesLimit = async (
     }
     // enviar para usuario
     if (destinyType === 2 && destiny) {
-      updatedValues.userId = destiny;
-      logsRetry.userId = destiny;
+      // Verificar se o usuário existe antes de atribuir
+      const userExists = await User.findByPk(destiny);
+      if (userExists) {
+        updatedValues.userId = destiny;
+        logsRetry.userId = destiny;
+      } else {
+        console.log(`Usuário ID ${destiny} não encontrado. Ticket não será atribuído.`);
+        // Não definir userId se o usuário não existir
+      }
     }
 
     ticket.update(updatedValues);

@@ -3,7 +3,7 @@ import { getTbot } from "../libs/tbot";
 import InstagramSendMessagesSystem from "../services/InstagramBotServices/InstagramSendMessagesSystem";
 import TelegramSendMessagesSystem from "../services/TbotServices/TelegramSendMessagesSystem";
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
-import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
+import { SendWhatsAppMessage } from "../services/WbotServices/SendWhatsAppMessage";
 
 // Interface para os dados necessários para envio de mensagem
 type Payload = {

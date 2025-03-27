@@ -23,7 +23,7 @@ const SyncUnreadMessagesWbot = async (
           const unreadMessages = await chat.fetchMessages({
             limit: chat.unreadCount
           });
-          logger.info(`CHAT: ${chat}`);
+          //logger.info(`CHAT: ${chat}`);
 
           if (chat.isGroup) {
             return;
@@ -48,7 +48,6 @@ const SyncUnreadMessagesWbot = async (
           }
 
           unreadMessages.map(async (msg, idx) => {
-            logger.info(`MSG: ${msg}`, msg.id?.id);
             if (msg.hasMedia) {
               await VerifyMediaMessage(msg, ticket, contact);
             } else {

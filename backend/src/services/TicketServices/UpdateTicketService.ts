@@ -40,7 +40,8 @@ const UpdateTicketService = async ({
   isTransference,
   userIdRequest
 }: Request): Promise<Response> => {
-  const { status, userId, tenantId, queueId } = ticketData;
+  const { status, tenantId, queueId } = ticketData;
+  let { userId } = ticketData;
 
   const ticket = await Ticket.findOne({
     where: { id: ticketId, tenantId },
@@ -73,6 +74,15 @@ const UpdateTicketService = async ({
     queueId,
     userId
   };
+
+  if (userId) {
+    const userExists = await User.findByPk(userId);
+    if (!userExists) {
+      console.log(`Usuário ID ${userId} não encontrado. Ticket não será atribuído.`);
+      // Não atualizar o userId se o usuário não existir
+      userId = undefined;
+    }
+  }
 
   try {
     const date = new Date();

@@ -11,7 +11,7 @@ import socketEmit from "../../helpers/socketEmit";
 import Queue from "../../libs/Queue";
 import { pupa } from "../../utils/pupa";
 import SendWhatsAppMedia from "../WbotServices/SendWhatsAppMedia";
-import SendWhatsAppMessage from "../WbotServices/SendWhatsAppMessage";
+import { SendWhatsAppMessage } from "../WbotServices/SendWhatsAppMessage";
 import { getInstaBot } from "../../libs/InstaBot";
 import InstagramSendMessagesSystem from "../InstagramBotServices/InstagramSendMessagesSystem";
 import TelegramSendMessagesSystem from "../TbotServices/TelegramSendMessagesSystem";

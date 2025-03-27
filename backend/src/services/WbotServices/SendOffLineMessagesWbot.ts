@@ -4,7 +4,7 @@ import Message from "../../models/Message";
 import MessagesOffLine from "../../models/MessageOffLine";
 import Ticket from "../../models/Ticket";
 import { logger } from "../../utils/logger";
-import SendWhatsAppMessage from "./SendWhatsAppMessage";
+import { SendWhatsAppMessage } from "./SendWhatsAppMessage";
 import { getIO } from "../../libs/socket";
 import UserMessagesLog from "../../models/UserMessagesLog";
 
