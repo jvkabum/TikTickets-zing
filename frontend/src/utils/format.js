@@ -1,21 +1,36 @@
-export function formatarMensagemWhatsapp (body) {
-  if (!body) return ''
+export function formatarMensagemWhatsapp (text) {
+  if (!text) return ''
 
-  // Substitui quebras de linha por <br>
-  let formattedText = body.replace(/\n/g, '<br>')
+  // Escapar caracteres HTML para evitar injeção de código
+  let formattedText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 
-  // Formata texto em negrito
-  formattedText = formattedText.replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
+  // Substituir quebras de linha por <br>
+  formattedText = formattedText.replace(/\n/g, '<br>')
 
-  // Formata texto em itálico
-  formattedText = formattedText.replace(/_([^_]+)_/g, '<em>$1</em>')
+  // Formatação de texto
+  // Negrito: *texto* ou **texto**
+  formattedText = formattedText.replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>')
+  formattedText = formattedText.replace(/\*([\s\S]*?)\*/g, '<strong>$1</strong>')
 
-  // Formata texto riscado
-  formattedText = formattedText.replace(/~([^~]+)~/g, '<del>$1</del>')
+  // Itálico: _texto_ ou __texto__
+  formattedText = formattedText.replace(/__([\s\S]*?)__/g, '<em>$1</em>')
+  formattedText = formattedText.replace(/_([\s\S]*?)_/g, '<em>$1</em>')
 
-  // Formata código
-  formattedText = formattedText.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>')
+  // Tachado: ~texto~ ou ~~texto~~
+  formattedText = formattedText.replace(/~~([\s\S]*?)~~/g, '<del>$1</del>')
+  formattedText = formattedText.replace(/~([\s\S]*?)~/g, '<del>$1</del>')
+
+  // Código em bloco: ```texto```
+  formattedText = formattedText.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+
+  // Código inline: `texto`
   formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>')
+
+  // Destacar emojis numeral
+  formattedText = formattedText.replace(/([\d]️⃣)/g, '<span class="option-emoji">$1</span>')
 
   return formattedText
 }

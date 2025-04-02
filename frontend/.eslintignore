@@ -6,3 +6,11 @@
 /node_modules
 
 /src/components/ccFlowBuilder/jsplumb.js
+
+# Ignorar arquivos CSS
+**/*.css
+**/*.scss
+**/*.less
+
+# Ignorar a pasta de componentes especificamente se necessário
+src/components/ccFlowBuilder/index.css

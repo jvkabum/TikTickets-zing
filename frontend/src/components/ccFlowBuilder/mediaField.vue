@@ -24,105 +24,107 @@
           append
           :max-files="1"
           counter
-          :max-file-size="10242880"
-          :max-total-size="10242880"
-          accept=".txt, .jpg, .png, image/jpeg, .jpeg, image/*, .pdf, .doc, .docx, .xls, .xlsx, .zip, .ppt, .pptx, .mp4, .mp3, .ogg, .mpeg"
+          :max-file-size="$attrs.element.data.maxSize"
+          :max-total-size="$attrs.element.data.maxSize"
+          :accept="$attrs.element.data.supportedTypes.join(', ')"
           @rejected="onRejectedFiles"
           @input="getMediaUrl"
         />
         <q-btn
-          v-if="!$attrs.element.data.type "
+          v-if="!$attrs.element.data.type"
           icon="mdi-file-plus-outline"
           @click="$refs.PickerFileMessage.pickFiles()"
           round
           flat
           size="lg"
           class="bg-grey-3 z-max q-pa-lg absolute-center"
-        />
+        >
+          <q-tooltip>
+            Clique para adicionar um arquivo (máx. 10MB)
+          </q-tooltip>
+        </q-btn>
 
         <div class="text-center full-width hide-scrollbar no-scroll">
-          <iframe
-            v-if="cMediaUrl && $attrs.element.data.type === 'application/pdf'"
-            frameBorder="0"
-            scrolling="no"
-            style="
-              max-height: 150px;
-              overflow-y: hidden;
-              -ms-overflow-y: hidden;
-            "
-            class="no-scroll hide-scrollbar"
-            :src="cMediaUrl"
-          >
-            Faça download do PDF
-            <!-- alt : <a href="mensagem.cMediaUrl"></a> -->
-          </iframe>
-          <video
-            v-if="cMediaUrl && $attrs.element.data.type.indexOf('video') != -1"
-            :src="cMediaUrl"
-            controls
-            class="q-mt-md"
-            style="objectFit: cover;
-                  width: 330px;
-                  height: 150px;
-                  borderTopLeftRadius: 8px;
-                  borderTopRightRadius: 8px;
-                  borderBottomLeftRadius: 8px;
-                  borderBottomRightRadius: 8px;"
-            type="video/mp4"
-          >
-          </video>
-          <audio
-            v-if="cMediaUrl && $attrs.element.data.type.indexOf('audio') != -1"
-            class="q-mt-md full-width"
-            controls
-          >
-            <source
+          <!-- Visualização de PDF -->
+          <div v-if="cMediaUrl && $attrs.element.data.type === 'application/pdf'" class="q-mt-md">
+            <iframe
+              frameBorder="0"
+              scrolling="no"
+              style="max-height: 150px; width: 100%;"
+              class="no-scroll hide-scrollbar"
               :src="cMediaUrl"
-              type="audio/ogg"
-            />
-          </audio>
-
-          <q-img
-            v-if="cMediaUrl && $attrs.element.data.type.indexOf('image') != -1"
-            @click="abrirModalImagem=true"
-            :src="cMediaUrl"
-            spinner-color="primary"
-            height="150px"
-            width="100%"
-            id="imagemfield"
-            style="cursor: pointer; "
-          />
-
-        </div>
-        <VueEasyLightbox
-          v-if="cMediaUrl && $attrs.element.data.type.indexOf('image') != -1"
-          :visible="abrirModalImagem"
-          :imgs="cMediaUrl"
-          :index="1"
-          @hide="abrirModalImagem = false;"
-        />
-        <div v-if="getFileIcon($attrs.element.data.name)">
-          <q-icon
-            size="80px"
-            :name="getFileIcon($attrs.element.data.name)"
-          />
-        </div>
-        <div
-          v-if="cMediaUrl"
-          class="text-bold flex flex-inline flex-center items-center"
-        >
-          <div
-            style="max-width: 340px"
-            class="ellipsis"
-          >
-            {{ $attrs.element.data.name }}
-            <q-tooltip>
-              {{ $attrs.element.data.name }}
-            </q-tooltip>
-
+            >
+              Faça download do PDF
+            </iframe>
+            <div class="text-caption q-mt-sm">
+              Clique para visualizar o PDF completo
+            </div>
           </div>
+
+          <!-- Visualização de Vídeo -->
+          <div v-if="cMediaUrl && $attrs.element.data.type.indexOf('video') !== -1" class="q-mt-md">
+            <video
+              :src="cMediaUrl"
+              controls
+              style="width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px;"
+              type="video/mp4"
+            >
+              Seu navegador não suporta a reprodução de vídeos.
+            </video>
+          </div>
+
+          <!-- Visualização de Áudio -->
+          <div v-if="cMediaUrl && $attrs.element.data.type.indexOf('audio') !== -1" class="q-mt-md">
+            <audio
+              class="full-width"
+              controls
+              :src="cMediaUrl"
+            >
+              Seu navegador não suporta a reprodução de áudio.
+            </audio>
+          </div>
+
+          <!-- Visualização de Imagem -->
+          <div v-if="cMediaUrl && $attrs.element.data.type.indexOf('image') !== -1" class="q-mt-md">
+            <q-img
+              @click="abrirModalImagem=true"
+              :src="cMediaUrl"
+              spinner-color="primary"
+              style="max-height: 200px; cursor: pointer; border-radius: 8px;"
+              fit="contain"
+            />
+            <div class="text-caption q-mt-sm">
+              Clique na imagem para ampliar
+            </div>
+          </div>
+
+          <!-- Visualização de outros tipos de arquivo -->
+          <div v-if="cMediaUrl && !['application/pdf', 'video', 'audio', 'image'].some(type => $attrs.element.data.type.indexOf(type) !== -1)" class="q-mt-md">
+            <q-icon
+              :name="getFileIcon($attrs.element.data.name)"
+              size="80px"
+            />
+            <div class="text-caption q-mt-sm">
+              {{ $attrs.element.data.name }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Legenda do arquivo -->
+        <div v-if="cMediaUrl" class="q-mt-md">
+          <q-input
+            v-model="$attrs.element.data.caption"
+            label="Legenda"
+            dense
+            outlined
+            rounded
+            placeholder="Digite uma legenda para o arquivo"
+          />
+        </div>
+
+        <!-- Botões de ação -->
+        <div v-if="cMediaUrl" class="row justify-end q-mt-sm">
           <q-btn
-            v-if="cMediaUrl"
             flat
             class="bg-padrao btn-rounded q-ma-sm"
             color="primary"
@@ -134,8 +136,27 @@
               Substituir Arquivo
             </q-tooltip>
           </q-btn>
+          <q-btn
+            flat
+            class="bg-padrao btn-rounded q-ma-sm"
+            color="negative"
+            no-caps
+            icon="mdi-delete-outline"
+            @click="clearFile"
+          >
+            <q-tooltip>
+              Remover Arquivo
+            </q-tooltip>
+          </q-btn>
         </div>
 
+        <VueEasyLightbox
+          v-if="cMediaUrl && $attrs.element.data.type.indexOf('image') != -1"
+          :visible="abrirModalImagem"
+          :imgs="cMediaUrl"
+          :index="1"
+          @hide="abrirModalImagem = false;"
+        />
       </q-card-section>
     </q-card>
   </div>
@@ -227,21 +248,46 @@ export default {
       })
     },
     onRejectedFiles (rejectedEntries) {
-      this.$q.notify({
-        html: true,
-        message: `Ops... Ocorreu um erro! <br>
-        <ul>
-          <li>Arquivo deve ter no máximo 5MB.</li>
-          <li>Priorize o envio de imagem ou vídeo.</li>
-        </ul>`,
-        type: 'negative',
-        progress: true,
-        position: 'top',
-        actions: [{
-          icon: 'close',
-          round: true,
-          color: 'white'
-        }]
+      rejectedEntries.forEach(entry => {
+        let message = ''
+        if (entry.failedPropValidation === 'max-file-size') {
+          message = `O arquivo "${entry.file.name}" excede o tamanho máximo permitido de 10MB.`
+        } else if (entry.failedPropValidation === 'accept') {
+          message = `O tipo de arquivo "${entry.file.name}" não é suportado.`
+        } else {
+          message = `O arquivo "${entry.file.name}" foi rejeitado.`
+        }
+        this.$q.notify({
+          type: 'negative',
+          message: message,
+          position: 'top',
+          timeout: 3000
+        })
+      })
+    },
+    clearFile () {
+      this.$q.dialog({
+        title: 'Confirmação',
+        message: 'Deseja realmente remover este arquivo?',
+        cancel: {
+          label: 'Não',
+          flat: true,
+          color: 'primary'
+        },
+        ok: {
+          label: 'Sim',
+          flat: true,
+          color: 'negative'
+        },
+        persistent: true
+      }).onOk(() => {
+        this.file = null
+        this.$attrs.element.data.mediaUrl = ''
+        this.$attrs.element.data.media = ''
+        this.$attrs.element.data.type = ''
+        this.$attrs.element.data.name = ''
+        this.$attrs.element.data.ext = ''
+        this.$attrs.element.data.caption = ''
       })
     }
   }

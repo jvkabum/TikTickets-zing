@@ -91,6 +91,18 @@
                       Enviar documentos, vídeo, aúdio e outros arquivos.
                     </q-tooltip>
                   </q-btn>
+
+                  <q-btn
+                    @click="showPreview = true"
+                    flat
+                    icon="mdi-eye-outline"
+                    class="bg-padrao btn-rounded q-mx-xs"
+                    :color="$q.dark.isActive ? 'white' : ''"
+                  >
+                    <q-tooltip content-class="text-bold">
+                      Visualizar interações
+                    </q-tooltip>
+                  </q-btn>
                 </div>
                 <div
                   class="row bg-grey-3 q-pa-sm q-my-md justify-center scroll"
@@ -161,6 +173,17 @@
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <!-- Botão de salvar interações -->
+                <div class="row justify-end q-mt-md">
+                  <q-btn
+                    color="positive"
+                    icon="mdi-content-save-outline"
+                    label="Salvar Interações"
+                    rounded
+                    @click="saveInteractions"
+                  />
                 </div>
               </div>
             </q-tab-panel>
@@ -276,7 +299,7 @@
                         inset
                         spaced
                       />
-                      <q-card-section class="q-pa-sm">
+                      <q-card-section>
                         <div class="text-bold q-px-sm"> Rotear para: </div>
                         <q-option-group
                           class="text-center"
@@ -290,10 +313,10 @@
                             <q-select
                               v-if="condition.action === 0"
                               dense
-                              rounded
                               outlined
+                              rounded
                               class="full-width"
-                              :value="condition.nextStepId || ''"
+                              :value="condition.nextNode || condition.nextStepId || ''"
                               :options="nodesList.nodeList.filter(n => n.type !== 'configurations')"
                               option-label="name"
                               option-value="id"
@@ -301,8 +324,9 @@
                               map-options
                               emit-value
                               clearable
-                              @input="nextStepId => addLineStep(nextStepId, idx)"
+                              @input="nextNode => addLineStep(nextNode, idx)"
                             />
+
                             <q-select
                               v-if="condition.action === 1"
                               dense
@@ -318,8 +342,9 @@
                               map-options
                               emit-value
                               clearable
-                              @input="condition.nextStepId = null; condition.userIdDestination = null"
+                              @input="condition.nextNode = null; condition.userIdDestination = null"
                             />
+
                             <q-select
                               v-if="condition.action === 2"
                               dense
@@ -334,8 +359,26 @@
                               map-options
                               emit-value
                               clearable
-                              @input="condition.nextStepId = null; condition.queueId = null"
+                              @input="condition.nextNode = null; condition.queueId = null"
                             />
+
+                            <!-- Campo para editar a chave da conexão -->
+                            <q-input
+                              v-if="condition.action === 0 && (condition.nextNode || condition.nextStepId)"
+                              dense
+                              outlined
+                              rounded
+                              class="full-width q-mt-sm"
+                              label="Chave da conexão"
+                              v-model="condition.description"
+                              placeholder="Texto exibido na linha de conexão"
+                              @input="updateLineLabel(idx)"
+                            >
+                              <template v-slot:append>
+                                <q-icon name="mdi-label-outline" />
+                                <q-tooltip>O texto que aparece na linha de conexão</q-tooltip>
+                              </template>
+                            </q-input>
                           </div>
                         </div>
                       </q-card-section>
@@ -351,21 +394,66 @@
             class="q-pa-sm q-gutter-md"
             v-show="type === 'line'"
           >
+            <div class="text-h6 q-mb-md text-primary">Editar Chave da Conexão</div>
             <q-input
               outlined
               label="Chave"
               v-model="line.label"
-            />
-            <q-btn
-              icon="mdi-close"
-              label="Redefinir"
-            />
-            <q-btn
-              type="primary"
-              icon="mdi-content-save"
-              @click="saveLine"
-              label="Salvar"
-            />
+              class="q-mb-md"
+              placeholder="Digite a chave da conexão"
+              autofocus
+              @keyup.enter="saveLine"
+              @input="updateLineLabelRealtime"
+            >
+              <template v-slot:prepend>
+                <q-icon name="mdi-label-outline" color="primary" />
+              </template>
+              <template v-slot:append>
+                <q-icon name="mdi-pencil" />
+                <q-tooltip>Digite o texto a ser exibido na linha de conexão</q-tooltip>
+              </template>
+              <template v-slot:hint>
+                Este texto será exibido na linha de conexão entre os nós
+              </template>
+            </q-input>
+            <div class="connection-preview q-mb-md" v-if="line.from && line.to">
+              <div class="preview-title q-mb-sm">Prévia da conexão:</div>
+              <div class="preview-connection">
+                <div class="preview-node">{{ getSourceNodeName() }}</div>
+                <div class="preview-arrow">
+                  <div class="preview-label" :class="{ 'empty-label': !line.label }">
+                    {{ line.label || 'Sem chave definida' }}
+                  </div>
+                  <q-icon name="mdi-arrow-right" size="24px" color="primary" />
+                </div>
+                <div class="preview-node">{{ getTargetNodeName() }}</div>
+              </div>
+            </div>
+            <div class="row justify-between">
+              <q-btn
+                outline
+                color="grey"
+                icon="mdi-close"
+                @click="line.label = ''"
+                label="Limpar"
+              />
+              <div>
+                <q-btn
+                  outline
+                  color="negative"
+                  icon="mdi-cancel"
+                  @click="type = 'node'"
+                  label="Cancelar"
+                  class="q-mr-sm"
+                />
+                <q-btn
+                  color="primary"
+                  icon="mdi-content-save"
+                  @click="saveLine"
+                  label="Salvar"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </q-card-section>
@@ -754,6 +842,91 @@
       </q-card-section>
 
     </q-card>
+
+    <!-- Modal de prévia das interações -->
+    <q-dialog v-model="showPreview">
+      <q-card style="width: 400px">
+        <q-card-section class="row items-center">
+          <div class="text-h6">Prévia das Interações</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="q-pa-md">
+          <div class="chat-preview">
+            <template v-for="(interaction) in node.interactions">
+              <!-- Mensagem de texto -->
+              <div
+                v-if="interaction.type === 'MessageField'"
+                :key="interaction.id"
+                class="chat-message"
+              >
+                <div class="message-content">
+                  <div class="message-text">{{ interaction.data.message }}</div>
+                  <div v-if="interaction.data.options && interaction.data.options.length > 0" class="message-options">
+                    <q-chip
+                      v-for="(option, optIdx) in interaction.data.options"
+                      :key="optIdx"
+                      dense
+                      class="q-ma-xs"
+                    >
+                      {{ option }}
+                    </q-chip>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mídia -->
+              <div
+                v-if="interaction.type === 'MediaField'"
+                :key="interaction.id"
+                class="chat-message"
+              >
+                <div class="message-content">
+                  <!-- Imagem -->
+                  <q-img
+                    v-if="interaction.data.type.indexOf('image') !== -1"
+                    :src="interaction.data.mediaUrl"
+                    style="max-height: 200px; border-radius: 8px;"
+                    fit="contain"
+                  />
+
+                  <!-- Vídeo -->
+                  <video
+                    v-if="interaction.data.type.indexOf('video') !== -1"
+                    :src="interaction.data.mediaUrl"
+                    controls
+                    style="width: 100%; max-height: 200px; border-radius: 8px;"
+                  />
+
+                  <!-- Áudio -->
+                  <audio
+                    v-if="interaction.data.type.indexOf('audio') !== -1"
+                    :src="interaction.data.mediaUrl"
+                    controls
+                    class="full-width"
+                  />
+
+                  <!-- Outros arquivos -->
+                  <div
+                    v-if="!['image', 'video', 'audio'].some(type => interaction.data.type.indexOf(type) !== -1)"
+                    class="file-preview"
+                  >
+                    <q-icon :name="getFileIcon(interaction.data.name)" size="48px" />
+                    <div class="text-caption q-mt-sm">{{ interaction.data.name }}</div>
+                  </div>
+
+                  <!-- Legenda -->
+                  <div v-if="interaction.data.caption" class="message-caption">
+                    {{ interaction.data.caption }}
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -787,6 +960,7 @@ export default {
       visible: true,
       tabNodeForm: 'interacoes',
       elements: [],
+      showPreview: false,
       optionsAcao: [
         { value: 0, label: 'Etapa' },
         { value: 1, label: 'Fila' },
@@ -820,11 +994,19 @@ export default {
       return uid()
     },
     addMessage () {
-      this.node.interactions.push({
+      const newMessage = {
+        id: this.$uuid(),
         type: 'MessageField',
-        data: { message: '' },
-        id: this.gerarUID()
-      })
+        data: {
+          message: '',
+          options: [],
+          delay: 0
+        }
+      }
+      if (!Array.isArray(this.node.interactions)) {
+        this.node.interactions = []
+      }
+      this.node.interactions.push(newMessage)
     },
     addMediaField () {
       this.node.interactions.push({
@@ -835,15 +1017,30 @@ export default {
           media: '',
           type: '',
           name: '',
-          caption: ''
+          caption: '',
+          supportedTypes: [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'video/mp4',
+            'audio/mp3',
+            'audio/ogg',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          ],
+          maxSize: 10485760 // 10MB em bytes
         },
         id: this.gerarUID()
       })
     },
     addCondiction () {
       this.node.conditions.push({
-        type: '',
-        condition: [],
+        type: 'R',
+        condition: ['bot'],
+        action: 0,
         id: this.gerarUID()
       })
     },
@@ -888,8 +1085,18 @@ export default {
         },
         persistent: true
       }).onOk(async () => {
+        // Antes de remover a condição, verificar se existe uma conexão para remover
+        const sourceId = this.node.id
+        const targetId = condition.nextNode || condition.nextStepId
+
+        // Remover a condição da lista
         const nConditions = this.node.conditions.filter(c => c.id !== condition.id)
         this.node.conditions = nConditions
+
+        // Se tiver um nó de destino, emitir evento para remover a conexão visual
+        if (targetId) {
+          this.$emit('deleteLine', sourceId, targetId)
+        }
       })
     },
     onInsertSelectEmojiSaudacao (emoji) {
@@ -926,23 +1133,27 @@ export default {
         tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
       }, 10)
     },
-    addLineStep (nextStepId, idx) {
+    addLineStep (nextNode, idx) {
       if (this.node.conditions[idx]?.queueId) {
         this.node.conditions[idx].queueId = null
       }
       if (this.node.conditions[idx]?.userIdDestination) {
         this.node.conditions[idx].userIdDestination = null
       }
-      const oldToLine = this.node.conditions[idx].nextStepId
-      this.node.conditions[idx].nextStepId = nextStepId
-      if (oldToLine != nextStepId) {
-        this.$emit('addNewLineCondition', this.node.id, nextStepId, oldToLine)
+      const oldToLine = this.node.conditions[idx].nextNode || this.node.conditions[idx].nextStepId
+
+      // Definir tanto nextNode quanto nextStepId para garantir compatibilidade
+      this.node.conditions[idx].nextNode = nextNode
+      this.node.conditions[idx].nextStepId = nextNode
+
+      if (oldToLine != nextNode) {
+        this.$emit('addNewLineCondition', this.node.id, nextNode, oldToLine)
       }
     },
-    removeItem (el, idx) {
+    removeItem (element, idx) {
       this.$q.dialog({
         title: 'Atenção!!',
-        message: `Deseja realmente deletar o elemento (${idx})?`,
+        message: `Deseja realmente deletar a interação (${idx})?`,
         cancel: {
           label: 'Não',
           color: 'primary',
@@ -954,9 +1165,10 @@ export default {
           push: true
         },
         persistent: true
-      }).onOk(async () => {
-        const idx = this.node.interactions.findIndex(e => e.id === el.id)
-        this.node.interactions.splice(idx, 1)
+      }).onOk(() => {
+        const nInteractions = this.node.interactions.filter(i => i.id !== element.id)
+        this.node.interactions = nInteractions
+        this.$emit('repaintEverything')
       })
     },
     nodeInit (data, id) {
@@ -969,11 +1181,39 @@ export default {
       })
     },
     lineInit (line) {
+      // Sempre definir o tipo como 'line' quando estamos inicializando a edição de uma linha
       this.type = 'line'
       this.line = line
+
+      // Garantir que o label seja inicializado corretamente
+      this.$nextTick(() => {
+        // Buscar a conexão atual para obter o label atualizado
+        const connection = this.$parent.jsPlumb.getConnections({
+          source: line.from,
+          target: line.to
+        })[0]
+
+        if (connection) {
+          // Atualizar o valor do label com o texto atual da conexão
+          this.line.label = connection.getLabel() || ''
+        } else if (!this.line.label) {
+          this.line.label = ''
+        }
+      })
     },
     saveLine () {
       this.$emit('setLineLabel', this.line.from, this.line.to, this.line.label)
+
+      // Notificar o usuário
+      this.$q.notify({
+        type: 'positive',
+        message: 'Chave da conexão atualizada!',
+        position: 'top',
+        timeout: 1500
+      })
+
+      // Voltar para o modo node após salvar
+      this.type = 'node'
     },
     save () {
       this.data.nodeList.filter((node) => {
@@ -989,6 +1229,342 @@ export default {
           this.$emit('repaintEverything')
         }
       })
+    },
+    activateSection (section) {
+      switch (section) {
+        case 'messages':
+        case 'flow':
+          this.tabNodeForm = 'interacoes'
+          if (section === 'messages') {
+            this.$nextTick(() => this.addMessage())
+          } else if (section === 'flow') {
+            this.$nextTick(() => this.addMediaField())
+          }
+          break
+        case 'conditions':
+          this.tabNodeForm = 'condicoes'
+          // Não adicionar condição automaticamente aqui, pois isso é feito
+          // quando uma conexão é criada
+          break
+        case 'advanced':
+          this.tabNodeForm = 'condicoes'
+          break
+        case 'interacoes':
+          this.tabNodeForm = 'interacoes'
+          break
+        default:
+          this.tabNodeForm = 'interacoes'
+      }
+    },
+    updateLineLabel (idx) {
+      // Obter a condição
+      const condition = this.node.conditions[idx]
+      if (!condition) return
+
+      // Obter o nó de destino
+      const targetNodeId = condition.nextNode || condition.nextStepId
+      if (!targetNodeId) return
+
+      // Emitir evento para atualizar a label na conexão
+      this.$emit('setLineLabel', this.node.id, targetNodeId, condition.description)
+
+      // Notificar o usuário
+      this.$q.notify({
+        type: 'positive',
+        message: 'Chave da conexão atualizada!',
+        position: 'top',
+        timeout: 1500
+      })
+    },
+    validateInteractions () {
+      let isValid = true
+      let errorMessage = ''
+
+      for (let i = 0; i < this.node.interactions.length; i++) {
+        const interaction = this.node.interactions[i]
+        if (interaction.type === 'MessageField') {
+          if (!interaction.data.message.trim()) {
+            isValid = false
+            errorMessage = `A mensagem ${i + 1} está vazia.`
+            break
+          }
+          // Validar opções se existirem
+          if (interaction.data.options && interaction.data.options.length > 0) {
+            const emptyOptions = interaction.data.options.filter(opt => !opt.trim())
+            if (emptyOptions.length > 0) {
+              isValid = false
+              errorMessage = `A mensagem ${i + 1} possui opções vazias.`
+              break
+            }
+            // Validar se as opções são únicas
+            const uniqueOptions = new Set(interaction.data.options)
+            if (uniqueOptions.size !== interaction.data.options.length) {
+              isValid = false
+              errorMessage = `A mensagem ${i + 1} possui opções duplicadas.`
+              break
+            }
+          }
+        } else if (interaction.type === 'MediaField') {
+          if (!interaction.data.mediaUrl) {
+            isValid = false
+            errorMessage = `O arquivo da mídia ${i + 1} não foi selecionado.`
+            break
+          }
+        }
+      }
+
+      if (!isValid) {
+        this.$q.notify({
+          type: 'warning',
+          message: errorMessage,
+          position: 'top',
+          timeout: 3000
+        })
+      }
+
+      return isValid
+    },
+    saveInteractions () {
+      // Tentar extrair opções automaticamente antes de validar
+      this.extrairOpcoesAutomaticamente()
+
+      if (this.validateInteractions()) {
+        // Ordenar interações
+        this.node.interactions = this.node.interactions.map((interaction, index) => {
+          if (interaction.type === 'MessageField') {
+            // Remover opções vazias
+            if (interaction.data.options) {
+              interaction.data.options = interaction.data.options.filter(opt => opt.trim())
+
+              // Garantir que a mensagem não tenha as opções duplicadas
+              // Extrair a parte principal da mensagem sem as opções
+              let message = interaction.data.message || ''
+
+              // Remover qualquer lista de opções e texto de instruções existente
+              const optionPatterns = [
+                /\n\n\*Opções disponíveis:\*\n([\s\S]*?)(\n_Digite o número ou o texto da opção desejada_)?$/,
+                /^\*Opções disponíveis:\*\n([\s\S]*?)(\n_Digite o número ou o texto da opção desejada_)?$/
+              ]
+
+              for (const pattern of optionPatterns) {
+                message = message.replace(pattern, '')
+              }
+
+              // Limpar linhas em branco extras ao final
+              message = message.replace(/\n+$/, '')
+
+              // Adicionar uma quebra de linha se a mensagem não terminar com uma
+              if (message && !message.endsWith('\n')) {
+                message += '\n'
+              }
+
+              // Adicionar uma linha em branco antes das opções se houver mensagem
+              if (message) {
+                message += '\n'
+              }
+
+              // Adicionar as opções numeradas
+              if (interaction.data.options.length > 0) {
+                message += '*Opções disponíveis:*\n'
+                interaction.data.options.forEach((option, index) => {
+                  message += `${index + 1}️⃣ *${option}*\n`
+                })
+                message += '\n_Digite o número ou o texto da opção desejada_'
+              }
+
+              interaction.data.message = message
+            }
+          }
+          return interaction
+        })
+
+        this.$emit('saveNode', this.node)
+        this.$q.notify({
+          type: 'positive',
+          message: 'Interações salvas com sucesso!',
+          position: 'top',
+          timeout: 2000
+        })
+      }
+    },
+    getNodeName (nodeId) {
+      const node = this.nodesList.nodeList.find(n => n.id === nodeId)
+      return node ? node.name : 'Nó não encontrado'
+    },
+    extrairOpcoesAutomaticamente () {
+      // Verifica se há interações do tipo MessageField
+      if (!this.node.interactions || this.node.interactions.length === 0) return
+
+      // Encontra a última mensagem que tenha texto
+      const mensagensComTexto = this.node.interactions.filter(
+        interaction => interaction.type === 'MessageField' && interaction.data.message
+      )
+
+      if (mensagensComTexto.length === 0) return
+
+      // Pega a última mensagem (mais recente)
+      const ultimaMensagem = mensagensComTexto[mensagensComTexto.length - 1]
+
+      // Inicializa o array de opções se não existir
+      if (!ultimaMensagem.data.options) {
+        this.$set(ultimaMensagem.data, 'options', [])
+      }
+
+      // Conjunto para armazenar todas as opções (evita duplicatas)
+      const todasOpcoes = new Set(ultimaMensagem.data.options || [])
+
+      // Adiciona APENAS os nomes dos nós conectados como opções
+      let adicionouNos = false
+      if (this.node.conditions && this.node.conditions.length > 0) {
+        // Buscar todos os nós conectados através das condições
+        this.node.conditions.forEach(condition => {
+          const targetNodeId = condition.nextNode || condition.nextStepId
+          if (targetNodeId) {
+            // Certifique-se de que estamos acessando o nodesList corretamente
+            const targetNode = this.nodesList && this.nodesList.nodeList
+              ? this.nodesList.nodeList.find(n => n.id === targetNodeId)
+              : null
+
+            if (targetNode && targetNode.name) {
+              const opcaoNova = !todasOpcoes.has(targetNode.name)
+              todasOpcoes.add(targetNode.name)
+              if (opcaoNova) adicionouNos = true
+            }
+          }
+        })
+      }
+
+      // Converte Set para Array
+      const opcoesArray = [...todasOpcoes]
+
+      // Apenas atualiza as opções e a mensagem se houver opções encontradas
+      if (opcoesArray.length > 0) {
+        // Limpa as opções existentes e adiciona apenas os nomes dos nós
+        ultimaMensagem.data.options = opcoesArray
+
+        // Atualiza o texto da mensagem com as opções formatadas
+        this.atualizarMensagemComOpcoes(ultimaMensagem)
+
+        // Notifica o usuário apenas se adicionou nós novos
+        if (adicionouNos) {
+          this.$q.notify({
+            type: 'positive',
+            message: 'Opções de resposta atualizadas com os nós conectados',
+            position: 'top',
+            timeout: 2000
+          })
+        }
+      }
+    },
+
+    atualizarMensagemComOpcoes (mensagem) {
+      if (!mensagem.data.options || mensagem.data.options.length === 0) return
+
+      let message = mensagem.data.message || ''
+
+      // Remover qualquer lista de opções e texto de instruções existente
+      const optionPatterns = [
+        /\n\n\*Opções disponíveis:\*\n([\s\S]*?)(\n_Digite o número ou o texto da opção desejada_)?$/,
+        /^\*Opções disponíveis:\*\n([\s\S]*?)(\n_Digite o número ou o texto da opção desejada_)?$/
+      ]
+
+      for (const pattern of optionPatterns) {
+        message = message.replace(pattern, '')
+      }
+
+      // Limpar linhas em branco extras ao final
+      message = message.replace(/\n+$/, '')
+
+      // Adicionar uma quebra de linha se a mensagem não terminar com uma
+      if (message && !message.endsWith('\n')) {
+        message += '\n'
+      }
+
+      // Adicionar uma linha em branco antes das opções se houver mensagem
+      if (message) {
+        message += '\n'
+      }
+
+      // Adicionar as opções numeradas
+      message += '*Opções disponíveis:*\n'
+      mensagem.data.options.forEach((option, index) => {
+        message += `${index + 1}️⃣ *${option}*\n`
+      })
+      message += '\n_Digite o número ou o texto da opção desejada_'
+
+      mensagem.data.message = message
+    },
+    updateNodeConditions () {
+      if (this.node && this.node.conditions) {
+        // Garantir que o tipo esteja correto para cada condição
+        this.node.conditions.forEach(condition => {
+          // Se não tiver tipo definido ou for 'default', usar 'R' (Respostas)
+          if (!condition.type || condition.type === 'default') {
+            condition.type = 'R'
+          }
+
+          // Converter condições antigas de US para R
+          if (condition.type === 'US') {
+            condition.type = 'R'
+          }
+
+          // Garantir que action esteja sempre definido como número
+          if (condition.action === undefined || condition.action === null) {
+            condition.action = 0 // Etapa
+          } else {
+            condition.action = Number(condition.action)
+          }
+
+          // Garantir que condition seja sempre um array
+          if (!Array.isArray(condition.condition)) {
+            // Se for string, converter para array
+            if (typeof condition.condition === 'string') {
+              if (condition.condition === 'true' || condition.condition === '') {
+                // Se for 'true' ou vazio, usar nome do nó alvo como valor padrão
+                const targetNodeId = condition.nextNode || condition.nextStepId
+                const targetNode = this.nodesList.nodeList.find(n => n.id === targetNodeId)
+                condition.condition = targetNode ? [targetNode.name] : ['bot']
+              } else {
+                // Outro valor de string, converter para array
+                condition.condition = [condition.condition]
+              }
+            } else {
+              // Nem string nem array, inicializar com valor padrão
+              condition.condition = ['bot']
+            }
+          } else if (Array.isArray(condition.condition) && condition.condition.length === 0) {
+            // Se for array vazio, inicializar com valor padrão
+            condition.condition = ['bot']
+          }
+        })
+
+        // Verificar e extrair opções das mensagens
+        this.extrairOpcoesAutomaticamente()
+
+        // Forçar atualização da UI
+        const conditions = [...this.node.conditions]
+        this.node.conditions = []
+        this.$nextTick(() => {
+          this.node.conditions = conditions
+          this.tabNodeForm = 'condicoes' // Garantir que estamos na aba de condições
+          this.$emit('repaintEverything')
+        })
+      }
+    },
+    getSourceNodeName () {
+      const sourceNode = this.nodesList.nodeList.find(n => n.id === this.line.from)
+      return sourceNode ? sourceNode.name : 'Nó de origem não encontrado'
+    },
+    getTargetNodeName () {
+      const targetNode = this.nodesList.nodeList.find(n => n.id === this.line.to)
+      return targetNode ? targetNode.name : 'Nó de destino não encontrado'
+    },
+    updateLineLabelRealtime (value) {
+      // Atualizar o label em tempo real enquanto o usuário digita
+      if (this.line && this.line.from && this.line.to) {
+        // Usar o mesmo método de setLineLabel mas sem salvar permanentemente
+        this.$emit('updateLineLabelRealtime', this.line.from, this.line.to, value)
+      }
     }
   },
   mounted () {
@@ -997,7 +1573,7 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
 .el-node-form-tag {
   position: absolute;
   top: 50%;
@@ -1008,5 +1584,89 @@ export default {
   border: 1px solid rgb(220, 227, 232);
   border-right: none;
   z-index: 0;
+}
+
+.chat-preview {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.chat-message {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.message-content {
+  max-width: 80%;
+  background: white;
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.message-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-options {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.message-caption {
+  margin-top: 4px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.file-preview {
+  text-align: center;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.connection-preview {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.preview-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.preview-connection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preview-node {
+  flex: 1;
+  text-align: left;
+}
+
+.preview-arrow {
+  flex: 0;
+  text-align: right;
+}
+
+.preview-label {
+  flex: 1;
+  text-align: right;
+}
+
+.empty-label {
+  color: #666;
 }
 </style>

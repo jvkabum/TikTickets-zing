@@ -14,8 +14,10 @@ let mNodeMap = {}
 // Tamanho padrão de um nó para cálculos de sobreposição
 const NODE_WIDTH = 220
 const NODE_HEIGHT = 100
-const MIN_NODE_DISTANCE = 300 // Aumentado MUITO significativamente para maior distância entre nós
-const SAFETY_MARGIN = 150 // Margem de segurança aumentada para manter os nós dentro do container
+// Valores ajustáveis para o espaçamento
+const MAX_NODE_DISTANCE = 300 // Distância máxima entre nós quando há poucos
+const MIN_NODE_DISTANCE = 180 // Distância mínima entre nós quando há muitos
+const SAFETY_MARGIN = 80 // Margem de segurança ajustada
 
 export function ForceDirected (data = {}, layout = 'force') {
   // Limpa as variáveis
@@ -48,6 +50,26 @@ export function ForceDirected (data = {}, layout = 'force') {
       mNodeMap[node.id] = node
     }
   }
+
+  // Calcula o espaçamento ideal com base no número de nós
+  // Fórmula adaptativa: menos nós = menor distância, mais nós = maior distância (até o limite)
+  const nodeCount = mNodeList.length
+  // Ajustamos dinâmicamente a distância entre nós baseado na quantidade
+  let dynamicNodeDistance
+  if (nodeCount <= 5) {
+    // Para poucos nós, usamos um espaçamento menor
+    dynamicNodeDistance = MIN_NODE_DISTANCE
+  } else if (nodeCount >= 15) {
+    // Para muitos nós, usamos o espaçamento maior
+    dynamicNodeDistance = MAX_NODE_DISTANCE
+  } else {
+    // Para quantidades intermediárias, interpolamos linearmente
+    const factor = (nodeCount - 5) / 10 // De 0 a 1
+    dynamicNodeDistance = MIN_NODE_DISTANCE + factor * (MAX_NODE_DISTANCE - MIN_NODE_DISTANCE)
+  }
+
+  // Atribuímos o valor calculado a uma variável global usada pelos algoritmos
+  window.currentNodeDistance = dynamicNodeDistance
 
   // Aplica o layout escolhido
   switch (layout) {
@@ -117,6 +139,9 @@ function resolveOverlaps () {
   let moved = true
   let iteration = 0
 
+  // Usa o valor dinâmico de espaçamento que calculamos
+  const nodeDistance = window.currentNodeDistance || MIN_NODE_DISTANCE
+
   while (moved && iteration < iterations) {
     moved = false
     iteration++
@@ -130,8 +155,8 @@ function resolveOverlaps () {
         if (i === j) continue
 
         const nodeB = mNodeList[j]
-        const overlapX = (NODE_WIDTH + MIN_NODE_DISTANCE) - Math.abs(nodeA.x - nodeB.x)
-        const overlapY = (NODE_HEIGHT + MIN_NODE_DISTANCE) - Math.abs(nodeA.y - nodeB.y)
+        const overlapX = (NODE_WIDTH + nodeDistance) - Math.abs(nodeA.x - nodeB.x)
+        const overlapY = (NODE_HEIGHT + nodeDistance) - Math.abs(nodeA.y - nodeB.y)
 
         // Se há sobreposição em ambas as direções
         if (overlapX > 0 && overlapY > 0) {
@@ -164,8 +189,10 @@ function resolveOverlaps () {
  */
 function forceLayout () {
   if (mNodeList && mLinkList) {
-    // Aumentado para criar mais espaço entre os nós
-    k = Math.sqrt(CANVAS_WIDTH * CANVAS_HEIGHT / mNodeList.length) * 2.2
+    // Ajustamos o fator k com base na distância dinâmica entre nós
+    const nodeDistance = window.currentNodeDistance || MIN_NODE_DISTANCE
+    // Reduzimos o fator quando há poucos nós para não espalhar tanto
+    k = Math.sqrt(CANVAS_WIDTH * CANVAS_HEIGHT / (mNodeList.length * 1.5)) * (nodeDistance / 200)
   }
 
   // Determinar posições iniciais de forma determinística
@@ -173,21 +200,26 @@ function forceLayout () {
   const centerX = CANVAS_WIDTH * 0.5
   const centerY = CANVAS_HEIGHT * 0.5
   const nodeCount = mNodeList.length
-  // Aumento do raio inicial para espalhar mais os nós
-  const radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) * 0.4
+
+  // Ajustar o raio inicial com base na quantidade de nós
+  // Para poucos nós, usamos um raio menor para manter o grupo mais compacto
+  const radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) * (nodeCount < 5 ? 0.15 : (nodeCount < 10 ? 0.25 : 0.35))
 
   for (let i = 0; i < mNodeList.length; i++) {
-    // Distribuição circular ou em espiral
+    // Distribuição circular uniforme
     const angle = (i / nodeCount) * 2 * Math.PI
-    // Maior variação no raio para evitar sobreposições exatas
-    const nodeRadius = radius * (0.7 + (i % 5) * 0.1)
+    // Variação no raio para evitar sobreposições iniciais
+    // Para poucos nós, mantemos o raio mais consistente
+    const nodeRadius = nodeCount < 5
+      ? radius * (0.85 + (i % 3) * 0.05)
+      : radius * (0.7 + (i % 5) * 0.1)
 
     mNodeList[i].x = centerX + nodeRadius * Math.cos(angle)
     mNodeList[i].y = centerY + nodeRadius * Math.sin(angle)
   }
 
-  // Mais iterações para obter um resultado melhor
-  for (let i = 0; i < 400; i++) {
+  // Aumentamos o número de iterações para melhor distribuição
+  for (let i = 0; i < 500; i++) {
     calculateRepulsive()
     calculateTraction()
     updateCoordinates()
@@ -198,8 +230,8 @@ function forceLayout () {
     }
   }
 
-  // Aplica uma força final de separação para garantir que não haja sobreposições
-  for (let i = 0; i < 5; i++) {
+  // Aplica forças extras de separação para garantir que não haja sobreposições
+  for (let i = 0; i < 8; i++) {
     resolveDirectOverlaps()
   }
 
@@ -211,7 +243,9 @@ function forceLayout () {
  * Resolve diretamente as sobreposições aplicando forças de separação
  */
 function resolveDirectOverlaps () {
-  const minDistance = NODE_WIDTH * 3 // Aumentada DRASTICAMENTE para garantir maior espaçamento
+  // Usa o valor dinâmico para o espaçamento mínimo
+  const nodeDistance = window.currentNodeDistance || MIN_NODE_DISTANCE
+  const minDistance = nodeDistance * 0.8 + NODE_WIDTH // Ajustamos usando o espaçamento dinâmico
 
   // Fazemos mais iterações para garantir uma separação efetiva
   for (let iter = 0; iter < 5; iter++) {
@@ -397,7 +431,8 @@ function ensureNodesWithinBounds () {
 }
 
 /**
- * Layout em árvore - organiza os nós em estrutura hierárquica
+ * Layout em árvore vertical
+ * Organiza os nós em uma estrutura hierárquica
  */
 function treeLayout () {
   // Encontra o nó raiz (aquele que não tem arestas de entrada)

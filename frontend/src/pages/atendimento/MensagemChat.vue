@@ -349,6 +349,13 @@
               class="q-message-container row items-end no-wrap"
             >
               <div v-html="formatarMensagemWhatsapp(mensagem.body)"></div>
+              <div v-if="mensagem.options && mensagem.options.length > 0" class="q-mt-sm options-list">
+                <div class="text-caption q-mb-xs">_Digite o número ou o texto da opção desejada_</div>
+                <div class="text-weight-bold q-mb-xs">*Opções disponíveis:*</div>
+                <div v-for="(option, index) in mensagem.options" :key="index" class="option-item">
+                  {{ index + 1 }}️⃣ *{{ option }}*
+                </div>
+              </div>
             </div>
           </div>
         </q-chat-message>
@@ -1004,6 +1011,9 @@ export default {
       } catch (error) {
         return 'plaintext'
       }
+    },
+    handleOptionClick (option, mensagem) {
+      this.$emit('option-selected', { option, mensagem })
     }
   },
   created () {
@@ -1289,5 +1299,48 @@ export default {
     min-height: 20px;
     padding: 0 4px;
   }
+}
+
+.message-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+
+  .q-btn {
+    min-width: 80px;
+    max-width: 200px;
+    white-space: normal;
+    height: auto;
+    padding: 4px 8px;
+    line-height: 1.2;
+  }
+}
+
+.options-list {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.03);
+  width: 100%;
+
+  .text-caption {
+    font-style: italic;
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .option-item {
+    padding: 4px 0;
+    font-weight: 500;
+  }
+}
+
+.option-number {
+  color: #0D47A1;
+}
+
+.option-emoji {
+  font-size: 1.2em;
+  margin: 0 2px;
 }
 </style>

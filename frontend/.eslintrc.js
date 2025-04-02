@@ -78,5 +78,8 @@ module.exports = {
 
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
-  }
+  },
+  
+  // Ignorar arquivos CSS completamente
+  ignorePatterns: ["**/*.css", "**/*.scss", "**/*.less"]
 }

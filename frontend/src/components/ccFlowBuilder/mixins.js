@@ -7,12 +7,12 @@ export const easyFlowMixin = {
         // 容器ID
         Container: 'efContainer',
         // 连线的样式，直线或者曲线等，可选值:  StateMachine、Flowchart，Bezier、Straight
-        Connector: ['Bezier', { curviness: 100 }],
+        Connector: ['Bezier', { curviness: 70 }],
         // Connector: ['Straight', {stub: 20, gap: 1}],
         // Connector: ['Flowchart', {stub: 30, gap: 1, alwaysRespectStubs: false, midpoint: 0.5, cornerRadius: 10}],
         // Connector: ['StateMachine', {margin: 5, curviness: 10, proximityLimit: 80}],
         // 鼠标不能拖动删除线
-        ConnectionsDetachable: false,
+        ConnectionsDetachable: true,
         // 删除线的时候节点不删除
         DeleteEndpointsOnDetach: false,
         /**
@@ -33,14 +33,14 @@ export const easyFlowMixin = {
         /**
          * 空白端点
          */
-        Endpoint: ['Blank', { Overlays: '' }],
+        Endpoint: ['Dot', { radius: 6 }],
         // Endpoints: [['Dot', {radius: 5, cssClass: 'ef-dot', hoverClass: 'ef-dot-hover'}], ['Rectangle', {height: 20, width: 20, cssClass: 'ef-rectangle', hoverClass: 'ef-rectangle-hover'}]],
         /**
          * 连线的两端端点样式
          * fill: 颜色值，如：#12aabb，为空不显示
          * outlineWidth: 外边线宽度
          */
-        EndpointStyle: { fill: '#1879ffa1', outlineWidth: 1 },
+        EndpointStyle: { fill: '#888888', stroke: '#666666', strokeWidth: 1 },
         // 是否打开jsPlumb的内部日志记录
         LogEnabled: true,
         /**
@@ -84,11 +84,17 @@ export const easyFlowMixin = {
         ],
         // 绘制图的模式 svg、canvas
         RenderMode: 'svg',
-        // 鼠标滑过线的样式
-        HoverPaintStyle: { stroke: '#b0b2b5', strokeWidth: 1 },
-        // 滑过锚点效果
-        // EndpointHoverStyle: {fill: 'red'}
-        Scope: 'jsPlumb_DefaultScope' // 范围，具有相同scope的点才可连接
+        // Estilo quando passa o mouse sobre a linha
+        HoverPaintStyle: {
+          stroke: '#2e6da4',
+          strokeWidth: 4
+        },
+        // Slided point effect
+        EndpointHoverStyle: { fill: '#2196f3', stroke: '#1976d2', radius: 7 },
+        Scope: 'jsPlumb_DefaultScope',
+        ConnectionOverlays: [
+          ['Arrow', { width: 10, length: 10, location: 1 }]
+        ]
       },
       /**
        * 连线参数
@@ -96,16 +102,19 @@ export const easyFlowMixin = {
       jsplumbConnectOptions: {
         isSource: true,
         isTarget: true,
-        // 动态锚点、提供了4个方向 Continuous、AutoDefault
-        anchor: 'Continuous',
-        // 设置连线上面的label样式
-        labelStyle: {
-          cssClass: 'flowLabel'
-        },
-        // 修改了jsplumb 源码，支持label 为空传入自定义style
-        emptyLabelStyle: {
-          cssClass: 'emptyFlowLabel'
-        }
+        // Alterando para um conector Bezier com mais curva
+        connector: ['Bezier', {
+          curviness: 70
+        }],
+        // Adicionar opções para detectar e evitar colisões com outros nós
+        paintStyle: { strokeWidth: 3, stroke: '#8db1dd' },
+        hoverPaintStyle: { stroke: '#2e6da4', strokeWidth: 4 },
+        connectorStyle: { strokeWidth: 3, stroke: '#8db1dd' },
+        connectorHoverStyle: { stroke: '#2e6da4', strokeWidth: 4 },
+        // Adicionar overlays para melhorar o visual das conexões
+        overlays: [
+          ['Arrow', { width: 10, length: 10, location: 1 }]
+        ]
       },
       /**
        * 源点配置参数
@@ -118,6 +127,15 @@ export const easyFlowMixin = {
         // 是否允许自己连接自己
         allowLoopback: true,
         maxConnections: -1,
+        // Habilitar drag de endpoints
+        isSource: true,
+        // Exibir endpoints no nó
+        endpoint: ['Dot', { radius: 6 }],
+        paintStyle: { fill: '#888888', stroke: '#666666', strokeWidth: 1 },
+        hoverPaintStyle: { fill: '#2196f3', stroke: '#1976d2' },
+        connectorStyle: { stroke: '#8db1dd', strokeWidth: 3 },
+        connectorHoverStyle: { stroke: '#2e6da4', strokeWidth: 4 },
+        dragOptions: {},
         onMaxConnections: function (info, e) {
           console.log(`超过了最大值连线: ${info.maxConnections}`)
         }
@@ -130,7 +148,7 @@ export const easyFlowMixin = {
         // anchor: 'Continuous',
         // 是否允许自己连接自己
         allowLoopback: true,
-        connector: ['Flowchart', { curviness: 50 }],
+        connector: ['Bezier', { curviness: 70 }],
         connectorStyle: {
           // 线的颜色
           stroke: 'red',
@@ -150,6 +168,12 @@ export const easyFlowMixin = {
         // 是否允许自己连接自己
         anchor: 'Continuous',
         allowLoopback: true,
+        // Habilitar os nós como destino
+        isTarget: true,
+        // Exibir endpoints nos nós
+        endpoint: ['Dot', { radius: 6 }],
+        paintStyle: { fill: '#888888', stroke: '#666666', strokeWidth: 1 },
+        hoverPaintStyle: { fill: '#2196f3', stroke: '#1976d2' },
         dropOptions: { hoverClass: 'ef-drop-hover' }
       }
     }

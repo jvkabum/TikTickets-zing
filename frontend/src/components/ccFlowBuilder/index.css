@@ -3,6 +3,7 @@
   position: relative;
   overflow: scroll;
   flex: 1;
+  transition: width 0.3s ease-in-out;
 }
 
 /*顶部工具栏*/
@@ -234,4 +235,428 @@
 
 .flowHeightDefault {
   height: calc(100vh - 135px);
+}
+
+/* Estilos para melhorar a experiência de arrastar e soltar */
+.jtk-endpoint {
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.jtk-endpoint:hover, .jtk-endpoint.jtk-hover {
+  transform: scale(1.3);
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.8);
+  z-index: 20;
+}
+
+.jtk-endpoint.highlight-target {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px #4CAF50;
+  z-index: 30;
+}
+
+.jtk-connector {
+  z-index: 4;
+}
+
+.jtk-connector.dragging-connection .jtk-connector-outline {
+  stroke: #2e6da4;
+  stroke-width: 2px;
+}
+
+.jtk-connector:hover, .jtk-connector.jtk-hover {
+  z-index: 5;
+}
+
+.jtk-connector.jtk-hover .jtk-connector-outline, 
+.jtk-connector:hover .jtk-connector-outline {
+  stroke: #ff4757;
+  stroke-width: 2px;
+}
+
+.dragging-connection {
+  box-shadow: 0 0 10px rgba(46, 109, 164, 0.5);
+}
+
+.connection-label {
+  background-color: white;
+  padding: 2px 5px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  z-index: 5;
+  transition: all 0.2s ease;
+}
+
+.editable-label {
+  position: relative;
+}
+
+.editable-label:hover {
+  background-color: #f0f7ff;
+  border-color: #8db1dd;
+  transform: scale(1.05);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.editable-label:hover::after {
+  content: "Duplo clique para editar";
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0,0,0,0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.connection-drop-effect {
+  animation: pulse 0.5s;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Estilos para endpoints e conectores */
+.jtk-endpoint {
+  z-index: 3;
+  cursor: pointer;
+}
+
+.jtk-endpoint-hover {
+  transform: scale(1.5);
+  transition: all 0.2s ease;
+}
+
+/* Indicador visual de que a conexão pode ser desconectada */
+.jtk-connector-overlays {
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.jtk-connector:hover .jtk-connector-overlays {
+  opacity: 1;
+}
+
+/* Estilo para indicar que a conexão pode ser desconectada */
+.jtk-connector:hover {
+  cursor: pointer;
+}
+
+.jtk-connector:hover::after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+/* Restante dos estilos */
+.jtk-source-endpoint {
+  fill: #dcdcdc;  /* Cinza claro neutro */
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+  cursor: pointer;
+  z-index: 5;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.jtk-target-endpoint {
+  fill: #dcdcdc;  /* Cinza claro neutro */
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+  cursor: crosshair;
+  z-index: 5;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.jtk-source-endpoint-hover, 
+.jtk-target-endpoint-hover {
+  fill: #1879FF;  /* Azul quando hover */
+  transform: scale(1.5);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  opacity: 1;
+}
+
+/* Endpoints conectados - cores por tipo de nó */
+.jtk-endpoint-connected {
+  opacity: 1;
+}
+
+/* Cor padrão para nós normais - azul */
+.node-color-default .jtk-endpoint-connected {
+  fill: #0288d1 !important;
+}
+
+/* Cor para nós de exceção - vermelho */
+.node-color-exception .jtk-endpoint-connected {
+  fill: #F56C6C !important;
+}
+
+/* Cor para nós de início - verde */
+.node-color-start .jtk-endpoint-connected {
+  fill: #84CF65 !important;
+}
+
+.highlight-target {
+  filter: drop-shadow(0 0 8px rgba(24, 121, 255, 0.8));
+  animation: pulse 1.5s infinite;
+}
+
+.dragging-connection .flow-node-drag {
+  background-color: rgba(24, 121, 255, 0.1);
+  border: 2px dashed #1879FF;
+  transition: all 0.3s ease;
+}
+
+.ef-drop-hover {
+  border: 2px solid #2e6da4 !important;
+  background-color: rgba(46, 109, 164, 0.1) !important;
+}
+
+.jtk-hover {
+  filter: drop-shadow(0 0 3px rgba(46, 109, 164, 0.8));
+  animation: glowing 1.5s infinite;
+}
+
+.connection-success-label {
+  background: rgba(0, 128, 0, 0.8);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeOut 1s ease forwards;
+}
+
+.connection-drop-effect {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
+@keyframes glowing {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(46, 109, 164, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(46, 109, 164, 0.8));
+  }
+  100% {
+    filter: drop-shadow(0 0 2px rgba(46, 109, 164, 0.5));
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 0.7;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+/* Estilo para os endpoints (bolinhas) */
+.jtk-endpoint {
+  z-index: 20;
+  transition: all 0.3s ease;
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+/* Estilo para todos os endpoints (bolinhas) por padrão - COR CINZA */
+.jtk-endpoint svg circle {
+  fill: #888888 !important;
+  stroke: none !important; /* Remover contorno */
+  stroke-width: 0; /* Zerar largura do contorno */
+  r: 5;
+  transition: all 0.3s ease;
+  visibility: visible !important; /* Forçar visibilidade */
+}
+
+/* Estilo para endpoint quando conectado - VERDE (sobrescreve o padrão) */
+.jtk-endpoint-connected svg circle {
+  fill: #4caf50 !important;
+  stroke: none !important; /* Remover contorno */
+  r: 6;
+  stroke-width: 0; /* Zerar largura do contorno */
+}
+
+/* Estilo para hover nos endpoints */
+.jtk-endpoint:hover svg circle {
+  stroke: none !important; /* Remover contorno */
+  r: 7;
+}
+
+/* Garantir que as classes específicas não substituam as cores principais */
+.jtk-source-endpoint svg circle,
+.jtk-target-endpoint svg circle {
+  fill: #888888 !important;
+  stroke: #666666 !important;
+}
+
+/* Sobrescrever apenas quando conectado */
+.jtk-endpoint-connected svg circle {
+  fill: #4caf50 !important;
+  stroke: #388e3c !important;
+}
+
+/* Reforçar para endpoints específicos conectados */
+.jtk-source-endpoint.jtk-endpoint-connected svg circle,
+.jtk-target-endpoint.jtk-endpoint-connected svg circle {
+  fill: #4caf50 !important;
+  stroke: #388e3c !important;
+}
+
+/* Estilo para conexões encaminhadas automaticamente */
+.jtk-connector {
+  z-index: 10;
+  transition: stroke 0.2s ease;
+}
+
+.jtk-connector path {
+  cursor: pointer;
+}
+
+.jtk-connector.jtk-hover {
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
+}
+
+/* Melhor visualização para endpoints */
+.jtk-endpoint {
+  z-index: 11;
+  cursor: crosshair;
+  transition: all 0.25s ease;
+}
+
+.jtk-endpoint.jtk-endpoint-connected {
+  opacity: 0.8;
+  transform: scale(1.2);
+}
+
+.jtk-endpoint.jtk-hover {
+  transform: scale(1.5);
+}
+
+.jtk-source-endpoint-hover, .jtk-target-endpoint-hover {
+  opacity: 1 !important;
+}
+
+.highlight-target {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+/* Efeito visual para feedback de conexão */
+.connection-success-label {
+  z-index: 100;
+}
+
+.connection-drop-effect {
+  background-color: rgba(58, 180, 73, 0.8);
+  color: white;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 0 10px rgba(58, 180, 73, 0.5);
+  animation: success-pulse 0.8s 1;
+}
+
+@keyframes success-pulse {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Estilo para endpoints primários e secundários */
+.jtk-source-endpoint.primary-endpoint {
+  transform: scale(1.1); /* Torna o endpoint de baixo 30% maior */
+  z-index: 5;
+  box-shadow: none !important; /* Remover qualquer sombra existente */
+  outline: none !important; /* Remover qualquer contorno */
+}
+
+.jtk-source-endpoint.secondary-endpoint {
+  transform: scale(1.1); /* Aumentar um pouco o tamanho */
+  z-index: 5; /* Aumentar z-index para ficar no mesmo nível do primário */
+  box-shadow: none !important; /* Remover qualquer sombra existente */
+  outline: none !important; /* Remover qualquer contorno */
+}
+
+/* Quando hover, destacar mais o endpoint primário, mas sem sombra */
+.jtk-source-endpoint.primary-endpoint.jtk-hover {
+  transform: scale(1.1);
+  box-shadow: none !important; /* Remover sombra no hover */
+}
+
+/* Quando hover, destacar também o endpoint secundário */
+.jtk-source-endpoint.secondary-endpoint.jtk-hover {
+  transform: scale(1.1);
+  box-shadow: none !important;
 }
