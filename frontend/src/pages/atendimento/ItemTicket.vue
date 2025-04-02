@@ -1,5 +1,6 @@
 <template>
   <q-list separator
+    v-if="isValid"
     style="max-width: 370px"
     class="q-px-sm q-py-none q-pt-sm">
     <!-- :clickable="ticket.status !== 'pending' && (ticket.id !== $store.getters['ticketFocado'].id || $route.name !== 'chat')" -->
@@ -25,7 +26,7 @@
           round
           v-if="ticket.status === 'pending' || (buscaTicket && ticket.status === 'pending')">
           <q-badge v-if="ticket.unreadMessages"
-            style="border-radius: 10px;"
+            style="border-radius: 10px; z-index: 99;"
             class="text-center text-bold"
             floating
             dense
@@ -33,8 +34,8 @@
             color="red"
             :label="ticket.unreadMessages" />
           <q-avatar>
-            <img :src="ticket.profilePicUrl"
-              onerror="this.style.display='none'"
+            <img :src="ticket.profilePicUrl || profilePicUrl || defaultAvatar"
+              @error="onImageError"
               style="width: 50px; height: 50px; border-radius: 50%;" />
           </q-avatar>
           <q-tooltip>
@@ -45,17 +46,19 @@
           v-if="ticket.status !== 'pending'"
           class="relative-position">
           <q-badge v-if="ticket.unreadMessages"
-            style="border-radius: 10px; z-index: 99"
+            style="border-radius: 10px; z-index: 99;"
             class="text-center text-bold"
             floating
             dense
             text-color="white"
             color="red"
             :label="ticket.unreadMessages" />
-          <img :src="ticket.profilePicUrl"
-            onerror="this.style.display='none'"
-            v-show="ticket.profilePicUrl">
-          <q-icon size="50px"
+          <img :src="ticket.profilePicUrl || profilePicUrl || defaultAvatar"
+            v-if="ticket.profilePicUrl || profilePicUrl"
+            @error="onImageError"
+            style="width: 50px; height: 50px; border-radius: 50%;">
+          <q-icon v-else
+            size="50px"
             name="mdi-account-circle"
             color="grey-8" />
         </q-avatar>
@@ -64,7 +67,7 @@
       <q-item-section id="ListItemsTicket">
         <q-item-label class="text-bold"
           lines="1">
-          {{ !ticket.name ? ticket.contact.name : ticket.name }}
+          {{ !ticket.name ? (ticket.contact ? ticket.contact.name : 'Sem nome') : ticket.name }}
           <q-icon size="20px"
             :name="`img:${ticket.channel}-logo.png`" />
           <span class="absolute-top-right q-pr-xs">
@@ -278,6 +281,9 @@ import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
 import defaultAvatar from 'src/assets/avatar.png'
 import { SincronizarMensagensTicket } from 'src/service/tickets'
 
+// Cache de imagens para evitar recarregamento constante
+const profileImageCache = {}
+
 export default {
   name: 'ItemTicket',
   mixins: [mixinAtualizarStatusTicket],
@@ -316,15 +322,16 @@ export default {
         closed: 'positive'
       },
       defaultAvatar,
-      profilePicUrl: null,
-      sincronizando: false
+      profilePicUrl: defaultAvatar,
+      originalProfilePicUrl: null, // Guardar URL original
+      sincronizando: false,
+      updateTimer: null
     }
   },
   props: {
     ticket: {
       type: Object,
-      default: () => {
-      }
+      default: () => ({})
     },
     buscaTicket: {
       type: Boolean,
@@ -344,22 +351,157 @@ export default {
       return {
         backgroundImage: this.$q.dark.isActive ? `url(${this.whatsBackgroundDark})` : `url(${this.whatsBackground})`
       }
+    },
+    isValid () {
+      // Verificar se o ticket é válido para renderização
+      if (!this.ticket || !this.ticket.id) {
+        return false
+      }
+
+      // Verificar outras propriedades essenciais
+      if (!this.ticket.status) {
+        console.warn('ItemTicket: ticket sem status', this.ticket.id)
+        return false
+      }
+
+      return true
+    },
+    ticketHash () {
+      // Hash único para detectar mudanças no ticket
+      if (!this.isValid) return ''
+      return `${this.ticket.id}-${this.ticket.updatedAt}-${this.ticket.unreadMessages}-${this.ticket.status}`
+    }
+  },
+  watch: {
+    ticket: {
+      handler (newVal, oldVal) {
+        if (newVal && newVal.id) {
+          this.loadTicketInfo()
+        }
+      },
+      deep: true,
+      immediate: true
+    },
+    ticketHash: {
+      handler (newVal, oldVal) {
+        if (newVal && newVal !== oldVal) {
+          this.loadTicketInfo()
+        }
+      }
     }
   },
   async mounted () {
-    this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
-    this.walletsDoTicket = await this.obterInformacoes(this.ticket, 'carteiras')
-    if (this.ticket.contact?.number) {
-      this.profilePicUrl = await this.$parent.getProfilePic(this.ticket.contact.number)
-    }
-    this.$store.subscribe(async (mutation, state) => {
-      if (mutation.type === 'UPDATE_CONTACT' && mutation.payload.id === this.ticket.contactId) {
-        this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
-        this.walletsDoTicket = await this.obterInformacoes(this.ticket, 'carteiras')
+    try {
+      if (!this.isValid) {
+        console.warn('ItemTicket: ticket inválido', this.ticket)
+        return
       }
-    })
+
+      await this.loadTicketInfo()
+
+      this.$store.subscribe(async (mutation, state) => {
+        if (mutation.type === 'UPDATE_CONTACT' && mutation.payload.id === this.ticket.contactId) {
+          this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
+          this.walletsDoTicket = await this.obterInformacoes(this.ticket, 'carteiras')
+        }
+
+        if (mutation.type === 'UPDATE_TICKET' && mutation.payload.ticket && mutation.payload.ticket.id === this.ticket.id) {
+          this.loadTicketInfo()
+        }
+
+        if (mutation.type === 'UPDATE_TICKET_UNREAD_MESSAGES' &&
+            mutation.payload.ticket &&
+            mutation.payload.ticket.id === this.ticket.id) {
+          this.loadTicketInfo()
+        }
+      })
+
+      // Escutar evento de tickets atualizados
+      this.$root.$on('tickets-updated', this.loadTicketInfo)
+    } catch (error) {
+      console.error('Erro ao montar ItemTicket:', error)
+    }
+
+    // Atualizar a hora a cada 20 segundos
+    this.hourUpdateInterval = setInterval(() => {
+      this.recalcularHora++
+    }, 20000)
+  },
+  beforeDestroy () {
+    // Limpar intervalos e listeners ao destruir o componente
+    clearInterval(this.hourUpdateInterval)
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer)
+    }
+    this.$root.$off('tickets-updated', this.loadTicketInfo)
   },
   methods: {
+    async loadTicketInfo () {
+      if (!this.isValid) return
+
+      // Definir avatar padrão imediatamente
+      if (!this.profilePicUrl) {
+        this.profilePicUrl = this.defaultAvatar
+      }
+
+      // Debounce para evitar múltiplas requisições em sequência
+      if (this.updateTimer) {
+        clearTimeout(this.updateTimer)
+      }
+
+      this.updateTimer = setTimeout(async () => {
+        try {
+          this.tagsDoTicket = await this.obterInformacoes(this.ticket, 'tags')
+          this.walletsDoTicket = await this.obterInformacoes(this.ticket, 'carteiras')
+
+          // Preservar a imagem original se já existe no ticket
+          if (this.ticket.originalProfilePicUrl) {
+            this.profilePicUrl = this.ticket.originalProfilePicUrl
+            this.originalProfilePicUrl = this.ticket.originalProfilePicUrl
+            return
+          }
+
+          if (this.ticket.contact?.number) {
+            // Verificar primeiro no cache
+            const cacheKey = `profile_${this.ticket.contact.number}`
+            if (profileImageCache[cacheKey]) {
+              this.profilePicUrl = profileImageCache[cacheKey]
+              this.originalProfilePicUrl = profileImageCache[cacheKey]
+            } else if (typeof this.$parent.getProfilePic === 'function') {
+              try {
+                // Buscar URL da imagem
+                const profileUrl = await this.$parent.getProfilePic(this.ticket.contact.number)
+
+                // Verificar se a URL é do WhatsApp (problemática)
+                if (this.isInvalidImageUrl(profileUrl)) {
+                  this.profilePicUrl = this.defaultAvatar
+                } else {
+                  this.profilePicUrl = profileUrl || this.defaultAvatar
+                  this.originalProfilePicUrl = profileUrl // Guardar URL original
+
+                  // Preservar a URL original no ticket para persistência
+                  this.$set(this.ticket, 'originalProfilePicUrl', profileUrl)
+                }
+
+                // Salvar no cache
+                profileImageCache[cacheKey] = this.profilePicUrl
+              } catch (error) {
+                console.error('Erro ao buscar imagem de perfil:', error)
+                this.profilePicUrl = this.defaultAvatar
+              }
+            } else {
+              this.profilePicUrl = this.defaultAvatar
+            }
+          }
+
+          // Forçar atualização do componente
+          this.$forceUpdate()
+        } catch (error) {
+          console.error('Erro ao carregar informações do ticket:', error)
+          this.profilePicUrl = this.defaultAvatar
+        }
+      }, 200)
+    },
     closeModal () {
       this.isTicketModalOpen = false
     },
@@ -376,14 +518,17 @@ export default {
     },
     async obterInformacoes (ticket, tipo) {
       try {
+        if (!ticket || !ticket.contactId) {
+          console.warn(`Tentativa de obter ${tipo} com ticket inválido:`, ticket)
+          return []
+        }
+
         const contato = await ObterContato(ticket.contactId)
-        if (contato) {
-          if (tipo === 'tags') {
-            const tags = contato.data.tags
-            return tags.map(tag => ({ tag: tag.tag, color: tag.color }))
-          } else if (tipo === 'carteiras') {
-            const wallets = contato.data.wallets
-            return wallets.map(wallet => ({ wallet: wallet.name }))
+        if (contato && contato.data) {
+          if (tipo === 'tags' && Array.isArray(contato.data.tags)) {
+            return contato.data.tags.map(tag => ({ tag: tag.tag, color: tag.color }))
+          } else if (tipo === 'carteiras' && Array.isArray(contato.data.wallets)) {
+            return contato.data.wallets.map(wallet => ({ wallet: wallet.name }))
           }
         }
         return []
@@ -393,13 +538,57 @@ export default {
       }
     },
     dataInWords (timestamp, updated) {
-      let data = parseJSON(updated)
-      if (timestamp) {
-        data = new Date(Number(timestamp))
+      try {
+        // Se nenhum dos valores for válido, usar data atual
+        if (!timestamp && !updated) {
+          return formatDistance(new Date(), new Date(), { locale: pt })
+        }
+
+        let data
+
+        // Verificar se timestamp existe e é válido
+        if (timestamp && !isNaN(Number(timestamp))) {
+          const timestampNum = Number(timestamp)
+
+          // Verificar se é timestamp em segundos (10 dígitos) e converter para milissegundos
+          if (timestampNum > 1000000000 && timestampNum < 9999999999) {
+            data = new Date(timestampNum * 1000)
+          } else if (timestampNum > 1262304000000 && timestampNum < 2524608000000) { // Verificar se o timestamp em milissegundos é válido (após 2010 e antes de 2050)
+            data = new Date(timestampNum)
+          } else if (timestampNum > 2524608000000) { // Timestamp futuro (possivelmente em segundos mas já convertido erroneamente)
+            console.warn('Timestamp futuro detectado:', timestampNum)
+            data = new Date() // Usar data atual para valores inválidos
+          } else {
+            console.warn('Timestamp inválido:', timestamp)
+            data = new Date() // Usar data atual para valores inválidos
+          }
+        } else if (updated) {
+          try {
+            // Tentar parse do updated
+            data = parseJSON(updated)
+
+            // Verificar se a data parseada é válida
+            if (isNaN(data.getTime())) {
+              throw new Error('Data parseada inválida')
+            }
+          } catch (parseError) {
+            console.warn('Erro ao fazer parse da data updated:', parseError)
+            data = new Date() // Usar data atual para valores inválidos
+          }
+        } else {
+          // Se nenhum dos dois for válido, usar data atual
+          data = new Date()
+        }
+
+        return formatDistance(data, new Date(), { locale: pt })
+      } catch (error) {
+        console.error('Erro ao formatar data:', error)
+        return 'agora' // Retornar "agora" em caso de erro
       }
-      return formatDistance(data, new Date(), { locale: pt })
     },
     abrirChatContato (ticket) {
+      if (!this.isValid) return
+
       // caso esteja em um tamanho mobile, fechar a drawer dos contatos
       if (this.$q.screen.lt.md && ticket.status !== 'pending') {
         this.$root.$emit('infor-cabecalo-chat:acao-menu')
@@ -408,15 +597,36 @@ export default {
       this.$store.commit('SET_HAS_MORE', true)
       this.$store.dispatch('AbrirChatMensagens', ticket)
     },
-    onImageError () {
+    onImageError (e) {
+      // Se já estamos usando o avatar padrão, não fazer nada para evitar loops
+      if (e.target.src === this.defaultAvatar) {
+        return
+      }
+
+      // Se temos a imagem original e ela é diferente da que falhou, tentar usar
+      if (this.originalProfilePicUrl && e.target.src !== this.originalProfilePicUrl) {
+        e.target.src = this.originalProfilePicUrl
+        return
+      }
+
+      // Evitar loops de erro e registrar o problema para depuração
+      e.target.onerror = null
+
+      // Definir a imagem padrão como fonte
+      e.target.src = this.defaultAvatar
+
+      // Também atualizar a referência da imagem no componente
       this.profilePicUrl = this.defaultAvatar
-    },
-    async loadProfilePic () {
-      if (this.ticket.contact?.number) {
-        this.profilePicUrl = await this.$parent.getProfilePic(this.ticket.contact.number)
+
+      // Atualizar no ticket e no cache (mas preservar a original)
+      if (this.ticket && this.ticket.contact?.number) {
+        const cacheKey = `profile_${this.ticket.contact.number}`
+        profileImageCache[cacheKey] = this.defaultAvatar
       }
     },
     async sincronizarMensagens () {
+      if (!this.isValid) return
+
       try {
         this.sincronizando = true
         await SincronizarMensagensTicket(this.ticket.id)
@@ -432,12 +642,33 @@ export default {
       } finally {
         this.sincronizando = false
       }
+    },
+    isInvalidImageUrl (url) {
+      if (!url) return true
+
+      // Se for a imagem original armazenada, consideramos válida
+      if (this.originalProfilePicUrl && url === this.originalProfilePicUrl) {
+        return false
+      }
+
+      // Verificar URLs do WhatsApp que são conhecidas por falhar
+      if (
+        url.includes('pps.whatsapp.net') ||
+        url.includes('web.whatsapp.com') ||
+        url.includes('whatsapp') ||
+        /\/t\d+\.\d+-\d+\//.test(url) // Padrão comum em URLs do WhatsApp
+      ) {
+        return true
+      }
+
+      // Verificar se a URL é de um domínio bloqueado ou tem extensão inválida
+      const blockedDomains = ['mmg.whatsapp.net', 'mmg-fna.whatsapp.net']
+      if (blockedDomains.some(domain => url.includes(domain))) {
+        return true
+      }
+
+      return false
     }
-  },
-  created () {
-    setInterval(() => {
-      this.recalcularHora++
-    }, 20000)
   }
 }
 </script>

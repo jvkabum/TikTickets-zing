@@ -14,12 +14,16 @@ export const ConsultarTickets = async (params) => {
     }
   })
 
+  // Adicionar timestamp para evitar cache
+  queryParams.append('_t', new Date().getTime())
+
   return request({
     url: `/tickets?${queryParams.toString()}`,
     method: 'get',
     headers: {
-      'Cache-Control': 'no-cache',
-      Pragma: 'no-cache'
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0'
     }
   })
 }

@@ -13,9 +13,58 @@ const orderTickets = (tickets) => {
   const newTickets = orderBy(tickets, [
     // Primeiro ordena por mensagens não lidas (desc para colocar tickets com unreadMessages > 0 no topo)
     ticket => ticket.unreadMessages > 0,
-    // Depois ordena por data da última mensagem
-    ticket => parseISO(ticket.lastMessageAt || ticket.updatedAt)
-  ], ['desc', 'asc'])
+    // Depois ordena por data da última mensagem (do mais recente para o mais antigo)
+    ticket => {
+      // Pegar o timestamp e convertê-lo para um objeto Date
+      let date
+      try {
+        if (ticket.lastMessageAt) {
+          // Se for um timestamp numérico em string, criar data a partir do número
+          if (!isNaN(Number(ticket.lastMessageAt))) {
+            const timestampNum = Number(ticket.lastMessageAt)
+
+            // Verificar se é timestamp em segundos (10 dígitos) e converter para milissegundos
+            if (timestampNum > 1000000000 && timestampNum < 9999999999) {
+              console.log('Convertendo timestamp de segundos para milissegundos:', timestampNum)
+              date = new Date(timestampNum * 1000)
+            } else if (timestampNum > 1262304000000) { // Verificar se o timestamp em milissegundos é válido (após 2010)
+              date = new Date(timestampNum)
+            } else {
+              console.warn('Timestamp muito antigo ou inválido:', timestampNum)
+              date = new Date() // Usar data atual para ordenação
+            }
+          } else {
+            // Caso contrário, tentar parseIso
+            date = parseISO(ticket.lastMessageAt)
+
+            // Verificar se a data parseada é válida
+            if (isNaN(date.getTime())) {
+              console.warn('Data parseada inválida:', ticket.lastMessageAt)
+              date = new Date() // Usar data atual para valores inválidos
+            }
+          }
+        } else if (ticket.updatedAt) {
+          try {
+            date = parseISO(ticket.updatedAt)
+            if (isNaN(date.getTime())) {
+              console.warn('updatedAt inválido:', ticket.updatedAt)
+              date = new Date()
+            }
+          } catch (e) {
+            console.warn('Erro ao parsear updatedAt:', e)
+            date = new Date()
+          }
+        } else {
+          // Se nenhuma data válida, usar a data atual (para evitar ordenações inconsistentes)
+          date = new Date()
+        }
+        return date
+      } catch (e) {
+        console.error('Erro ao converter data:', e, ticket)
+        return new Date() // Em caso de erro, usar data atual
+      }
+    }
+  ], ['desc', 'desc'])
   return [...newTickets]
 }
 
@@ -178,107 +227,170 @@ const atendimentoTicket = {
     },
     // OK
     LOAD_TICKETS (state, payload) {
-      const newTickets = []
-      // Atualizar cache e verificar tickets existentes
-      payload.forEach(ticket => {
+      // Se for um array, iterar sobre cada ticket
+      const tickets = Array.isArray(payload.tickets) ? payload.tickets : payload
+      console.log('LOAD_TICKETS', tickets.length, 'tickets')
+
+      // Nova abordagem para garantir reatividade
+      const updatedTickets = [...state.tickets]
+      let hasChanges = false
+
+      // Para cada ticket novo ou atualizado
+      tickets.forEach(ticket => {
         if (checkTicketFilter(ticket)) {
           // Atualizar cache
           state.ticketsCache.set(ticket.id, ticket)
-          const existingIndex = state.tickets.findIndex(t => t.id === ticket.id)
+
+          // Verificar se o ticket já existe
+          const existingIndex = updatedTickets.findIndex(t => t.id === ticket.id)
+
           if (existingIndex !== -1) {
             // Atualizar ticket existente
-            if (ticket.unreadMessages > 0) {
-              // Mover para o topo se tiver mensagens não lidas
-              newTickets.push(ticket)
-            } else {
-              Object.assign(state.tickets[existingIndex], ticket)
+            if (JSON.stringify(updatedTickets[existingIndex]) !== JSON.stringify({
+              ...updatedTickets[existingIndex],
+              ...ticket
+            })) {
+              updatedTickets[existingIndex] = {
+                ...updatedTickets[existingIndex],
+                ...ticket
+              }
+              hasChanges = true
             }
           } else {
             // Adicionar novo ticket
-            newTickets.push(ticket)
+            updatedTickets.push(ticket)
+            hasChanges = true
           }
         }
       })
 
-      // Filtrar tickets existentes removendo os que foram movidos para o topo
-      const existingTickets = state.tickets.filter(t => !newTickets.find(nt => nt.id === t.id))
-      // Combinar e ordenar tickets
-      state.tickets = orderTickets([...newTickets, ...existingTickets])
+      // Só reordena e atualiza se houve mudanças
+      if (hasChanges) {
+        console.log('LOAD_TICKETS aplicando mudanças')
+        state.tickets = orderTickets(updatedTickets.filter(t => checkTicketFilter(t)))
+      }
+    },
+    // Nova mutação para forçar atualização dos tickets
+    FORCE_REFRESH_TICKETS (state, tickets) {
+      try {
+        console.log('FORCE_REFRESH_TICKETS: Forçando atualização dos tickets', tickets.length)
+
+        // Se temos tickets específicos para atualizar
+        if (Array.isArray(tickets) && tickets.length > 0) {
+          // Criar uma cópia dos tickets atuais
+          const updatedTickets = [...state.tickets]
+          let hasChanges = false
+
+          // Para cada ticket, verificar se existe e atualizar
+          tickets.forEach(ticket => {
+            if (ticket && ticket.id) {
+              const index = updatedTickets.findIndex(t => t.id === ticket.id)
+              if (index !== -1) {
+                // Verificar se há diferenças
+                if (JSON.stringify(updatedTickets[index]) !== JSON.stringify(ticket)) {
+                  updatedTickets[index] = { ...ticket }
+                  hasChanges = true
+                }
+              }
+            }
+          })
+
+          // Se houve mudanças, atualizar o estado
+          if (hasChanges) {
+            state.tickets = orderTickets(updatedTickets)
+          }
+        } else {
+          // Se não temos tickets específicos, apenas reordenar os existentes para forçar reatividade
+          state.tickets = orderTickets([...state.tickets])
+        }
+      } catch (error) {
+        console.error('Erro em FORCE_REFRESH_TICKETS:', error)
+      }
     },
     RESET_TICKETS (state) {
       state.hasMore = true
       state.tickets = []
     },
     RESET_UNREAD (state, payload) {
+      console.log('RESET_UNREAD chamado para ticket:', payload.ticketId)
       const tickets = [...state.tickets]
       const ticketId = payload.ticketId
       const ticketIndex = tickets.findIndex(t => t.id === ticketId)
+
       if (ticketIndex !== -1) {
-        tickets[ticketIndex] = payload
-        tickets[ticketIndex].unreadMessages = 0
-      }
-      state.ticket = tickets
-    },
-    // OK
-    UPDATE_TICKET (state, payload) {
-      // Atualizar cache
-      state.ticketsCache.set(payload.id, payload)
-      const ticketIndex = state.tickets.findIndex(t => t.id === payload.id)
-      if (ticketIndex !== -1) {
-        // Atualizar ticket existente
-        const tickets = [...state.tickets]
+        console.log('RESET_UNREAD encontrou ticket:', ticketId)
         tickets[ticketIndex] = {
           ...tickets[ticketIndex],
           ...payload,
-          username: payload?.user?.name || payload?.username || tickets[ticketIndex].username,
-          profilePicUrl: payload?.contact?.profilePicUrl || payload?.profilePicUrl || tickets[ticketIndex].profilePicUrl,
-          name: payload?.contact?.name || payload?.name || tickets[ticketIndex].name
+          unreadMessages: 0
         }
-        state.tickets = tickets.filter(t => checkTicketFilter(t))
+        state.tickets = orderTickets(tickets.filter(t => checkTicketFilter(t)))
+      }
+    },
+    UPDATE_TICKET (state, payload) {
+      console.log('UPDATE_TICKET chamado para ticket:', payload.id || payload.ticket?.id)
+      // Determinar o ticket a ser atualizado
+      const ticketData = payload.ticket || payload
+
+      // Atualizar cache
+      state.ticketsCache.set(ticketData.id, ticketData)
+
+      const ticketIndex = state.tickets.findIndex(t => t.id === ticketData.id)
+      if (ticketIndex !== -1) {
+        // Atualizar ticket existente
+        const tickets = [...state.tickets]
+        const updatedTicket = {
+          ...tickets[ticketIndex],
+          ...ticketData,
+          username: ticketData?.user?.name || ticketData?.username || tickets[ticketIndex].username,
+          profilePicUrl: ticketData?.contact?.profilePicUrl || ticketData?.profilePicUrl || tickets[ticketIndex].profilePicUrl,
+          name: ticketData?.contact?.name || ticketData?.name || tickets[ticketIndex].name
+        }
+
+        // Verificar se há mudanças reais
+        if (JSON.stringify(tickets[ticketIndex]) !== JSON.stringify(updatedTicket)) {
+          console.log('UPDATE_TICKET atualizando ticket existente:', ticketData.id)
+          tickets[ticketIndex] = updatedTicket
+          state.tickets = orderTickets(tickets.filter(t => checkTicketFilter(t)))
+        }
 
         // Atualizar ticket focado
-        if (state.ticketFocado.id === payload.id) {
+        if (state.ticketFocado.id === ticketData.id) {
           state.ticketFocado = {
             ...state.ticketFocado,
-            ...payload
+            ...ticketData
           }
         }
-      } else {
+      } else if (checkTicketFilter(ticketData)) {
         // Adicionar novo ticket
+        console.log('UPDATE_TICKET adicionando novo ticket:', ticketData.id)
         const tickets = [...state.tickets]
         const newTicket = {
-          ...payload,
-          username: payload?.user?.name || payload?.username,
-          profilePicUrl: payload?.contact?.profilePicUrl || payload?.profilePicUrl,
-          name: payload?.contact?.name || payload?.name
+          ...ticketData,
+          username: ticketData?.user?.name || ticketData?.username,
+          profilePicUrl: ticketData?.contact?.profilePicUrl || ticketData?.profilePicUrl,
+          name: ticketData?.contact?.name || ticketData?.name
         }
-        tickets.unshift(newTicket)
-        state.tickets = tickets.filter(t => checkTicketFilter(t))
+        tickets.push(newTicket)
+        state.tickets = orderTickets(tickets.filter(t => checkTicketFilter(t)))
       }
     },
-
     DELETE_TICKET (state, payload) {
+      const ticketId = payload.ticketId || payload
+      console.log('DELETE_TICKET chamado para ticket:', ticketId)
+
       // Remover do cache
-      state.ticketsCache.delete(payload)
-      const ticketIndex = state.tickets.findIndex(t => t.id === payload)
+      state.ticketsCache.delete(ticketId)
+
+      const ticketIndex = state.tickets.findIndex(t => t.id === ticketId)
       if (ticketIndex !== -1) {
-        state.tickets.splice(ticketIndex, 1)
+        console.log('DELETE_TICKET removendo ticket:', ticketId)
+        // Criar uma nova cópia do array para garantir reatividade
+        const tickets = [...state.tickets]
+        tickets.splice(ticketIndex, 1)
+        state.tickets = tickets
       }
     },
-
-    // UPDATE_TICKET_MESSAGES_COUNT (state, payload) {
-
-    //   const { ticket, searchParam } = payload
-    //   const ticketIndex = state.tickets.findIndex(t => t.id === ticket.id)
-    //   if (ticketIndex !== -1) {
-    //     state.tickets[ticketIndex] = ticket
-    //     state.tickets.unshift(state.tickets.splice(ticketIndex, 1)[0])
-    //   } else if (!searchParam) {
-    //     state.tickets.unshift(ticket)
-    //   }
-    //   // return state.tickets
-    // },
-
     UPDATE_TICKET_FOCADO_CONTACT (state, payload) {
       state.ticketFocado.contact = payload
     },
@@ -339,36 +451,97 @@ const atendimentoTicket = {
     },
     // OK
     UPDATE_MESSAGES (state, payload) {
-      if (state.ticketFocado.id === payload.ticket.id) {
+      console.log('UPDATE_MESSAGES chamado para mensagem:', payload.id)
+
+      // Verificar e corrigir timestamp se necessário
+      if (!payload.timestamp || isNaN(Number(payload.timestamp))) {
+        console.log('Corrigindo timestamp inválido para mensagem:', payload.id)
+        payload.timestamp = Date.now().toString()
+      }
+
+      // Atualizar mensagens do ticket focado
+      if (state.ticketFocado.id === payload.ticket?.id) {
         // Atualizar cache
         state.mensagensCache.set(payload.id, payload)
+
+        // Atualizar array de mensagens
         const messageIndex = state.mensagens.findIndex(m => m.id === payload.id)
         const mensagens = [...state.mensagens]
+
         if (messageIndex !== -1) {
-          mensagens[messageIndex] = payload
+          // Verificar se há mudanças reais
+          if (JSON.stringify(mensagens[messageIndex]) !== JSON.stringify(payload)) {
+            console.log('UPDATE_MESSAGES atualizando mensagem existente:', payload.id)
+            mensagens[messageIndex] = payload
+            state.mensagens = mensagens
+          }
         } else {
+          console.log('UPDATE_MESSAGES adicionando nova mensagem:', payload.id)
           mensagens.push(payload)
+          state.mensagens = mensagens
         }
-        state.mensagens = mensagens
+
+        // Atualizar mensagens agendadas se for o caso
         if (payload.scheduleDate && payload.status == 'pending') {
-          const idxScheduledMessages = state.ticketFocado.scheduledMessages.findIndex(m => m.id === payload.id)
+          const scheduledMessages = [...(state.ticketFocado.scheduledMessages || [])]
+          const idxScheduledMessages = scheduledMessages.findIndex(m => m.id === payload.id)
+
           if (idxScheduledMessages === -1) {
-            state.ticketFocado.scheduledMessages.push(payload)
+            console.log('UPDATE_MESSAGES adicionando mensagem agendada:', payload.id)
+            scheduledMessages.push(payload)
+            state.ticketFocado = {
+              ...state.ticketFocado,
+              scheduledMessages
+            }
           }
         }
       }
-      // Atualizar ticket
-      const TicketIndexUpdate = state.tickets.findIndex(t => t.id == payload.ticket.id)
-      if (TicketIndexUpdate !== -1) {
-        const tickets = [...state.tickets]
-        const unreadMessages = state.ticketFocado.id == payload.ticket.id ? 0 : payload.ticket.unreadMessages
-        tickets[TicketIndexUpdate] = {
-          ...state.tickets[TicketIndexUpdate],
-          answered: payload.ticket.answered,
-          unreadMessages,
-          lastMessage: payload.mediaName || payload.body
+
+      // Atualizar o ticket correspondente
+      const ticketId = payload.ticket?.id
+      if (!ticketId) return
+
+      const ticketIndex = state.tickets.findIndex(t => t.id === ticketId)
+      if (ticketIndex === -1) return
+
+      // Preparar updates para o ticket
+      const tickets = [...state.tickets]
+      const unreadMessages = state.ticketFocado.id === ticketId ? 0
+        : payload.fromMe ? tickets[ticketIndex].unreadMessages
+          : (tickets[ticketIndex].unreadMessages || 0) + 1
+
+      // Verificar e corrigir timestamp se necessário
+      let timestamp = payload.timestamp || Date.now().toString()
+
+      // Se for um número válido
+      if (!isNaN(Number(timestamp))) {
+        const timestampNum = Number(timestamp)
+        // Verificar se é timestamp em segundos (10 dígitos) e converter para milissegundos
+        if (timestampNum > 1000000000 && timestampNum < 9999999999) {
+          console.log('UPDATE_MESSAGES: Convertendo timestamp de segundos para milissegundos:', timestampNum)
+          timestamp = (timestampNum * 1000).toString()
+        } else if (timestampNum > 2524608000000) { // Verificar se o timestamp é muito no futuro (após 2050)
+          console.warn('UPDATE_MESSAGES: Timestamp muito no futuro, corrigindo:', timestampNum)
+          timestamp = Date.now().toString()
         }
-        state.tickets = tickets
+      } else {
+        console.warn('UPDATE_MESSAGES: Timestamp inválido, usando tempo atual')
+        timestamp = Date.now().toString()
+      }
+
+      const updatedTicket = {
+        ...tickets[ticketIndex],
+        answered: payload.ticket.answered,
+        unreadMessages,
+        lastMessage: payload.mediaName || payload.body,
+        lastMessageAt: timestamp
+      }
+
+      // Verificar se há mudanças reais
+      if (JSON.stringify(tickets[ticketIndex]) !== JSON.stringify(updatedTicket)) {
+        console.log('UPDATE_MESSAGES atualizando ticket:', ticketId)
+        tickets[ticketIndex] = updatedTicket
+        state.tickets = orderTickets(tickets.filter(t => checkTicketFilter(t)))
       }
     },
     // OK
@@ -420,6 +593,85 @@ const atendimentoTicket = {
     RESET_MESSAGE (state) {
       state.mensagens = []
       state.mensagensCache.clear() // Limpar cache ao resetar
+    },
+    // Adicionar mutation UPDATE_TICKET_UNREAD_MESSAGES que está sendo usada no socket mas não está implementada
+    UPDATE_TICKET_UNREAD_MESSAGES (state, payload) {
+      // Suportar diferentes formatos de payload que podem vir do socket
+      let ticket
+
+      if (payload.ticket) {
+        ticket = payload.ticket
+      } else if (payload.id) {
+        // Se o payload for o próprio ticket
+        ticket = payload
+      } else {
+        console.error('Formato de payload inválido em UPDATE_TICKET_UNREAD_MESSAGES:', payload)
+        return
+      }
+
+      console.log('UPDATE_TICKET_UNREAD_MESSAGES processando ticket:', ticket.id)
+
+      // Garantir que o lastMessageAt seja válido
+      if (!ticket.lastMessageAt || isNaN(Number(ticket.lastMessageAt))) {
+        console.log('Corrigindo lastMessageAt inválido em UPDATE_TICKET_UNREAD_MESSAGES para ticket:', ticket.id)
+        ticket.lastMessageAt = Date.now().toString()
+      } else if (ticket.updatedAt && !ticket.lastMessageAt) {
+        ticket.lastMessageAt = new Date(ticket.updatedAt).getTime().toString()
+      }
+
+      const ticketIndex = state.tickets.findIndex(t => t.id === ticket.id)
+
+      if (ticketIndex !== -1) {
+        // Corrigir timestamp se necessário
+        if (ticket.lastMessageAt && !isNaN(Number(ticket.lastMessageAt))) {
+          const timestampNum = Number(ticket.lastMessageAt)
+          // Verificar se é timestamp em segundos (10 dígitos) e converter para milissegundos
+          if (timestampNum > 1000000000 && timestampNum < 9999999999) {
+            console.log('UPDATE_TICKET_UNREAD_MESSAGES: Convertendo timestamp de segundos para milissegundos:', timestampNum)
+            ticket.lastMessageAt = (timestampNum * 1000).toString()
+          } else if (timestampNum > 2524608000000) { // Verificar se o timestamp é muito no futuro (após 2050)
+            console.warn('UPDATE_TICKET_UNREAD_MESSAGES: Timestamp muito no futuro, corrigindo:', timestampNum)
+            ticket.lastMessageAt = Date.now().toString()
+          }
+        } else if (!ticket.lastMessageAt) {
+          console.log('UPDATE_TICKET_UNREAD_MESSAGES: Sem timestamp, usando tempo atual')
+          ticket.lastMessageAt = Date.now().toString()
+        }
+
+        // Atualizar ticket existente
+        const tickets = [...state.tickets]
+        const updatedTicket = {
+          ...tickets[ticketIndex],
+          ...ticket,
+          unreadMessages: ticket.unreadMessages || tickets[ticketIndex].unreadMessages + 1,
+          lastMessage: ticket.lastMessage || tickets[ticketIndex].lastMessage,
+          lastMessageAt: ticket.lastMessageAt
+        }
+
+        // Verificar se realmente houve mudança
+        if (JSON.stringify(tickets[ticketIndex]) !== JSON.stringify(updatedTicket)) {
+          console.log('UPDATE_TICKET_UNREAD_MESSAGES atualizando ticket existente:', ticket.id)
+          tickets[ticketIndex] = updatedTicket
+          state.tickets = orderTickets(tickets.filter(t => checkTicketFilter(t)))
+        }
+      } else if (checkTicketFilter(ticket)) {
+        // Adicionar novo ticket se passar no filtro
+        console.log('UPDATE_TICKET_UNREAD_MESSAGES adicionando novo ticket:', ticket.id)
+        const tickets = [...state.tickets]
+        tickets.push(ticket)
+        state.tickets = orderTickets(tickets)
+      }
+
+      // Se o ticket estiver focado, redefine contagem de não lidas
+      if (state.ticketFocado.id === ticket.id) {
+        const idx = state.tickets.findIndex(t => t.id === ticket.id)
+        if (idx !== -1) {
+          // Criar uma nova referência para garantir reatividade
+          const tickets = [...state.tickets]
+          tickets[idx] = { ...tickets[idx], unreadMessages: 0 }
+          state.tickets = tickets
+        }
+      }
     }
   },
   actions: {
