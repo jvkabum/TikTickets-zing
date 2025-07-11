@@ -6,7 +6,6 @@ import (
 
 	"flowdeskpro-backend/config"
 	"flowdeskpro-backend/models"
-	"flowdeskpro-backend/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"

@@ -20,19 +20,19 @@
 
 ## 🚧 O que Falta Fazer
 
-- [ ] Implementar os controladores restantes:
-    - [ ] Company (CRUD completo)
-    - [ ] User (perfil, atualização)
-    - [ ] Contact (CRUD)
-    - [ ] Message (CRUD)
-- [ ] Criar os modelos restantes:
-    - [ ] Contact
-    - [ ] Message
-    - [ ] Outros modelos necessários (ex: integrações)
-- [ ] Implementar WebSocket para chat em tempo real
+- [x] Implementar os controladores restantes:
+    - [x] Company (CRUD completo)
+    - [x] User (perfil, atualização)
+    - [x] Contact (CRUD)
+    - [x] Message (CRUD)
+- [x] Criar os modelos restantes:
+    - [x] Contact
+    - [x] Message
+    - [x] Outros modelos necessários (ex: integrações)
+- [x] Implementar WebSocket para chat em tempo real
 - [ ] Migrar integrações com APIs externas (WhatsApp, Telegram, Instagram, etc.)
 - [ ] Implementar sistema de filas (substituir Bull por Redis ou outro em Go)
-- [ ] Criar sistema de migrações do banco de dados (ex: usar GORM AutoMigrate ou ferramenta dedicada)
+- [x] Criar sistema de migrações do banco de dados (ex: usar GORM AutoMigrate ou ferramenta dedicada)
 - [ ] Implementar testes unitários e de integração
 - [ ] Configurar CI/CD para build, testes e deploy do backend Go
 - [ ] Documentar endpoints REST e WebSocket (Swagger/OpenAPI)

@@ -30,6 +30,18 @@ func main() {
 		logger.Fatal("Erro ao conectar ao banco de dados:", err)
 	}
 
+	// Executar migrações
+	if err := database.RunMigrations(db); err != nil {
+		logger.Fatal("Erro ao executar migrações:", err)
+	}
+
+	// Popular banco com dados iniciais (apenas em desenvolvimento)
+	if cfg.Environment == "development" {
+		if err := database.SeedDatabase(db); err != nil {
+			logger.Error("Erro ao popular banco:", err)
+		}
+	}
+
 	// Configurar Gin
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
