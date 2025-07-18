@@ -187,7 +187,7 @@ export default {
         })
         return
       }
-      
+
       this.isEditing = true
       this.editingName = this.node.name
       this.$nextTick(() => {

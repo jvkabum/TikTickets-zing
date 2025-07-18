@@ -127,26 +127,13 @@
               {{wallet.wallet}}
             </q-tooltip>
           </q-icon>
-          <!-- <span class="q-ml-sm text-bold" :style="{ color: (ticket.queue || obterNomeFila(ticket)) ? 'black' : '' }"
-          :color="$q.dark.isActive ? 'blue-9' : 'blue-2'"
-          > -->
-          <span class="q-ml-sm text-bold"
-          :color="$q.dark.isActive ? 'white ' : 'black'"
-          >
-            {{ `${ticket.queue || obterNomeFila(ticket) || ''}` }}
+        </div>
+        <q-item-label lines="1"
+          caption>
+          #{{ ticket.id }}
+          <span class="q-ml-sm">
+            {{ `Fila: ${ticket.queue || obterNomeFila(ticket) || ''}` }}
           </span>
-          <!-- <span class="q-ml-sm text-bold" :style="{ color: 'black' }">
-            Etiquetas:
-          </span> -->
-          <!-- <q-chip
-            v-for="tag in tagsDoTicket"
-            :color="tag.color"
-            :key="tag.tag"
-            dense
-            square
-            :label="tag && tag.tag"
-            size="10px"
-            class="q-mr-md text-bold" /> -->
           <span class="absolute-bottom-right ">
             <q-icon v-if="ticket.status === 'closed'"
               name="mdi-check-circle-outline"
@@ -168,7 +155,7 @@
               </q-tooltip>
             </q-icon>
           </span>
-        </div>
+        </q-item-label>
         <q-item-label class="row col items-center justify-between"
           caption>
           Usuário: {{ ticket.username || '' }}
