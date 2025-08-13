@@ -1,21 +1,21 @@
 /* eslint-disable no-useless-constructor */
-import { Connection, Channel, connect, Message } from "amqplib"; 
-import { logger } from "../utils/logger"; 
-import { sleepRandomTime } from "../utils/sleepRandomTime"; 
+import * as amqp from "amqplib";
+import { logger } from "../utils/logger";
+import { sleepRandomTime } from "../utils/sleepRandomTime";
 
 // ====================
 // Classe RabbitmqServer
 // ====================
 export default class RabbitmqServer {
-  private conn: Connection; // Conexão com o RabbitMQ
-  private channel: Channel; // Canal de comunicação com o RabbitMQ
+  private conn: any; // Conexão com o RabbitMQ
+  private channel: any; // Canal de comunicação com o RabbitMQ
 
   // Construtor da classe que recebe a URI do RabbitMQ
   constructor(private uri: string) { }
 
   // Função para iniciar a conexão e o canal
   async start(): Promise<void> {
-    this.conn = await connect(this.uri); // Conecta ao RabbitMQ usando a URI fornecida
+    this.conn = await amqp.connect(this.uri); // Conecta ao RabbitMQ usando a URI fornecida
     this.channel = await this.conn.createChannel(); // Cria um canal de comunicação
     await this.channel.assertQueue("waba360", { durable: true }); // Assegura que a fila "waba360" existe
     await this.channel.assertQueue("messenger", { durable: true }); // Assegura que a fila "messenger" existe
@@ -45,7 +45,7 @@ export default class RabbitmqServer {
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   async consumeWhatsapp(
     queue: string,
-    callback: (message: Message) => Promise<void>
+    callback: (message: any) => Promise<void>
   ) {
     this.channel.prefetch(10, false); // Define o número de mensagens que podem ser processadas simultaneamente
     await this.channel.assertQueue(queue, { durable: true }); // Assegura que a fila existe
@@ -69,7 +69,7 @@ export default class RabbitmqServer {
 
   // Função para consumir mensagens de uma fila
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  async consume(queue: string, callback: (message: Message) => void) {
+  async consume(queue: string, callback: (message: any) => void) {
     return this.channel.consume(queue, (message: any) => { // Inicia o consumo de mensagens da fila
       try {
         callback(message); // Chama a função de callback para processar a mensagem

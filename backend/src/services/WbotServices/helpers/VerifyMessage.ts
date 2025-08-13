@@ -35,9 +35,7 @@ const VerifyMessage = async (
   await ticket.update({
     lastMessage:
       msg.type === "location"
-        ? msg.location.options
-          ? `Localization - ${msg.location.options}`
-          : "Localization"
+        ? "Localization"
         : msg.body
   });
 
