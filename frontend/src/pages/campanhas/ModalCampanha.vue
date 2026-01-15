@@ -1,7 +1,7 @@
 <template>
   <q-dialog
     persistent
-    :value="modalCampanha"
+    v-model="modalCampanhaModel"
     @hide="fecharModal"
     @show="abrirModal"
   >
@@ -24,25 +24,16 @@
             style="width: 500px"
             v-model="campanha.name"
             label="Nome da Campanha"
-            @blur="$v.campanha.name.$touch"
-            :error="$v.campanha.name.$error"
+            @blur="v$.campanha.name.$touch()"
+            :error="v$.campanha.name.$error"
             error-message="Obrigatório"
           />
-          <q-datetime-picker
+          <cDateTimePick
             style="width: 200px"
-            dense
-            rounded
-            hide-bottom-space
-            outlined
-            stack-label
-            bottom-slots
             label="Data/Hora início"
-            mode="datetime"
-            color="primary"
-            format24h
             v-model="campanha.start"
-            @blur="$v.campanha.start.$touch"
-            :error="$v.campanha.start.$error"
+            @blur="v$.campanha.start.$touch()"
+            :error="v$.campanha.start.$error"
             error-message="Não pode ser inferior ao dia atual"
           />
           <q-select
@@ -59,8 +50,8 @@
             option-value="id"
             option-label="name"
             input-style="width: 280px; max-width: 280px;"
-            @blur="$v.campanha.sessionId.$touch"
-            :error="$v.campanha.sessionId.$error"
+            @blur="v$.campanha.sessionId.$touch()"
+            :error="v$.campanha.sessionId.$error"
             error-message="Obrigatório"
             style="width: 250px"
           />
@@ -160,12 +151,10 @@
                   self="bottom middle"
                   :offset="[5, 40]"
                 >
-                  <VEmojiPicker
-                    style="width: 40vw"
-                    :showSearch="false"
-                    :emojisByRow="20"
-                    labelSearch="Localizar..."
-                    lang="pt-BR"
+                  <EmojiPicker
+                    :native="true"
+                    :hide-search="false"
+                    :disable-skin-tones="true"
                     @select="(v) => onInsertSelectEmoji(v, 'message1')"
                   />
                 </q-menu>
@@ -177,9 +166,9 @@
                 style="min-height: 12.5vh; max-height: 12.5vh;"
                 class="q-pa-sm bg-white full-width rounded-all"
                 :class="{
-                  'bg-red-1': $v.campanha.message1.$error
+                  'bg-red-1': v$.campanha.message1.$error
                 }"
-                @blur="$v.campanha.message1.$touch"
+                @blur="v$.campanha.message1.$touch()"
                 placeholder="Digite a mensagem"
                 autogrow
                 dense
@@ -231,12 +220,9 @@
                   self="bottom middle"
                   :offset="[5, 40]"
                 >
-                  <VEmojiPicker
-                    style="width: 40vw"
-                    :showSearch="false"
-                    :emojisByRow="20"
-                    labelSearch="Localizar..."
-                    lang="pt-BR"
+                  <EmojiPicker
+                    :native="true"
+                    :hide-search="false"
                     @select="(v) => onInsertSelectEmoji(v, 'message2')"
                   />
                 </q-menu>
@@ -252,9 +238,9 @@
                 dense
                 outlined
                 :class="{
-                  'bg-red-1': $v.campanha.message2.$error
+                  'bg-red-1': v$.campanha.message2.$error
                 }"
-                @blur="$v.campanha.message2.$touch"
+                @blur="v$.campanha.message2.$touch()"
                 @input="(v) => campanha.message2 = v.target.value"
                 :value="campanha.message2"
               />
@@ -302,12 +288,9 @@
                   self="bottom middle"
                   :offset="[5, 40]"
                 >
-                  <VEmojiPicker
-                    style="width: 40vw"
-                    :showSearch="false"
-                    :emojisByRow="20"
-                    labelSearch="Localizar..."
-                    lang="pt-BR"
+                  <EmojiPicker
+                    :native="true"
+                    :hide-search="false"
                     @select="(v) => onInsertSelectEmoji(v, 'message3')"
                   />
                 </q-menu>
@@ -323,9 +306,9 @@
                 dense
                 outlined
                 :class="{
-                  'bg-red-1': $v.campanha.message3.$error
+                  'bg-red-1': v$.campanha.message3.$error
                 }"
-                @blur="$v.campanha.message3.$touch"
+                @blur="v$.campanha.message3.$touch()"
                 @input="(v) => campanha.message3 = v.target.value"
                 :value="campanha.message3"
               />
@@ -411,15 +394,20 @@
 </template>
 
 <script>
-import { required } from 'vuelidate/lib/validators'
-import { VEmojiPicker } from 'v-emoji-picker'
+import { required } from '@vuelidate/validators'
+import { useVuelidate } from '@vuelidate/core'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 import axios from 'axios'
-import cMolduraCelular from 'src/components/cMolduraCelular'
-import MensagemChat from 'src/pages/atendimento/MensagemChat'
+import cMolduraCelular from 'src/components/cMolduraCelular.vue'
+import MensagemChat from 'src/pages/atendimento/MensagemChat.vue'
+import cDateTimePick from 'src/components/cDateTimePick.vue'
 import { mapGetters } from 'vuex'
 import { CriarCampanha, AlterarCampanha } from 'src/service/campanhas'
 import { parseISO, startOfDay } from 'date-fns'
+
 const isValidDate = (v) => {
+  if (!v) return true
   return startOfDay(new Date(parseISO(v))).getTime() >= startOfDay(new Date()).getTime()
 }
 
@@ -433,7 +421,7 @@ const downloadImageCors = axios.create({
 
 export default {
   name: 'ModalCampanha',
-  components: { VEmojiPicker, cMolduraCelular, MensagemChat },
+  components: { EmojiPicker, cMolduraCelular, MensagemChat, cDateTimePick },
   props: {
     modalCampanha: {
       type: Boolean,
@@ -444,6 +432,11 @@ export default {
       default: () => {
         return { id: null }
       }
+    }
+  },
+  setup (props, { emit }) {
+    return {
+      v$: useVuelidate()
     }
   },
   data () {
@@ -493,17 +486,27 @@ export default {
       arquivos: []
     }
   },
-  validations: {
-    campanha: {
-      name: { required },
-      start: { required, isValidDate },
-      message1: { required },
-      message2: { required },
-      message3: { required },
-      sessionId: { required }
+  validations () {
+    return {
+      campanha: {
+        name: { required },
+        start: { required, isValidDate },
+        message1: { required },
+        message2: { required },
+        message3: { required },
+        sessionId: { required }
+      }
     }
   },
   computed: {
+    modalCampanhaModel: {
+      get () {
+        return this.modalCampanha
+      },
+      set (v) {
+        this.$emit('update:modalCampanha', v)
+      }
+    },
     ...mapGetters(['whatsapps']),
     cSessions () {
       return this.whatsapps.filter(w => w.type === 'whatsapp' && !w.isDeleted)
@@ -579,16 +582,16 @@ export default {
         cursorPos = startPos,
         tmpStr = tArea.value
       // filter:
-      if (!emoji.data) {
+      if (!emoji.i) {
         return
       }
       // insert:
       self.txtContent = this.campanha[ref]
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
+      self.txtContent = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos, tmpStr.length)
       this.campanha[ref] = self.txtContent
       // move cursor:
       setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
+        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.i.length
       }, 10)
     },
     resetarCampanha () {
@@ -667,8 +670,8 @@ export default {
         })
         return
       }
-      this.$v.campanha.$touch()
-      if (this.$v.campanha.$error) {
+      this.v$.campanha.$touch()
+      if (this.v$.campanha.$error) {
         this.$q.notify({
           type: 'negative',
           message: 'Verifique se todas os campos obrigatórios estão preenchidos '

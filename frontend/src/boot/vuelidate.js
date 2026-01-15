@@ -1,32 +1,8 @@
-import Vuelidate from 'vuelidate'
-import VuelidateErrorExtractor from 'vuelidate-error-extractor'
+import { boot } from 'quasar/wrappers'
 
-import linkify from 'vue-linkify'
-
-/* We need messages for validation */
-const messages = {
-  required: '{attribute} é obrigatório',
-  email: '{attribute} é inválido.',
-  minValue: '{attribute} deve ser maior que {min}',
-  minLength: '{attribute} deve possui no mínimo {min} carateres',
-  maxLength: '{attribute} deve possui no máximo {min} carateres',
-  validaData: 'Data inválida'
-}
-
-const mapNames = {
-  email: 'E-mail',
-  name: 'Nome',
-  nome: 'Nome',
-  username: 'Usuário'
-}
-
-export default ({
-  Vue
-}) => {
-  Vue.directive('linkified', linkify)
-  Vue.use(Vuelidate)
-  Vue.use(VuelidateErrorExtractor, {
-    messages,
-    attributes: mapNames
-  })
-}
+export default boot(({ app }) => {
+  // No Vue 3, o Vuelidate é usado via Composition API (useVuelidate)
+  // ou registrado globalmente se necessário. 
+  // No caso do Quasar 2, geralmente não precisa de registro global no boot
+  // pois o Vuelidate é importado diretamente nos componentes.
+})

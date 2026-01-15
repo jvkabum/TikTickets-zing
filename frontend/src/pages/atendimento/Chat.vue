@@ -39,13 +39,13 @@
         </infinite-loading>
       </transition>
       <MensagemChat
-        :replyingMessage.sync="replyingMessage"
+        v-model:replyingMessage="replyingMessage"
         :mensagens="cMessages"
         :ticketId="ticketFocado.id"
         v-if="cMessages.length && ticketFocado.id"
         @mensagem-chat:encaminhar-mensagem="abrirModalEncaminharMensagem"
-        :ativarMultiEncaminhamento.sync="ativarMultiEncaminhamento"
-        :mensagensParaEncaminhar.sync="mensagensParaEncaminhar"
+        v-model:ativarMultiEncaminhamento="ativarMultiEncaminhamento"
+        v-model:mensagensParaEncaminhar="mensagensParaEncaminhar"
       />
       <div id="inicioListaMensagensChat"></div>
     </q-scroll-area>
@@ -219,7 +219,7 @@
       <InputMensagem
         v-if="!mensagensParaEncaminhar.length"
         :mensagensRapidas="mensagensRapidas"
-        :replyingMessage.sync="replyingMessage"
+        v-model:replyingMessage="replyingMessage"
       />
       <q-resize-observer @resize="onResizeInputMensagem" />
     </q-footer>
@@ -245,7 +245,7 @@
           <InputMensagem
             isScheduleDate
             :mensagensRapidas="mensagensRapidas"
-            :replyingMessage.sync="replyingMessage"
+            v-model:replyingMessage="replyingMessage"
           />
         </q-card-section>
 
@@ -274,7 +274,7 @@
         <q-card-section>
           <MensagemChat
             :isShowOptions="false"
-            :replyingMessage.sync="replyingMessage"
+            v-model:replyingMessage="replyingMessage"
             :mensagens="[mensagemEncaminhamento]"
           />
         </q-card-section>
@@ -334,15 +334,15 @@
 </template>
 <script>
 import mixinCommon from './mixinCommon'
-import InforCabecalhoChat from './InforCabecalhoChat'
+import InforCabecalhoChat from './InforCabecalhoChat.vue'
 // import parser from 'vdata-parser'
-import MensagemChat from './MensagemChat'
-import InputMensagem from './InputMensagem'
+import MensagemChat from './MensagemChat.vue'
+import InputMensagem from './InputMensagem.vue'
 import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
 import mixinSockets from './mixinSockets'
-import InfiniteLoading from 'vue-infinite-loading'
-import { ListarContatos } from 'src/service/contatos'
-import { EncaminharMensagem } from 'src/service/tickets'
+import InfiniteLoading from 'v3-infinite-loading'
+import { ListarContatos } from '../../service/contatos'
+import { EncaminharMensagem } from '../../service/tickets'
 import whatsBackground from 'src/assets/wa-background.png'
 import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
 
@@ -664,7 +664,7 @@ export default {
   mounted () {
     this.socketMessagesList()
   },
-  destroyed () {
+  unmounted () {
     this.$root.$off('scrollToBottomMessageChat', this.scrollToBottom)
   }
 }

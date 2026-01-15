@@ -211,11 +211,10 @@
                   style="height: calc(100vh - 490px)"
                   class="row bg-grey-3 q-pa-sm scroll q-mt-md col justify-start"
                 >
-                  <template v-for="(condition, idx) in node.conditions">
+                  <template v-for="(condition, idx) in node.conditions" :key="condition.id">
                     <q-card
                       bordered
                       flat
-                      :key="condition.id"
                       class="full-width q-my-sm"
                       style="min-height: 250px;"
                     >
@@ -503,7 +502,7 @@
                         self="bottom middle"
                         :offset="[5, 40]"
                       >
-                        <VEmojiPicker
+                        <EmojiPicker
                           style="width: 40vw"
                           :showSearch="false"
                           :emojisByRow="20"
@@ -572,7 +571,7 @@
                         self="bottom middle"
                         :offset="[5, 40]"
                       >
-                        <VEmojiPicker
+                        <EmojiPicker
                           style="width: 40vw"
                           :showSearch="false"
                           :emojisByRow="20"
@@ -932,13 +931,14 @@
 
 <script>
 import { uid } from 'quasar'
-import MessageField from './messageField'
+import MessageField from './messageField.vue'
 import MediaField from './mediaField.vue'
-import { VEmojiPicker } from 'v-emoji-picker'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 export default {
   components: {
     MessageField,
-    VEmojiPicker,
+    EmojiPicker,
     MediaField
   },
   props: {

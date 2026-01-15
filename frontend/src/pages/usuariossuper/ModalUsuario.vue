@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import { required, email, minLength, maxLength } from 'vuelidate/lib/validators'
+import { required, email, minLength, maxLength } from '@vuelidate/validators'
 import { CriarUsuarioTenant } from 'src/service/user'
 import { AdminListarEmpresas } from 'src/service/empresas'
 export default {

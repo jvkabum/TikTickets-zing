@@ -9,12 +9,12 @@
           v-if="$q.screen.lt.md"
           class="q-mx-xs-none q-ml-md"
           :color="$q.dark.isActive ? 'white' : ''"
-          @click="$root.$emit('infor-cabecalo-chat:acao-menu')" />
+          @click="bus.emit('infor-cabecalo-chat:acao-menu')" />
         <q-item clickable
           v-ripple
           class="q-ma-none q-pa-none full"
           style="min-height: 60px; height: 60px; width: 300px;"
-          @click="$root.$emit('update-ticket:info-contato')">
+          @click="bus.emit('update-ticket:info-contato')">
           <q-item-section avatar
             class="q-pl-sm">
             <q-btn round
@@ -302,15 +302,18 @@
 </template>
 
 <script>
+import bus from 'src/utils/eventBus'
 const userId = +localStorage.getItem('userId')
 import { mapGetters } from 'vuex'
 import { ListarUsuarios } from 'src/service/user'
 import { ListarFilas } from 'src/service/filas'
 import { AtualizarTicket, SincronizarMensagensTicket } from 'src/service/tickets'
+
 export default {
   name: 'InfoCabecalhoMensagens',
   data () {
     return {
+      bus,
       modalTransferirTicket: false,
       usuarioSelecionado: null,
       filaSelecionada: null,

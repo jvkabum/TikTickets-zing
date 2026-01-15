@@ -1,8 +1,6 @@
 <template>
-  <div>
-    <div class="timerBox">
-      <span>{{ addZero(timer.minutes)}}:{{addZero(timer.seconds)}}</span>
-    </div>
+  <div class="timerBox">
+    {{ addZero(timer.minutes) }}:{{ addZero(timer.seconds) }}
   </div>
 </template>
 
@@ -14,27 +12,31 @@ export default {
       timer: {
         minutes: 0,
         seconds: 0
-      }
+      },
+      intervalId: null
     }
   },
   methods: {
     interval () {
-      setInterval(() => {
+      this.intervalId = setInterval(() => {
         if (this.timer.seconds === 59) {
           this.timer = {
             ...this.timer,
             minutes: this.timer.minutes + 1,
             seconds: 0
           }
-        }
-        this.timer = {
-          ...this.timer,
-          seconds: this.timer.seconds + 1
+        } else {
+          this.timer = {
+            ...this.timer,
+            seconds: this.timer.seconds + 1
+          }
         }
       }, 1000)
     },
     stopInteval () {
-      clearInterval(this.interval)
+      if (this.intervalId) {
+        clearInterval(this.intervalId)
+      }
     },
     addZero (n) {
       return n < 10 ? '0' + n : n
@@ -43,7 +45,7 @@ export default {
   mounted () {
     this.interval()
   },
-  destroyed () {
+  unmounted () {
     this.stopInteval()
   }
 }

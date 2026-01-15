@@ -149,7 +149,7 @@
 
 <script>
 import { format, sub } from 'date-fns'
-import ccPrintModelLandscape from './ccPrintModelLandscape'
+import ccPrintModelLandscape from './ccPrintModelLandscape.vue'
 import * as XLSX from 'xlsx'
 import { RelatorioContatos } from 'src/service/estatisticas'
 

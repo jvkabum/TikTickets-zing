@@ -74,7 +74,7 @@
 
 <script>
 import { DeletarEtiqueta, ListarEtiquetas } from 'src/service/etiquetas'
-import ModalEtiqueta from './ModalEtiqueta'
+import ModalEtiqueta from './ModalEtiqueta.vue'
 export default {
   name: 'Etiquetas',
   components: {

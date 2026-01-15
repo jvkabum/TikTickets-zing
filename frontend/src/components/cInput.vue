@@ -10,11 +10,10 @@
       dense
       outlined
       rounded
-      :value="value"
-      v-on="$listeners"
+      :modelValue="modelValue"
+      @update:modelValue="v => $emit('update:modelValue', v)"
       :error="cError"
       :error-message="cErrorMessage"
-      @input.native="valorInputSeEmpty"
     >
       <template
         v-slot:before
@@ -29,29 +28,23 @@
 
       <!-- Aceitar Demais Slot's -->
       <template
-        v-for="(_, slot) of $scopedSlots"
+        v-for="(_, slot) in $slots"
         v-slot:[slot]="scope"
       >
         <slot
           :name="slot"
-          v-bind="scope"
+          v-bind="scope || {}"
         />
       </template>
     </q-input>
   </div>
 </template>
 <script>
-import { singleErrorExtractorMixin } from 'vuelidate-error-extractor'
 export default {
-  extends: singleErrorExtractorMixin,
-  name: 'ccInput',
+  name: 'cInput',
   inheritAttrs: false,
-  data () {
-    return {
-    }
-  },
   props: {
-    value: [String, Number, Date],
+    modelValue: [String, Number, Date],
     label: String,
     classAtrrs: {
       type: String,
@@ -68,42 +61,33 @@ export default {
     icon: {
       type: Object,
       default: () => { }
-    }
+    },
+    // Removendo dependência do extractor, passamos as propriedades manualmente do vuelidate se necessário
+    hasErrors: Boolean,
+    firstErrorMessage: String
   },
+  emits: ['update:modelValue'],
   computed: {
     cError () {
-      if (this.error == 'NI') {
+      if (this.error === 'NI') {
         return this.hasErrors
       }
       return this.error
     },
     cErrorMessage () {
-      if (this.errorMessage == '') {
+      if (this.errorMessage === '') {
         return this.firstErrorMessage
       }
       return this.errorMessage
     },
-    iconElment: {
-      cache: false,
-      get () {
-        const defaultConfig = { name: null, size: '24px', color: '#000' }
-        const data = { ...defaultConfig, ...this.icon }
-        if (!data.name) {
-          return defaultConfig
-        } else {
-          return data
-        }
+    iconElment () {
+      const defaultConfig = { name: null, size: '24px', color: '#000' }
+      const data = { ...defaultConfig, ...this.icon }
+      if (!data.name) {
+        return defaultConfig
+      } else {
+        return data
       }
-    }
-  },
-  methods: {
-    // Methodo para facilitar o retorno para null e não ''
-    valorInputSeEmpty ($event) {
-      if (!$event.target.value) {
-        this.$emit('input', null)
-        return
-      }
-      this.$emit('input', $event.target.value)
     }
   }
 }

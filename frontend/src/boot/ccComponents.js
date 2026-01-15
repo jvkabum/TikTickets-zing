@@ -1,20 +1,18 @@
-import cInput from 'src/components/cInput'
-import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
 import { Dark, uid } from 'quasar'
-import DatePick from 'src/components/cDatePick'
-import cDateTimePick from 'src/components/cDateTimePick'
+import { boot } from 'quasar/wrappers'
+import DatePick from '../components/cDatePick.vue'
+import cDateTimePick from '../components/cDateTimePick.vue'
+import cInput from '../components/cInput.vue'
+import { notificarErro, notificarSucesso } from '../utils/helpersNotifications'
 
 import { format, parseISO } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR'
-import { UpdateConfiguracoesUsuarios } from 'src/service/user'
+import { UpdateConfiguracoesUsuarios } from '../service/user'
 
 const formatarValorMoeda = (num, black = false, intl = {}) => {
   const config = {
     language: 'pt-br',
     options: {
-      // style: 'currency',
-      // currency: 'BRL',
-      // currencyDisplay: 'symbol',
       minimumFractionDigits: 2,
       maximumFractionDigits: 3
     }
@@ -48,13 +46,12 @@ const arredodar = (num, places) => {
 }
 
 const iniciaisString = nomecompleto => {
-  nomecompleto = nomecompleto.replace(/\s(de|da|dos|das)\s/g, ' ') // Remove os de,da, dos,das.
-  const iniciais = nomecompleto.match(/\b(\w)/gi) // Iniciais de cada parte do nome.
-  // var nome = nomecompleto.split(' ')[0].toLowerCase() // Primeiro nome.
+  nomecompleto = nomecompleto.replace(/\s(de|da|dos|das)\s/g, ' ')
+  const iniciais = nomecompleto.match(/\b(\w)/gi)
   const sobrenomes = iniciais
     .splice(1, iniciais.length - 1)
     .join('')
-    .toLowerCase() // Iniciais
+    .toLowerCase()
   const iniciaisNome = iniciais + sobrenomes
   return iniciaisNome.toUpperCase()
 }
@@ -74,9 +71,7 @@ const setConfigsUsuario = ({ isDark }) => {
     withUnreadMessages: false,
     isNotAssignedUser: false,
     includeNotQueueDefined: true
-    // date: new Date(),
   }
-  // this.isDark = !this.isDark
   Dark.set(isDark)
   const usuario = JSON.parse(localStorage.getItem('usuario'))
   const filtrosAtendimento = JSON.parse(localStorage.getItem('filtrosAtendimento')) || filtroPadrao
@@ -91,18 +86,17 @@ const setConfigsUsuario = ({ isDark }) => {
   localStorage.setItem('usuario', JSON.stringify({ ...usuario, configs: data }))
 }
 
-export default ({
-  Vue
-}) => {
-  Vue.component('cInput', cInput)
-  Vue.component('DatePick', DatePick)
-  Vue.component('cDateTimePick', cDateTimePick)
-  Vue.prototype.$formatarValorMoeda = formatarValorMoeda
-  Vue.prototype.$round = arredodar
-  Vue.prototype.$formatarData = formatarData
-  Vue.prototype.$iniciaisString = iniciaisString
-  Vue.prototype.$notificarErro = notificarErro
-  Vue.prototype.$notificarSucesso = notificarSucesso
-  Vue.prototype.$setConfigsUsuario = setConfigsUsuario
-  Vue.prototype.$uuid = uid
-}
+export default boot(({ app }) => {
+  app.component('cInput', cInput)
+  app.component('DatePick', DatePick)
+  app.component('cDateTimePick', cDateTimePick)
+
+  app.config.globalProperties.$formatarValorMoeda = formatarValorMoeda
+  app.config.globalProperties.$round = arredodar
+  app.config.globalProperties.$formatarData = formatarData
+  app.config.globalProperties.$iniciaisString = iniciaisString
+  app.config.globalProperties.$notificarErro = notificarErro
+  app.config.globalProperties.$notificarSucesso = notificarSucesso
+  app.config.globalProperties.$setConfigsUsuario = setConfigsUsuario
+  app.config.globalProperties.$uuid = uid
+})

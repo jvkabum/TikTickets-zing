@@ -7,32 +7,16 @@
         </div>
         <div class="col-xs-12 col-md-9 justify-end flex q-gutter-sm text-center text-md-right q-my-md rdsPainelDate">
           <div class="q-mb-sm">
-            <q-datetime-picker
+            <DatePick
               style="width: 200px"
-              dense
-              hide-bottom-space
-              outlined
-              stack-label
-              bottom-slots
-              label="Data/Hora Agendamento"
-              mode="date"
-              color="primary"
-              format24h
+              label="Data Inicial"
               v-model="params.startDate"
             />
           </div>
           <div class="q-mb-sm">
-            <q-datetime-picker
+            <DatePick
               style="width: 200px"
-              dense
-              hide-bottom-space
-              outlined
-              stack-label
-              bottom-slots
-              label="Data/Hora Agendamento"
-              mode="date"
-              color="primary"
-              format24h
+              label="Data Final"
               v-model="params.endDate"
             />
           </div>
@@ -282,7 +266,7 @@ import {
   GetDashTicketsPerUsersDetail
 } from 'src/service/estatisticas'
 import { subDays, format, formatDuration, differenceInDays } from 'date-fns'
-import ApexChart from 'vue-apexcharts'
+import ApexChart from 'vue3-apexcharts'
 
 export default {
   name: 'IndexDashboard',

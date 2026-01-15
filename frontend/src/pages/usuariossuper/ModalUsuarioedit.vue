@@ -88,7 +88,7 @@
 </template>
 
 <script>
-import { required, email, minLength, maxLength } from 'vuelidate/lib/validators'
+import { required, email, minLength, maxLength } from '@vuelidate/validators'
 import { AdminUpdateUsuarios } from 'src/service/user'
 export default {
   name: 'ModalUsuario',

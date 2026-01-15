@@ -1,3 +1,4 @@
+@use "sass:math"
 // Quasar Sass (& SCSS) Variables
 // --------------------------------------------------
 // To customize the look and feel of this app, you can override
@@ -34,7 +35,7 @@ $warning: #F2C037
 //  SPACING
 
 $spacer: 2.2rem
-$spacer-sm: ($spacer / 2)
+$spacer-sm: math.div($spacer, 2)
 $spacer-lg: ($spacer * 2)
 
 //  COLORS
@@ -81,7 +82,7 @@ $headings-font-family: inherit !default
 $headings-font-weight: 500 !default
 $headings-line-height: 1.2 !default
 $headings-color: #2c2c2c
-$headings-margin-bottom: ($spacer / 2) !default
+$headings-margin-bottom: math.div($spacer, 2) !default
 
 $font-weight-light: 300
 $font-weight-normal: 400

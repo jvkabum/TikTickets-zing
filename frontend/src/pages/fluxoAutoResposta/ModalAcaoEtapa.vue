@@ -102,7 +102,7 @@
                 self="bottom middle"
                 :offset="[5, 40]"
               >
-                <VEmojiPicker
+                <EmojiPicker
                   style="width: 40vw"
                   :showSearch="false"
                   :emojisByRow="20"
@@ -155,7 +155,8 @@
 <script>
 const userId = +localStorage.getItem('userId')
 import { CriarAcaoEtapa, EditarAcaoEtapa } from 'src/service/autoResposta'
-import { VEmojiPicker } from 'v-emoji-picker'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 
 export default {
   name: 'ModalAcaoEtapa',

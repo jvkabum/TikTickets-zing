@@ -400,13 +400,13 @@
             dense
             class="text-bold q-ml-md flex flex-block"
             :icon-color="$q.dark.isActive ? 'black' : 'white'"
-            :value="$q.dark.isActive"
+            :model-value="$q.dark.isActive"
             :color="$q.dark.isActive ? 'grey-3' : 'black'"
             checked-icon="mdi-white-balance-sunny"
             unchecked-icon="mdi-weather-sunny"
-            @input="$setConfigsUsuario({ isDark: !$q.dark.isActive })"
+            @update:model-value="$setConfigsUsuario({ isDark: !$q.dark.isActive })"
           >
-            <q-tooltip content-class="text-body1">
+            <q-tooltip class="text-body1">
               {{ $q.dark.isActive ? 'Desativar' : 'Ativar' }} Modo Escuro (Dark Mode)
             </q-tooltip>
           </q-toggle>
@@ -415,13 +415,12 @@
               horizontal
               style="heigth: 40px; width: 300px;"
             >
-              <template v-for="item in whatsapps">
+              <template v-for="item in whatsapps" :key="item.id">
                 <q-btn
                   rounded
                   flat
                   dense
                   size="18px"
-                  :key="item.id"
                   class="q-mx-xs q-pa-none"
                   :style="`opacity: ${item.status === 'CONNECTED' ? 1 : 0.2}`"
                   :icon="`img:${item.type}-logo.png`"
@@ -767,17 +766,17 @@
         </q-scroll-area>
       </q-drawer>
 
-      <ModalNovoTicket :modalNovoTicket.sync="modalNovoTicket" />
+      <ModalNovoTicket v-model:modalNovoTicket="modalNovoTicket" />
       <ContatoModal
         :contactId="selectedContactId"
-        :modalContato.sync="modalContato"
+        v-model:modalContato="modalContato"
         @contatoModal:contato-editado="contatoEditado"
       />
 
       <ModalUsuario
         :isProfile="true"
-        :modalUsuario.sync="modalUsuario"
-        :usuarioEdicao.sync="usuario"
+        v-model:modalUsuario="modalUsuario"
+        v-model:usuarioEdicao="usuario"
       />
 
       <q-dialog
@@ -811,9 +810,8 @@
                 class="q-pl-sm "
                 :class="{ 'text-black': !$q.dark.isActive }"
               >
-                <template v-for="(log, idx) in logsTicket">
+                <template v-for="(log, idx) in logsTicket" :key="log && log.id || idx">
                   <q-timeline-entry
-                    :key="log && log.id || idx"
                     :subtitle="$formatarData(log.createdAt, 'dd/MM/yyyy HH:mm')"
                     :color="messagesLog[log.type] && messagesLog[log.type].color || ''"
                     :icon="messagesLog[log.type] && messagesLog[log.type].icon || ''"
@@ -847,24 +845,24 @@
 
 <script>
 import ItemStatusChannel from 'src/pages/sessaoWhatsapp/ItemStatusChannel.vue'
-import ContatoModal from 'src/pages/contatos/ContatoModal'
-import ItemTicket from './ItemTicket'
+import ContatoModal from 'src/pages/contatos/ContatoModal.vue'
+import ItemTicket from './ItemTicket.vue'
 import { ConsultarLogsTicket, ConsultarTickets, DeletarMensagem } from 'src/service/tickets'
 import { mapGetters } from 'vuex'
 import mixinSockets from './mixinSockets'
 import socketInitial from 'src/layouts/socketInitial'
-import ModalNovoTicket from './ModalNovoTicket'
+import ModalNovoTicket from './ModalNovoTicket.vue'
 import { ListarFilas } from 'src/service/filas'
 const UserQueues = JSON.parse(localStorage.getItem('queues'))
 const profile = localStorage.getItem('profile')
 const username = localStorage.getItem('username')
 const usuario = JSON.parse(localStorage.getItem('usuario'))
-import StatusWhatsapp from 'src/components/StatusWhatsapp'
+import StatusWhatsapp from 'src/components/StatusWhatsapp.vue'
 import alertSound from 'src/assets/sound.mp3'
 import { ListarWhatsapps } from 'src/service/sessoesWhatsapp'
 import { debounce } from 'quasar'
 import { format } from 'date-fns'
-import ModalUsuario from 'src/pages/usuarios/ModalUsuario'
+import ModalUsuario from 'src/pages/usuarios/ModalUsuario.vue'
 import { ListarConfiguracoes } from 'src/service/configuracoes'
 import { ListarMensagensRapidas } from 'src/service/mensagensRapidas'
 import { ListarEtiquetas } from 'src/service/etiquetas'
@@ -873,6 +871,7 @@ import { RealizarLogout } from 'src/service/login'
 import { ListarUsuarios } from 'src/service/user'
 import MensagemChat from './MensagemChat.vue'
 import { messagesLog } from '../../utils/constants'
+import bus from 'src/utils/eventBus'
 export default {
   name: 'IndexAtendimento',
   mixins: [mixinSockets, socketInitial],
@@ -1223,11 +1222,11 @@ export default {
     }
   },
   async mounted () {
-    this.$root.$on('infor-cabecalo-chat:acao-menu', this.setValueMenu)
-    this.$root.$on('update-ticket:info-contato', this.setValueMenuContact)
+    bus.on('infor-cabecalo-chat:acao-menu', this.setValueMenu)
+    bus.on('update-ticket:info-contato', this.setValueMenuContact)
     this.socketTicketList()
     this.pesquisaTickets = JSON.parse(localStorage.getItem('filtrosAtendimento'))
-    this.$root.$on('handlerNotifications', this.handlerNotifications)
+    bus.on('handlerNotifications', this.handlerNotifications)
     await this.listarWhatsapps()
     await this.consultarTickets()
     await this.listarUsuarios()
@@ -1248,7 +1247,7 @@ export default {
         if (!ticket) return
         // caso esteja em um tamanho mobile, fechar a drawer dos contatos
         if (this.$q.screen.lt.md && ticket.status !== 'pending') {
-          this.$root.$emit('infor-cabecalo-chat:acao-menu')
+          bus.emit('infor-cabecalo-chat:acao-menu')
         }
         console.log('before - AbrirChatMensagens', ticket)
         this.$store.commit('SET_HAS_MORE', true)
@@ -1259,10 +1258,10 @@ export default {
       this.$router.push({ name: 'chat-empty' })
     }
   },
-  destroyed () {
-    this.$root.$off('handlerNotifications', this.handlerNotifications)
-    this.$root.$off('infor-cabecalo-chat:acao-menu', this.setValueMenu)
-    this.$root.$on('update-ticket:info-contato', this.setValueMenuContact)
+  unmounted () {
+    bus.off('handlerNotifications', this.handlerNotifications)
+    bus.off('infor-cabecalo-chat:acao-menu', this.setValueMenu)
+    bus.off('update-ticket:info-contato', this.setValueMenuContact)
     // this.socketDisconnect()
     this.$store.commit('TICKET_FOCADO', {})
   }

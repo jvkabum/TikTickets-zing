@@ -27,7 +27,7 @@
                 self="bottom middle"
                 :offset="[5, 40]"
               >
-                <VEmojiPicker
+                <EmojiPicker
                   style="width: 40vw"
                   :showSearch="false"
                   :emojisByRow="20"
@@ -159,11 +159,12 @@
 </template>
 
 <script>
-import { VEmojiPicker } from 'v-emoji-picker'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 
 export default {
   name: 'MessageField',
-  components: { VEmojiPicker },
+  components: { EmojiPicker },
   data () {
     return {
       variaveis: [

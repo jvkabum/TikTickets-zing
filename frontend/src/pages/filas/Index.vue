@@ -59,7 +59,7 @@
 
 <script>
 import { DeletarFila, ListarFilas } from 'src/service/filas'
-import ModalFila from './ModalFila'
+import ModalFila from './ModalFila.vue'
 export default {
   name: 'Filas',
   components: {

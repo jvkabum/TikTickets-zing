@@ -121,7 +121,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { required, url } from 'vuelidate/lib/validators'
+import { required, url } from '@vuelidate/validators'
 const isValidURL = (v) => url(v) || !v
 import { CriarAPI, EditarAPI } from 'src/service/api'
 export default {

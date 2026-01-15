@@ -11,7 +11,7 @@
       :columns="columns"
       :loading="loading"
       row-key="id"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[0]"
     >
       <template v-slot:top-right>
@@ -84,8 +84,8 @@
       </template>
     </q-table>
     <ModalMensagemRapida
-      :modalMensagemRapida.sync="modalMensagemRapida"
-      :mensagemRapidaEmEdicao.sync="mensagemRapidaEmEdicao"
+      v-model:modalMensagemRapida="modalMensagemRapida"
+      v-model:mensagemRapidaEmEdicao="mensagemRapidaEmEdicao"
       @mensagemRapida:criada="mensagemCriada"
       @mensagemRapida:editada="mensagemEditada"
     />
@@ -93,8 +93,8 @@
 </template>
 
 <script>
-import ModalMensagemRapida from './ModalMensagemRapida'
-import { ListarMensagensRapidas, DeletarMensagemRapida } from 'src/service/mensagensRapidas'
+import ModalMensagemRapida from './ModalMensagemRapida.vue'
+import { ListarMensagensRapidas, DeletarMensagemRapida } from '../../service/mensagensRapidas'
 export default {
   name: 'MensagensRapidas',
   components: { ModalMensagemRapida },

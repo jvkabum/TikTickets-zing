@@ -1,15 +1,11 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-import user from './modules/user'
-import whatsapp from './modules/whatsapp'
-import atendimentoTicket from './modules/atendimentoTicket'
-import notifications from './modules/Notifications'
-import chatFlow from './modules/chatFlow'
-import usersApp from './modules/usersApp'
+import { createStore } from 'vuex'
 import getters from './getters'
-// import example from './module-example'
-
-Vue.use(Vuex)
+import atendimentoTicket from './modules/atendimentoTicket'
+import chatFlow from './modules/chatFlow'
+import notifications from './modules/Notifications'
+import user from './modules/user'
+import usersApp from './modules/usersApp'
+import whatsapp from './modules/whatsapp'
 
 /*
  * If not building with SSR mode, you can
@@ -20,23 +16,19 @@ Vue.use(Vuex)
  * with the Store instance.
  */
 
-export default function (/* { ssrContext } */) {
-  const Store = new Vuex.Store({
-    getters,
-    modules: {
-      // example
-      user,
-      notifications,
-      atendimentoTicket,
-      whatsapp,
-      chatFlow,
-      usersApp
-    },
+const Store = createStore({
+  getters,
+  modules: {
+    user,
+    notifications,
+    atendimentoTicket,
+    whatsapp,
+    chatFlow,
+    usersApp
+  },
+  // enable strict mode (adds overhead!)
+  // for dev mode only
+  strict: process.env.DEBUGGING
+})
 
-    // enable strict mode (adds overhead!)
-    // for dev mode only
-    strict: process.env.DEBUGGING
-  })
-
-  return Store
-}
+export default Store

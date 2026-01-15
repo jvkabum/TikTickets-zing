@@ -1,7 +1,7 @@
 import axios from 'axios'
-import Router from '../router/index'
-import loading from 'src/utils/loading'
 import { Notify } from 'quasar'
+import loading from 'src/utils/loading'
+import { RouterInstance as Router } from '../router/index'
 import backendErrors from './erros'
 import { RefreshToken } from './login'
 
@@ -56,7 +56,7 @@ const clearAuthData = () => {
 
 const redirectToLogin = () => {
   clearAuthData()
-  if (Router.currentRoute.name !== 'login') {
+  if (Router.currentRoute.value.name !== 'login') {
     Router.push({ name: 'login' })
   }
 }
@@ -120,7 +120,7 @@ service.interceptors.response.use(
     const isSessionError = sessionErrors.includes(errorMessage)
 
     if ((status === 403 || status === 401 || isSessionError) &&
-        !originalRequest.url.includes('/auth/login')) {
+      !originalRequest.url.includes('/auth/login')) {
       // Se for erro no refresh token, vai direto para login
       if (originalRequest.url.includes('/auth/refresh_token')) {
         redirectToLogin()

@@ -13,12 +13,11 @@
       </q-card>
     </div>
     <div class="row full-width q-py-lg q-px-md ">
-      <template v-for="item in whatsapps">
+      <template v-for="item in whatsapps" :key="item.id">
         <q-card
           flat
           bordered
           class="col-xs-12 col-sm-5 col-md-4 col-lg-3 q-ma-md"
-          :key="item.id"
         >
           <q-item>
             <q-item-section avatar>
@@ -68,12 +67,12 @@
 </template>
 
 <script>
-import { AdminListarChannels } from 'src/service/channels'
+import { AdminListarChannels } from '../../service/channels'
 import { format, parseISO } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR/index'
 import { mapGetters } from 'vuex'
-import ItemStatusChannel from './ItemStatusChannel'
-import { AdminListarEmpresas } from 'src/service/empresas'
+import ItemStatusChannel from './ItemStatusChannel.vue'
+import { AdminListarEmpresas } from '../../service/empresas'
 
 const userLogado = JSON.parse(localStorage.getItem('usuario'))
 
@@ -163,8 +162,8 @@ export default {
     this.listarEmpresas()
     this.userProfile = localStorage.getItem('profile')
   },
-  destroyed () {
-    this.$root.$off('UPDATE_SESSION')
+  unmounted () {
+    // this.$root.$off('UPDATE_SESSION')
   }
 }
 </script>

@@ -171,7 +171,7 @@
                 self="bottom middle"
                 :offset="[5, 40]"
               >
-                <VEmojiPicker
+                <EmojiPicker
                   style="width: 40vw"
                   :showSearch="false"
                   :emojisByRow="20"
@@ -239,14 +239,15 @@
 </template>
 
 <script>
-import { required, minLength, maxLength } from 'vuelidate/lib/validators'
+import { required, minLength, maxLength } from '@vuelidate/validators'
 import { UpdateWhatsapp, CriarWhatsapp } from 'src/service/sessoesWhatsapp'
 import cInput from 'src/components/cInput.vue'
 import { copyToClipboard, Notify } from 'quasar'
-import { VEmojiPicker } from 'v-emoji-picker'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 
 export default {
-  components: { cInput, VEmojiPicker },
+  components: { cInput, EmojiPicker },
   name: 'ModalWhatsapp',
   props: {
     modalWhatsapp: {

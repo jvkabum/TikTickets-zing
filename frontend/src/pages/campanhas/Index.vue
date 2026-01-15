@@ -120,7 +120,7 @@
 
 <script>
 import { CancelarCampanha, DeletarCampanha, IniciarCampanha, ListarCampanhas } from 'src/service/campanhas'
-import ModalCampanha from './ModalCampanha'
+import ModalCampanha from './ModalCampanha.vue'
 import { format, parseISO, startOfDay } from 'date-fns'
 import { socketIO } from 'src/utils/socket'
 const socket = socketIO()

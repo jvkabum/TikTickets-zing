@@ -11,7 +11,7 @@
       virtual-scroll
       :virtual-scroll-item-size="48"
       :virtual-scroll-sticky-size-start="48"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[0]"
       @virtual-scroll="onScroll"
       :bordered="isChatContact"
@@ -197,7 +197,7 @@
     </q-table>
     <ContatoModal
       :contactId="selectedContactId"
-      :modalContato.sync="modalContato"
+      v-model:modalContato="modalContato"
       @contatoModal:contato-editado="UPDATE_CONTACTS"
       @contatoModal:contato-criado="UPDATE_CONTACTS"
     />
@@ -353,11 +353,11 @@
 
 <script>
 const userId = +localStorage.getItem('userId')
-import { CriarTicket } from 'src/service/tickets'
-import { ListarContatos, ImportarArquivoContato, DeletarContato, SyncronizarContatos, ExportarArquivoContato } from 'src/service/contatos'
-import ContatoModal from './ContatoModal'
-import { ListarUsuarios } from 'src/service/user'
-import { ListarEtiquetas } from 'src/service/etiquetas'
+import { CriarTicket } from '../../service/tickets'
+import { ListarContatos, ImportarArquivoContato, DeletarContato, SyncronizarContatos, ExportarArquivoContato } from '../../service/contatos'
+import ContatoModal from './ContatoModal.vue'
+import { ListarUsuarios } from '../../service/user'
+import { ListarEtiquetas } from '../../service/etiquetas'
 import { mapGetters } from 'vuex'
 
 export default {

@@ -147,10 +147,9 @@
         v-flowDrag
         :style="{ width: isPanelVisible ? 'calc(100% - 500px)' : '100%' }"
       >
-        <template v-for="node in data.nodeList">
+        <template v-for="node in data.nodeList" :key="node.id">
           <flow-node
             :id="node.id"
-            :key="node.id"
             :node="node"
             :activeElement="activeElement"
             @changeNodeSite="changeNodeSite"
@@ -204,11 +203,11 @@
 import draggable from 'vuedraggable'
 import './jsplumb'
 import { easyFlowMixin } from './mixins'
-import flowNode from './node'
-import nodeMenu from './node_menu'
-import FlowInfo from './info'
-import FlowHelp from './help'
-import FlowNodeForm from './node_form'
+import FlowNode from './node.vue'
+import nodeMenu from './node_menu.vue'
+import FlowInfo from './info.vue'
+import FlowHelp from './help.vue'
+import FlowNodeForm from './node_form.vue'
 import { cloneDeep } from 'lodash'
 import './index.css'
 import { uid } from 'quasar'
@@ -253,7 +252,7 @@ export default {
   },
   directives: {
     flowDrag: {
-      bind (el, binding, vnode, oldNode) {
+      mounted (el, binding, vnode, oldNode) {
         if (!binding) {
           return
         }

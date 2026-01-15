@@ -2,34 +2,34 @@
 const routes = [
   {
     path: '/',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('../layouts/MainLayout.vue'),
     redirect: { name: 'home' },
     children: [
-      { path: '', component: () => import('pages/dashboard/Index.vue') },
-      { path: '/home', name: 'home-dashboard', component: () => import('pages/dashboard/Index.vue') },
-      { path: '/painel-atendimentos', name: 'painel-atendimentos', component: () => import('pages/dashboard/DashTicketsFilas.vue') },
-      { path: '/sessoes', name: 'sessoes', component: () => import('pages/sessaoWhatsapp/Index.vue') },
-      { path: '/contatos', name: 'contatos', component: () => import('pages/contatos/Index.vue') },
-      { path: '/usuarios', name: 'usuarios', component: () => import('pages/usuarios/Index.vue') },
-      { path: '/auto-resposta', name: 'auto-resposta', component: () => import('pages/fluxoAutoResposta/Index.vue') },
-      { path: '/mensagens-rapidas', name: 'mensagens-rapidas', component: () => import('pages/mensagensRapidas/Index.vue') },
-      { path: '/filas', name: 'filas', component: () => import('pages/filas/Index.vue') },
-      { path: '/configuracoes', name: 'configuracoes', component: () => import('pages/configuracoes/Index.vue') },
-      { path: '/etiquetas', name: 'etiquetas', component: () => import('pages/etiquetas/Index.vue') },
-      { path: '/campanhas', name: 'campanhas', component: () => import('pages/campanhas/Index.vue') },
-      { path: '/campanhas/:campanhaId', name: 'contatos-campanha', component: () => import('pages/campanhas/ContatosCampanha.vue') },
-      { path: '/horario-atendimento', name: 'horarioAtendimento', component: () => import('pages/horarioAtendimento/Index.vue') },
-      { path: '/api-service', name: 'api-service', component: () => import('pages/api/Index.vue') },
-      { path: '/sessaosuper', name: 'sessaosuper', component: () => import('pages/sessaosuper/Index.vue') },
-      { path: '/usuariossuper', name: 'usuariossuper', component: () => import('pages/usuariossuper/Index.vue') },
-      { path: '/empresassuper', name: 'empresassuper', component: () => import('pages/empresassuper/Index.vue') },
+      { path: '', component: () => import('../pages/dashboard/Index.vue') },
+      { path: '/home', name: 'home-dashboard', component: () => import('../pages/dashboard/Index.vue') },
+      { path: '/painel-atendimentos', name: 'painel-atendimentos', component: () => import('../pages/dashboard/DashTicketsFilas.vue') },
+      { path: '/sessoes', name: 'sessoes', component: () => import('../pages/sessaoWhatsapp/Index.vue') },
+      { path: '/contatos', name: 'contatos', component: () => import('../pages/contatos/Index.vue') },
+      { path: '/usuarios', name: 'usuarios', component: () => import('../pages/usuarios/Index.vue') },
+      { path: '/auto-resposta', name: 'auto-resposta', component: () => import('../pages/fluxoAutoResposta/Index.vue') },
+      { path: '/mensagens-rapidas', name: 'mensagens-rapidas', component: () => import('../pages/mensagensRapidas/Index.vue') },
+      { path: '/filas', name: 'filas', component: () => import('../pages/filas/Index.vue') },
+      { path: '/configuracoes', name: 'configuracoes', component: () => import('../pages/configuracoes/Index.vue') },
+      { path: '/etiquetas', name: 'etiquetas', component: () => import('../pages/etiquetas/Index.vue') },
+      { path: '/campanhas', name: 'campanhas', component: () => import('../pages/campanhas/Index.vue') },
+      { path: '/campanhas/:campanhaId', name: 'contatos-campanha', component: () => import('../pages/campanhas/ContatosCampanha.vue') },
+      { path: '/horario-atendimento', name: 'horarioAtendimento', component: () => import('../pages/horarioAtendimento/Index.vue') },
+      { path: '/api-service', name: 'api-service', component: () => import('../pages/api/Index.vue') },
+      { path: '/sessaosuper', name: 'sessaosuper', component: () => import('../pages/sessaosuper/Index.vue') },
+      { path: '/usuariossuper', name: 'usuariossuper', component: () => import('../pages/usuariossuper/Index.vue') },
+      { path: '/empresassuper', name: 'empresassuper', component: () => import('../pages/empresassuper/Index.vue') },
       {
         path: '/chat-flow',
-        component: () => import('pages/chatFlow/Index.vue'),
+        component: () => import('../pages/chatFlow/Index.vue'),
         redirect: 'chat-flow',
         children: [
-          { path: '', name: 'chat-flow', component: () => import('pages/chatFlow/ListaChatFlow.vue') },
-          { path: 'builder', name: 'chat-flow-builder', component: () => import('components/ccFlowBuilder/panel.vue') }
+          { path: '', name: 'chat-flow', component: () => import('../pages/chatFlow/ListaChatFlow.vue') },
+          { path: 'builder', name: 'chat-flow-builder', component: () => import('../components/ccFlowBuilder/panel.vue') }
         ]
       }
     ]
@@ -37,32 +37,32 @@ const routes = [
   {
     path: '/relatorios',
     redirect: 'relatorios',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('../layouts/MainLayout.vue'),
     children: [
       {
         path: '',
         name: 'relatorios',
-        component: () => import('pages/relatorios/ccListaRelatorios')
+        component: () => import('../pages/relatorios/ccListaRelatorios.vue')
       },
       {
         path: 'estatisticas-atendimentos-usuarios',
         name: 'estatisticas-atendimentos-usuarios',
-        component: () => import('pages/relatorios/RelatorioResumoAtendimentosUsuarios')
+        component: () => import('../pages/relatorios/RelatorioResumoAtendimentosUsuarios.vue')
       },
       {
         path: 'lista-contatos',
         name: 'lista-contatos',
-        component: () => import('pages/relatorios/RelatorioContatosGeral')
+        component: () => import('../pages/relatorios/RelatorioContatosGeral.vue')
       },
       {
         path: 'contatos-por-etiquetas',
         name: 'contatos-por-etiquetas',
-        component: () => import('pages/relatorios/RelatorioContatosEtiquetas')
+        component: () => import('../pages/relatorios/RelatorioContatosEtiquetas.vue')
       },
       {
         path: 'contatos-por-estado',
         name: 'contatos-por-estado',
-        component: () => import('pages/relatorios/RelatorioContatosEstado')
+        component: () => import('../pages/relatorios/RelatorioContatosEstado.vue')
       }
     ]
   },
@@ -70,17 +70,17 @@ const routes = [
     path: '/atendimento',
     name: 'atendimento',
     // redirect: { name: 'chat-empty' },
-    component: () => import('pages/atendimento/Index.vue'),
+    component: () => import('../pages/atendimento/Index.vue'),
     children: [
       {
         path: '/chats/',
         name: 'chat-empty',
-        component: () => import('pages/atendimento/Chat.vue')
+        component: () => import('../pages/atendimento/Chat.vue')
       },
       {
         path: ':ticketId',
         name: 'chat',
-        component: () => import('pages/atendimento/Chat.vue')
+        component: () => import('../pages/atendimento/Chat.vue')
         // beforeEnter (to, from, next) {
         //   if (!from.params.ticketId) {
         //     next({ name: 'chat-empty' })
@@ -91,7 +91,7 @@ const routes = [
       {
         path: 'contatos',
         name: 'chat-contatos',
-        component: () => import('pages/contatos/Index.vue'),
+        component: () => import('../pages/contatos/Index.vue'),
         props: { isChatContact: true }
       }
 
@@ -101,13 +101,13 @@ const routes = [
   // Always leave this as last one,
   // but you can also remove it
   {
-    path: '*',
-    component: () => import('pages/Error404.vue')
+    path: '/:catchAll(.*)*',
+    component: () => import('../pages/Error404.vue')
   },
   {
     path: '/login',
     name: 'login',
-    component: () => import('pages/Login.vue')
+    component: () => import('../pages/Login.vue')
   }
 ]
 

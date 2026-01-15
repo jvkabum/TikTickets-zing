@@ -1,8 +1,8 @@
-import { ConsultarDadosTicket, LocalizarMensagens } from 'src/service/tickets'
-import { Notify } from 'quasar'
-import $router from 'src/router'
-import { orderBy } from 'lodash'
 import { parseISO } from 'date-fns'
+import { orderBy } from 'lodash'
+import { Notify } from 'quasar'
+import { RouterInstance as $router } from 'src/router'
+import { ConsultarDadosTicket, LocalizarMensagens } from 'src/service/tickets'
 
 const orderMessages = (messages) => {
   const newMessages = orderBy(messages, (obj) => parseISO(obj.timestamp || obj.createdAt), ['asc'])
@@ -222,11 +222,11 @@ const atendimentoTicket = {
   },
   mutations: {
     // OK
-    SET_HAS_MORE (state, payload) {
+    SET_HAS_MORE(state, payload) {
       state.hasMore = payload
     },
     // OK
-    LOAD_TICKETS (state, payload) {
+    LOAD_TICKETS(state, payload) {
       // Se for um array, iterar sobre cada ticket
       const tickets = Array.isArray(payload.tickets) ? payload.tickets : payload
       console.log('LOAD_TICKETS', tickets.length, 'tickets')
@@ -271,7 +271,7 @@ const atendimentoTicket = {
       }
     },
     // Nova mutação para forçar atualização dos tickets
-    FORCE_REFRESH_TICKETS (state, tickets) {
+    FORCE_REFRESH_TICKETS(state, tickets) {
       try {
         console.log('FORCE_REFRESH_TICKETS: Forçando atualização dos tickets', tickets.length)
 
@@ -307,11 +307,11 @@ const atendimentoTicket = {
         console.error('Erro em FORCE_REFRESH_TICKETS:', error)
       }
     },
-    RESET_TICKETS (state) {
+    RESET_TICKETS(state) {
       state.hasMore = true
       state.tickets = []
     },
-    RESET_UNREAD (state, payload) {
+    RESET_UNREAD(state, payload) {
       console.log('RESET_UNREAD chamado para ticket:', payload.ticketId)
       const tickets = [...state.tickets]
       const ticketId = payload.ticketId
@@ -327,7 +327,7 @@ const atendimentoTicket = {
         state.tickets = orderTickets(tickets.filter(t => checkTicketFilter(t)))
       }
     },
-    UPDATE_TICKET (state, payload) {
+    UPDATE_TICKET(state, payload) {
       console.log('UPDATE_TICKET chamado para ticket:', payload.id || payload.ticket?.id)
       // Determinar o ticket a ser atualizado
       const ticketData = payload.ticket || payload
@@ -375,7 +375,7 @@ const atendimentoTicket = {
         state.tickets = orderTickets(tickets.filter(t => checkTicketFilter(t)))
       }
     },
-    DELETE_TICKET (state, payload) {
+    DELETE_TICKET(state, payload) {
       const ticketId = payload.ticketId || payload
       console.log('DELETE_TICKET chamado para ticket:', ticketId)
 
@@ -391,10 +391,10 @@ const atendimentoTicket = {
         state.tickets = tickets
       }
     },
-    UPDATE_TICKET_FOCADO_CONTACT (state, payload) {
+    UPDATE_TICKET_FOCADO_CONTACT(state, payload) {
       state.ticketFocado.contact = payload
     },
-    UPDATE_CONTACT (state, payload) {
+    UPDATE_CONTACT(state, payload) {
       if (state.ticketFocado.contactId == payload.id) {
         state.ticketFocado.contact = payload
       }
@@ -408,7 +408,7 @@ const atendimentoTicket = {
       }
     },
     // OK
-    TICKET_FOCADO (state, payload) {
+    TICKET_FOCADO(state, payload) {
       const params = {
         ...payload,
         status: payload.status == 'pending' ? 'open' : payload.status,
@@ -420,7 +420,7 @@ const atendimentoTicket = {
       state.ticketFocado = params
     },
     // OK
-    LOAD_INITIAL_MESSAGES (state, payload) {
+    LOAD_INITIAL_MESSAGES(state, payload) {
       const { messages, messagesOffLine } = payload
       state.mensagens = []
       // Atualizar cache de mensagens
@@ -432,7 +432,7 @@ const atendimentoTicket = {
       state.mensagens = newMessages
     },
     // OK
-    LOAD_MORE_MESSAGES (state, payload) {
+    LOAD_MORE_MESSAGES(state, payload) {
       const { messages, messagesOffLine } = payload
       const arrayMessages = [...messages, ...messagesOffLine]
       const newMessages = []
@@ -450,7 +450,7 @@ const atendimentoTicket = {
       state.mensagens = [...messagesOrdered, ...state.mensagens]
     },
     // OK
-    UPDATE_MESSAGES (state, payload) {
+    UPDATE_MESSAGES(state, payload) {
       console.log('UPDATE_MESSAGES chamado para mensagem:', payload.id)
 
       // Verificar e corrigir timestamp se necessário
@@ -545,7 +545,7 @@ const atendimentoTicket = {
       }
     },
     // OK
-    UPDATE_MESSAGE_STATUS (state, payload) {
+    UPDATE_MESSAGE_STATUS(state, payload) {
       // Se ticket não for o focado, não atualizar.
       if (state.ticketFocado.id != payload.ticket.id) {
         return
@@ -565,7 +565,7 @@ const atendimentoTicket = {
         state.ticketFocado.scheduledMessages = scheduled
       }
     },
-    UPDATE_MESSAGE (state, payload) {
+    UPDATE_MESSAGE(state, payload) {
       // Se ticket não for o focado, não atualizar.
       if (state.ticketFocado.id != payload.ticketId) {
         return
@@ -590,12 +590,12 @@ const atendimentoTicket = {
       }
     },
     // OK
-    RESET_MESSAGE (state) {
+    RESET_MESSAGE(state) {
       state.mensagens = []
       state.mensagensCache.clear() // Limpar cache ao resetar
     },
     // Adicionar mutation UPDATE_TICKET_UNREAD_MESSAGES que está sendo usada no socket mas não está implementada
-    UPDATE_TICKET_UNREAD_MESSAGES (state, payload) {
+    UPDATE_TICKET_UNREAD_MESSAGES(state, payload) {
       // Suportar diferentes formatos de payload que podem vir do socket
       let ticket
 
@@ -675,7 +675,7 @@ const atendimentoTicket = {
     }
   },
   actions: {
-    async LocalizarMensagensTicket ({ commit, state }, params) {
+    async LocalizarMensagensTicket({ commit, state }, params) {
       try {
         // Verificar cache primeiro
         if (params.pageNumber === 1) {
@@ -700,7 +700,7 @@ const atendimentoTicket = {
         throw error
       }
     },
-    async AbrirChatMensagens ({ commit, dispatch }, data) {
+    async AbrirChatMensagens({ commit, dispatch }, data) {
       try {
         await commit('TICKET_FOCADO', {})
         await commit('RESET_MESSAGE')

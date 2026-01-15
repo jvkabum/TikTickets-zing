@@ -7,7 +7,7 @@
       :columns="columns"
       :loading="loading"
       row-key="id"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       virtual-scroll
       :virtual-scroll-item-size="48"
       :virtual-scroll-sticky-size-start="48"
@@ -58,24 +58,24 @@
       </template>
     </q-table>
     <ModalUsuario
-      :modalUsuario.sync="modalUsuario"
+      v-model:modalUsuario="modalUsuario"
       @modalUsuario:usuario-editado="UPDATE_USUARIO"
       @modalUsuario:usuario-criado="usuarioCriado"
-      :usuarioEdicao.sync="usuarioSelecionado"
+      v-model:usuarioEdicao="usuarioSelecionado"
     />
     <ModalUsuarioEdit
-      :modalUsuario.sync="modalUsuarioEdit"
+      v-model:modalUsuario="modalUsuarioEdit"
       @modalUsuario:usuario-editado="UPDATE_USUARIO"
-      :usuarioEdicao.sync="usuarioSelecionado"
+      v-model:usuarioEdicao="usuarioSelecionado"
     />
   </div>
 </template>
 
 <script>
 // const userId = +localStorage.getItem('userId')
-import { AdminListarUsuarios } from 'src/service/user'
-import ModalUsuarioEdit from './ModalUsuarioedit'
-import ModalUsuario from './ModalUsuario'
+import { AdminListarUsuarios } from '../../service/user'
+import ModalUsuarioEdit from './ModalUsuarioedit.vue'
+import ModalUsuario from './ModalUsuario.vue'
 export default {
   name: 'IndexUsuarios',
   components: { ModalUsuario, ModalUsuarioEdit },
@@ -177,10 +177,10 @@ export default {
     await this.listarUsuarios()
     this.userProfile = localStorage.getItem('profile')
     // Ouça o evento 'usuario-editado'
-    this.$root.$on('usuario-editado', () => {
+    // this.$root.$on('usuario-editado', () => {
       // Atualize a página aqui
-      this.listarUsuarios()
-    })
+      // this.listarUsuarios()
+    // })
   }
 }
 </script>

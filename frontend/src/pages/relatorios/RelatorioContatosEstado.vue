@@ -175,7 +175,7 @@
 </template>
 
 <script>
-import ccPrintModelLandscape from './ccPrintModelLandscape'
+import ccPrintModelLandscape from './ccPrintModelLandscape.vue'
 import * as XLSX from 'xlsx'
 import { RelatorioContatos } from 'src/service/estatisticas'
 import { ListarEtiquetas } from 'src/service/etiquetas'

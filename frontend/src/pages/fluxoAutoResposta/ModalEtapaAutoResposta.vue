@@ -35,7 +35,7 @@
                 self="bottom middle"
                 :offset="[5, 40]"
               >
-                <VEmojiPicker
+                <EmojiPicker
                   style="width: 40vw"
                   :showSearch="false"
                   :emojisByRow="20"
@@ -92,12 +92,13 @@
 </template>
 
 <script>
-import { VEmojiPicker } from 'v-emoji-picker'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 
 import { CriarEtapaResposta, EditarEtapaResposta } from 'src/service/autoResposta'
 export default {
   name: 'ModalEtapaAutoResposta',
-  components: { VEmojiPicker },
+  components: { EmojiPicker },
   props: {
     modalEtapaAutoResposta: {
       type: Boolean,

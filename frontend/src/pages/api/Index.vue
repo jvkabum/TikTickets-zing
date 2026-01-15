@@ -145,8 +145,8 @@
     </q-card>
 
     <ModalApi
-      :modalApi.sync="modalApi"
-      :apiEdicao.sync="apiEdicao"
+      v-model:modalApi="modalApi"
+      v-model:apiEdicao="apiEdicao"
       @modal-api:criada="apiCriada"
       @modal-api:editada="apiEditada"
     />
@@ -155,9 +155,9 @@
 </template>
 
 <script>
-import { ListarAPIs, ApagarAPI, NovoTokenAPI } from 'src/service/api'
+import { ListarAPIs, ApagarAPI, NovoTokenAPI } from '../../service/api'
 import { copyToClipboard } from 'quasar'
-import ModalApi from './ModalApi'
+import ModalApi from './ModalApi.vue'
 export default {
   name: 'APIs',
   components: {

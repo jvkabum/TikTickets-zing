@@ -76,7 +76,7 @@
 
 <script>
 import { DeletarTenant, ListarTenants } from 'src/service/empresas'
-import ModalTenant from './ModalTenant'
+import ModalTenant from './ModalTenant.vue'
 export default {
   name: 'Tenants',
   components: {

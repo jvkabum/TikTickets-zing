@@ -23,8 +23,8 @@
                 clearable
                 v-model="form.email"
                 placeholder="meu@email.com"
-                @blur="$v.form.email.$touch"
-                :error="$v.form.email.$error"
+                @blur="v$.form.email.$touch"
+                :error="v$.form.email.$error"
                 error-message="Deve ser um e-mail válido."
                 outlined
                 @keypress.enter="fazerLogin">
@@ -59,9 +59,9 @@
                 :loading="loading"
                 @click="fazerLogin">
                 Login
-                <span slot="loading">
+                <template v-slot:loading>
                   <q-spinner-puff class="on-left" />Logando...
-                </span>
+                </template>
               </q-btn>
               <q-btn class="q-my-lg"
                 style="width: 200px"
@@ -80,10 +80,14 @@
 </template>
 
 <script>
-import { required, email } from 'vuelidate/lib/validators'
+import { useVuelidate } from '@vuelidate/core'
+import { required, email } from '@vuelidate/validators'
 
 export default {
   name: 'Login',
+  setup () {
+    return { v$: useVuelidate() }
+  },
   data () {
     return {
       modalEsqueciSenha: false,
@@ -97,17 +101,19 @@ export default {
       loading: false
     }
   },
-  validations: {
-    form: {
-      email: { required, email },
-      password: { required }
-    },
-    emailRedefinicao: { required, email }
+  validations () {
+    return {
+      form: {
+        email: { required, email },
+        password: { required }
+      },
+      emailRedefinicao: { required, email }
+    }
   },
   methods: {
     fazerLogin () {
-      this.$v.form.$touch()
-      if (this.$v.form.$error) {
+      this.v$.form.$touch()
+      if (this.v$.form.$error) {
         this.$q.notify('Informe usuário e senha corretamente.')
         return
       }

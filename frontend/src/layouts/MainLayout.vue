@@ -114,11 +114,11 @@
           dense
           class="text-bold q-ml-xs"
           :icon-color="$q.dark.isActive ? 'black' : 'white'"
-          :value="$q.dark.isActive"
+          :model-value="$q.dark.isActive"
           :color="$q.dark.isActive ? 'grey-3' : 'black'"
           checked-icon="mdi-white-balance-sunny"
           unchecked-icon="mdi-weather-sunny"
-          @input="$setConfigsUsuario({ isDark: !$q.dark.isActive })"
+          @update:model-value="$setConfigsUsuario({ isDark: !$q.dark.isActive })"
         >
           <q-tooltip content-class="text-body1 hide-scrollbar">
             {{ $q.dark.isActive ? 'Desativar' : 'Ativar' }} Modo Escuro (Dark Mode)
@@ -247,13 +247,14 @@
     </audio>
     <ModalUsuario
       :isProfile="true"
-      :modalUsuario.sync="modalUsuario"
-      :usuarioEdicao.sync="usuario"
+      v-model:modalUsuario="modalUsuario"
+      v-model:usuarioEdicao="usuario"
     />
   </q-layout>
 </template>
 
 <script>
+import bus from 'src/utils/eventBus'
 import cSystemVersion from '../components/cSystemVersion.vue'
 import { ListarWhatsapps } from 'src/service/sessoesWhatsapp'
 import EssentialLink from 'components/EssentialLink.vue'
@@ -261,7 +262,7 @@ import socketInitial from './socketInitial'
 import alertSound from 'src/assets/sound.mp3'
 import { format } from 'date-fns'
 const username = localStorage.getItem('username')
-import ModalUsuario from 'src/pages/usuarios/ModalUsuario'
+import ModalUsuario from 'src/pages/usuarios/ModalUsuario.vue'
 import { mapGetters } from 'vuex'
 import { ListarConfiguracoes } from 'src/service/configuracoes'
 import { RealizarLogout } from 'src/service/login'
@@ -393,8 +394,10 @@ export default {
   name: 'MainLayout',
   mixins: [socketInitial],
   components: { EssentialLink, ModalUsuario, cStatusUsuario, cSystemVersion },
+
   data () {
     return {
+      bus,
       username,
       domainExperimentalsMenus: ['@'],
       miniState: true,
@@ -561,7 +564,7 @@ export default {
     abrirChatContato (ticket) {
       // caso esteja em um tamanho mobile, fechar a drawer dos contatos
       if (this.$q.screen.lt.md && ticket.status !== 'pending') {
-        this.$root.$emit('infor-cabecalo-chat:acao-menu')
+        bus.emit('infor-cabecalo-chat:acao-menu')
       }
       if (!(ticket.status !== 'pending' && (ticket.id !== this.$store.getters.ticketFocado.id || this.$route.name !== 'chat'))) return
       this.$store.commit('SET_HAS_MORE', true)
@@ -607,7 +610,7 @@ export default {
     this.userProfile = localStorage.getItem('profile')
     await this.conectarSocket(this.usuario)
   },
-  destroyed () {
+  unmounted () {
     socket.disconnect()
   }
 }

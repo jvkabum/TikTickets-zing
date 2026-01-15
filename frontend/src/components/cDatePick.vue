@@ -9,11 +9,10 @@
       bottom-slots
       v-bind="$attrs"
       :class="classAtrrs"
-      :value="cValue"
-      v-on="$listeners"
+      :modelValue="modelValue"
+      @update:modelValue="v => $emit('update:modelValue', v)"
       :error="cError"
       :error-message="cErrorMessage"
-      :ruler="[val => dateIsValid(val) || 'Data inválida!' ]"
     >
       <template v-slot:append>
         <q-icon
@@ -26,10 +25,10 @@
             transition-hide="scale"
           >
             <q-date
-              :value="cQDate"
+              :modelValue="cQDate"
               today-btn
               mask="DD/MM/YYYY"
-              @input="emitDate"
+              @update:modelValue="emitDate"
             />
           </q-popup-proxy>
         </q-icon>
@@ -37,37 +36,25 @@
 
       <!-- Aceitar Demais Slot's -->
       <template
-        v-for="(_, slot) of $scopedSlots"
+        v-for="(_, slot) in $slots"
         v-slot:[slot]="scope"
       >
         <slot
           :name="slot"
-          v-bind="scope"
+          v-bind="scope || {}"
         />
       </template>
     </q-input>
   </div>
 </template>
 <script>
-import { singleErrorExtractorMixin } from 'vuelidate-error-extractor'
-import { format, parse, isValid } from 'date-fns'
+import { format, parse, isValid, parseISO } from 'date-fns'
 
 export default {
-  name: 'ccInputDate',
-  extends: singleErrorExtractorMixin,
+  name: 'cDatePick',
   inheritAttrs: false,
-  data () {
-    return {
-      date: null,
-      dateSelect: null
-    }
-  },
   props: {
-    value: [String, Date],
-    initValue: {
-      type: [String, Date],
-      default: null
-    },
+    modelValue: [String, Date],
     error: {
       type: [String, Boolean, Number],
       default: 'NI' // Não Informada
@@ -80,63 +67,42 @@ export default {
       type: String,
       default: () => ''
     },
-    icon: {
-      type: Object,
-      default: () => { }
-    }
+    hasErrors: Boolean,
+    firstErrorMessage: String
   },
-  watch: {
-    initValue (v) {
-      this.dateFormated(v)
-    }
-  },
+  emits: ['update:modelValue'],
   computed: {
-    cValue () {
-      return this.value ? this.value : this.dateSelect ? format(parse(this.dateSelect, 'dd/MM/yyyy', new Date()), 'yyyy-MM-dd') : null
-    },
     cQDate () {
-      if (isValid(this.cValue)) {
-        return format(this.cValue, 'dd/MM/yyyy')
+      if (!this.modelValue) return format(new Date(), 'dd/MM/yyyy')
+      try {
+        const date = typeof this.modelValue === 'string' ? parseISO(this.modelValue) : this.modelValue
+        if (isValid(date)) {
+          return format(date, 'dd/MM/yyyy')
+        }
+      } catch (e) {
+        // Fallback
       }
-      return this.cValue ? format(parse(this.cValue, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy') : format(new Date(), 'dd/MM/yyyy')
+      return format(new Date(), 'dd/MM/yyyy')
     },
     cError () {
-      if (this.error == 'NI') {
+      if (this.error === 'NI') {
         return this.hasErrors
       }
       return this.error
     },
     cErrorMessage () {
-      if (this.errorMessage == '') {
+      if (this.errorMessage === '') {
         return this.firstErrorMessage
       }
       return this.errorMessage
-    },
-    iconElment: {
-      cache: false,
-      get () {
-        const defaultConfig = { name: null, size: '24px', color: '#000' }
-        const data = { ...defaultConfig, ...this.icon }
-        if (!data.name) {
-          return defaultConfig
-        } else {
-          return data
-        }
-      }
     }
   },
   methods: {
-    emitDate (d, r, dt) {
-      let date = d
-      if (!date) {
-        date = `${dt.day}/${dt.month}/${dt.year}`
-      }
-      const parseDate = parse(date, 'dd/MM/yyyy', new Date())
-      this.$emit('input', format(parseDate, 'yyyy-MM-dd'))
+    emitDate (value) {
+      if (!value) return
+      const parseDate = parse(value, 'dd/MM/yyyy', new Date())
+      this.$emit('update:modelValue', format(parseDate, 'yyyy-MM-dd'))
       this.$refs.qDateProxy.hide()
-    },
-    dateIsValid (d) {
-      return this.cValue ? isValid(d) : true
     }
   }
 }

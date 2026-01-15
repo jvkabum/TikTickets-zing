@@ -1,16 +1,16 @@
 import html2canvas from 'html2canvas'
-import ccPrintModelLandscape from './ccPrintModelLandscape'
+import ccPrintModelLandscape from './ccPrintModelLandscape.vue'
 
 export default {
   components: { ccPrintModelLandscape },
-  data () {
+  data() {
     return {
       imprimir: false,
       imprimirFiltros: false
     }
   },
   methods: {
-    async printFiltros (id = 'filtrosRelatorio', mostrarFiltros = false) {
+    async printFiltros(id = 'filtrosRelatorio', mostrarFiltros = false) {
       const node = await document.getElementById('footerAppendFiltros')
       // Excluir todos os filhos da div
       node.innerHTML = ''

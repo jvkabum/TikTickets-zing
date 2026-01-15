@@ -72,19 +72,10 @@
           class="row col-12 q-pa-sm"
           v-if="isScheduleDate"
         >
-          <q-datetime-picker
+          <cDateTimePick
             style="width: 300px"
-            dense
-            rounded
-            hide-bottom-space
-            outlined
-            stack-label
-            bottom-slots
             label="Data/Hora Agendamento"
-            mode="datetime"
-            color="primary"
             v-model="scheduleDate"
-            format24h
           />
         </div>
 
@@ -121,12 +112,9 @@
               :offset="[380, 40]"
               class="emoji-menu"
             >
-              <VEmojiPicker
-                style="width: 40vw"
-                :showSearch="false"
-                :emojisByRow="20"
-                labelSearch="Localizar..."
-                lang="pt-BR"
+              <EmojiPicker
+                :native="true"
+                :hide-search="false"
                 @select="onInsertSelectEmoji"
               />
             </q-menu>
@@ -200,12 +188,9 @@
                   self="bottom middle"
                   :offset="[380, 40]"
                 >
-                  <VEmojiPicker
-                    style="width: 40vw"
-                    :showSearch="false"
-                    :emojisByRow="20"
-                    labelSearch="Localizar..."
-                    lang="pt-BR"
+                  <EmojiPicker
+                    :native="true"
+                    :hide-search="false"
                     @select="onInsertSelectEmoji"
                   />
                 </q-menu>
@@ -422,13 +407,16 @@
 import { LocalStorage, uid } from 'quasar'
 import mixinCommon from './mixinCommon'
 import { EnviarMensagemTexto } from 'src/service/tickets'
-import { VEmojiPicker } from 'v-emoji-picker'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 import { mapGetters } from 'vuex'
-import RecordingTimer from './RecordingTimer'
+import RecordingTimer from './RecordingTimer.vue'
 import MicRecorder from 'mic-recorder-to-mp3'
-import MediaPreview from 'src/components/MediaPreview'
+import MediaPreview from 'src/components/MediaPreview.vue'
+import { bus } from 'src/utils/eventBus'
 const Mp3Recorder = new MicRecorder({ bitRate: 128 })
 import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
+import cDateTimePick from 'src/components/cDateTimePick.vue'
 
 export default {
   name: 'InputMensagem',
@@ -448,9 +436,10 @@ export default {
     }
   },
   components: {
-    VEmojiPicker,
+    EmojiPicker,
     RecordingTimer,
-    MediaPreview
+    MediaPreview,
+    cDateTimePick
   },
   data () {
     return {
@@ -529,17 +518,17 @@ export default {
         tmpStr = tArea.value
 
       // filter:
-      if (!emoji.data) {
+      if (!emoji.i) {
         return
       }
 
       // insert:
       self.txtContent = this.textChat
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
+      self.txtContent = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos, tmpStr.length)
       this.textChat = self.txtContent
       // move cursor:
       setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
+        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.i.length
       }, 10)
     },
     abrirEnvioArquivo (event) {
@@ -778,7 +767,8 @@ export default {
     }
   },
   mounted () {
-    this.$root.$on('mensagem-chat:focar-input-mensagem', () => this.$refs.inputEnvioMensagem.focus())
+    this.busId = 'mensagem-chat:focar-input-mensagem'
+    bus.on(this.busId, () => this.$refs.inputEnvioMensagem.focus())
     const self = this
     window.addEventListener('paste', self.handleInputPaste)
     if (![null, undefined].includes(LocalStorage.getItem('sign'))) {
@@ -794,12 +784,10 @@ export default {
       }
     })
   },
-  beforeDestroy () {
+  beforeUnmount () {
     const self = this
     window.removeEventListener('paste', self.handleInputPaste)
-  },
-  destroyed () {
-    this.$root.$off('mensagem-chat:focar-input-mensagem')
+    bus.off(this.busId)
   }
 }
 </script>

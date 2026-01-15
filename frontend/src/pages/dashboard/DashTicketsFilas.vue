@@ -71,9 +71,8 @@
 
     <div style="height: 85vh"
       class="scroll">
-      <template v-for="(items, key) in sets">
+      <template v-for="(items, key) in sets" :key="key">
         <div :style="{ height: 800 }"
-          :key="key"
           class="row q-pa-md q-col-gutter-md q-mb-sm">
           <div :class="contentClass"
             v-for="(item, index) in items"
@@ -145,12 +144,12 @@
 
 <script>
 const usuario = JSON.parse(localStorage.getItem('usuario'))
-import { socketIO } from 'src/utils/socket'
+import { socketIO } from '../../utils/socket'
 const socket = socketIO()
 
-import ItemTicket from 'src/pages/atendimento/ItemTicket'
-import { ConsultarTicketsQueuesService } from 'src/service/estatisticas.js'
-import { ListarFilas } from 'src/service/filas'
+import ItemTicket from '../atendimento/ItemTicket.vue'
+import { ConsultarTicketsQueuesService } from '../../service/estatisticas.js'
+import { ListarFilas } from '../../service/filas'
 const UserQueues = localStorage.getItem('queues')
 import { groupBy } from 'lodash'
 const profile = localStorage.getItem('profile')
@@ -363,7 +362,7 @@ export default {
     })
     await this.consultarTickets()
   },
-  destroyed () {
+  unmounted () {
     socket.disconnect()
   }
 }

@@ -7,7 +7,7 @@
       :columns="columns"
       :loading="loading"
       row-key="id"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[0]"
     >
       <template v-slot:top-right>
@@ -71,14 +71,14 @@
       </template>
     </q-table>
     <ModalUsuario
-      :modalUsuario.sync="modalUsuario"
+      v-model:modalUsuario="modalUsuario"
       @modalUsuario:usuario-editado="UPDATE_USUARIO"
       @modalUsuario:usuario-criado="usuarioCriado"
-      :usuarioEdicao.sync="usuarioSelecionado"
+      v-model:usuarioEdicao="usuarioSelecionado"
     />
     <ModalFilaUsuario
-      :modalFilaUsuario.sync="modalFilaUsuario"
-      :usuarioSelecionado.sync="usuarioSelecionado"
+      v-model:modalFilaUsuario="modalFilaUsuario"
+      v-model:usuarioSelecionado="usuarioSelecionado"
       :filas="filas"
       @modalFilaUsuario:sucesso="UPDATE_USUARIO"
     />
@@ -87,10 +87,10 @@
 
 <script>
 // const userId = +localStorage.getItem('userId')
-import { ListarUsuarios, DeleteUsuario } from 'src/service/user'
-import { ListarFilas } from 'src/service/filas'
-import ModalUsuario from './ModalUsuario'
-import ModalFilaUsuario from './ModalFilaUsuario'
+import { ListarUsuarios, DeleteUsuario } from '../../service/user'
+import { ListarFilas } from '../../service/filas'
+import ModalUsuario from './ModalUsuario.vue'
+import ModalFilaUsuario from './ModalFilaUsuario.vue'
 export default {
   name: 'IndexUsuarios',
   components: { ModalUsuario, ModalFilaUsuario },

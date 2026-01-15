@@ -79,7 +79,7 @@
       </q-card-actions>
     </q-card>
     <ContatoModal
-      :modalContato.sync="modalContato"
+      v-model:modalContato="modalContato"
       @contatoModal:contato-criado="contatoCriadoNotoTicket"
     />
   </q-dialog>
@@ -88,9 +88,9 @@
 
 <script>
 const userId = +localStorage.getItem('userId')
-import { ListarContatos } from 'src/service/contatos'
-import { CriarTicket } from 'src/service/tickets'
-import ContatoModal from 'src/pages/contatos/ContatoModal'
+import { ListarContatos } from '../../service/contatos'
+import { CriarTicket } from '../../service/tickets'
+import ContatoModal from '../contatos/ContatoModal.vue'
 
 export default {
   name: 'ModalNovoTicket',
@@ -175,7 +175,7 @@ export default {
       this.loading = false
     }
   },
-  destroyed () {
+  unmounted () {
     this.contatoSelecionado = null
   }
 }

@@ -5,10 +5,16 @@
 
 // Configuration for your app
 // https://quasar.dev/quasar-cli/quasar-conf-js
-/* eslint-env node */
 
-module.exports = function (ctx) {
-  require('dotenv').config()
+/* eslint-env node */
+import path from 'path';
+import { configure } from 'quasar/wrappers';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default configure(function (ctx) {
   return {
     // https://quasar.dev/quasar-cli/supporting-ts
     // supportTS: false,
@@ -21,7 +27,8 @@ module.exports = function (ctx) {
     // https://quasar.dev/quasar-cli/boot-files
     boot: [
       'vuelidate',
-      'ccComponents'
+      'ccComponents',
+      'apex'
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -46,11 +53,13 @@ module.exports = function (ctx) {
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
       env: {
-        VUE_URL_API: process.env.VUE_URL_API
+        VUE_URL_API: process.env.VUE_URL_API,
+        VUE_FACEBOOK_APP_ID: process.env.VUE_FACEBOOK_APP_ID
       },
       vueRouterMode: 'hash', // available values: 'hash', 'history'
 
       // transpile: false,
+      // publicPath: '/',
 
       // Add dependencies for transpiling with Babel (Array of string/regex)
       // (from node_modules, which are by default not transpiled).
@@ -66,20 +75,20 @@ module.exports = function (ctx) {
       // Options below are automatically set depending on the env, set them if you want to override
       // extractCSS: false,
 
-      // https://quasar.dev/quasar-cli/handling-webpack
-      extendWebpack (cfg) {
-        cfg.module.rules.push({
-          enforce: 'pre',
-          test: /\.(js|vue)$/,
-          loader: 'eslint-loader',
-          exclude: /node_modules/,
-          options: {
-            devtool: 'source-map',
-            preventExtract: true
-          }
-        })
-        cfg.devtool = 'source-map'
-      }
+      // https://quasar.dev/quasar-cli/handling-vite
+      extendViteConf(viteConf) {
+        viteConf.resolve = viteConf.resolve || {}
+        viteConf.resolve.alias = {
+          ...viteConf.resolve.alias,
+          'src': path.resolve(__dirname, './src'),
+          'pages': path.resolve(__dirname, './src/pages'),
+          'layouts': path.resolve(__dirname, './src/layouts'),
+          'components': path.resolve(__dirname, './src/components'),
+          'boot': path.resolve(__dirname, './src/boot'),
+          'stores': path.resolve(__dirname, './src/stores'),
+          'assets': path.resolve(__dirname, './src/assets')
+        }
+      },
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
@@ -91,18 +100,14 @@ module.exports = function (ctx) {
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-framework
     framework: {
-      iconSet: 'material-icons', // Quasar icon set
-      lang: 'pt-br',
       config: {
         dark: false
       },
-      directives: ['Ripple', 'ClosePopup'],
-      // Possible values for "importStrategy":
-      // * 'auto' - (DEFAULT) Auto-import needed Quasar components & directives
-      // * 'all'  - Manually specify what to import
-      importStrategy: 'auto',
 
-      // For special cases outside of where "auto" importStrategy can have an impact
+      lang: 'pt-br',
+      iconSet: 'material-icons', // Quasar icon set
+
+      // For special cases outside of where the auto-import strategy can have an impact
       // (like functional components as one of the examples),
       // you can manually specify Quasar components/directives to be available everywhere:
       //
@@ -110,25 +115,57 @@ module.exports = function (ctx) {
       // directives: [],
 
       // Quasar plugins
-      plugins: ['Notify', 'Dialog', 'LocalStorage']
+      plugins: [
+        'Notify',
+        'Dialog',
+        'LocalStorage'
+      ]
     },
 
-    animations: 'all', // --- includes all animations
+    // animations: 'all', // --- includes all animations
     // https://quasar.dev/options/animations
-    // animations: [],
+    animations: [],
 
     // https://quasar.dev/quasar-cli/developing-ssr/configuring-ssr
     ssr: {
-      pwa: false
+      pwa: false,
+
+      // manualStoreHydration: true,
+      // manualPostHydrationTrigger: true,
+
+      prodPort: 3000, // The default port that the production server should use
+      // (gets superseded if process.env.PORT is specified at runtime)
+
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+      // Tell browser how long it can cache the build artifacts (in milliseconds)
+
+      extendLibConf(cfg) {
+        // do something with lib generated cfg
+      },
+
+      extendRootContext(/* ssrContext */) {
+        // ssrContext.someProperty = 'someValue'
+      },
+
+      extractCSS: false,
+
+      middlewares: [
+        ctx.prod ? 'compression' : '',
+        'render' // keep this as last one
+      ]
     },
 
     // https://quasar.dev/quasar-cli/developing-pwa/configuring-pwa
     pwa: {
-      workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
-      workboxOptions: {maximumFileSizeToCacheInBytes: 5000000,}, // only for GenerateSW
+      workboxMode: 'GenerateSW', // or 'InjectManifest'
+      injectPwaMetaTags: true,
+      swFilename: 'sw.js',
+      manifestFilename: 'manifest.json',
+      useCredentialsForProxySSR: false,
+
       manifest: {
-        name: 'FlowDeskPro',
-        short_name: 'FlowDeskPro',
+        name: 'IZING',
+        short_name: 'IZING',
         description: 'Bot Multi-atendimento para whatsapp',
         display: 'standalone',
         orientation: 'portrait',
@@ -166,7 +203,7 @@ module.exports = function (ctx) {
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
     cordova: {
-      // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
+      // noConfigHtmlSelection: true, // optionally disable the "No config.xml" error, if you know what you are doing
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
@@ -176,7 +213,9 @@ module.exports = function (ctx) {
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
     electron: {
-      bundler: 'builder', // 'packager' or 'builder'
+      inspectPort: 5858,
+
+      bundler: 'packager', // 'packager' or 'builder'
 
       packager: {
         // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
@@ -185,24 +224,32 @@ module.exports = function (ctx) {
         // appBundleId: '',
         // appCategoryType: '',
         // osxSign: '',
-        // protocol: 'myapp://path',
+        // protocol: 'my-app://',
 
-        // Windows only
-        // win32metadata: { ... }
+        // Windows / Linux
+        // platform: 'win32' // 'win32', 'linux', 'darwin', 'all'
       },
 
       builder: {
         // https://www.electron.build/configuration/configuration
-        appId: 'FlowDeskPro'
+
+        appId: 'IZING'
       },
 
-      // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
-      nodeIntegration: true,
+      // "chain" is a webpack-chain object for the main process
+      extendMainConf(/* cfg */) {
+        // do something with cfg
+      },
+    },
 
-      extendWebpack (/* cfg */) {
-        // do something with Electron main process Webpack cfg
-        // chainWebpack also available besides this extendWebpack
-      }
+    // Full list of options: https://quasar.dev/quasar-cli/developing-browser-extensions/configuring-bex
+    bex: {
+      contentScripts: [
+        'my-content-script'
+      ],
+
+      // extendBexScriptsConf (cfg) {}
+      // extendBexManifestJson (json) {}
     }
   }
-}
+});

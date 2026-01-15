@@ -50,7 +50,7 @@
                 self="bottom middle"
                 :offset="[5, 40]"
               >
-                <VEmojiPicker
+                <EmojiPicker
                   style="width: 40vw"
                   :showSearch="false"
                   :emojisByRow="20"
@@ -226,11 +226,12 @@
 
 <script>
 import { CriarMensagemRapida, AlterarMensagemRapida, DeletarImagemMensagemRapida } from 'src/service/mensagensRapidas'
-import { VEmojiPicker } from 'v-emoji-picker'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 
 export default {
   name: 'ModalMensagemRapida',
-  components: { VEmojiPicker },
+  components: { EmojiPicker },
   props: {
     modalMensagemRapida: {
       type: Boolean,
@@ -625,7 +626,7 @@ export default {
   background: transparent !important;
 }
 
-.video-preview-dialog::v-deep .q-dialog__backdrop {
+.video-preview-dialog :deep(.q-dialog__backdrop) {
   background: black !important;
   opacity: 0.9 !important;
 }

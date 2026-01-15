@@ -1,10 +1,11 @@
 const usuario = JSON.parse(localStorage.getItem('usuario'))
 import Router from 'src/router/index'
-import { socketIO } from '../utils/socket'
 import { ConsultarTickets } from 'src/service/tickets'
+import bus from 'src/utils/eventBus'
+import { socketIO } from '../utils/socket'
 
 const socket = socketIO()
-
+// ... (código intermediário mantido igual)
 const userId = +localStorage.getItem('userId')
 
 socket.on(`tokenInvalid:${socket.id}`, () => {
@@ -23,7 +24,7 @@ socket.on(`tokenInvalid:${socket.id}`, () => {
 
 export default {
   methods: {
-    socketInitial () {
+    socketInitial() {
       socket.emit(`${usuario.tenantId}:joinNotification`)
 
       socket.io.on(`${usuario.tenantId}:whatsapp`, data => {
@@ -33,20 +34,16 @@ export default {
       })
 
       socket.on(`${usuario.tenantId}:ticketList`, async data => {
-        console.log('socket ON')
         if (data.type === 'chat:create') {
-          console.log('chat:create')
           if (data.payload.ticket.userId !== userId) return
           if (data.payload.fromMe) return
-          const message = new self.Notification('Contato: ' + data.payload.ticket.contact.name, {
+          new self.Notification('Contato: ' + data.payload.ticket.contact.name, {
             body: 'Mensagem: ' + data.payload.body,
             tag: 'simple-push-demo-notification',
             image: data.payload.ticket.contact.profilePicUrl,
             icon: data.payload.ticket.contact.profilePicUrl
           })
-          console.log(message)
-          console.log('enviou msg')
-          // Atualiza notificações de mensagem
+
           const params = {
             searchParam: '',
             pageNumber: 1,
@@ -57,22 +54,12 @@ export default {
             withUnreadMessages: true,
             isNotAssignedUser: false,
             includeNotQueueDefined: true
-            // date: new Date(),
           }
-          console.log('Definiu parametros')
           try {
-            console.log('try')
             const { data } = await ConsultarTickets(params)
-            console.log('try 1')
-            this.countTickets = data.count // count total de tickets no status
-            console.log('try 2')
-            // this.ticketsList = data.tickets
+            this.countTickets = data.count
             this.$store.commit('UPDATE_NOTIFICATIONS', data)
-            console.log('try 3')
-            // this.$store.commit('SET_HAS_MORE', data.hasMore)
-            // console.log(this.notifications)
           } catch (err) {
-            console.log('error try')
             this.$notificarErro('Algum problema', err)
             console.error(err)
           }
@@ -88,7 +75,7 @@ export default {
       socket.on(`${usuario.tenantId}:whatsappSession`, data => {
         if (data.action === 'update') {
           this.$store.commit('UPDATE_SESSION', data.session)
-          this.$root.$emit('UPDATE_SESSION', data.session)
+          bus.emit('UPDATE_SESSION', data.session)
         }
 
         if (data.action === 'readySession') {
@@ -101,11 +88,7 @@ export default {
             html: true,
             progress: true,
             timeout: 7000,
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }],
+            actions: [{ icon: 'close', round: true, color: 'white' }],
             classes: 'text-body2 text-weight-medium'
           })
         }
@@ -117,15 +100,11 @@ export default {
           type: 'negative',
           progress: true,
           position: 'top',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
+          actions: [{ icon: 'close', round: true, color: 'white' }]
         })
       })
+
       socket.on(`${usuario.tenantId}:ticketList`, async data => {
-        var verify = []
         if (data.type === 'notification:new') {
           const params = {
             searchParam: '',
@@ -141,30 +120,28 @@ export default {
           try {
             const data_noti = await ConsultarTickets(params)
             this.$store.commit('UPDATE_NOTIFICATIONS_P', data_noti.data)
-            verify = data_noti
+
+            let pass_noti = false
+            data_noti.data.tickets.forEach((element) => { pass_noti = (element.id == data.payload.id ? true : pass_noti) })
+
+            if (pass_noti) {
+              new self.Notification('Novo cliente pendente', {
+                body: 'Cliente: ' + data.payload.contact.name,
+                tag: 'simple-push-demo-notification'
+              })
+            }
           } catch (err) {
             this.$notificarErro('Algum problema', err)
             console.error(err)
-          }
-          // Faz verificação para se certificar que notificação pertence a fila do usuário
-          var pass_noti = false
-          verify.data.tickets.forEach((element) => { pass_noti = (element.id == data.payload.id ? true : pass_noti) })
-          // Exibe Notificação
-          if (pass_noti) {
-            const message = new self.Notification('Novo cliente pendente', {
-              body: 'Cliente: ' + data.payload.contact.name,
-              tag: 'simple-push-demo-notification'
-            })
-            console.log(message)
           }
         }
       })
     }
   },
-  mounted () {
+  mounted() {
     this.socketInitial()
   },
-  destroyed () {
+  unmounted() {
     socket && socket.disconnect()
   }
 }

@@ -285,9 +285,9 @@
 import { DeletarAutoResposta, DeletarEtapaResposta, ListarAutoResposta, DeletarAcaoEtapa } from 'src/service/autoResposta'
 import { ListarFilas } from 'src/service/filas'
 import { ListarUsuarios } from 'src/service/user'
-import ModalAutoResposta from './ModalAutoResposta'
-import ModalEtapaAutoResposta from './ModalEtapaAutoResposta'
-import ModalAcaoEtapa from './ModalAcaoEtapa'
+import ModalAutoResposta from './ModalAutoResposta.vue'
+import ModalEtapaAutoResposta from './ModalEtapaAutoResposta.vue'
+import ModalAcaoEtapa from './ModalAcaoEtapa.vue'
 import ccFlow from '../../components/ccFlowBuilder/panel.vue'
 
 export default {
