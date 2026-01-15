@@ -180,23 +180,17 @@
 
 <script>
 
-import { DeletarWhatsapp, DeleteWhatsappSession, StartWhatsappSession, ListarWhatsapps, RequestNewQrCode, UpdateWhatsapp } from '../../service/sessoesWhatsapp'
 import { format, parseISO } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR/index'
-import ModalQrCode from './ModalQrCode.vue'
 import { mapGetters } from 'vuex'
-import ModalWhatsapp from './ModalWhatsapp.vue'
-import ItemStatusChannel from './ItemStatusChannel.vue'
 import { ListarChatFlow } from '../../service/chatFlow'
+import { DeletarWhatsapp, DeleteWhatsappSession, ListarWhatsapps, RequestNewQrCode, StartWhatsappSession, UpdateWhatsapp } from '../../service/sessoesWhatsapp'
 
 const userLogado = JSON.parse(localStorage.getItem('usuario'))
 
 export default {
   name: 'IndexSessoesWhatsapp',
   components: {
-    ModalQrCode,
-    ModalWhatsapp,
-    ItemStatusChannel
   },
   data () {
     return {

@@ -404,19 +404,17 @@
 </template>
 
 <script>
+import MicRecorder from 'mic-recorder-to-mp3'
 import { LocalStorage, uid } from 'quasar'
-import mixinCommon from './mixinCommon'
 import { EnviarMensagemTexto } from 'src/service/tickets'
+import { bus } from 'src/utils/eventBus'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 import { mapGetters } from 'vuex'
-import RecordingTimer from './RecordingTimer.vue'
-import MicRecorder from 'mic-recorder-to-mp3'
-import MediaPreview from 'src/components/MediaPreview.vue'
-import { bus } from 'src/utils/eventBus'
-const Mp3Recorder = new MicRecorder({ bitRate: 128 })
 import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
-import cDateTimePick from 'src/components/cDateTimePick.vue'
+import mixinCommon from './mixinCommon'
+import RecordingTimer from './RecordingTimer.vue'
+const Mp3Recorder = new MicRecorder({ bitRate: 128 })
 
 export default {
   name: 'InputMensagem',
@@ -436,10 +434,7 @@ export default {
     }
   },
   components: {
-    EmojiPicker,
-    RecordingTimer,
-    MediaPreview,
-    cDateTimePick
+    EmojiPicker
   },
   data () {
     return {

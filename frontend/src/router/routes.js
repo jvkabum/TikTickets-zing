@@ -5,27 +5,27 @@ const routes = [
     component: () => import('../layouts/MainLayout.vue'),
     redirect: { name: 'home' },
     children: [
-      { path: '', component: () => import('../pages/dashboard/Index.vue') },
-      { path: '/home', name: 'home-dashboard', component: () => import('../pages/dashboard/Index.vue') },
+      { path: '', component: () => import('../pages/dashboard/Dashboard.vue') },
+      { path: '/home', name: 'home-dashboard', component: () => import('../pages/dashboard/Dashboard.vue') },
       { path: '/painel-atendimentos', name: 'painel-atendimentos', component: () => import('../pages/dashboard/DashTicketsFilas.vue') },
-      { path: '/sessoes', name: 'sessoes', component: () => import('../pages/sessaoWhatsapp/Index.vue') },
-      { path: '/contatos', name: 'contatos', component: () => import('../pages/contatos/Index.vue') },
-      { path: '/usuarios', name: 'usuarios', component: () => import('../pages/usuarios/Index.vue') },
-      { path: '/auto-resposta', name: 'auto-resposta', component: () => import('../pages/fluxoAutoResposta/Index.vue') },
-      { path: '/mensagens-rapidas', name: 'mensagens-rapidas', component: () => import('../pages/mensagensRapidas/Index.vue') },
-      { path: '/filas', name: 'filas', component: () => import('../pages/filas/Index.vue') },
-      { path: '/configuracoes', name: 'configuracoes', component: () => import('../pages/configuracoes/Index.vue') },
-      { path: '/etiquetas', name: 'etiquetas', component: () => import('../pages/etiquetas/Index.vue') },
-      { path: '/campanhas', name: 'campanhas', component: () => import('../pages/campanhas/Index.vue') },
+      { path: '/sessoes', name: 'sessoes', component: () => import('../pages/sessaoWhatsapp/SessaoWhatsapp.vue') },
+      { path: '/contatos', name: 'contatos', component: () => import('../pages/contatos/Contatos.vue') },
+      { path: '/usuarios', name: 'usuarios', component: () => import('../pages/usuarios/Usuarios.vue') },
+      { path: '/auto-resposta', name: 'auto-resposta', component: () => import('../pages/fluxoAutoResposta/FluxoAutoResposta.vue') },
+      { path: '/mensagens-rapidas', name: 'mensagens-rapidas', component: () => import('../pages/mensagensRapidas/MensagensRapidas.vue') },
+      { path: '/filas', name: 'filas', component: () => import('../pages/filas/Filas.vue') },
+      { path: '/configuracoes', name: 'configuracoes', component: () => import('../pages/configuracoes/Configuracoes.vue') },
+      { path: '/etiquetas', name: 'etiquetas', component: () => import('../pages/etiquetas/Etiquetas.vue') },
+      { path: '/campanhas', name: 'campanhas', component: () => import('../pages/campanhas/Campanhas.vue') },
       { path: '/campanhas/:campanhaId', name: 'contatos-campanha', component: () => import('../pages/campanhas/ContatosCampanha.vue') },
-      { path: '/horario-atendimento', name: 'horarioAtendimento', component: () => import('../pages/horarioAtendimento/Index.vue') },
-      { path: '/api-service', name: 'api-service', component: () => import('../pages/api/Index.vue') },
-      { path: '/sessaosuper', name: 'sessaosuper', component: () => import('../pages/sessaosuper/Index.vue') },
-      { path: '/usuariossuper', name: 'usuariossuper', component: () => import('../pages/usuariossuper/Index.vue') },
-      { path: '/empresassuper', name: 'empresassuper', component: () => import('../pages/empresassuper/Index.vue') },
+      { path: '/horario-atendimento', name: 'horarioAtendimento', component: () => import('../pages/horarioAtendimento/HorarioAtendimento.vue') },
+      { path: '/api-service', name: 'api-service', component: () => import('../pages/api/Api.vue') },
+      { path: '/sessaosuper', name: 'sessaosuper', component: () => import('../pages/sessaosuper/SessaoSuper.vue') },
+      { path: '/usuariossuper', name: 'usuariossuper', component: () => import('../pages/usuariossuper/UsuariosSuperPagina.vue') },
+      { path: '/empresassuper', name: 'empresassuper', component: () => import('../pages/empresassuper/EmpresasSuper.vue') },
       {
         path: '/chat-flow',
-        component: () => import('../pages/chatFlow/Index.vue'),
+        component: () => import('../pages/chatFlow/ChatFlowPagina.vue'),
         redirect: 'chat-flow',
         children: [
           { path: '', name: 'chat-flow', component: () => import('../pages/chatFlow/ListaChatFlow.vue') },
@@ -70,7 +70,7 @@ const routes = [
     path: '/atendimento',
     name: 'atendimento',
     // redirect: { name: 'chat-empty' },
-    component: () => import('../pages/atendimento/Index.vue'),
+    component: () => import('../pages/atendimento/Atendimento.vue'),
     children: [
       {
         path: '/chats/',
@@ -81,17 +81,11 @@ const routes = [
         path: ':ticketId',
         name: 'chat',
         component: () => import('../pages/atendimento/Chat.vue')
-        // beforeEnter (to, from, next) {
-        //   if (!from.params.ticketId) {
-        //     next({ name: 'chat-empty' })
-        //   }
-        //   next()
-        // }
       },
       {
         path: 'contatos',
         name: 'chat-contatos',
-        component: () => import('../pages/contatos/Index.vue'),
+        component: () => import('../pages/contatos/Contatos.vue'),
         props: { isChatContact: true }
       }
 

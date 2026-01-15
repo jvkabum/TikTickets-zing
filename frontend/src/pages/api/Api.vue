@@ -155,13 +155,11 @@
 </template>
 
 <script>
-import { ListarAPIs, ApagarAPI, NovoTokenAPI } from '../../service/api'
-import { copyToClipboard } from 'quasar'
-import ModalApi from './ModalApi.vue'
+import { copyToClipboard } from 'quasar';
+import { ApagarAPI, ListarAPIs, NovoTokenAPI } from '../../service/api';
 export default {
   name: 'APIs',
   components: {
-    ModalApi
   },
   data () {
     return {

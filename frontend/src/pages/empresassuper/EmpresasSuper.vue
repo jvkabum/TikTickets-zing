@@ -11,7 +11,7 @@
       :columns="columns"
       :loading="loading"
       row-key="id"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[0]"
     >
 
@@ -66,8 +66,8 @@
     </template>
     </q-table>
     <ModalTenant
-      :modalTenant.sync="modalTenant"
-      :tenantEdicao.sync="tenantEdicao"
+      v-model:modalTenant="modalTenant"
+      v-model:tenantEdicao="tenantEdicao"
       @modal-tenant:criada="tenantCriada"
       @modal-tenant:editada="tenantEditada"
     />
@@ -75,12 +75,10 @@
 </template>
 
 <script>
-import { DeletarTenant, ListarTenants } from 'src/service/empresas'
-import ModalTenant from './ModalTenant.vue'
+import { DeletarTenant, ListarTenants } from 'src/service/empresas';
 export default {
   name: 'Tenants',
   components: {
-    ModalTenant
   },
   data () {
     return {

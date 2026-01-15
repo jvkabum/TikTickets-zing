@@ -6,8 +6,8 @@
       square
       hide-bottom
       class="my-sticky-dynamic q-ma-lg"
-      title="Etiquetas"
-      :data="etiquetas"
+      title="Filas"
+      :data="filas"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -19,18 +19,8 @@
           color="primary"
           label="Adicionar"
           rounded
-          @click="etiquetaEdicao = {}; modalEtiqueta = true"
+          @click="filaEdicao = {}; modalFila = true"
         />
-      </template>
-      <template v-slot:body-cell-color="props">
-        <q-td class="text-center">
-          <div
-            class="q-pa-sm rounded-borders"
-            :style="`background: ${props.row.color}`"
-          >
-            {{ props.row.color }}
-          </div>
-        </q-td>
       </template>
       <template v-slot:body-cell-isActive="props">
         <q-td class="text-center">
@@ -41,51 +31,44 @@
           />
         </q-td>
       </template>
-      <template v-slot:body-cell-autoTag="props">
-        <q-td class="text-center">
-          {{ props.row.autoTag }}
-        </q-td>
-      </template>
       <template v-slot:body-cell-acoes="props">
         <q-td class="text-center">
           <q-btn
             flat
             round
             icon="edit"
-            @click="editarEtiqueta(props.row)"
+            @click="editarFila(props.row)"
           />
           <q-btn
             flat
             round
             icon="mdi-delete"
-            @click="deletarEtiqueta(props.row)"
+            @click="deletarFila(props.row)"
           />
         </q-td>
       </template>
     </q-table>
-    <ModalEtiqueta
-      :modalEtiqueta.sync="modalEtiqueta"
-      :etiquetaEdicao.sync="etiquetaEdicao"
-      @modal-etiqueta:criada="etiquetaCriada"
-      @modal-etiqueta:editada="etiquetaEditada"
+    <ModalFila
+      :modalFila.sync="modalFila"
+      :filaEdicao.sync="filaEdicao"
+      @modal-fila:criada="filaCriada"
+      @modal-fila:editada="filaEditada"
     />
   </div>
 </template>
 
 <script>
-import { DeletarEtiqueta, ListarEtiquetas } from 'src/service/etiquetas'
-import ModalEtiqueta from './ModalEtiqueta.vue'
+import { DeletarFila, ListarFilas } from 'src/service/filas';
 export default {
-  name: 'Etiquetas',
+  name: 'Filas',
   components: {
-    ModalEtiqueta
   },
   data () {
     return {
       userProfile: 'user',
-      etiquetaEdicao: {},
-      modalEtiqueta: false,
-      etiquetas: [],
+      filaEdicao: {},
+      modalFila: false,
+      filas: [],
       pagination: {
         rowsPerPage: 40,
         rowsNumber: 0,
@@ -94,40 +77,38 @@ export default {
       loading: false,
       columns: [
         { name: 'id', label: '#', field: 'id', align: 'left' },
-        { name: 'tag', label: 'Etiqueta', field: 'tag', align: 'left' },
-        { name: 'color', label: 'Cor', field: 'color', align: 'center' },
+        { name: 'queue', label: 'Fila', field: 'queue', align: 'left' },
         { name: 'isActive', label: 'Ativo', field: 'isActive', align: 'center' },
-        { name: 'autoTag', label: 'Auto Tag', field: 'autoTag', align: 'center' }, // Nova coluna
         { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
       ]
     }
   },
   methods: {
-    async listarEtiquetas () {
-      const { data } = await ListarEtiquetas()
-      this.etiquetas = data
+    async listarFilas () {
+      const { data } = await ListarFilas()
+      this.filas = data
     },
-    etiquetaCriada (etiqueta) {
-      const newEtiquetas = [...this.etiquetas]
-      newEtiquetas.push(etiqueta)
-      this.etiquetas = [...newEtiquetas]
+    filaCriada (fila) {
+      const newFilas = [...this.filas]
+      newFilas.push(fila)
+      this.filas = [...newFilas]
     },
-    etiquetaEditada (etiqueta) {
-      const newEtiquetas = [...this.etiquetas]
-      const idx = newEtiquetas.findIndex(f => f.id === etiqueta.id)
+    filaEditada (fila) {
+      const newFilas = [...this.filas]
+      const idx = newFilas.findIndex(f => f.id === fila.id)
       if (idx > -1) {
-        newEtiquetas[idx] = etiqueta
+        newFilas[idx] = fila
       }
-      this.etiquetas = [...newEtiquetas]
+      this.filas = [...newFilas]
     },
-    editarEtiqueta (etiqueta) {
-      this.etiquetaEdicao = { ...etiqueta }
-      this.modalEtiqueta = true
+    editarFila (fila) {
+      this.filaEdicao = { ...fila }
+      this.modalFila = true
     },
-    deletarEtiqueta (etiqueta) {
+    deletarFila (fila) {
       this.$q.dialog({
         title: 'Atenção!!',
-        message: `Deseja realmente deletar a Etiqueta "${etiqueta.tag}"?`,
+        message: `Deseja realmente deletar a Fila "${fila.queue}"?`,
         cancel: {
           label: 'Não',
           color: 'primary',
@@ -141,17 +122,17 @@ export default {
         persistent: true
       }).onOk(() => {
         this.loading = true
-        DeletarEtiqueta(etiqueta)
+        DeletarFila(fila)
           .then(res => {
-            let newEtiquetas = [...this.etiquetas]
-            newEtiquetas = newEtiquetas.filter(f => f.id !== etiqueta.id)
+            let newFilas = [...this.filas]
+            newFilas = newFilas.filter(f => f.id !== fila.id)
 
-            this.etiquetas = [...newEtiquetas]
+            this.filas = [...newFilas]
             this.$q.notify({
               type: 'positive',
               progress: true,
               position: 'top',
-              message: `Etiqueta ${etiqueta.tag} deletada!`,
+              message: `Fila ${fila.queue} deletada!`,
               actions: [{
                 icon: 'close',
                 round: true,
@@ -166,7 +147,7 @@ export default {
   },
   mounted () {
     this.userProfile = localStorage.getItem('profile')
-    this.listarEtiquetas()
+    this.listarFilas()
   }
 }
 </script>

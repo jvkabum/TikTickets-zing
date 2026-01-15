@@ -9,6 +9,7 @@
 /* eslint-env node */
 import path from 'path';
 import { configure } from 'quasar/wrappers';
+import Components from 'unplugin-vue-components/vite';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -77,6 +78,35 @@ export default configure(function (ctx) {
 
       // https://quasar.dev/quasar-cli/handling-vite
       extendViteConf(viteConf) {
+        viteConf.plugins.push(
+          Components({
+            dirs: [
+              'src/components',
+              'src/layouts',
+              'src/pages/api',
+              'src/pages/atendimento',
+              'src/pages/campanhas',
+              'src/pages/chatFlow',
+              'src/pages/configuracoes',
+              'src/pages/contatos',
+              'src/pages/dashboard',
+              'src/pages/empresassuper',
+              'src/pages/etiquetas',
+              'src/pages/filas',
+              'src/pages/fluxoAutoResposta',
+              'src/pages/horarioAtendimento',
+              'src/pages/mensagensRapidas',
+              'src/pages/relatorios',
+              'src/pages/sessaoWhatsapp',
+              'src/pages/sessaosuper',
+              'src/pages/usuarios',
+              'src/pages/usuariossuper'
+            ],
+            extensions: ['vue'],
+            deep: true,
+            dts: false,
+          })
+        )
         viteConf.resolve = viteConf.resolve || {}
         viteConf.resolve.alias = {
           ...viteConf.resolve.alias,

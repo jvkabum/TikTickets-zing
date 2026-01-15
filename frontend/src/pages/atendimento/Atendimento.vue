@@ -844,45 +844,31 @@
 </template>
 
 <script>
-import ItemStatusChannel from 'src/pages/sessaoWhatsapp/ItemStatusChannel.vue'
-import ContatoModal from 'src/pages/contatos/ContatoModal.vue'
-import ItemTicket from './ItemTicket.vue'
-import { ConsultarLogsTicket, ConsultarTickets, DeletarMensagem } from 'src/service/tickets'
-import { mapGetters } from 'vuex'
-import mixinSockets from './mixinSockets'
+import { format } from 'date-fns'
+import { debounce } from 'quasar'
+import alertSound from 'src/assets/sound.mp3'
 import socketInitial from 'src/layouts/socketInitial'
-import ModalNovoTicket from './ModalNovoTicket.vue'
+import { ListarConfiguracoes } from 'src/service/configuracoes'
+import { EditarCarteiraContato, EditarEtiquetasContato } from 'src/service/contatos'
+import { ListarEtiquetas } from 'src/service/etiquetas'
 import { ListarFilas } from 'src/service/filas'
+import { RealizarLogout } from 'src/service/login'
+import { ListarMensagensRapidas } from 'src/service/mensagensRapidas'
+import { ListarWhatsapps } from 'src/service/sessoesWhatsapp'
+import { ConsultarLogsTicket, ConsultarTickets, DeletarMensagem } from 'src/service/tickets'
+import { ListarUsuarios } from 'src/service/user'
+import bus from 'src/utils/eventBus'
+import { mapGetters } from 'vuex'
+import { messagesLog } from '../../utils/constants'
+import mixinSockets from './mixinSockets'
 const UserQueues = JSON.parse(localStorage.getItem('queues'))
 const profile = localStorage.getItem('profile')
 const username = localStorage.getItem('username')
 const usuario = JSON.parse(localStorage.getItem('usuario'))
-import StatusWhatsapp from 'src/components/StatusWhatsapp.vue'
-import alertSound from 'src/assets/sound.mp3'
-import { ListarWhatsapps } from 'src/service/sessoesWhatsapp'
-import { debounce } from 'quasar'
-import { format } from 'date-fns'
-import ModalUsuario from 'src/pages/usuarios/ModalUsuario.vue'
-import { ListarConfiguracoes } from 'src/service/configuracoes'
-import { ListarMensagensRapidas } from 'src/service/mensagensRapidas'
-import { ListarEtiquetas } from 'src/service/etiquetas'
-import { EditarEtiquetasContato, EditarCarteiraContato } from 'src/service/contatos'
-import { RealizarLogout } from 'src/service/login'
-import { ListarUsuarios } from 'src/service/user'
-import MensagemChat from './MensagemChat.vue'
-import { messagesLog } from '../../utils/constants'
-import bus from 'src/utils/eventBus'
 export default {
   name: 'IndexAtendimento',
   mixins: [mixinSockets, socketInitial],
   components: {
-    ItemTicket,
-    ModalNovoTicket,
-    StatusWhatsapp,
-    ContatoModal,
-    ModalUsuario,
-    MensagemChat,
-    ItemStatusChannel
   },
   data () {
     return {

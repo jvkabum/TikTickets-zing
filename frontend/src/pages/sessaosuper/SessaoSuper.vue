@@ -40,7 +40,7 @@
           </q-item>
           <q-separator />
           <q-card-section>
-            <ItemStatusChannel :item="item" />
+            <ItemStatusChannelSuper :item="item" />
           </q-card-section>
           <q-separator />
           <q-card-actions
@@ -67,11 +67,10 @@
 </template>
 
 <script>
-import { AdminListarChannels } from '../../service/channels'
 import { format, parseISO } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR/index'
 import { mapGetters } from 'vuex'
-import ItemStatusChannel from './ItemStatusChannel.vue'
+import { AdminListarChannels } from '../../service/channels'
 import { AdminListarEmpresas } from '../../service/empresas'
 
 const userLogado = JSON.parse(localStorage.getItem('usuario'))
@@ -79,7 +78,6 @@ const userLogado = JSON.parse(localStorage.getItem('usuario'))
 export default {
   name: 'IndexSessoesWhatsapp',
   components: {
-    ItemStatusChannel
   },
   data () {
     return {

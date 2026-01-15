@@ -248,7 +248,7 @@
                   :mensagem="mensagem"
                   @openContactModal="openContactModal"
                 />
-                <ContatoModal
+                <ContatoModalReduzido
                   :value="modalContato"
                   :contact="currentContact"
                   @close="closeModal"
@@ -387,19 +387,14 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import axios from 'axios'
 import { Base64 } from 'js-base64'
-import AudioVisualizer from '../../components/AudioVisualizer.vue'
-import MediaViewer from '../../components/MediaViewer/MediaViewer.vue'
-import MensagemRespondida from './MensagemRespondida.vue'
-import ContatoCard from './ContatoCard.vue'
-import ContatoModal from './ContatoModal.vue'
-import { DeletarMensagem, EditarMensagem } from 'src/service/tickets'
 import { ListarProtocolos } from 'src/service/protocols'
-import mixinCommon from './mixinCommon'
-import CodeViewer from '../../components/CodeViewer.vue'
+import { DeletarMensagem, EditarMensagem } from 'src/service/tickets'
+import { mapGetters } from 'vuex'
 import { formatarMensagemWhatsapp } from '../../utils/format'
+import ContatoModalReduzido from './ContatoModalReduzido.vue'
+import mixinCommon from './mixinCommon'
 
 const downloadImageCors = axios.create({
   baseURL: process.env.VUE_URL_API,
@@ -483,12 +478,7 @@ export default {
     }
   },
   components: {
-    AudioVisualizer,
-    MediaViewer,
-    MensagemRespondida,
-    ContatoCard,
-    ContatoModal,
-    CodeViewer
+    ContatoModalReduzido
   },
   computed: {
     ...mapGetters(['ticketFocado']),

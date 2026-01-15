@@ -93,11 +93,10 @@
 </template>
 
 <script>
-import ModalMensagemRapida from './ModalMensagemRapida.vue'
-import { ListarMensagensRapidas, DeletarMensagemRapida } from '../../service/mensagensRapidas'
+import { DeletarMensagemRapida, ListarMensagensRapidas } from '../../service/mensagensRapidas';
 export default {
   name: 'MensagensRapidas',
-  components: { ModalMensagemRapida },
+  components: { },
   data () {
     return {
       loading: false,

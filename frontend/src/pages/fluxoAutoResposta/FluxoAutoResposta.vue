@@ -282,17 +282,13 @@
 </template>
 
 <script>
-import { DeletarAutoResposta, DeletarEtapaResposta, ListarAutoResposta, DeletarAcaoEtapa } from 'src/service/autoResposta'
-import { ListarFilas } from 'src/service/filas'
-import { ListarUsuarios } from 'src/service/user'
-import ModalAutoResposta from './ModalAutoResposta.vue'
-import ModalEtapaAutoResposta from './ModalEtapaAutoResposta.vue'
-import ModalAcaoEtapa from './ModalAcaoEtapa.vue'
-import ccFlow from '../../components/ccFlowBuilder/panel.vue'
+import { DeletarAcaoEtapa, DeletarAutoResposta, DeletarEtapaResposta, ListarAutoResposta } from 'src/service/autoResposta';
+import { ListarFilas } from 'src/service/filas';
+import { ListarUsuarios } from 'src/service/user';
 
 export default {
   name: 'CadastroAutoReply',
-  components: { ccFlow, ModalAutoResposta, ModalEtapaAutoResposta, ModalAcaoEtapa },
+  components: { },
   data () {
     return {
       autoRespostaSelecionado: {},

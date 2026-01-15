@@ -255,18 +255,14 @@
 
 <script>
 import bus from 'src/utils/eventBus'
-import cSystemVersion from '../components/cSystemVersion.vue'
 import { ListarWhatsapps } from 'src/service/sessoesWhatsapp'
-import EssentialLink from 'components/EssentialLink.vue'
 import socketInitial from './socketInitial'
 import alertSound from 'src/assets/sound.mp3'
 import { format } from 'date-fns'
 const username = localStorage.getItem('username')
-import ModalUsuario from 'src/pages/usuarios/ModalUsuario.vue'
 import { mapGetters } from 'vuex'
 import { ListarConfiguracoes } from 'src/service/configuracoes'
 import { RealizarLogout } from 'src/service/login'
-import cStatusUsuario from '../components/cStatusUsuario.vue'
 import { socketIO } from 'src/utils/socket'
 import { ConsultarTickets } from 'src/service/tickets'
 
@@ -393,7 +389,7 @@ const superMenu = [
 export default {
   name: 'MainLayout',
   mixins: [socketInitial],
-  components: { EssentialLink, ModalUsuario, cStatusUsuario, cSystemVersion },
+  components: { },
 
   data () {
     return {

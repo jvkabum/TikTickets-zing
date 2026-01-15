@@ -87,13 +87,11 @@
 
 <script>
 // const userId = +localStorage.getItem('userId')
-import { ListarUsuarios, DeleteUsuario } from '../../service/user'
-import { ListarFilas } from '../../service/filas'
-import ModalUsuario from './ModalUsuario.vue'
-import ModalFilaUsuario from './ModalFilaUsuario.vue'
+import { ListarFilas } from '../../service/filas';
+import { DeleteUsuario, ListarUsuarios } from '../../service/user';
 export default {
   name: 'IndexUsuarios',
-  components: { ModalUsuario, ModalFilaUsuario },
+  components: { },
   data () {
     return {
       userProfile: 'user',

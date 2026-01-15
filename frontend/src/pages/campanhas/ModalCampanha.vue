@@ -394,17 +394,14 @@
 </template>
 
 <script>
-import { required } from '@vuelidate/validators'
 import { useVuelidate } from '@vuelidate/core'
+import { required } from '@vuelidate/validators'
+import axios from 'axios'
+import { parseISO, startOfDay } from 'date-fns'
+import { AlterarCampanha, CriarCampanha } from 'src/service/campanhas'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
-import axios from 'axios'
-import cMolduraCelular from 'src/components/cMolduraCelular.vue'
-import MensagemChat from 'src/pages/atendimento/MensagemChat.vue'
-import cDateTimePick from 'src/components/cDateTimePick.vue'
 import { mapGetters } from 'vuex'
-import { CriarCampanha, AlterarCampanha } from 'src/service/campanhas'
-import { parseISO, startOfDay } from 'date-fns'
 
 const isValidDate = (v) => {
   if (!v) return true
@@ -421,7 +418,7 @@ const downloadImageCors = axios.create({
 
 export default {
   name: 'ModalCampanha',
-  components: { EmojiPicker, cMolduraCelular, MensagemChat, cDateTimePick },
+  components: { EmojiPicker },
   props: {
     modalCampanha: {
       type: Boolean,

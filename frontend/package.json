@@ -63,6 +63,7 @@
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-vue": "^9.13.0",
     "postcss": "^8.4.23",
+    "unplugin-vue-components": "^30.0.0",
     "workbox-build": "^7.0.0"
   },
   "browserslist": [

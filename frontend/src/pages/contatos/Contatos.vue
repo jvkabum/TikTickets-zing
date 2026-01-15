@@ -353,16 +353,15 @@
 
 <script>
 const userId = +localStorage.getItem('userId')
-import { CriarTicket } from '../../service/tickets'
-import { ListarContatos, ImportarArquivoContato, DeletarContato, SyncronizarContatos, ExportarArquivoContato } from '../../service/contatos'
-import ContatoModal from './ContatoModal.vue'
-import { ListarUsuarios } from '../../service/user'
-import { ListarEtiquetas } from '../../service/etiquetas'
 import { mapGetters } from 'vuex'
+import { DeletarContato, ExportarArquivoContato, ImportarArquivoContato, ListarContatos, SyncronizarContatos } from '../../service/contatos'
+import { ListarEtiquetas } from '../../service/etiquetas'
+import { CriarTicket } from '../../service/tickets'
+import { ListarUsuarios } from '../../service/user'
 
 export default {
   name: 'IndexContatos',
-  components: { ContatoModal },
+  components: { },
   userProfile: 'user',
   usuario: {},
   props: {

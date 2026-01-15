@@ -119,9 +119,8 @@
 </template>
 
 <script>
-import { CancelarCampanha, DeletarCampanha, IniciarCampanha, ListarCampanhas } from 'src/service/campanhas'
-import ModalCampanha from './ModalCampanha.vue'
 import { format, parseISO, startOfDay } from 'date-fns'
+import { CancelarCampanha, DeletarCampanha, IniciarCampanha, ListarCampanhas } from 'src/service/campanhas'
 import { socketIO } from 'src/utils/socket'
 const socket = socketIO()
 const usuario = JSON.parse(localStorage.getItem('usuario'))
@@ -129,7 +128,6 @@ const usuario = JSON.parse(localStorage.getItem('usuario'))
 export default {
   name: 'Campanhas',
   components: {
-    ModalCampanha
   },
   data () {
     return {
@@ -296,7 +294,7 @@ export default {
     this.listarCampanhas()
     this.socketInit()
   },
-  beforeDestroy () {
+  unmounted () {
     socket.off(`${usuario.tenantId}:campaign`)
   }
 }

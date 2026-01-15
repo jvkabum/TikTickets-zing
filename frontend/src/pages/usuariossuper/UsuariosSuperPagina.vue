@@ -57,13 +57,13 @@
         {{ usuarios.length }}/{{ pagination.rowsNumber }}
       </template>
     </q-table>
-    <ModalUsuario
+    <ModalUsuarioSuper
       v-model:modalUsuario="modalUsuario"
       @modalUsuario:usuario-editado="UPDATE_USUARIO"
       @modalUsuario:usuario-criado="usuarioCriado"
       v-model:usuarioEdicao="usuarioSelecionado"
     />
-    <ModalUsuarioEdit
+    <ModalUsuarioEditSuper
       v-model:modalUsuario="modalUsuarioEdit"
       @modalUsuario:usuario-editado="UPDATE_USUARIO"
       v-model:usuarioEdicao="usuarioSelecionado"
@@ -73,12 +73,10 @@
 
 <script>
 // const userId = +localStorage.getItem('userId')
-import { AdminListarUsuarios } from '../../service/user'
-import ModalUsuarioEdit from './ModalUsuarioedit.vue'
-import ModalUsuario from './ModalUsuario.vue'
+import { AdminListarUsuarios } from '../../service/user';
 export default {
   name: 'IndexUsuarios',
-  components: { ModalUsuario, ModalUsuarioEdit },
+  components: { },
   data () {
     return {
       userProfile: 'user',

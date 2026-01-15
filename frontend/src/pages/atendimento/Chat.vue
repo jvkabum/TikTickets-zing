@@ -334,17 +334,15 @@
 </template>
 <script>
 import mixinCommon from './mixinCommon'
-import InforCabecalhoChat from './InforCabecalhoChat.vue'
 // import parser from 'vdata-parser'
-import MensagemChat from './MensagemChat.vue'
-import InputMensagem from './InputMensagem.vue'
-import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
-import mixinSockets from './mixinSockets'
+// import parser from 'vdata-parser'
+import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
+import whatsBackground from 'src/assets/wa-background.png'
 import InfiniteLoading from 'v3-infinite-loading'
 import { ListarContatos } from '../../service/contatos'
 import { EncaminharMensagem } from '../../service/tickets'
-import whatsBackground from 'src/assets/wa-background.png'
-import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
+import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
+import mixinSockets from './mixinSockets'
 
 export default {
   name: 'Chat',
@@ -353,9 +351,6 @@ export default {
     mensagensRapidas: Array
   },
   components: {
-    InforCabecalhoChat,
-    MensagemChat,
-    InputMensagem,
     InfiniteLoading
   },
   data () {
