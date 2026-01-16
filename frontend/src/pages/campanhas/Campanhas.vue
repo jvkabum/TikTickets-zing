@@ -10,7 +10,7 @@
       :columns="columns"
       :loading="loading"
       row-key="id"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[0]"
     >
       <template v-slot:top-right>
@@ -21,15 +21,18 @@
           rounded
           @click="listarCampanhas"
         >
-          <q-tooltip>
-            Atualizar Listagem
-          </q-tooltip>
+          <q-tooltip> Atualizar Listagem </q-tooltip>
         </q-btn>
         <q-btn
           rounded
           color="primary"
           label="Adicionar"
-          @click="campanhaEdicao = {}; modalCampanha = true"
+          @click="
+            () => {
+              campanhaEdicao = {}
+              modalCampanha = true
+            }
+          "
         />
       </template>
       <template v-slot:body-cell-color="props">
@@ -59,9 +62,7 @@
             icon="mdi-account-details-outline"
             @click="contatosCampanha(props.row)"
           >
-            <q-tooltip>
-              Lista de Contatos da Campanha
-            </q-tooltip>
+            <q-tooltip> Lista de Contatos da Campanha </q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -70,9 +71,7 @@
             icon="mdi-calendar-clock"
             @click="iniciarCampanha(props.row)"
           >
-            <q-tooltip>
-              Programar Envio
-            </q-tooltip>
+            <q-tooltip> Programar Envio </q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -81,9 +80,7 @@
             icon="mdi-close-box-multiple"
             @click="cancelarCampanha(props.row)"
           >
-            <q-tooltip>
-              Cancelar Campanha
-            </q-tooltip>
+            <q-tooltip> Cancelar Campanha </q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -91,9 +88,7 @@
             icon="edit"
             @click="editarCampanha(props.row)"
           >
-            <q-tooltip>
-              Editar Campanha
-            </q-tooltip>
+            <q-tooltip> Editar Campanha </q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -101,205 +96,240 @@
             icon="mdi-delete"
             @click="deletarCampanha(props.row)"
           >
-            <q-tooltip>
-              Excluir Campanha
-            </q-tooltip>
+            <q-tooltip> Excluir Campanha </q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
     <ModalCampanha
       v-if="modalCampanha"
-      :modalCampanha.sync="modalCampanha"
-      :campanhaEdicao.sync="campanhaEdicao"
+      v-model:modalCampanha="modalCampanha"
+      v-model:campanhaEdicao="campanhaEdicao"
       @modal-campanha:criada="campanhaCriada"
       @modal-campanha:editada="campanhaEditada"
     />
   </div>
 </template>
 
-<script>
+<script setup>
 import { format, parseISO, startOfDay } from 'date-fns'
-import { CancelarCampanha, DeletarCampanha, IniciarCampanha, ListarCampanhas } from 'src/service/campanhas'
+import { storeToRefs } from 'pinia'
+import { useQuasar } from 'quasar'
+import { useCampanhaStore } from 'src/stores/useCampanhaStore'
+import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
 import { socketIO } from 'src/utils/socket'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import ModalCampanha from './ModalCampanha.vue'
+
+const router = useRouter()
+const $q = useQuasar()
 const socket = socketIO()
+const store = useCampanhaStore()
+const { campanhas, loading } = storeToRefs(store)
+const {
+  listarCampanhas,
+  deletarCampanha: deletarCampanhaStore,
+  cancelarCampanha: cancelarCampanhaStore,
+  iniciarCampanha: iniciarCampanhaStore,
+  atualizarCampanha
+} = store
+
 const usuario = JSON.parse(localStorage.getItem('usuario'))
+const userProfile = ref('user')
+const campanhaEdicao = ref({})
+const modalCampanha = ref(false)
 
-export default {
-  name: 'Campanhas',
-  components: {
+const pagination = ref({
+  rowsPerPage: 40,
+  rowsNumber: 0,
+  lastIndex: 0
+})
+
+const statusOptions = {
+  pending: 'Pendente',
+  scheduled: 'Programada',
+  processing: 'Processando',
+  canceled: 'Cancelada',
+  finished: 'Finalizada',
+  failed: 'Falhou'
+}
+
+const columns = [
+  { name: 'id', label: '#', field: 'id', align: 'left' },
+  { name: 'name', label: 'Campanha', field: 'name', align: 'left' },
+  {
+    name: 'start',
+    label: 'Início',
+    field: 'start',
+    align: 'center',
+    format: v => format(parseISO(v), 'dd/MM/yyyy HH:mm')
   },
-  data () {
-    return {
-      userProfile: 'user',
-      campanhaEdicao: {},
-      modalCampanha: false,
-      campanhas: [],
-      pagination: {
-        rowsPerPage: 40,
-        rowsNumber: 0,
-        lastIndex: 0
-      },
-      loading: false,
-      columns: [
-        { name: 'id', label: '#', field: 'id', align: 'left' },
-        { name: 'name', label: 'Campanha', field: 'name', align: 'left' },
-        { name: 'start', label: 'Início', field: 'start', align: 'center', format: (v) => format(parseISO(v), 'dd/MM/yyyy HH:mm') },
-        {
-          name: 'status',
-          label: 'Status',
-          field: 'status',
-          align: 'center',
-          format: (v) => v ? this.status[v] : ''
-        },
-        { name: 'contactsCount', label: 'Qtd. Contatos', field: 'contactsCount', align: 'center' },
-        { name: 'pendentesEnvio', label: 'À Enviar', field: 'pendentesEnvio', align: 'center' },
-        { name: 'pendentesEntrega', label: 'À Entregar', field: 'pendentesEntrega', align: 'center' },
-        { name: 'recebidas', label: 'Recebidas', field: 'recebidas', align: 'center' },
-        { name: 'lidas', label: 'Lidas', field: 'lidas', align: 'center' },
-        { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
-      ],
-      status: {
-        pending: 'Pendente',
-        scheduled: 'Programada',
-        processing: 'Processando',
-        canceled: 'Cancelada',
-        finished: 'Finalizada',
-        failed: 'Falhou'
-      }
+  {
+    name: 'status',
+    label: 'Status',
+    field: 'status',
+    align: 'center',
+    format: v => (v ? statusOptions[v] : '')
+  },
+  {
+    name: 'contactsCount',
+    label: 'Qtd. Contatos',
+    field: 'contactsCount',
+    align: 'center'
+  },
+  {
+    name: 'pendentesEnvio',
+    label: 'À Enviar',
+    field: 'pendentesEnvio',
+    align: 'center'
+  },
+  {
+    name: 'pendentesEntrega',
+    label: 'À Entregar',
+    field: 'pendentesEntrega',
+    align: 'center'
+  },
+  {
+    name: 'recebidas',
+    label: 'Recebidas',
+    field: 'recebidas',
+    align: 'center'
+  },
+  { name: 'lidas', label: 'Lidas', field: 'lidas', align: 'center' },
+  { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
+]
+
+const isValidDate = v => {
+  return startOfDay(new Date(parseISO(v))).getTime() >= startOfDay(new Date()).getTime()
+}
+
+const campanhaCriada = () => {
+  listarCampanhas()
+}
+
+const campanhaEditada = () => {
+  listarCampanhas()
+}
+
+const editarCampanha = campanha => {
+  if (campanha.status !== 'pending' && campanha.status !== 'canceled') {
+    notificarErro('Só é permitido editar campanhas que estejam pendentes ou canceladas.')
+    return
+  }
+  campanhaEdicao.value = {
+    ...campanha,
+    start: campanha.start,
+    end: campanha.start
+  }
+  modalCampanha.value = true
+}
+
+const deletarCampanha = campanha => {
+  if (campanha.status !== 'pending' && campanha.status !== 'canceled' && campanha.contactsCount) {
+    notificarErro(
+      'Só é permitido deletar campanhas que estejam pendentes ou canceladas e não possuam contatos vinculados.'
+    )
+    return
+  }
+  $q.dialog({
+    title: 'Atenção!!',
+    message: `Deseja realmente deletar a Campanha "${campanha.name}"?`,
+    cancel: {
+      label: 'Não',
+      color: 'primary',
+      push: true
+    },
+    ok: {
+      label: 'Sim',
+      color: 'negative',
+      push: true
+    },
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await deletarCampanhaStore(campanha)
+      notificarSucesso(`Campanha ${campanha.name} deletada!`)
+    } catch (error) {
+      console.error(error)
     }
-  },
-  methods: {
-    async listarCampanhas () {
-      const { data } = await ListarCampanhas()
-      this.campanhas = data
-    },
-    isValidDate (v) {
-      return startOfDay(new Date(parseISO(v))).getTime() >= startOfDay(new Date()).getTime()
-    },
-    campanhaCriada (campanha) {
-      this.listarCampanhas()
-    },
-    campanhaEditada (campanha) {
-      this.listarCampanhas()
-    },
-    editarCampanha (campanha) {
-      if (campanha.status !== 'pending' && campanha.status !== 'canceled') {
-        this.$notificarErro('Só é permitido editar campanhas que estejam pendentes ou canceladas.')
-      }
-      this.campanhaEdicao = {
-        ...campanha,
-        start: campanha.start,
-        end: campanha.start
-      }
-      this.modalCampanha = true
-    },
-    deletarCampanha (campanha) {
-      if (campanha.status !== 'pending' && campanha.status !== 'canceled' && campanha.contactsCount) {
-        this.$notificarErro('Só é permitido deletar campanhas que estejam pendentes ou canceladas e não possuam contatos vinculados.')
-      }
-      this.$q.dialog({
-        title: 'Atenção!!',
-        message: `Deseja realmente deletar a Campanha "${campanha.tag}"?`,
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        this.loading = true
-        DeletarCampanha(campanha)
-          .then(res => {
-            let newCampanhas = [...this.campanhas]
-            newCampanhas = newCampanhas.filter(f => f.id !== campanha.id)
-            this.campanhas = [...newCampanhas]
-            this.$notificarSucesso(`Campanha ${campanha.tag} deletada!`)
-          })
-        this.loading = false
-      })
-    },
-    contatosCampanha (campanha) {
-      this.$router.push({
-        name: 'contatos-campanha',
-        params: {
-          campanhaId: campanha.id,
-          campanha
-        }
-      })
-    },
-    cancelarCampanha (campanha) {
-      this.$q.dialog({
-        title: 'Atenção!!',
-        message: `Deseja realmente deletar a Campanha "${campanha.name}"?`,
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        CancelarCampanha(campanha.id)
-          .then(res => {
-            this.$notificarSucesso('Campanha cancelada.')
-            this.listarCampanhas()
-          }).catch(err => {
-            this.$notificarErro('Não foi possível cancelar a campanha.', err)
-          })
-      })
-    },
-    iniciarCampanha (campanha) {
-      if (!this.isValidDate(campanha.start)) {
-        this.$notificarErro('Não é possível programar campanha com data menor que a atual')
-      }
+  })
+}
 
-      if (campanha.contactsCount == 0) {
-        this.$notificarErro('Necessário ter contatos vinculados para programar a campanha.')
-      }
-
-      if (campanha.status !== 'pending' && campanha.status !== 'canceled') {
-        this.$notificarErro('Só é permitido programar campanhas que estejam pendentes ou canceladas.')
-      }
-
-      IniciarCampanha(campanha.id).then(res => {
-        this.$notificarSucesso('Campanha iniciada.')
-        this.listarCampanhas()
-      }).catch(err => {
-        this.$notificarErro('Não foi possível iniciar a campanha.', err)
-      })
-    },
-    socketInit () {
-      socket.on(`${usuario.tenantId}:campaign`, data => {
-        if (data.action === 'update') {
-          const idx = this.campanhas.findIndex(c => c.id === data.campaign.id)
-          if (idx !== -1) {
-            this.campanhas[idx] = data.campaign
-          }
-        }
-      })
+const contatosCampanha = campanha => {
+  router.push({
+    name: 'contatos-campanha',
+    params: {
+      campanhaId: campanha.id,
+      campanha
     }
-  },
-  mounted () {
-    this.userProfile = localStorage.getItem('profile')
-    this.listarCampanhas()
-    this.socketInit()
-  },
-  unmounted () {
-    socket.off(`${usuario.tenantId}:campaign`)
+  })
+}
+
+const cancelarCampanha = campanha => {
+  $q.dialog({
+    title: 'Atenção!!',
+    message: `Deseja realmente cancelar a Campanha "${campanha.name}"?`,
+    cancel: {
+      label: 'Não',
+      color: 'primary',
+      push: true
+    },
+    ok: {
+      label: 'Sim',
+      color: 'negative',
+      push: true
+    },
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await cancelarCampanhaStore(campanha.id)
+      notificarSucesso('Campanha cancelada.')
+      listarCampanhas()
+    } catch (err) {
+      notificarErro('Não foi possível cancelar a campanha.', err)
+    }
+  })
+}
+
+const iniciarCampanha = async campanha => {
+  if (!isValidDate(campanha.start)) {
+    notificarErro('Não é possível programar campanha com data menor que a atual')
+    return
+  }
+
+  if (campanha.contactsCount == 0) {
+    notificarErro('Necessário ter contatos vinculados para programar a campanha.')
+    return
+  }
+
+  if (campanha.status !== 'pending' && campanha.status !== 'canceled') {
+    notificarErro('Só é permitido programar campanhas que estejam pendentes ou canceladas.')
+    return
+  }
+
+  try {
+    await iniciarCampanhaStore(campanha.id)
+    notificarSucesso('Campanha iniciada.')
+    listarCampanhas()
+  } catch (err) {
+    notificarErro('Não foi possível iniciar a campanha.', err)
   }
 }
 
+onMounted(() => {
+  userProfile.value = localStorage.getItem('profile')
+  listarCampanhas()
+  socket.on(`${usuario.tenantId}:campaign`, data => {
+    if (data.action === 'update') {
+      atualizarCampanha(data.campaign)
+    }
+  })
+})
+
+onUnmounted(() => {
+  socket.off(`${usuario.tenantId}:campaign`)
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

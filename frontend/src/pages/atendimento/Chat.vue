@@ -3,847 +3,409 @@
     class="bg-white no-scroll hide-scrollbar overflow-hidden"
     :style="style"
   >
-    <InforCabecalhoChat
-      @updateTicket:resolver="atualizarStatusTicket('closed')"
-      @updateTicket:retornar="atualizarStatusTicket('pending')"
-      @updateTicket:reabrir="atualizarStatusTicket('open')"
-      @abrir:modalAgendamentoMensagem="modalAgendamentoMensagem = true"
-    />
+    <InforCabecalhoChat @abrir:modalAgendamentoMensagem="modalAgendamentoMensagem = true" />
 
     <q-scroll-area
       ref="scrollContainer"
-      class="scroll-y "
+      class="scroll-y"
       :style="cStyleScroll"
       @scroll="scrollArea"
     >
-      <transition
-        appear
-        enter-active-class="animated fadeIn"
-        leave-active-class="animated fadeOut"
-      >
-        <infinite-loading
-          v-if="cMessages.length"
-          @infinite="onLoadMore"
-          direction="top"
-          :identificador="ticketFocado.id"
-          spinner="spiral"
+      <div class="column q-py-md">
+        <transition
+          appear
+          enter-active-class="animated fadeIn"
+          leave-active-class="animated fadeOut"
         >
-          <div slot="no-results">
-            <div v-if="!cMessages.length">
-              Sem resultados :(
-            </div>
-          </div>
-          <div slot="no-more">
-            Nada mais a carregar :)
-          </div>
-        </infinite-loading>
-      </transition>
-      <MensagemChat
-        v-model:replyingMessage="replyingMessage"
-        :mensagens="cMessages"
-        :ticketId="ticketFocado.id"
-        v-if="cMessages.length && ticketFocado.id"
-        @mensagem-chat:encaminhar-mensagem="abrirModalEncaminharMensagem"
-        v-model:ativarMultiEncaminhamento="ativarMultiEncaminhamento"
-        v-model:mensagensParaEncaminhar="mensagensParaEncaminhar"
-      />
-      <div id="inicioListaMensagensChat"></div>
+          <infinite-loading
+            v-if="mensagens.length"
+            @infinite="onLoadMore"
+            direction="top"
+            :identifier="ticketFocado.id"
+          >
+            <template #no-results>
+              <div class="text-center q-pa-sm text-grey-6">Início da conversa</div>
+            </template>
+            <template #no-more>
+              <div class="text-center q-pa-sm text-grey-6">Não há mais mensagens</div>
+            </template>
+          </infinite-loading>
+        </transition>
+
+        <MensagemChat
+          v-model:replyingMessage="replyingMessage"
+          :mensagens="mensagens"
+          :ticketId="ticketFocado.id"
+          v-if="mensagens.length && ticketFocado.id"
+          @mensagem-chat:encaminhar-mensagem="abrirModalEncaminharMensagem"
+          v-model:ativarMultiEncaminhamento="ativarMultiEncaminhamento"
+          v-model:mensagensParaEncaminhar="mensagensParaEncaminhar"
+        />
+        <div id="inicioListaMensagensChat"></div>
+      </div>
     </q-scroll-area>
+
     <div
-      class="absolute-center items-center"
-      :class="{
-          'row col text-center q-col-gutter-lg': !$q.screen.xs,
-          'full-width text-center': $q.screen.xs
-        }"
+      class="absolute-center items-center text-center"
       v-if="!ticketFocado.id"
     >
       <q-icon
-        style="margin-left: 30vw"
         size="6em"
         color="grey-6"
         name="mdi-emoticon-wink-outline"
-        class="row col text-center"
-        :class="{
-            'row col text-center q-mr-lg': !$q.screen.xs,
-            'full-width text-center center-block': $q.screen.xs
-          }"
-      >
-      </q-icon>
-      <h1
-        class="text-grey-6 row col justify-center"
-        :class="{
-            'full-width': $q.screen.xs
-          }"
-      >
-        Selecione um ticket!
-      </h1>
+      />
+      <h1 class="text-h4 text-grey-6">Selecione um ticket!</h1>
     </div>
+
     <div
-      v-if="cMessages.length"
+      v-if="mensagens.length && scrollIcon"
       class="relative-position"
     >
-      <transition
-        appear
-        enter-active-class="animated fadeIn"
-        leave-active-class="animated fadeOut"
-      >
-        <div v-if="scrollIcon">
-          <q-btn
-            class="vac-icon-scroll"
-            color="white"
-            text-color="black"
-            icon="mdi-arrow-down"
-            round
-            push
-            ripple
-            dense
-            @click="scrollToBottom"
-          />
-        </div>
-      </transition>
+      <q-btn
+        class="vac-icon-scroll"
+        color="primary"
+        text-color="white"
+        icon="mdi-arrow-down"
+        round
+        push
+        ripple
+        dense
+        @click="scrollToBottom"
+      />
     </div>
 
-    <q-footer class="bg-white">
-      <q-separator class="bg-grey-4" />
-      <q-list
+    <q-footer
+      class="bg-white"
+      bordered
+    >
+      <!-- Replying Banner -->
+      <div
         v-if="replyingMessage"
-        :style="`border-top: 1px solid #; max-height: 140px; width: 100%;`"
-        style=" max-height: 100px;"
-        class="q-pa-none q-py-md text-black row items-center col justify-center full-width"
-        :class="{
-            'bg-grey-1': !$q.dark.isActive,
-            'bg-grey-10': $q.dark.isActive
-          }"
+        class="q-pa-sm bg-grey-2 row items-center no-wrap"
       >
-        <q-item
-          class="q-card--bordered q-pb-sm btn-rounded"
-          :style="`
-            width: 460px;
-            min-width: 460px;
-            max-width: 460px;
-            max-height: 110px;
-          `"
-          :class="{
-              'bg-blue-1': !replyingMessage.fromMe && !$q.dark.isActive,
-              'bg-blue-2 text-black': !replyingMessage.fromMe && $q.dark.isActive,
-              'bg-grey-2 text-black': replyingMessage.fromMe
-            }"
-        >
-          <q-item-section>
-            <q-item-label
-              v-if="!replyingMessage.fromMe"
-              :class="{ 'text-black': $q.dark.isActive }"
-              caption
-            >
-              {{ replyingMessage.contact && replyingMessage.contact.name }}
-            </q-item-label>
-            <q-item-label
-              lines="4"
-              v-html="farmatarMensagemWhatsapp(replyingMessage.body)"
-            >
-            </q-item-label>
-          </q-item-section>
-          <q-btn
-            @click="replyingMessage = null"
-            dense
-            flat
-            round
-            icon="close"
-            class="float-right absolute-top-right z-max"
-            :disabled="loading || ticketFocado.status !== 'open'"
-          />
-        </q-item>
-      </q-list>
+        <div class="col overflow-hidden">
+          <div class="text-bold text-primary">
+            {{ replyingMessage.contact?.name || 'Você' }}
+          </div>
+          <div
+            class="ellipsis text-caption"
+            v-html="formatarMensagemWhatsapp(replyingMessage.body)"
+          ></div>
+        </div>
+        <q-btn
+          flat
+          round
+          dense
+          icon="close"
+          @click="replyingMessage = null"
+        />
+      </div>
 
-      <q-banner
-        class="text-grey-8"
-        v-if="mensagensParaEncaminhar.length > 0"
+      <!-- Forward Banner -->
+      <div
+        v-if="ativarMultiEncaminhamento"
+        class="q-pa-md bg-blue-1"
       >
-        <span class="text-bold text-h5"> {{ mensagensParaEncaminhar.length }} de 10 mensagens</span> selecionadas para
-        serem encaminhadas.
-        <q-separator class="bg-grey-4" />
+        <div class="row items-center justify-between q-mb-sm">
+          <span class="text-bold">{{ mensagensParaEncaminhar.length }} mensagens selecionadas</span>
+          <q-btn
+            flat
+            label="Cancelar"
+            color="negative"
+            @click="cancelarMultiEncaminhamento"
+          />
+        </div>
         <q-select
           dense
-          class="q-my-md"
-          ref="selectAutoCompleteContato"
-          autofocus
           outlined
           rounded
-          hide-dropdown-icon
-          :loading="loading"
           v-model="contatoSelecionado"
-          :options="contatos"
-          input-debounce="700"
+          :options="contatosOptions"
           @filter="localizarContato"
           use-input
-          hide-selected
           fill-input
-          clearable
+          hide-selected
           option-label="name"
-          option-value="id"
-          label="Localize e selecione o contato"
-          hint="Digite no mínimo duas letras para localizar o contato. É possível selecionar apenas 1 contato!"
+          placeholder="Localizar contato para encaminhar..."
         >
-          <template v-slot:option="scope">
-            <q-item
-              v-bind="scope.itemProps"
-              v-on="scope.itemEvents"
-              v-if="scope.opt.name"
-            >
+          <template #option="scope">
+            <q-item v-bind="scope.itemProps">
               <q-item-section>
-                <q-item-label> {{ scope.opt.name }}</q-item-label>
+                <q-item-label>{{ scope.opt.name }}</q-item-label>
                 <q-item-label caption>{{ scope.opt.number }}</q-item-label>
               </q-item-section>
             </q-item>
           </template>
         </q-select>
-        <template v-slot:action>
-          <q-btn
-            class="bg-padrao q-px-sm"
-            flat
-            color="negative"
-            label="Cancelar"
-            @click="cancelarMultiEncaminhamento"
-          />
-          <q-btn
-            class="bg-padrao q-px-sm"
-            flat
-            color="positive"
-            label="Enviar"
-            icon="mdi-send"
-            @click="confirmarEncaminhamentoMensagem(mensagensParaEncaminhar)"
-          />
-        </template>
-      </q-banner>
+        <q-btn
+          class="full-width q-mt-sm"
+          color="primary"
+          label="Encaminhar"
+          icon="mdi-send"
+          :disable="!contatoSelecionado"
+          @click="confirmarEncaminhamentoMulti"
+        />
+      </div>
 
       <InputMensagem
-        v-if="!mensagensParaEncaminhar.length"
-        :mensagensRapidas="mensagensRapidas"
+        v-if="!ativarMultiEncaminhamento"
+        :mensagens-rapidas="mensagensRapidas"
         v-model:replyingMessage="replyingMessage"
       />
       <q-resize-observer @resize="onResizeInputMensagem" />
     </q-footer>
 
+    <!-- Modais -->
     <q-dialog
       v-model="modalAgendamentoMensagem"
       persistent
     >
-      <q-card :style="$q.screen.width < 770 ? `min-width: 98vw; max-width: 98vw` : 'min-width: 50vw; max-width: 50vw'">
-        <q-card-section>
-          <div class="text-h6">
-            Agendamento de Mensagem
-            <q-btn
-              flat
-              class="bg-padrao btn-rounded float-right"
-              color="negative"
-              icon="close"
-              v-close-popup
-            />
-          </div>
-        </q-card-section>
-        <q-card-section class="q-mb-lg">
-          <InputMensagem
-            isScheduleDate
-            :mensagensRapidas="mensagensRapidas"
-            v-model:replyingMessage="replyingMessage"
+      <q-card style="min-width: 50vw">
+        <q-card-section class="row items-center justify-between">
+          <div class="text-h6">Agendamento de Mensagem</div>
+          <q-btn
+            flat
+            round
+            icon="close"
+            v-close-popup
           />
         </q-card-section>
-
+        <q-card-section>
+          <InputMensagem
+            is-schedule-date
+            :mensagens-rapidas="mensagensRapidas"
+          />
+        </q-card-section>
       </q-card>
-
     </q-dialog>
+
     <q-dialog
       v-model="modalEncaminhamentoMensagem"
       persistent
-      @hide="mensagemEncaminhamento = {}"
     >
-      <q-card :style="$q.screen.width < 770 ? `min-width: 98vw; max-width: 98vw` : 'min-width: 50vw; max-width: 50vw'">
-        <q-card-section>
-          <div class="text-h6">
-            Encaminhando Mensagem
-            <q-btn
-              flat
-              class="bg-padrao btn-rounded float-right"
-              color="negative"
-              icon="close"
-              v-close-popup
-            />
-          </div>
-        </q-card-section>
-        <q-separator inset />
-        <q-card-section>
-          <MensagemChat
-            :isShowOptions="false"
-            v-model:replyingMessage="replyingMessage"
-            :mensagens="[mensagemEncaminhamento]"
+      <q-card style="min-width: 400px">
+        <q-card-section class="row items-center justify-between">
+          <div class="text-h6">Encaminhar Mensagem</div>
+          <q-btn
+            flat
+            round
+            icon="close"
+            v-close-popup
           />
         </q-card-section>
         <q-card-section>
           <q-select
-            class="q-px-lg"
-            ref="selectAutoCompleteContato"
-            autofocus
             outlined
-            rounded
-            hide-dropdown-icon
-            :loading="loading"
             v-model="contatoSelecionado"
-            :options="contatos"
-            input-debounce="700"
+            :options="contatosOptions"
             @filter="localizarContato"
             use-input
-            hide-selected
             fill-input
-            clearable
+            hide-selected
             option-label="name"
-            option-value="id"
-            label="Localize e selecione o contato"
-            hint="Digite no mínimo duas letras para localizar o contato. É possível selecionar apenas 1 contato!"
-          >
-            <template v-slot:option="scope">
-              <q-item
-                v-bind="scope.itemProps"
-                v-on="scope.itemEvents"
-                v-if="scope.opt.name"
-              >
-                <q-item-section>
-                  <q-item-label> {{ scope.opt.name }}</q-item-label>
-                  <q-item-label caption>{{ scope.opt.number }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </template>
-          </q-select>
+            placeholder="Localizar contato..."
+            dense
+          />
         </q-card-section>
-        <q-card-actions
-          align="right"
-          class="q-pa-md"
-        >
+        <q-card-actions align="right">
           <q-btn
-            class="bg-padrao q-px-sm"
             flat
-            color="positive"
+            label="Cancelar"
+            v-close-popup
+          />
+          <q-btn
+            color="primary"
             label="Enviar"
-            icon="mdi-send"
-            @click="confirmarEncaminhamentoMensagem([mensagemEncaminhamento])"
+            @click="confirmarEncaminhamentoSimples"
+            :disable="!contatoSelecionado"
           />
         </q-card-actions>
       </q-card>
     </q-dialog>
-
   </div>
 </template>
-<script>
-import mixinCommon from './mixinCommon'
-// import parser from 'vdata-parser'
-// import parser from 'vdata-parser'
+
+<script setup>
+import { storeToRefs } from 'pinia'
 import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
 import whatsBackground from 'src/assets/wa-background.png'
+import { ListarContatos } from 'src/service/contatos'
+import { EncaminharMensagem } from 'src/service/tickets'
+import { useTicketStore } from 'src/stores/useTicketStore'
+import bus from 'src/utils/eventBus'
+import { formatarMensagemWhatsapp } from 'src/utils/formatMessage'
+import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
 import InfiniteLoading from 'v3-infinite-loading'
-import { ListarContatos } from '../../service/contatos'
-import { EncaminharMensagem } from '../../service/tickets'
-import mixinAtualizarStatusTicket from './mixinAtualizarStatusTicket'
-import mixinSockets from './mixinSockets'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import InforCabecalhoChat from './InforCabecalhoChat.vue'
+import InputMensagem from './InputMensagem.vue'
+import MensagemChat from './MensagemChat.vue'
 
-export default {
-  name: 'Chat',
-  mixins: [mixinCommon, mixinAtualizarStatusTicket, mixinSockets],
-  props: {
-    mensagensRapidas: Array
-  },
-  components: {
-    InfiniteLoading
-  },
-  data () {
-    return {
-      megaCache: {
-        tickets: new Map(),
-        mensagens: new Map(),
-        contatos: new Map(),
-        estados: new Map(),
-        ultimaAtualizacao: new Map()
-      },
-      scrollIcon: false,
-      loading: false,
-      exibirContato: false,
-      heigthInputMensagem: 0,
-      params: {
-        ticketId: null,
-        pageNumber: 1
-      },
-      agendamentoMensagem: {
-        scheduleDate: ''
-      },
-      replyingMessage: null,
-      modalAgendamentoMensagem: false,
-      modalEncaminhamentoMensagem: false,
-      mensagemEncaminhamento: {},
-      mensagensParaEncaminhar: [],
-      ativarMultiEncaminhamento: false,
-      contatoSelecionado: {
-        id: '',
-        name: ''
-      },
-      contatos: []
-    }
-  },
-  computed: {
-    cMessages () {
-      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      this.replyingMessage = null
-      return this.mensagensTicket
-    },
-    style () {
-      return {
-        backgroundImage: this.$q.dark.isActive ? `url(${whatsBackgroundDark}) !important` : `url(${whatsBackground}) !important`,
-        // backgroundRepeat: 'no-repeat !important',
-        backgroundPosition: 'center !important'
-        // backgroundSize: '50% !important',
-      }
-    },
-    cStyleScroll () {
-      const loading = 0 // this.loading ? 72 : 0
-      const add = this.heigthInputMensagem + loading
-      return `min-height: calc(100vh - ${62 + add}px); height: calc(100vh - ${62 + add}px); width: 100%`
-    }
-  },
-  watch: {
-    'ticketFocado.id': {
-      immediate: true,
-      handler (newId) {
-        if (newId) {
-          this.carregarMensagensTicket(newId)
-        }
-      }
-    },
-    tickets: {
-      handler () {
-        this.preCarregarTodosTickets()
-      },
-      deep: true
-    }
-  },
-  methods: {
-    async preCarregarTodosTickets () {
-      try {
-        const tickets = this.$store.state.tickets || []
-        if (!Array.isArray(tickets)) return
+const props = defineProps({
+  mensagensRapidas: {
+    type: Array,
+    default: () => []
+  }
+})
 
-        for (const ticket of tickets) {
-          if (!this.megaCache.mensagens.has(ticket.id)) {
-            const response = await this.$store.dispatch('LocalizarMensagensTicket', {
-              ticketId: ticket.id,
-              pageNumber: 1,
-              pageSize: 20
-            })
-            if (response && Array.isArray(response)) {
-              this.megaCache.mensagens.set(ticket.id, new Map(response.map(m => [m.id, m])))
-              this.megaCache.ultimaAtualizacao.set(`mensagens_${ticket.id}`, Date.now())
-              this.preCarregarMaisMensagens(ticket.id)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao pré-carregar tickets:', error)
-      }
-    },
-    async preCarregarMaisMensagens (ticketId) {
-      try {
-        const response = await this.$store.dispatch('LocalizarMensagensTicket', {
-          ticketId,
-          pageNumber: 2,
-          pageSize: 50
-        })
-        if (response && Array.isArray(response)) {
-          const cacheTicket = this.megaCache.mensagens.get(ticketId)
-          if (cacheTicket) {
-            response.forEach(msg => {
-              if (!cacheTicket.has(msg.id)) {
-                cacheTicket.set(msg.id, msg)
-              }
-            })
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao pré-carregar mais mensagens:', error)
-      }
-    },
-    async carregarMensagensTicket (ticketId) {
-      if (!ticketId) return
-      try {
-        this.loading = true
-        if (this.megaCache.mensagens.has(ticketId)) {
-          const mensagens = Array.from(this.megaCache.mensagens.get(ticketId).values())
-          this.$store.commit('SET_MESSAGES', mensagens)
-          this.loading = false
-          return
-        }
+const ticketStore = useTicketStore()
+const { mensagens, ticketFocado, hasMore, loading } = storeToRefs(ticketStore)
 
-        const response = await this.$store.dispatch('LocalizarMensagensTicket', {
-          ticketId,
-          pageNumber: 1,
-          pageSize: 20
-        })
-        if (response && Array.isArray(response)) {
-          this.megaCache.mensagens.set(ticketId, new Map(response.map(m => [m.id, m])))
-          this.megaCache.ultimaAtualizacao.set(`mensagens_${ticketId}`, Date.now())
-          this.$store.commit('SET_MESSAGES', response)
-          this.preCarregarMaisMensagens(ticketId)
-        }
-        this.loading = false
-      } catch (error) {
-        console.error('Erro ao carregar mensagens:', error)
-        this.loading = false
-      }
-    },
-    async onResizeInputMensagem (size) {
-      this.heigthInputMensagem = size.height
-    },
-    async onLoadMore (infiniteState) {
-      if (this.loading) return
+const scrollContainer = ref(null)
+const scrollIcon = ref(false)
+const heigthInputMensagem = ref(0)
+const replyingMessage = ref(null)
+const modalAgendamentoMensagem = ref(false)
+const modalEncaminhamentoMensagem = ref(false)
+const mensagemSimplesEncaminhar = ref(null)
+const mensagensParaEncaminhar = ref([])
+const ativarMultiEncaminhamento = ref(false)
+const contatoSelecionado = ref(null)
+const contatosOptions = ref([])
 
-      if (!this.hasMore || !this.ticketFocado?.id) {
-        return infiniteState.complete()
-      }
+const pageNumber = ref(1)
 
-      try {
-        this.loading = true
-        const ticketId = this.ticketFocado.id
-        const cacheKey = `mensagens_${ticketId}_${this.params.pageNumber}`
+const style = computed(() => ({
+  backgroundImage: document.body.classList.contains('body--dark')
+    ? `url(${whatsBackgroundDark})`
+    : `url(${whatsBackground})`,
+  backgroundPosition: 'center'
+}))
 
-        if (this.cacheMensagens.has(ticketId) && this.cacheValido(cacheKey)) {
-          const mensagens = Array.from(this.cacheMensagens.get(ticketId).values())
-          this.$store.commit('SET_MESSAGES', mensagens)
-          this.loading = false
-          infiniteState.loaded()
-          return
-        }
+const cStyleScroll = computed(() => {
+  const add = heigthInputMensagem.value
+  return {
+    height: `calc(100vh - ${62 + add}px)`,
+    width: '100%'
+  }
+})
 
-        this.params.ticketId = ticketId
-        this.params.pageNumber += 1
-        const resultado = await this.$store.dispatch('LocalizarMensagensTicket', this.params)
-        await this.gerenciarCacheMensagens(ticketId, resultado)
-        this.loading = false
-        infiniteState.loaded()
-      } catch (error) {
-        infiniteState.complete()
-      }
-      this.loading = false
-    },
-    scrollArea (e) {
-      this.hideOptions = true
-      if (!e) return
-      this.scrollIcon = (e.verticalSize - (e.verticalPosition + e.verticalContainerSize)) > 2000
-    },
-    scrollToBottom () {
-      document.getElementById('inicioListaMensagensChat').scrollIntoView()
-    },
-    abrirModalEncaminharMensagem (msg) {
-      this.mensagemEncaminhamento = msg
-      this.modalEncaminhamentoMensagem = true
-    },
-    async gerenciarCacheContatos (search) {
-      const cacheKey = `contatos_${search}`
+const carregarMensagens = async (isLoadMore = false) => {
+  if (!ticketFocado.value.id) return
+  if (!isLoadMore) pageNumber.value = 1
 
-      if (this.cacheContatos.has(search) && this.cacheValido(cacheKey)) {
-        return Array.from(this.cacheContatos.get(search).values())
-      }
-
-      const { data } = await ListarContatos({ searchParam: search })
-
-      if (data.contacts.length) {
-        this.cacheContatos.set(search, new Map(data.contacts.map(c => [c.id, c])))
-        this.ultimaAtualizacao.set(cacheKey, Date.now())
-      }
-
-      return data.contacts
-    },
-    async localizarContato (search, update, abort) {
-      if (search.length < 2) {
-        if (this.contatos.length) update(() => { this.contatos = [...this.contatos] })
-        abort()
-        return
-      }
-
-      this.loading = true
-      try {
-        const contatosCached = await this.gerenciarCacheContatos(search)
-        update(() => {
-          if (contatosCached.length) {
-            this.contatos = contatosCached
-          } else {
-            this.contatos = [{}]
-          }
-        })
-      } catch (error) {
-        console.error('Erro ao buscar contatos:', error)
-        this.contatos = [{}]
-      }
-      this.loading = false
-    },
-    cancelarMultiEncaminhamento () {
-      this.mensagensParaEncaminhar = []
-      this.ativarMultiEncaminhamento = false
-    },
-    confirmarEncaminhamentoMensagem (data) {
-      if (!this.contatoSelecionado.id) {
-        this.$notificarErro('Selecione o contato de destino das mensagens.')
-        return
-      }
-      EncaminharMensagem(data, this.contatoSelecionado)
-        .then(r => {
-          this.$notificarSucesso(`Mensagem encaminhada para ${this.contatoSelecionado.name} | Número: ${this.contatoSelecionado.number}`)
-          this.mensagensParaEncaminhar = []
-          this.ativarMultiEncaminhamento = false
-        })
-        .catch(e => {
-          this.$notificarErro('Não foi possível encaminhar mensagem. Tente novamente em alguns minutos!', e)
-        })
-    },
-    cacheValido (chave, tempoLimite = 5 * 60 * 1000) {
-      const ultimaAtualizacao = this.ultimaAtualizacao.get(chave)
-      return ultimaAtualizacao && (Date.now() - ultimaAtualizacao) < tempoLimite
-    },
-    async gerenciarCacheMensagens (ticketId, mensagens) {
-      if (!this.cacheMensagens.has(ticketId)) {
-        this.cacheMensagens.set(ticketId, new Map())
-      }
-      const cacheTicket = this.cacheMensagens.get(ticketId)
-      mensagens.forEach(msg => {
-        if (!cacheTicket.has(msg.id)) {
-          cacheTicket.set(msg.id, msg)
-        }
-      })
-      this.ultimaAtualizacao.set(`mensagens_${ticketId}`, Date.now())
-      this.$nextTick(() => {
-        this.scrollToBottom()
-      })
-    },
-    limparCacheAntigo (tempoLimite = 30 * 60 * 1000) {
-      const agora = Date.now()
-      this.ultimaAtualizacao.forEach((timestamp, chave) => {
-        if (agora - timestamp > tempoLimite) {
-          const [tipo, id] = chave.split('_')
-          switch (tipo) {
-            case 'mensagens':
-              this.cacheMensagens.delete(id)
-              break
-            case 'contatos':
-              this.cacheContatos.delete(id)
-              break
-            case 'estados':
-              this.cacheEstados.delete(id)
-              break
-          }
-          this.ultimaAtualizacao.delete(chave)
-        }
-      })
-    }
-  },
-  created () {
-    this.$root.$on('scrollToBottomMessageChat', this.scrollToBottom)
-    this.socketTicket()
-    this.preCarregarTodosTickets()
-    setInterval(() => {
-      const agora = Date.now()
-      this.megaCache.ultimaAtualizacao.forEach((timestamp, chave) => {
-        if (agora - timestamp > 30 * 60 * 1000) {
-          const [tipo, id] = chave.split('_')
-          if (this.megaCache[tipo]) {
-            this.megaCache[tipo].delete(id)
-          }
-          this.megaCache.ultimaAtualizacao.delete(chave)
-        }
-      })
-    }, 15 * 60 * 1000)
-  },
-  mounted () {
-    this.socketMessagesList()
-  },
-  unmounted () {
-    this.$root.$off('scrollToBottomMessageChat', this.scrollToBottom)
+  try {
+    await ticketStore.consultarMensagens({
+      ticketId: ticketFocado.value.id,
+      pageNumber: pageNumber.value,
+      pageSize: 20
+    })
+    if (!isLoadMore) scrollToBottom()
+  } catch (e) {
+    notificarErro('Erro ao carregar mensagens', e)
   }
 }
+
+const onLoadMore = async state => {
+  if (!hasMore.value || loading.value) {
+    state.complete()
+    return
+  }
+  pageNumber.value++
+  try {
+    await carregarMensagens(true)
+    state.loaded()
+  } catch (e) {
+    state.error()
+  }
+}
+
+const scrollArea = e => {
+  if (!e) return
+  scrollIcon.value = e.verticalSize - (e.verticalPosition + e.verticalContainerSize) > 800
+}
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    const el = document.getElementById('inicioListaMensagensChat')
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
+  })
+}
+
+const onResizeInputMensagem = size => {
+  heigthInputMensagem.value = size.height
+}
+
+const abrirModalEncaminharMensagem = msg => {
+  mensagemSimplesEncaminhar.value = msg
+  modalEncaminhamentoMensagem.value = true
+}
+
+const cancelarMultiEncaminhamento = () => {
+  mensagensParaEncaminhar.value = []
+  ativarMultiEncaminhamento.value = false
+}
+
+const localizarContato = async (val, update, abort) => {
+  if (val.length < 2) {
+    abort()
+    return
+  }
+  try {
+    const { data } = await ListarContatos({ searchParam: val })
+    update(() => {
+      contatosOptions.value = data.contacts
+    })
+  } catch (e) {
+    abort()
+  }
+}
+
+const confirmarEncaminhamentoSimples = async () => {
+  if (!contatoSelecionado.value) return
+  try {
+    await EncaminharMensagem([mensagemSimplesEncaminhar.value], contatoSelecionado.value)
+    notificarSucesso('Mensagem encaminhada!')
+    modalEncaminhamentoMensagem.value = false
+    contatoSelecionado.value = null
+  } catch (e) {
+    notificarErro('Erro ao encaminhar', e)
+  }
+}
+
+const confirmarEncaminhamentoMulti = async () => {
+  if (!contatoSelecionado.value || !mensagensParaEncaminhar.value.length) return
+  try {
+    await EncaminharMensagem(mensagensParaEncaminhar.value, contatoSelecionado.value)
+    notificarSucesso(`${mensagensParaEncaminhar.value.length} mensagens encaminhadas!`)
+    cancelarMultiEncaminhamento()
+    contatoSelecionado.value = null
+  } catch (e) {
+    notificarErro('Erro ao encaminhar', e)
+  }
+}
+
+watch(
+  () => ticketFocado.value.id,
+  newId => {
+    if (newId) {
+      replyingMessage.value = null
+      carregarMensagens()
+    }
+  }
+)
+
+onMounted(() => {
+  bus.on('scrollToBottomMessageChat', scrollToBottom)
+  carregarMensagens()
+})
+
+onUnmounted(() => {
+  bus.off('scrollToBottomMessageChat', scrollToBottom)
+})
 </script>
 
 <style lang="scss">
-audio {
-  height: 36px;
-  width: 100%;
-  border-radius: 18px;
-  outline: none;
-
-  &::-webkit-media-controls-panel {
-    background-color: transparent !important;
-    padding: 0 8px;
-  }
-
-  &::-webkit-media-controls-current-time-display,
-  &::-webkit-media-controls-time-remaining-display {
-    color: #000;
-    font-size: 12px;
-  }
-
-  &::-webkit-media-controls-play-button {
-    opacity: 0.9;
-  }
-
-  &::-webkit-media-controls-timeline {
-    background-color: #e6e6e6;
-    border-radius: 2px;
-    height: 4px;
-    margin: 0 8px;
-  }
-
-  &::-webkit-media-controls-timeline-container {
-    padding: 0;
-  }
-
-  &::-webkit-media-controls-volume-slider {
-    display: none;
-  }
-
-  &::-webkit-media-controls-mute-button {
-    display: none;
-  }
-
-  &::-webkit-media-controls-current-time-display {
-    margin-left: 8px;
-  }
-
-  &::-webkit-media-controls-time-remaining-display {
-    margin-right: 8px;
-  }
-}
-
-.mostar-btn-opcoes-chat {
-  display: none;
-  transition: opacity 0.2s ease;
-  z-index: 2;
-}
-
-.q-message-text:hover .mostar-btn-opcoes-chat {
-  display: block;
-  opacity: 1;
-}
-
-.hr-text {
-  line-height: 1em;
-  position: relative;
-  outline: 0;
-  border: 0;
-  color: black;
-  text-align: center;
-  height: 1.5em;
-  opacity: 0.8;
-
-  &:before {
-    content: "";
-    // use the linear-gradient for the fading effect
-    // use a solid background color for a solid bar
-    background: linear-gradient(to right, transparent, #818078, transparent);
-    position: absolute;
-    left: 0;
-    top: 50%;
-    width: 100%;
-    height: 1px;
-  }
-
-  &:after {
-    content: attr(data-content);
-    position: relative;
-    display: inline-block;
-    color: black;
-    font-size: 16px;
-    font-weight: 600;
-    padding: 0 0.5em;
-    line-height: 1.5em;
-    background-color: $grey;
-    border-radius: 15px;
-  }
-}
-
-.textContentItem {
-  overflow-wrap: break-word;
-  // padding: 3px 80px 6px 6px;
-}
-
-.textContentItemDeleted {
-  font-style: italic;
-  color: rgba(0, 0, 0, 0.36);
-  overflow-wrap: break-word;
-  // padding: 3px 80px 6px 6px;
-}
-
-.replyginContactMsgSideColor {
-  flex: none;
-  width: 4px;
-  background-color: #35cd96;
-}
-
-.replyginSelfMsgSideColor {
-  flex: none;
-  width: 4px;
-  background-color: #6bcbef;
-}
-
-.replyginMsgBody {
-  padding: 10;
-  height: auto;
-  display: block;
-  white-space: pre-wrap;
-  overflow: hidden;
-}
-
-.messageContactName {
-  display: flex;
-  color: #6bcbef;
-  font-weight: 500;
-}
-
 .vac-icon-scroll {
   position: absolute;
-  bottom: 20px;
+  bottom: 100px;
   right: 20px;
-  box-shadow: 0 1px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14),
-    0 1px 2px 0 rgba(0, 0, 0, 0.12);
-  display: flex;
-  cursor: pointer;
-  z-index: 99;
+  z-index: 10;
 }
 
-// /* CSS Logilcs */
-// #message-box {
-//   &:empty ~ #submit-button {
-//     display: none;
-//   } /*when textbox empty show microhpone*/
-//   &:not(:empty) ~ #voice-button {
-//     display: none;
-//   } /*when textbox with texy show submit button*/
-// }
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-
-.fade-enter,
-.fade-leave-to
-
-/* .fade-leave-active below version 2.1.8 */ {
-  opacity: 0;
-}
-
-.q-message-text {
-  &:has(.audio-container) {
-    .q-message-stamp {
-      position: absolute;
-      right: 27px;
-      bottom: 10px;
-      font-size: 0.75rem;
-      opacity: 0.7;
-      z-index: 2;
-      top: 37px;
-    }
+.hide-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 </style>

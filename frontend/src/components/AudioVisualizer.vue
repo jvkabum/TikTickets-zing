@@ -1,378 +1,175 @@
 <template>
   <div class="audio-container">
-    <div class="photo-container">
-      <q-avatar size="45px" class="q-mr-sm">
-        <img
-          :src="avatarSrc || contact?.profilePicUrl"
-          v-show="avatarSrc || contact?.profilePicUrl"
-          @error="$event.target.style.display='none'"
-        >
-        <q-icon
-          v-if="!avatarSrc && !contact?.profilePicUrl"
-          name="person"
-          size="45px"
-          color="grey-5"
-        />
+    <div class="photo-container relative-position">
+      <q-avatar
+        size="45px"
+        class="q-mr-sm shadow-1"
+      >
+        <img :src="avatarSrc || defaultAvatar" />
       </q-avatar>
-      <div class="rate-options" @click="toggleRate">
-        <q-btn
-          flat
-          dense
-          size="sm"
-          :label="formatRate(audioRate)"
-          color="white"
-          class="q-px-xs"
-        />
-      </div>
       <q-icon
-        name="mic"
-        size="0.9rem"
-        color="positive"
-        class="mic-icon"
+        v-if="!fromMe"
+        name="mdi-microphone"
+        size="12px"
+        class="mic-icon shadow-2 text-blue-8"
+        style="position: absolute; bottom: 0; right: 8px; background: white; border-radius: 50%; padding: 1px"
       />
     </div>
 
-    <q-btn
-      flat
-      round
-      dense
-      :icon="isPlaying ? 'pause' : 'play_arrow'"
-      @click="togglePlayPause"
-      class="play-pause-btn"
-    />
+    <div class="controls-visualizer-container row no-wrap items-center full-width">
+      <q-btn
+        flat
+        round
+        dense
+        :icon="isPlaying ? 'mdi-pause' : 'mdi-play'"
+        color="grey-9"
+        @click="togglePlayPause"
+        class="play-pause-btn q-mr-xs"
+      />
 
-    <div class="time-container">
-      <div class="time-label">
-        {{ formattedCurrentTime }}
-      </div>
       <div
-        class="visualizer-container"
+        class="visualizer-wrapper col relative-position"
         ref="waveformRef"
-        @click="handleVisualizerClick"
-      />
-      <div class="duration-label">
-        {{ formattedDuration }}
+      >
+        <!-- Wavesurfer container -->
+      </div>
+
+      <div class="duration-label text-caption text-grey-8 q-mx-xs">
+        {{ formattedTime }}
+      </div>
+
+      <div
+        @click="incrementRate"
+        class="rate-chip cursor-pointer text-bold text-caption bg-grey-3 q-px-xs rounded-borders"
+      >
+        {{ rate }}x
       </div>
     </div>
-
-    <div
-      v-if="showRateControl"
-      @click="incrementRate"
-      class="rate-chip"
-    >
-      {{ formatRate(audioRate) }}
-    </div>
-
-    <audio
-      ref="audioRef"
-      :src="url"
-      type="audio/mpeg"
-      @loadedmetadata="handleLoadedMetadata"
-      @timeupdate="handleTimeUpdate"
-      @play="handlePlay"
-      @pause="handlePause"
-      @ended="handleEnded"
-    >
-      Seu navegador não suporta o elemento de áudio.
-    </audio>
   </div>
 </template>
 
-<script>
+<script setup>
+import defaultAvatar from 'src/assets/avatar.png'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import WaveSurfer from 'wavesurfer.js'
 
-const LS_NAME = 'audioMessageRate'
+const props = defineProps({
+  url: { type: String, required: true },
+  contact: { type: Object, default: () => ({}) },
+  avatarSrc: { type: String, default: '' },
+  fromMe: { type: Boolean, default: false }
+})
 
-export default {
-  name: 'AudioVisualizer',
-  props: {
-    url: {
-      type: String,
-      required: true
-    },
-    contact: {
-      type: Object,
-      default: () => ({})
-    },
-    avatarSrc: {
-      type: String,
-      default: ''
-    }
-  },
-  data () {
-    return {
-      audioRate: parseFloat(localStorage.getItem(LS_NAME) || '1'),
-      isPlaying: false,
-      currentTime: 0,
-      duration: 0,
-      formattedCurrentTime: '0:00',
-      formattedDuration: '0:00',
-      showRateControl: false,
-      wavesurfer: null
-    }
-  },
-  methods: {
-    formatRate (rate) {
-      return rate
-    },
-    formatTime (time) {
-      if (isNaN(time)) return '0:00'
-      const minutes = Math.floor(time / 60)
-      const seconds = Math.floor(time % 60)
-      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
-    },
-    togglePlayPause () {
-      if (this.wavesurfer) {
-        this.wavesurfer.playPause()
-      }
-    },
-    toggleRate () {
-      const rates = [1, 2, 3, 4]
-      const currentIndex = rates.indexOf(this.audioRate)
-      const nextRate = rates[(currentIndex + 1) % rates.length]
-      this.setRate(nextRate)
-    },
-    setRate (rate) {
-      this.audioRate = rate
-      if (this.wavesurfer) {
-        this.wavesurfer.setPlaybackRate(rate)
-      }
-      localStorage.setItem(LS_NAME, rate)
-    },
-    handleLoadedMetadata () {
-      const audio = this.$refs.audioRef
-      this.duration = audio.duration
-      this.formattedDuration = this.formatTime(audio.duration)
-    },
-    handleTimeUpdate () {
-      const audio = this.$refs.audioRef
-      this.currentTime = audio.currentTime
-      this.formattedCurrentTime = this.formatTime(audio.currentTime)
-    },
-    handlePlay () {
-      this.isPlaying = true
-      this.showRateControl = true
-    },
-    handlePause () {
-      this.isPlaying = false
-    },
-    handleEnded () {
-      this.isPlaying = false
-      this.currentTime = 0
-      this.formattedCurrentTime = '0:00'
-      this.showRateControl = false
-    },
-    handleVisualizerClick (event) {
-      if (this.wavesurfer) {
-        const rect = this.$refs.waveformRef.getBoundingClientRect()
-        const clickX = event.clientX - rect.left
-        const ratio = clickX / rect.width
-        this.wavesurfer.seekTo(ratio)
-      }
-    },
-    initWaveSurfer () {
-      this.wavesurfer = WaveSurfer.create({
-        container: this.$refs.waveformRef,
-        waveColor: '#999',
-        progressColor: '#1976D2',
-        cursorColor: 'transparent',
-        barWidth: 2,
-        barGap: 1,
-        height: 35,
-        responsive: true,
-        normalize: true,
-        fillParent: true,
-        minPxPerSec: 50,
-        interact: true
-      })
+const LS_RATE = 'audioMessageRate'
+const waveformRef = ref(null)
+const wavesurfer = ref(null)
+const isPlaying = ref(false)
+const duration = ref(0)
+const currentTime = ref(0)
+const rate = ref(Number(localStorage.getItem(LS_RATE)) || 1)
 
-      this.wavesurfer.load(this.url)
+const formattedTime = computed(() => {
+  const time = isPlaying.value ? currentTime.value : duration.value
+  const minutes = Math.floor(time / 60)
+  const seconds = Math.floor(time % 60)
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
 
-      this.wavesurfer.on('play', () => {
-        this.isPlaying = true
-        this.showRateControl = true
-      })
+const initWaveSurfer = () => {
+  wavesurfer.value = WaveSurfer.create({
+    container: waveformRef.value,
+    waveColor: '#BDBDBD',
+    progressColor: '#1976D2',
+    cursorColor: 'transparent',
+    barWidth: 2,
+    barRadius: 3,
+    cursorWidth: 1,
+    height: 30,
+    barGap: 3,
+    url: props.url
+  })
 
-      this.wavesurfer.on('pause', () => {
-        this.isPlaying = false
-      })
+  wavesurfer.value.on('ready', () => {
+    duration.value = wavesurfer.value.getDuration()
+    wavesurfer.value.setPlaybackRate(rate.value)
+  })
 
-      this.wavesurfer.on('finish', () => {
-        this.handleEnded()
-      })
+  wavesurfer.value.on('audioprocess', () => {
+    currentTime.value = wavesurfer.value.getCurrentTime()
+  })
 
-      this.wavesurfer.on('audioprocess', () => {
-        this.currentTime = this.wavesurfer.getCurrentTime()
-        this.formattedCurrentTime = this.formatTime(this.currentTime)
-      })
+  wavesurfer.value.on('play', () => (isPlaying.value = true))
+  wavesurfer.value.on('pause', () => (isPlaying.value = false))
+  wavesurfer.value.on('finish', () => {
+    isPlaying.value = false
+    currentTime.value = 0
+  })
+}
 
-      this.wavesurfer.on('ready', () => {
-        this.duration = this.wavesurfer.getDuration()
-        this.formattedDuration = this.formatTime(this.duration)
-        this.wavesurfer.setPlaybackRate(this.audioRate)
-      })
-    },
-    incrementRate () {
-      const rates = [1, 2, 3, 4]
-      const currentIndex = rates.indexOf(this.audioRate)
-      const nextRate = rates[(currentIndex + 1) % rates.length]
-      this.setRate(nextRate)
-    }
-  },
-  async mounted () {
-    this.initWaveSurfer()
-  },
-  beforeDestroy () {
-    if (this.wavesurfer) {
-      this.wavesurfer.destroy()
+const togglePlayPause = () => {
+  wavesurfer.value?.playPause()
+}
+
+const incrementRate = () => {
+  if (rate.value === 1) rate.value = 1.5
+  else if (rate.value === 1.5) rate.value = 2
+  else rate.value = 1
+
+  localStorage.setItem(LS_RATE, rate.value)
+  wavesurfer.value?.setPlaybackRate(rate.value)
+}
+
+onMounted(() => {
+  initWaveSurfer()
+})
+
+onUnmounted(() => {
+  wavesurfer.value?.destroy()
+})
+
+watch(
+  () => props.url,
+  newUrl => {
+    if (newUrl) {
+      wavesurfer.value?.load(newUrl)
     }
   }
-}
+)
 </script>
 
 <style lang="scss" scoped>
 .audio-container {
   display: flex;
   align-items: center;
-  padding: 8px 8px 8px 0;
-  margin-bottom: 2px;
-  border-radius: 120px;
-  border: none;
-  width: 370px;
-  min-width: 300px;
-  height: 40px;
-  position: relative;
-  box-sizing: border-box;
+  padding: 4px 8px;
+  background: #f5f5f5;
+  border-radius: 40px;
+  width: 100%;
+  max-width: 350px;
+  min-width: 280px;
 }
 
-.photo-container {
-  display: flex;
-  align-items: center;
-  position: relative;
-  min-width: 70px;
-  margin-right: 0;
-  top: 2px;
-  cursor: pointer;
-
-  &:hover .rate-options {
-    display: flex;
-    animation: fadeIn 0.2s ease;
-  }
-}
-
-.rate-options {
-  display: none;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1f2937;
-  border-radius: 50px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  padding: 4px 12px;
-  z-index: 2;
-  transition: all 0.2s ease;
-  cursor: pointer;
-
-  .q-btn {
-    color: #fff;
-    font-size: 0.85rem;
-    min-height: 24px;
-    font-weight: 500;
-
-    &:hover {
-      background: transparent;
-    }
-  }
-
-  &:hover {
-    background: #2d3748;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 50%;
-    transform: translateX(-50%) rotate(45deg);
-    width: 8px;
-    height: 8px;
-    background: #1f2937;
-  }
-}
-
-.mic-icon {
-  position: absolute;
-  bottom: 0;
-  right: 5px;
-  background-color: white;
-  border-radius: 50%;
-  padding: 2px;
-  top: 12px;
-  box-shadow: 0px 1px 2px rgba(0,0,0,0.2);
-}
-
-.play-pause-btn {
-  padding: 0;
-  margin-right: 0;
-  min-width: 24px;
-  top: -1px;
-}
-
-.time-container {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  position: relative;
-  margin: 0;
-  top: -1px;
-}
-
-.time-label {
-  font-size: 0.75rem;
-  color: rgba(0, 0, 0, 0.7);
-  min-width: 30px;
-  padding: 0 2px;
-}
-
-.duration-label {
-  font-size: 0.75rem;
-  color: rgba(0, 0, 0, 0.7);
-  min-width: 30px;
-  padding: 0 2px;
+.visualizer-wrapper {
+  height: 30px;
+  overflow: hidden;
 }
 
 .rate-chip {
-  position: absolute;
-  left: 8px;
-  top: -6px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 80px;
+  min-width: 35px;
+  text-align: center;
+  user-select: none;
+  font-size: 10px;
+  height: 20px;
+  line-height: 20px;
+}
+
+.play-pause-btn {
   z-index: 1;
 }
 
-.visualizer-container {
-  flex: 1;
-  top: -1px;
-  position: relative;
-  cursor: pointer;
-  height: 33px;
-  margin: 0;
-  padding: 0;
-  z-index: 1;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+.duration-label {
+  min-width: 40px;
+  text-align: right;
+  font-size: 11px;
 }
 </style>

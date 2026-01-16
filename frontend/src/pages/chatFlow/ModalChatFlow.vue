@@ -1,6 +1,6 @@
 <template>
   <q-dialog
-    :value="modalChatFlow"
+    :model-value="modalChatFlow"
     @hide="fecharModal"
     @show="abrirModal"
     persistent
@@ -10,11 +10,17 @@
       class="q-pa-lg"
     >
       <q-card-section>
-        <div class="text-h6">{{ chatFlow.isDuplicate ? 'Duplicar' : chatFlowEdicao.id ? 'Editar': 'Criar' }} Fluxo <span v-if="chatFlow.isDuplicate"> (Nome: {{ chatFlowEdicao.name }}) </span></div>
+        <div class="text-h6">
+          {{ chatFlow.isDuplicate ? 'Duplicar' : chatFlowEdicao.id ? 'Editar' : 'Criar' }}
+          Fluxo
+          <span v-if="chatFlow.isDuplicate"> (Nome: {{ chatFlowEdicao.name }}) </span>
+        </div>
         <div
           v-if="chatFlow.isDuplicate"
           class="text-subtitle1"
-        > Nome: {{ chatFlowEdicao.name }} </div>
+        >
+          Nome: {{ chatFlowEdicao.name }}
+        </div>
       </q-card-section>
       <q-card-section>
         <q-input
@@ -22,8 +28,11 @@
           outlined
           rounded
           dense
-          v-model="chatFlow.name"
+          v-model="name"
+          v-bind="nameProps"
           label="Descrição"
+          :error="!!errors.name"
+          :error-message="errors.name"
         />
         <div class="row col q-mt-md">
           <q-input
@@ -32,14 +41,18 @@
             rounded
             dense
             outlined
-            v-model="chatFlow.celularTeste"
+            v-model="celularTeste"
+            v-bind="celularTesteProps"
             label="Número para Teste"
+            :error="!!errors.celularTeste"
+            :error-message="errors.celularTeste"
             hint="Deixe limpo para que a Auto resposta funcione. Caso contrário, irá funcionar somente para o número informado aqui."
           />
         </div>
         <div class="row col q-mt-md">
           <q-checkbox
-            v-model="chatFlow.isActive"
+            v-model="isActive"
+            v-bind="isActiveProps"
             label="Ativo"
           />
         </div>
@@ -64,87 +77,111 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-
 </template>
 
-<script>
-const userId = +localStorage.getItem('userId')
-import { CriarChatFlow, UpdateChatFlow } from 'src/service/chatFlow'
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
 import { getDefaultFlow } from 'src/components/ccFlowBuilder/defaultFlow'
+import { useChatFlowStore } from 'src/stores/useChatFlowStore'
+import { useForm } from 'vee-validate'
+import { reactive } from 'vue'
+import { z } from 'zod'
 
-export default {
-  name: 'ModalNovoChatFlow',
-  props: {
-    modalChatFlow: {
-      type: Boolean,
-      default: false
-    },
-    chatFlowEdicao: {
-      type: Object,
-      default: () => {
-        return { id: null }
-      }
-    }
+const props = defineProps({
+  modalChatFlow: {
+    type: Boolean,
+    default: false
   },
-  data () {
-    return {
-      chatFlow: {
-        name: null,
-        userId,
-        celularTeste: null,
-        isActive: true
-      }
-      // options: [
-      //   { value: 0, label: 'Entrada (Criação do Ticket)' },
-      //   { value: 1, label: 'Encerramento (Resolução Ticket)' }
-      // ]
-    }
-  },
-  methods: {
-    abrirModal () {
-      if (this.chatFlowEdicao.id) {
-        this.chatFlow = {
-          ...this.chatFlowEdicao,
-          userId
-        }
-      } else {
-        this.chatFlow = {
-          name: null,
-          action: 0,
-          userId,
-          celularTeste: null,
-          isActive: true
-        }
-      }
-    },
-    fecharModal () {
-      this.chatFlow = {
-        name: null,
-        action: 0,
-        userId,
-        celularTeste: null,
-        isActive: true
-      }
-      this.$emit('update:chatFlowEdicao', { id: null })
-      this.$emit('update:modalChatFlow', false)
-    },
-    async handleAutoresposta () {
-      if (this.chatFlow.id && !this.chatFlow?.isDuplicate) {
-        const { data } = await UpdateChatFlow(this.chatFlow)
-        this.$notificarSucesso('Fluxo editado.')
-        this.$emit('chatFlow:editado', data)
-      } else {
-        // setar id = null para rotina de duplicação de fluxo
-        const flow = { ...getDefaultFlow(), ...this.chatFlow, id: null }
-        const { data } = await CriarChatFlow(flow)
-        this.$notificarSucesso('Novo fluxo criado.')
-        this.$emit('chatFlow:criada', data)
-      }
-      this.fecharModal()
-    }
+  chatFlowEdicao: {
+    type: Object,
+    default: () => ({ id: null })
+  }
+})
+
+const emit = defineEmits(['update:modalChatFlow', 'update:chatFlowEdicao', 'chatFlow:criada', 'chatFlow:editado'])
+
+const chatFlowStore = useChatFlowStore()
+const { criarChatFlow, atualizarChatFlow } = chatFlowStore
+
+const userId = +localStorage.getItem('userId')
+
+const validationSchema = toTypedSchema(
+  z.object({
+    name: z.string().min(1, 'Descrição é obrigatória'),
+    celularTeste: z.string().optional().nullable(),
+    isActive: z.boolean().optional()
+  })
+)
+
+const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
+  validationSchema,
+  initialValues: {
+    name: '',
+    celularTeste: '',
+    isActive: true
+  }
+})
+
+const [name, nameProps] = defineField('name')
+const [celularTeste, celularTesteProps] = defineField('celularTeste')
+const [isActive, isActiveProps] = defineField('isActive')
+
+const chatFlow = reactive({
+  id: null,
+  isDuplicate: false,
+  action: 0
+})
+
+const abrirModal = () => {
+  if (props.chatFlowEdicao.id) {
+    chatFlow.id = props.chatFlowEdicao.id
+    chatFlow.isDuplicate = !!props.chatFlowEdicao.isDuplicate
+    setValues({
+      name: props.chatFlowEdicao.name,
+      celularTeste: props.chatFlowEdicao.celularTeste,
+      isActive: props.chatFlowEdicao.isActive
+    })
+  } else {
+    resetForm()
+    chatFlow.id = null
+    chatFlow.isDuplicate = false
   }
 }
+
+const fecharModal = () => {
+  resetForm()
+  chatFlow.id = null
+  chatFlow.isDuplicate = false
+  emit('update:chatFlowEdicao', { id: null })
+  emit('update:modalChatFlow', false)
+}
+
+const handleAutoresposta = handleSubmit(async values => {
+  try {
+    if (chatFlow.id && !chatFlow.isDuplicate) {
+      const data = await atualizarChatFlow({
+        ...values,
+        id: chatFlow.id,
+        userId,
+        action: chatFlow.action
+      })
+      emit('chatFlow:editado', data)
+    } else {
+      const flow = {
+        ...getDefaultFlow(),
+        ...values,
+        id: null,
+        userId,
+        action: chatFlow.action
+      }
+      const data = await criarChatFlow(flow)
+      emit('chatFlow:criada', data)
+    }
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+  }
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

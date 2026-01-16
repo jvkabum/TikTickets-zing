@@ -5,10 +5,10 @@ export const socketIO = () => {
     reconnection: true,
     autoConnect: true,
     transports: ['websocket'],
-    auth: (cb) => {
+    auth: cb => {
       const tokenItem = localStorage.getItem('token')
       const token = tokenItem ? JSON.parse(tokenItem) : null
-      // eslint-disable-next-line standard/no-callback-literal
+      // eslint-disable-next-line n/no-callback-literal
       cb({ token })
     }
   })
@@ -16,12 +16,12 @@ export const socketIO = () => {
 
 const socket = socketIO()
 
-socket.io.on('error', (error) => {
+socket.io.on('error', error => {
   // ...
   console.error('socket error', error)
 })
 
-socket.on('disconnect', (reason) => {
+socket.on('disconnect', reason => {
   console.info('socket disconnect', reason)
 
   // if (reason === "io server disconnect") {

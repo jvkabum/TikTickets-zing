@@ -155,8 +155,8 @@ function resolveOverlaps () {
         if (i === j) continue
 
         const nodeB = mNodeList[j]
-        const overlapX = (NODE_WIDTH + nodeDistance) - Math.abs(nodeA.x - nodeB.x)
-        const overlapY = (NODE_HEIGHT + nodeDistance) - Math.abs(nodeA.y - nodeB.y)
+        const overlapX = NODE_WIDTH + nodeDistance - Math.abs(nodeA.x - nodeB.x)
+        const overlapY = NODE_HEIGHT + nodeDistance - Math.abs(nodeA.y - nodeB.y)
 
         // Se há sobreposição em ambas as direções
         if (overlapX > 0 && overlapY > 0) {
@@ -192,7 +192,7 @@ function forceLayout () {
     // Ajustamos o fator k com base na distância dinâmica entre nós
     const nodeDistance = window.currentNodeDistance || MIN_NODE_DISTANCE
     // Reduzimos o fator quando há poucos nós para não espalhar tanto
-    k = Math.sqrt(CANVAS_WIDTH * CANVAS_HEIGHT / (mNodeList.length * 1.5)) * (nodeDistance / 200)
+    k = Math.sqrt((CANVAS_WIDTH * CANVAS_HEIGHT) / (mNodeList.length * 1.5)) * (nodeDistance / 200)
   }
 
   // Determinar posições iniciais de forma determinística
@@ -203,16 +203,14 @@ function forceLayout () {
 
   // Ajustar o raio inicial com base na quantidade de nós
   // Para poucos nós, usamos um raio menor para manter o grupo mais compacto
-  const radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) * (nodeCount < 5 ? 0.15 : (nodeCount < 10 ? 0.25 : 0.35))
+  const radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) * (nodeCount < 5 ? 0.15 : nodeCount < 10 ? 0.25 : 0.35)
 
   for (let i = 0; i < mNodeList.length; i++) {
     // Distribuição circular uniforme
     const angle = (i / nodeCount) * 2 * Math.PI
     // Variação no raio para evitar sobreposições iniciais
     // Para poucos nós, mantemos o raio mais consistente
-    const nodeRadius = nodeCount < 5
-      ? radius * (0.85 + (i % 3) * 0.05)
-      : radius * (0.7 + (i % 5) * 0.1)
+    const nodeRadius = nodeCount < 5 ? radius * (0.85 + (i % 3) * 0.05) : radius * (0.7 + (i % 5) * 0.1)
 
     mNodeList[i].x = centerX + nodeRadius * Math.cos(angle)
     mNodeList[i].y = centerY + nodeRadius * Math.sin(angle)
@@ -298,14 +296,15 @@ function calculateRepulsive () {
         distY = mNodeList[i].y - mNodeList[j].y
         dist = Math.sqrt(distX * distX + distY * distY)
       }
-      if (dist < 80) { // Aumentado para detectar proximidade maior
+      if (dist < 80) {
+        // Aumentado para detectar proximidade maior
         ejectFactor = 15 // Força maior para nós muito próximos
       }
       // Efeito em distâncias maiores para melhorar distribuição
       if (dist > 0 && dist < 400) {
         const id = mNodeList[i].id
-        mDxMap[id] = mDxMap[id] + distX / dist * k * k / dist * ejectFactor
-        mDyMap[id] = mDyMap[id] + distY / dist * k * k / dist * ejectFactor
+        mDxMap[id] = mDxMap[id] + (((distX / dist) * k * k) / dist) * ejectFactor
+        mDyMap[id] = mDyMap[id] + (((distY / dist) * k * k) / dist) * ejectFactor
       }
     }
   }
@@ -338,10 +337,10 @@ function calculateTraction () {
     // Limita a atração para não juntar demais os nós
     const capDist = Math.min(dist, NODE_WIDTH * 3)
 
-    mDxMap[eStartID] = mDxMap[eStartID] - distX * capDist / k * condenseFactor
-    mDyMap[eStartID] = mDyMap[eStartID] - distY * capDist / k * condenseFactor
-    mDxMap[eEndID] = mDxMap[eEndID] + distX * capDist / k * condenseFactor
-    mDyMap[eEndID] = mDyMap[eEndID] + distY * capDist / k * condenseFactor
+    mDxMap[eStartID] = mDxMap[eStartID] - ((distX * capDist) / k) * condenseFactor
+    mDyMap[eStartID] = mDyMap[eStartID] - ((distY * capDist) / k) * condenseFactor
+    mDxMap[eEndID] = mDxMap[eEndID] + ((distX * capDist) / k) * condenseFactor
+    mDyMap[eEndID] = mDyMap[eEndID] + ((distY * capDist) / k) * condenseFactor
   }
 }
 
@@ -350,7 +349,8 @@ function calculateTraction () {
  */
 function updateCoordinates () {
   // Aumentados para permitir movimentos maiores
-  const maxt = 8, maxty = 7
+  const maxt = 8,
+    maxty = 7
   for (let v = 0; v < mNodeList.length; v++) {
     const node = mNodeList[v]
     let dx = Math.floor(mDxMap[node.id])
@@ -873,7 +873,7 @@ function levelLayout () {
 
       // Se não houver nós posicionados, começa do princípio
       if (maxX === -Infinity) {
-        maxX = Math.max(150, (CANVAS_WIDTH - (nodesWithoutParent.length * horizontalSpacing)) / 2) - horizontalSpacing
+        maxX = Math.max(150, (CANVAS_WIDTH - nodesWithoutParent.length * horizontalSpacing) / 2) - horizontalSpacing
       }
 
       // Posiciona cada nó sem pai à direita dos outros
@@ -1009,22 +1009,29 @@ function circleLayout () {
 
   for (let i = 0; i < mNodeList.length; i++) {
     // Remove a pontuação e converte para minúsculas para comparação mais flexível
-    const nodeLabelClean = ((mNodeList[i].label || '').toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '')).trim()
+    const nodeLabelClean = (mNodeList[i].label || '')
+      .toLowerCase()
+      .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '')
+      .trim()
     const nodeId = mNodeList[i].id
 
     // Identifica "Bem Vindo" ou "Boas vindas" pelo texto ou ID
-    if (nodeLabelClean.includes('bem vindo') ||
-        nodeLabelClean.includes('boas vindas') ||
-        nodeId === 'nodeC' ||
-        nodeId === '2') {
+    if (
+      nodeLabelClean.includes('bem vindo') ||
+      nodeLabelClean.includes('boas vindas') ||
+      nodeId === 'nodeC' ||
+      nodeId === '2'
+    ) {
       bemVindoNodeId = mNodeList[i].id
     }
 
     // Identifica "Início" ou "Inicio" pelo texto ou ID
-    if (nodeLabelClean.includes('início') ||
-        nodeLabelClean.includes('inicio') ||
-        nodeId === 'start' ||
-        nodeId === '1') {
+    if (
+      nodeLabelClean.includes('início') ||
+      nodeLabelClean.includes('inicio') ||
+      nodeId === 'start' ||
+      nodeId === '1'
+    ) {
       inicioNodeId = mNodeList[i].id
     }
   }
@@ -1036,20 +1043,26 @@ function circleLayout () {
 
   // Debug - verificar IDs identificados
   console.log('Nós especiais identificados:', { bemVindoNodeId, inicioNodeId })
-  console.log('Lista de nós total:', mNodeList.map(n => ({ id: n.id, label: n.label })))
+  console.log(
+    'Lista de nós total:',
+    mNodeList.map(n => ({ id: n.id, label: n.label }))
+  )
 
   // Verifica se o nó "Início" existe na lista
-  const inicioExists = mNodeList.some(node =>
-    node.id === 'start' ||
-    node.id === '1' ||
-    (node.label && (node.label.toLowerCase().includes('início') || node.label.toLowerCase().includes('inicio')))
+  const inicioExists = mNodeList.some(
+    node =>
+      node.id === 'start' ||
+      node.id === '1' ||
+      (node.label && (node.label.toLowerCase().includes('início') || node.label.toLowerCase().includes('inicio')))
   )
 
   // Verifica se o nó "Boas vindas" existe na lista
-  const boasVindasExists = mNodeList.some(node =>
-    node.id === 'nodeC' ||
-    node.id === '2' ||
-    (node.label && (node.label.toLowerCase().includes('boas vindas') || node.label.toLowerCase().includes('bem vindo')))
+  const boasVindasExists = mNodeList.some(
+    node =>
+      node.id === 'nodeC' ||
+      node.id === '2' ||
+      (node.label &&
+        (node.label.toLowerCase().includes('boas vindas') || node.label.toLowerCase().includes('bem vindo')))
   )
 
   console.log('Existência dos nós:', { inicioExists, boasVindasExists })
@@ -1069,7 +1082,10 @@ function circleLayout () {
         mNodeList[i].style.backgroundColor = '#90CAF9'
         mNodeList[i].style.zIndex = '10'
 
-        console.log('Posicionando nó Início com x=50px EXATO:', mNodeList[i].id, mNodeList[i].label, { x: mNodeList[i].x, y: mNodeList[i].y })
+        console.log('Posicionando nó Início com x=50px EXATO:', mNodeList[i].id, mNodeList[i].label, {
+          x: mNodeList[i].x,
+          y: mNodeList[i].y
+        })
         break
       }
     }
@@ -1092,7 +1108,10 @@ function circleLayout () {
         mNodeList[i].style.backgroundColor = '#90CAF9'
         mNodeList[i].style.zIndex = '10'
 
-        console.log('Posicionando nó Boas vindas:', mNodeList[i].id, mNodeList[i].label, { x: mNodeList[i].x, y: mNodeList[i].y })
+        console.log('Posicionando nó Boas vindas:', mNodeList[i].id, mNodeList[i].label, {
+          x: mNodeList[i].x,
+          y: mNodeList[i].y
+        })
         break
       }
     }
@@ -1119,7 +1138,10 @@ function circleLayout () {
       node.x = inicioX
       node.y = inicioY + 100 // Exatamente 100px abaixo do Início
 
-      console.log('Posicionando nó Configurations 100px abaixo do Início:', node.id, { x: node.x, y: node.y })
+      console.log('Posicionando nó Configurations 100px abaixo do Início:', node.id, {
+        x: node.x,
+        y: node.y
+      })
       break
     }
   }
@@ -1141,10 +1163,12 @@ function circleLayout () {
 
     // Verificação direta por ID conhecido para Boas vindas
     if (node.id === 'nodeC' || node.id === '2') {
-      const inicioNode = mNodeList.find(n =>
-        n.id === 'start' || n.id === '1' ||
-        ((n.label || '').toLowerCase().includes('início') ||
-         (n.label || '').toLowerCase().includes('inicio'))
+      const inicioNode = mNodeList.find(
+        n =>
+          n.id === 'start' ||
+          n.id === '1' ||
+          (n.label || '').toLowerCase().includes('início') ||
+          (n.label || '').toLowerCase().includes('inicio')
       )
 
       // Posiciona "Boas vindas" ao lado de "Início" se ele existir
@@ -1206,8 +1230,10 @@ function circleLayout () {
       if (incomingConnections[nodeId] && incomingConnections[nodeId].length > 0) {
         let parentLevel = -1
         for (const potentialParent of incomingConnections[nodeId]) {
-          if (nodeLevels[potentialParent] !== undefined &&
-             (parentLevel === -1 || nodeLevels[potentialParent] > parentLevel)) {
+          if (
+            nodeLevels[potentialParent] !== undefined &&
+            (parentLevel === -1 || nodeLevels[potentialParent] > parentLevel)
+          ) {
             parentLevel = nodeLevels[potentialParent]
             nodeParents[nodeId] = potentialParent
           }
@@ -1352,10 +1378,7 @@ function finalizeCircularLayout (centerX, centerY, nodeLevels) {
         const angle = Math.atan2(node.y - centerY, node.x - centerX)
 
         // Calcula o raio atual
-        const radius = Math.sqrt(
-          Math.pow(node.x - centerX, 2) +
-          Math.pow(node.y - centerY, 2)
-        )
+        const radius = Math.sqrt(Math.pow(node.x - centerX, 2) + Math.pow(node.y - centerY, 2))
 
         // Aumenta um pouco o raio para afastar o nó dos outros
         const newRadius = radius * 1.05
@@ -1381,8 +1404,8 @@ function gridLayout () {
 
   const marginX = 150 // Aumentado para garantir visibilidade nas bordas
   const marginY = 150
-  const cellWidth = (CANVAS_WIDTH - 2 * marginX) / Math.max(1, cols - 1) * 1.1 // 10% mais espaço
-  const cellHeight = (CANVAS_HEIGHT - 2 * marginY) / Math.max(1, rows - 1) * 1.1
+  const cellWidth = ((CANVAS_WIDTH - 2 * marginX) / Math.max(1, cols - 1)) * 1.1 // 10% mais espaço
+  const cellHeight = ((CANVAS_HEIGHT - 2 * marginY) / Math.max(1, rows - 1)) * 1.1
 
   for (let i = 0; i < nodeCount; i++) {
     const row = Math.floor(i / cols)
@@ -1574,7 +1597,7 @@ function hubRadialLayout () {
     for (let i = 0; i < firstLevelNodes.length; i++) {
       const nodeId = firstLevelNodes[i]
       // Distribui os nós em um semicírculo na parte superior (de -90° a 90°)
-      const angle = (i * sectorAngle) - (Math.PI / 2)
+      const angle = i * sectorAngle - Math.PI / 2
       // Usa o mesmo raio base definido anteriormente
 
       // Posição do hub secundário
@@ -1632,8 +1655,10 @@ function hubRadialLayout () {
 
           for (let k = 0; k < mLinkList.length; k++) {
             const edge = mLinkList[k]
-            if ((edge.source === nodeId && edge.target === possibleParentId) ||
-                (edge.target === nodeId && edge.source === possibleParentId)) {
+            if (
+              (edge.source === nodeId && edge.target === possibleParentId) ||
+              (edge.target === nodeId && edge.source === possibleParentId)
+            ) {
               connectionDistance = 0 // Nós diretamente conectados
               break
             }
@@ -1730,7 +1755,7 @@ function hubRadialLayout () {
         // Calcula o ângulo em relação ao centro
         const angle = Math.atan2(node.y - centerY, node.x - centerX)
         // Ajusta o raio com base no nível e no número total de nós
-        const newRadius = baseRadius + (level * radiusIncrement * (1 + (mNodeList.length / 50)))
+        const newRadius = baseRadius + level * radiusIncrement * (1 + mNodeList.length / 50)
 
         node.x = centerX + newRadius * Math.cos(angle)
         node.y = centerY + newRadius * Math.sin(angle)
@@ -1805,10 +1830,7 @@ function hubRadialLayout () {
             const newAngleB = angleB + 0.05
 
             // Mantém o mesmo raio mas ajusta o ângulo
-            const radius = Math.sqrt(
-              Math.pow(nodeA.x - centerX, 2) +
-              Math.pow(nodeA.y - centerY, 2)
-            )
+            const radius = Math.sqrt(Math.pow(nodeA.x - centerX, 2) + Math.pow(nodeA.y - centerY, 2))
 
             // Aplica novos ângulos
             nodeA.x = centerX + radius * Math.cos(newAngleA)
@@ -1951,7 +1973,7 @@ function resolveAllOverlaps () {
           overlapsResolved = false
 
           // Decide em qual direção mover (na direção de menos sobreposição)
-          if ((minDistanceX - dx) < (minDistanceY - dy)) {
+          if (minDistanceX - dx < minDistanceY - dy) {
             // Mais fácil corrigir no eixo X
             if (nodeA.x < nodeB.x) {
               // Somente move o nó A se não for o "Início"
@@ -2022,7 +2044,7 @@ export default {
     // Retorna os nós com as posições atualizadas
     return {
       nodes: mNodeList.map(({ id, x, y }) => ({ id, x, y })),
-      edges: edges
+      edges
     }
   }
 }
@@ -2083,7 +2105,7 @@ function applyRepulsiveForce (nodeA, nodeB) {
   const distance = Math.sqrt(dx * dx + dy * dy) || 1
 
   // Força inversamente proporcional à distância
-  const force = k * k / distance
+  const force = (k * k) / distance
 
   // Componentes da força
   const fx = (dx / distance) * force
@@ -2105,7 +2127,7 @@ function applyAttractiveForce (nodeA, nodeB) {
   const distance = Math.sqrt(dx * dx + dy * dy) || 1
 
   // Força proporcional à distância
-  const force = distance * distance / k
+  const force = (distance * distance) / k
 
   // Componentes da força
   const fx = (dx / distance) * force

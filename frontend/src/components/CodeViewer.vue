@@ -4,7 +4,11 @@
     <!-- Cabeçalho com informações do arquivo e ações -->
     <div class="code-header">
       <div class="file-info">
-        <q-icon name="mdi-file-code" size="20px" class="q-mr-sm" />
+        <q-icon
+          name="mdi-file-code"
+          size="20px"
+          class="q-mr-sm"
+        />
         <span class="file-name">{{ fileName || 'Código' }}</span>
       </div>
       <div class="actions">
@@ -46,12 +50,21 @@
     <!-- Área de exibição do código -->
     <div class="code-content">
       <!-- Indicador de carregamento exibido enquanto o conteúdo da URL é baixado -->
-      <div v-if="loading" class="text-center q-pa-md">
-        <q-spinner color="primary" size="2em" />
+      <div
+        v-if="loading"
+        class="text-center q-pa-md"
+      >
+        <q-spinner
+          color="primary"
+          size="2em"
+        />
         <div class="text-caption q-mt-sm">Carregando código...</div>
       </div>
       <!-- Exibição do código com números de linha e realce de sintaxe -->
-      <pre v-else class="code-container">
+      <pre
+        v-else
+        class="code-container"
+      >
         <div class="line-numbers">
           <div v-for="n in totalLines" :key="n" class="line-number">{{ n }}</div>
         </div>
@@ -61,166 +74,157 @@
   </div>
 </template>
 
-<script>
-import hljs from 'highlight.js' // Biblioteca para realce de sintaxe
-import 'highlight.js/styles/atom-one-dark.css' // Estilo do realce inspirado no Atom
-import axios from 'axios' // Biblioteca para requisições HTTP
-import { formatarCodigoSql, formatarCodigo, isSqlFileType, getHighlightLanguage } from '../utils/codeFormat.js'
+<script setup>
+import axios from 'axios'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/atom-one-dark.css'
+import { useQuasar } from 'quasar'
+import { computed, ref, watch } from 'vue'
+import { formatarCodigo, formatarCodigoSql, getHighlightLanguage, isSqlFileType } from '../utils/codeFormat.js'
 
-export default {
-  name: 'CodeViewer',
-
-  props: {
-    code: {
-      type: String,
-      default: ''
-    },
-    fileName: {
-      type: String,
-      default: ''
-    },
-    fileType: {
-      type: String,
-      default: 'plaintext'
-    }
+const props = defineProps({
+  code: {
+    type: String,
+    default: ''
   },
-
-  data () {
-    return {
-      loading: false,
-      fileContent: ''
-    }
+  fileName: {
+    type: String,
+    default: ''
   },
+  fileType: {
+    type: String,
+    default: 'plaintext'
+  }
+})
 
-  computed: {
-    isUrl () {
-      return this.code && this.code.startsWith('http')
-    },
+const $q = useQuasar()
+const loading = ref(false)
+const fileContent = ref('')
 
-    content () {
-      return this.fileContent || this.code
-    },
+const isUrl = computed(() => {
+  return props.code && props.code.startsWith('http')
+})
 
-    filteredContent () {
-      if (!this.content) return ''
-      return this.content
-    },
+const content = computed(() => {
+  return fileContent.value || props.code
+})
 
-    totalLines () {
-      return this.filteredContent.split('\n').length
-    },
+const filteredContent = computed(() => {
+  if (!content.value) return ''
+  return content.value
+})
 
-    isSqlFile () {
-      return isSqlFileType(this.fileType)
-    },
+const totalLines = computed(() => {
+  return filteredContent.value.split('\n').length
+})
 
-    getLanguageClass () {
-      return getHighlightLanguage(this.fileType)
-    },
+const isSqlFile = computed(() => {
+  return isSqlFileType(props.fileType)
+})
 
-    highlightedCode () {
-      if (!this.filteredContent) { return '<span class="hljs-line empty-line" data-line="1"> </span>' }
+const getLanguageClass = computed(() => {
+  return getHighlightLanguage(props.fileType)
+})
 
-      const language = this.getLanguageClass
+const highlightedCode = computed(() => {
+  if (!filteredContent.value) {
+    return '<span class="hljs-line empty-line" data-line="1"> </span>'
+  }
 
-      // Tratamento especial para SQL para preservar formatação exata
-      if (this.isSqlFile) {
-        const result = hljs.highlight(this.filteredContent, { language })
-        return formatarCodigoSql(this.filteredContent, result.value)
-      }
+  const language = getLanguageClass.value
 
-      // Para outros tipos de arquivo, usar o comportamento normal com indentação preservada
-      const result = hljs.highlight(this.filteredContent, { language })
-      return formatarCodigo(this.filteredContent, result.value)
-    }
-  },
+  if (isSqlFile.value) {
+    const result = hljs.highlight(filteredContent.value, { language })
+    return formatarCodigoSql(filteredContent.value, result.value)
+  }
 
-  methods: {
-    copiarCodigo () {
-      navigator.clipboard.writeText(this.content)
-        .then(() => {
-          this.$q.notify({
-            type: 'positive',
-            message: 'Código copiado!',
-            position: 'top',
-            timeout: 2000
-          })
-        })
-        .catch(() => {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Erro ao copiar código',
-            position: 'top',
-            timeout: 2000
-          })
-        })
-    },
+  const result = hljs.highlight(filteredContent.value, { language })
+  return formatarCodigo(filteredContent.value, result.value)
+})
 
-    async loadFileContent () {
-      if (!this.isUrl) return
+const copiarCodigo = () => {
+  navigator.clipboard
+    .writeText(content.value)
+    .then(() => {
+      $q.notify({
+        type: 'positive',
+        message: 'Código copiado!',
+        position: 'top',
+        timeout: 2000
+      })
+    })
+    .catch(() => {
+      $q.notify({
+        type: 'negative',
+        message: 'Erro ao copiar código',
+        position: 'top',
+        timeout: 2000
+      })
+    })
+}
 
-      this.loading = true
-      try {
-        const response = await axios.get(this.code)
-        this.fileContent = response.data
-      } catch (error) {
-        console.error('Erro ao carregar arquivo:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Erro ao carregar o arquivo',
-          position: 'top',
-          timeout: 2000
-        })
-        this.fileContent = 'Erro ao carregar o arquivo'
-      } finally {
-        this.loading = false
-      }
-    },
+const loadFileContent = async () => {
+  if (!isUrl.value) return
 
-    abrirEmNovaGuia () {
-      if (this.isUrl) {
-        const blob = new Blob([this.content], { type: 'text/plain' })
-        const url = URL.createObjectURL(blob)
-        window.open(url, '_blank')
-      }
-    },
-
-    downloadArquivo () {
-      if (this.isUrl) {
-        const link = document.createElement('a')
-        link.href = this.code
-        link.download = this.fileName || this.code.split('/').pop()
-        link.click()
-      }
-    }
-  },
-
-  watch: {
-    code: {
-      immediate: true,
-      handler (newCode) {
-        if (this.isUrl) {
-          this.loadFileContent()
-        } else {
-          this.fileContent = ''
-        }
-      }
-    }
+  loading.value = true
+  try {
+    const response = await axios.get(props.code)
+    fileContent.value = response.data
+  } catch (error) {
+    console.error('Erro ao carregar arquivo:', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Erro ao carregar o arquivo',
+      position: 'top',
+      timeout: 2000
+    })
+    fileContent.value = 'Erro ao carregar o arquivo'
+  } finally {
+    loading.value = false
   }
 }
+
+const abrirEmNovaGuia = () => {
+  if (isUrl.value) {
+    const blob = new Blob([content.value], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+  }
+}
+
+const downloadArquivo = () => {
+  if (isUrl.value) {
+    const link = document.createElement('a')
+    link.href = props.code
+    link.download = props.fileName || props.code.split('/').pop()
+    link.click()
+  }
+}
+
+watch(
+  () => props.code,
+  newCode => {
+    if (isUrl.value) {
+      loadFileContent()
+    } else {
+      fileContent.value = ''
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style lang="scss">
 // Definição de variáveis para facilitar a manutenção das cores e estilos
 $bg-dark: #121212; // Cor de fundo principal mais escura
-$bg-code: #1E1E1E; // Cor de fundo do código
+$bg-code: #1e1e1e; // Cor de fundo do código
 $bg-header: #252526; // Cor de fundo do cabeçalho, ligeiramente mais clara que o fundo principal
-$border-color: #3C3C3C; // Cor da borda para separar elementos, tom médio de cinza
-$text-light: #CCCCCC; // Cor do texto principal, cinza claro para contraste com o fundo escuro
+$border-color: #3c3c3c; // Cor da borda para separar elementos, tom médio de cinza
+$text-light: #cccccc; // Cor do texto principal, cinza claro para contraste com o fundo escuro
 $line-number-color: #858585; // Cor dos números das linhas, cinza médio para ser visível mas não distrair
-$highlight: #569CD6; // Cor para palavras-chave e tags, azul claro para destaque
-$string-color: #D69D85; // Cor para strings, tom alaranjado para facilitar identificação
-$comment-color: #6A9955; // Cor para comentários, verde médio para diferenciar do código
+$highlight: #569cd6; // Cor para palavras-chave e tags, azul claro para destaque
+$string-color: #d69d85; // Cor para strings, tom alaranjado para facilitar identificação
+$comment-color: #6a9955; // Cor para comentários, verde médio para diferenciar do código
 $scroll-thumb: #333333; // Cor da barra de rolagem, cinza escuro para integrar com o tema
 $scroll-thumb-hover: #454545; // Cor da barra ao passar o mouse, cinza mais claro para feedback visual
 
@@ -334,7 +338,7 @@ $scroll-thumb-hover: #454545; // Cor da barra ao passar o mouse, cinza mais clar
         font-family: 'Fira Code', monospace; // Fonte monoespaçada ideal para código
         font-size: 14px; // Tamanho da fonte consistente
         white-space: pre; // Preserva espaços e quebras de linha do código
-        color: #D4D4D4; // Cor clara para o texto do código
+        color: #d4d4d4; // Cor clara para o texto do código
         flex: 1; // Ocupa espaço disponível
         line-height: 1.5em; // Altura da linha consistente com os números
         display: flex; // Usa flexbox para organizar linhas verticalmente
@@ -368,27 +372,27 @@ $scroll-thumb-hover: #454545; // Cor da barra ao passar o mouse, cinza mais clar
   .hljs-built_in,
   .hljs-function,
   .hljs-title {
-    color: #DCDCAA; // Amarelo claro para funções e propriedades built-in
+    color: #dcdcaa; // Amarelo claro para funções e propriedades built-in
   }
 
   .hljs-number,
   .hljs-literal {
-    color: #B5CEA8; // Verde claro para números e literais
+    color: #b5cea8; // Verde claro para números e literais
   }
 
   .hljs-operator,
   .hljs-punctuation {
-    color: #D4D4D4; // Cor padrão para operadores e pontuação
+    color: #d4d4d4; // Cor padrão para operadores e pontuação
   }
 
   .hljs-variable {
-    color: #9CDCFE; // Azul claro para variáveis
+    color: #9cdcfe; // Azul claro para variáveis
   }
 
   // Estilização do tooltip
   .q-tooltip {
     background: $scroll-thumb; // Fundo escuro para o tooltip
-    color: #FFFFFF; // Texto branco para contraste
+    color: #ffffff; // Texto branco para contraste
     font-size: 12px; // Fonte menor para o tooltip
     padding: 4px 8px; // Espaçamento interno
     border-radius: 4px; // Cantos arredondados
@@ -451,43 +455,43 @@ $scroll-thumb-hover: #454545; // Cor da barra ao passar o mouse, cinza mais clar
   }
 
   .hljs-keyword {
-    color: #CF8BF0; // Roxo mais claro para palavras-chave SQL (UPDATE, SET, WHERE)
+    color: #cf8bf0; // Roxo mais claro para palavras-chave SQL (UPDATE, SET, WHERE)
     font-weight: bold; // Negrito para destacar
     text-transform: uppercase; // Mantém maiúsculas para keywords SQL
   }
 
   .hljs-string {
-    color: #CE9178; // Laranja avermelhado para strings
+    color: #ce9178; // Laranja avermelhado para strings
   }
 
   .hljs-variable,
   .hljs-attr {
-    color: #9CDCFE; // Azul para variáveis e nomes de coluna
+    color: #9cdcfe; // Azul para variáveis e nomes de coluna
   }
 
   .hljs-operator,
   .hljs-punctuation {
-    color: #D4D4D4; // Cor padrão para operadores e pontuação
+    color: #d4d4d4; // Cor padrão para operadores e pontuação
   }
 
   .hljs-built_in {
-    color: #DCDCAA; // Amarelo para funções built-in
+    color: #dcdcaa; // Amarelo para funções built-in
   }
 
   .hljs-params {
-    color: #9CDCFE; // Azul claro para parâmetros
+    color: #9cdcfe; // Azul claro para parâmetros
   }
 
   .hljs-type {
-    color: #4EC9B0; // Verde azulado para tipos
+    color: #4ec9b0; // Verde azulado para tipos
   }
 
   .hljs-number {
-    color: #B5CEA8; // Verde claro para números
+    color: #b5cea8; // Verde claro para números
   }
 
   .hljs-comment {
-    color: #6A9955; // Verde para comentários
+    color: #6a9955; // Verde para comentários
     font-style: italic; // Itálico para comentários
   }
 }
@@ -497,7 +501,7 @@ $scroll-thumb-hover: #454545; // Cor da barra ao passar o mouse, cinza mais clar
 .hljs .token.entity,
 .hljs .token.url,
 .hljs-operator {
-  color: #D4D4D4; // Cor clara padrão para operadores
+  color: #d4d4d4; // Cor clara padrão para operadores
   background: transparent; // Remove qualquer background
 }
 

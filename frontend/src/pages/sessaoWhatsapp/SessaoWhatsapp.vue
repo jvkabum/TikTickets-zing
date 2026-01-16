@@ -20,7 +20,10 @@
       </q-card>
     </div>
     <div class="row full-width">
-      <template v-for="item in canais" :key="item.id">
+      <template
+        v-for="item in canais"
+        :key="item.id"
+      >
         <q-card
           flat
           bordered
@@ -58,7 +61,7 @@
             <template v-if="item.type === 'messenger'">
               <div class="text-body2 text-bold q-mt-sm">
                 <span> Página: </span>
-                {{ item.fbObject && item.fbObject.name || 'Nenhuma página configurada.' }}
+                {{ (item.fbObject && item.fbObject.name) || 'Nenhuma página configurada.' }}
               </div>
             </template>
           </q-card-section>
@@ -75,7 +78,7 @@
               option-value="id"
               option-label="name"
               clearable
-              @input="handleSaveWhatsApp(item)"
+              @update:model-value="handleSaveWhatsApp(item)"
             />
           </q-card-section>
           <q-separator />
@@ -89,7 +92,7 @@
                 v-if="item.type == 'whatsapp' && item.status == 'qrcode'"
                 color="blue-5"
                 label="QR Code"
-                @click="handleOpenQrModal(item, 'btn-qrCode')"
+                @click="handleOpenQrModal(item)"
                 icon-right="watch_later"
                 :disable="!isAdmin"
               />
@@ -109,7 +112,7 @@
                   v-if="item.status == 'DISCONNECTED' && item.type == 'whatsapp'"
                   color="blue-5"
                   label="Novo QR Code"
-                  @click="handleRequestNewQrCode(item, 'btn-qrCode')"
+                  @click="handleRequestNewQrCode(item)"
                   icon-right="watch_later"
                   :disable="!isAdmin"
                 />
@@ -119,9 +122,7 @@
                 v-if="item.status == 'OPENING'"
                 class="row items-center q-gutter-sm flex flex-inline"
               >
-                <div class="text-bold">
-                  Conectando
-                </div>
+                <div class="text-bold">Conectando</div>
                 <q-spinner-radio
                   color="positive"
                   size="2em"
@@ -151,9 +152,7 @@
               flat
               class="absolute-bottom-right"
             >
-              <q-tooltip>
-                Deletar conexáo
-              </q-tooltip>
+              <q-tooltip> Deletar conexáo </q-tooltip>
             </q-btn>
           </q-card-actions>
         </q-card>
@@ -162,7 +161,7 @@
     <ModalQrCode
       v-model:abrirModalQR="abrirModalQR"
       :channel="cDadosWhatsappSelecionado"
-      @gerar-novo-qrcode="v => handleRequestNewQrCode(v, 'btn-qrCode')"
+      @gerar-novo-qrcode="handleRequestNewQrCode"
     />
     <ModalWhatsapp
       v-model:modalWhatsapp="modalWhatsapp"
@@ -178,228 +177,165 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { useQuasar } from 'quasar'
+import { ListarChatFlow } from 'src/service/chatFlow'
+import {
+  DeletarWhatsapp,
+  DeleteWhatsappSession,
+  ListarWhatsapps,
+  RequestNewQrCode,
+  StartWhatsappSession,
+  UpdateWhatsapp
+} from 'src/service/sessoesWhatsapp'
+import { useWhatsappStore } from 'src/stores/useWhatsappStore'
+import { notificarErro } from 'src/utils/helpersNotifications'
+import { computed, onMounted, ref, watch } from 'vue'
 
-import { format, parseISO } from 'date-fns'
-import pt from 'date-fns/locale/pt-BR/index'
-import { mapGetters } from 'vuex'
-import { ListarChatFlow } from '../../service/chatFlow'
-import { DeletarWhatsapp, DeleteWhatsappSession, ListarWhatsapps, RequestNewQrCode, StartWhatsappSession, UpdateWhatsapp } from '../../service/sessoesWhatsapp'
+// Componentes
+import ItemStatusChannel from './ItemStatusChannel.vue'
+import ModalQrCode from './ModalQrCode.vue'
+import ModalWhatsapp from './ModalWhatsapp.vue'
 
-const userLogado = JSON.parse(localStorage.getItem('usuario'))
+const $q = useQuasar()
+const whatsappStore = useWhatsappStore()
 
-export default {
-  name: 'IndexSessoesWhatsapp',
-  components: {
+const userProfile = ref('user')
+const loading = ref(false)
+const isAdmin = ref(false)
+const abrirModalQR = ref(false)
+const modalWhatsapp = ref(false)
+const whatsappSelecionado = ref({})
+const listaChatFlow = ref([])
+const canais = ref([])
+
+const whatsapps = computed(() => whatsappStore.whatsapps)
+
+const cDadosWhatsappSelecionado = computed(() => {
+  const { id } = whatsappSelecionado.value
+  return whatsapps.value.find(w => w.id === id)
+})
+
+watch(
+  whatsapps,
+  newVal => {
+    canais.value = JSON.parse(JSON.stringify(newVal))
   },
-  data () {
-    return {
-      userProfile: 'user',
-      loading: false,
-      userLogado,
-      isAdmin: false,
-      abrirModalQR: false,
-      modalWhatsapp: false,
-      whatsappSelecionado: {},
-      listaChatFlow: [],
-      whatsAppId: null,
-      canais: [],
-      objStatus: {
-        qrcode: ''
-      },
-      columns: [
-        {
-          name: 'name',
-          label: 'Nome',
-          field: 'name',
-          align: 'left'
-        },
-        {
-          name: 'status',
-          label: 'Status',
-          field: 'status',
-          align: 'center'
-        },
-        {
-          name: 'session',
-          label: 'Sessão',
-          field: 'status',
-          align: 'center'
-        },
-        {
-          name: 'number',
-          label: 'Número',
-          field: 'number',
-          align: 'center'
-        },
-        {
-          name: 'updatedAt',
-          label: 'Última Atualização',
-          field: 'updatedAt',
-          align: 'center',
-          format: d => this.formatarData(d, 'dd/MM/yyyy HH:mm')
-        },
-        {
-          name: 'isDefault',
-          label: 'Padrão',
-          field: 'isDefault',
-          align: 'center'
-        },
-        {
-          name: 'acoes',
-          label: 'Ações',
-          field: 'acoes',
-          align: 'center'
-        }
-      ]
+  { deep: true, immediate: true }
+)
+
+const handleOpenQrModal = channel => {
+  whatsappSelecionado.value = channel
+  abrirModalQR.value = true
+}
+
+const handleOpenModalWhatsapp = whatsapp => {
+  whatsappSelecionado.value = whatsapp
+  modalWhatsapp.value = true
+}
+
+const handleDisconectWhatsSession = async whatsAppId => {
+  $q.dialog({
+    title: 'Atenção!! Deseja realmente desconectar? ',
+    cancel: { label: 'Não', color: 'primary', push: true },
+    ok: { label: 'Sim', color: 'negative', push: true },
+    persistent: true
+  }).onOk(async () => {
+    loading.value = true
+    try {
+      await DeleteWhatsappSession(whatsAppId)
+      whatsappStore.updateWhatsapp({ id: whatsAppId, status: 'DISCONNECTED' })
+    } finally {
+      loading.value = false
     }
-  },
-  watch: {
-    whatsapps: {
-      handler () {
-        this.canais = JSON.parse(JSON.stringify(this.whatsapps))
-      },
-      deep: true
-    }
-  },
-  computed: {
-    ...mapGetters(['whatsapps']),
-    cDadosWhatsappSelecionado () {
-      const { id } = this.whatsappSelecionado
-      return this.whatsapps.find(w => w.id === id)
-    }
-  },
-  methods: {
-    formatarData (data, formato) {
-      return format(parseISO(data), formato, { locale: pt })
-    },
-    handleOpenQrModal (channel) {
-      this.whatsappSelecionado = channel
-      this.abrirModalQR = true
-    },
-    handleOpenModalWhatsapp (whatsapp) {
-      this.whatsappSelecionado = whatsapp
-      this.modalWhatsapp = true
-    },
-    async handleDisconectWhatsSession (whatsAppId) {
-      this.$q.dialog({
-        title: 'Atenção!! Deseja realmente desconectar? ',
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        this.loading = true
-        DeleteWhatsappSession(whatsAppId).then(() => {
-          const whatsapp = this.whatsapps.find(w => w.id === whatsAppId)
-          this.$store.commit('UPDATE_WHATSAPPS', {
-            ...whatsapp,
-            status: 'DISCONNECTED'
-          })
-        }).finally(f => {
-          this.loading = false
-        })
-      })
-    },
-    async handleStartWhatsAppSession (whatsAppId) {
-      try {
-        await StartWhatsappSession(whatsAppId)
-      } catch (error) {
-        console.error(error)
-      }
-    },
-    async handleRequestNewQrCode (channel, origem) {
-      if (channel.type === 'telegram' && !channel.tokenTelegram) {
-        this.$notificarErro('Necessário informar o token para Telegram')
-      }
-      this.loading = true
-      try {
-        await RequestNewQrCode({ id: channel.id, isQrcode: true })
-        setTimeout(() => {
-          this.handleOpenQrModal(channel)
-        }, 2000)
-      } catch (error) {
-        console.error(error)
-      }
-      this.loading = false
-    },
-    async listarWhatsapps () {
-      const { data } = await ListarWhatsapps()
-      this.$store.commit('LOAD_WHATSAPPS', data)
-    },
-    async deleteWhatsapp (whatsapp) {
-      this.$q.dialog({
-        title: 'Atenção!! Deseja realmente deletar? ',
-        message: 'Não é uma boa ideia apagar se já tiver gerado atendimentos para esse whatsapp.',
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        this.loading = true
-        DeletarWhatsapp(whatsapp.id).then(r => {
-          this.$store.commit('DELETE_WHATSAPPS', whatsapp.id)
-        }).finally(f => {
-          this.loading = false
-        })
-      })
-    },
-    async listarChatFlow () {
-      const { data } = await ListarChatFlow()
-      this.listaChatFlow = data.chatFlow
-    },
-    async handleSaveWhatsApp (whatsapp) {
-      try {
-        await UpdateWhatsapp(whatsapp.id, whatsapp)
-        this.$q.notify({
-          type: 'positive',
-          progress: true,
-          position: 'top',
-          message: `Whatsapp ${whatsapp.id ? 'editado' : 'criado'} com sucesso!`,
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-      } catch (error) {
-        console.error(error)
-        return this.$q.notify({
-          type: 'error',
-          progress: true,
-          position: 'top',
-          message: 'Ops! Verifique os erros... O nome da conexão não pode existir na plataforma, é um identificador único.',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-      }
-    }
-  },
-  mounted () {
-    this.userProfile = localStorage.getItem('profile')
-    this.isAdmin = localStorage.getItem('profile')
-    this.listarWhatsapps()
-    this.listarChatFlow()
+  })
+}
+
+const handleStartWhatsAppSession = async whatsAppId => {
+  try {
+    await StartWhatsappSession(whatsAppId)
+  } catch (error) {
+    console.error(error)
   }
 }
+
+const handleRequestNewQrCode = async channel => {
+  if (channel.type === 'telegram' && !channel.tokenTelegram) {
+    notificarErro('Necessário informar o token para Telegram')
+  }
+  loading.value = true
+  try {
+    await RequestNewQrCode({ id: channel.id, isQrcode: true })
+    setTimeout(() => {
+      handleOpenQrModal(channel)
+    }, 2000)
+  } catch (error) {
+    console.error(error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const listarWhatsapps = async () => {
+  try {
+    const { data } = await ListarWhatsapps()
+    whatsappStore.setWhatsapps(data)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const deleteWhatsapp = async whatsapp => {
+  $q.dialog({
+    title: 'Atenção!! Deseja realmente deletar? ',
+    message: 'Não é uma boa ideia apagar se já tiver gerado atendimentos para esse whatsapp.',
+    cancel: { label: 'Não', color: 'primary', push: true },
+    ok: { label: 'Sim', color: 'negative', push: true },
+    persistent: true
+  }).onOk(async () => {
+    loading.value = true
+    try {
+      await DeletarWhatsapp(whatsapp.id)
+      whatsappStore.removeWhatsapp(whatsapp.id)
+    } finally {
+      loading.value = false
+    }
+  })
+}
+
+const listarChatFlow = async () => {
+  try {
+    const { data } = await ListarChatFlow()
+    listaChatFlow.value = data.chatFlow
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const handleSaveWhatsApp = async whatsapp => {
+  try {
+    await UpdateWhatsapp(whatsapp.id, whatsapp)
+    $q.notify({
+      type: 'positive',
+      message: `Whatsapp ${whatsapp.id ? 'editado' : 'criado'} com sucesso!`,
+      position: 'top'
+    })
+  } catch (error) {
+    console.error(error)
+    $q.notify({
+      type: 'error',
+      message: 'Ops! Verifique os erros... O nome da conexão não pode existir na plataforma, é um identificador único.',
+      position: 'top'
+    })
+  }
+}
+
+onMounted(() => {
+  userProfile.value = localStorage.getItem('profile')
+  isAdmin.value = localStorage.getItem('profile') === 'admin'
+  listarWhatsapps()
+  listarChatFlow()
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

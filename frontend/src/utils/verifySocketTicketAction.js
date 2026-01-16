@@ -1,8 +1,7 @@
-
 const isNotViewAssignedTickets = () => {
   const configuracoes = JSON.parse(localStorage.getItem('configuracoes'))
   const conf = configuracoes?.find(c => c.key === 'NotViewAssignedTickets')
-  return (conf?.value === 'enabled')
+  return conf?.value === 'enabled'
 }
 
 const verifySocketTicketAction = (ticket, action = null) => {
@@ -30,10 +29,7 @@ const verifySocketTicketAction = (ticket, action = null) => {
     return true
   }
 
-  const whiteListAction = [
-    'updateUnread',
-    'delete'
-  ]
+  const whiteListAction = ['updateUnread', 'delete']
 
   // verifciar se ação está na whitelist
   if (whiteListAction.includes(action)) {
@@ -102,7 +98,8 @@ const verifySocketTicketAction = (ticket, action = null) => {
   if (isNotViewAssignedTickets()) {
     if (ticket.userId && ticket.userId !== usuario.id) {
       // console.log('isNotViewAssignedTickets e ticket não é do usuário')
-    } return false
+    }
+    return false
   }
 
   // verificar se filtro somente tickets não assinados (isNotAssingned) ativo

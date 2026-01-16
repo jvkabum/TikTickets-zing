@@ -4,11 +4,10 @@
       borderless
       dense
       rounded
-      v-model="usuario.status"
+      v-model="statusUsuario"
       :options="statusOptions"
       map-options
       emit-value
-      @input="updateStatus"
     >
       <template v-slot:selected>
         <div class="row full-width justify-center">
@@ -28,47 +27,49 @@
           </q-chip>
         </div>
       </template>
-
     </q-select>
-
   </div>
-
 </template>
 
-<script>
-export default {
-  name: 'cUserStatus',
-  props: {
-    usuario: {
-      type: Object,
-      default: () => { }
-    }
-  },
-  computed: {
-    cStatus () {
-      const usuario = this.usuario
-      return this.statusOptions.find(s => s.value == usuario.status) || {}
-    }
-  },
-  data () {
-    return {
-      status: {},
-      statusOptions: [
-        { label: 'Online', value: 'online', icon: 'mdi-account-check', color: 'positive' },
-        { label: 'Offline', value: 'offline', icon: 'mdi-account-off', color: 'negative' }
-      ]
-    }
-  },
-  methods: {
-    updateStatus (status) {
-      const usuario = { ...this.usuario, status }
-      localStorage.setItem('usuario', JSON.stringify(usuario))
-      this.$emit('update:usuario', usuario)
-      console.log('usuario', usuario)
-    }
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  usuario: {
+    type: Object,
+    default: () => ({})
   }
-}
+})
+
+const emit = defineEmits(['update:usuario'])
+
+const statusOptions = [
+  {
+    label: 'Online',
+    value: 'online',
+    icon: 'mdi-account-check',
+    color: 'positive'
+  },
+  {
+    label: 'Offline',
+    value: 'offline',
+    icon: 'mdi-account-off',
+    color: 'negative'
+  }
+]
+
+const cStatus = computed(() => {
+  return statusOptions.find(s => s.value === props.usuario.status) || {}
+})
+
+const statusUsuario = computed({
+  get: () => props.usuario.status,
+  set: value => {
+    const usuario = { ...props.usuario, status: value }
+    localStorage.setItem('usuario', JSON.stringify(usuario))
+    emit('update:usuario', usuario)
+  }
+})
 </script>
 
-<style>
-</style>
+<style></style>

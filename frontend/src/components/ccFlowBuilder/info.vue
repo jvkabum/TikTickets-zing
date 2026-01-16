@@ -23,34 +23,25 @@
   </q-dialog>
 </template>
 
-<script>
-import { Codemirror } from 'vue-codemirror'
+<script setup>
 import { json } from '@codemirror/lang-json'
 import { ref, shallowRef } from 'vue'
+import { Codemirror } from 'vue-codemirror'
 
-export default {
-  components: {
-    Codemirror
-  },
-  props: {
-    data: Object
-  },
-  setup() {
-    return {
-      extensions: shallowRef([json()])
-    }
-  },
-  data () {
-    return {
-      dialogVisible: false,
-      flowJsonData: ''
-    }
-  },
-  methods: {
-    init () {
-      this.dialogVisible = true
-      this.flowJsonData = JSON.stringify(this.data, null, 4)
-    }
-  }
+const props = defineProps({
+  data: Object
+})
+
+const dialogVisible = ref(false)
+const flowJsonData = ref('')
+const extensions = shallowRef([json()])
+
+const init = () => {
+  dialogVisible.value = true
+  flowJsonData.value = JSON.stringify(props.data, null, 4)
 }
+
+defineExpose({
+  init
+})
 </script>

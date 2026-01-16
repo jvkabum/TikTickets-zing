@@ -1,7 +1,7 @@
 import request from 'src/service/request'
 import { Notify } from 'quasar'
 
-const handleAuthError = (error) => {
+const handleAuthError = error => {
   const message = error?.response?.data?.error || 'Erro de autenticação'
   Notify.create({
     type: 'negative',
@@ -24,13 +24,15 @@ export function RealizarLogin (user) {
     url: '/auth/login/',
     method: 'post',
     data: user
-  }).then(response => {
-    if (response.data?.token) {
-      setTokens(response.data.token, response.data.refreshToken)
-      return response
-    }
-    throw new Error('Token não recebido do servidor')
-  }).catch(handleAuthError)
+  })
+    .then(response => {
+      if (response.data?.token) {
+        setTokens(response.data.token, response.data.refreshToken)
+        return response
+      }
+      throw new Error('Token não recebido do servidor')
+    })
+    .catch(handleAuthError)
 }
 
 export function RealizarLogout (user) {

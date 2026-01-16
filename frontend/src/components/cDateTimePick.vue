@@ -11,8 +11,8 @@
       bottom-slots
       v-bind="$attrs"
       :class="classAtrrs"
-      :modelValue="cDisplayValue"
-      @update:modelValue="handleInput"
+      :model-value="cDisplayValue"
+      @update:model-value="handleInput"
       :error="cError"
       :error-message="cErrorMessage"
     >
@@ -27,10 +27,10 @@
             transition-hide="scale"
           >
             <q-date
-              :modelValue="cQDate"
+              :model-value="cQDate"
               today-btn
               mask="DD/MM/YYYY HH:mm"
-              @update:modelValue="emitDate"
+              @update:model-value="emitDate"
             />
           </q-popup-proxy>
         </q-icon>
@@ -46,8 +46,8 @@
             transition-hide="scale"
           >
             <q-time
-              :modelValue="cQDate"
-              @update:modelValue="emitDate"
+              :model-value="cQDate"
+              @update:model-value="emitDate"
               mask="DD/MM/YYYY HH:mm"
               format24h
             >
@@ -76,80 +76,88 @@
     </q-input>
   </div>
 </template>
-<script>
-import { format, parse, isValid, parseISO } from 'date-fns'
 
-export default {
-  name: 'cDateTimePick',
-  inheritAttrs: false,
-  props: {
-    modelValue: [String, Date],
-    error: {
-      type: [String, Boolean, Number],
-      default: 'NI' // Não Informada
-    },
-    errorMessage: {
-      type: [String, Boolean, Number],
-      default: '' // Não Informada
-    },
-    classAtrrs: {
-      type: String,
-      default: () => ''
-    },
-    hasErrors: Boolean,
-    firstErrorMessage: String
+<script setup>
+import { format, isValid, parse, parseISO } from 'date-fns'
+import { computed } from 'vue'
+
+defineOptions({
+  inheritAttrs: false
+})
+
+const props = defineProps({
+  modelValue: [String, Date],
+  error: {
+    type: [String, Boolean, Number],
+    default: 'NI' // Não Informada
   },
-  emits: ['update:modelValue'],
-  computed: {
-    cDisplayValue () {
-      if (!this.modelValue) return ''
-      try {
-        const date = typeof this.modelValue === 'string' ? (this.modelValue.includes('T') ? parseISO(this.modelValue) : parse(this.modelValue, 'yyyy-MM-dd HH:mm', new Date())) : this.modelValue
-        if (isValid(date)) {
-          return format(date, 'dd/MM/yyyy HH:mm')
-        }
-      } catch (e) {
-         // silent
-      }
-      return ''
-    },
-    cQDate () {
-      return this.cDisplayValue || format(new Date(), 'dd/MM/yyyy HH:mm')
-    },
-    cError () {
-      if (this.error === 'NI') {
-        return this.hasErrors
-      }
-      return this.error
-    },
-    cErrorMessage () {
-      if (this.errorMessage === '') {
-        return this.firstErrorMessage
-      }
-      return this.errorMessage
-    }
+  errorMessage: {
+    type: [String, Boolean, Number],
+    default: '' // Não Informada
   },
-  methods: {
-    handleInput (val) {
-      if (!val || val.includes('_')) return
-      try {
-        const date = parse(val, 'dd/MM/yyyy HH:mm', new Date())
-        if (isValid(date)) {
-          this.$emit('update:modelValue', format(date, 'yyyy-MM-dd HH:mm'))
-        }
-      } catch (e) {
-        // silent
-      }
-    },
-    emitDate (value) {
-      if (!value) return
-      const parseDate = parse(value, 'DD/MM/YYYY HH:mm', new Date())
-      this.$emit('update:modelValue', format(parseDate, 'yyyy-MM-dd HH:mm'))
-      // ref hide logic might be different or unnecessary if v-close-popup is used, but keeping for now
+  classAtrrs: {
+    type: String,
+    default: () => ''
+  },
+  hasErrors: Boolean,
+  firstErrorMessage: String
+})
+
+const emit = defineEmits(['update:modelValue'])
+
+const cDisplayValue = computed(() => {
+  if (!props.modelValue) return ''
+  try {
+    const date =
+      typeof props.modelValue === 'string'
+        ? props.modelValue.includes('T')
+          ? parseISO(props.modelValue)
+          : parse(props.modelValue, 'yyyy-MM-dd HH:mm', new Date())
+        : props.modelValue
+    if (isValid(date)) {
+      return format(date, 'dd/MM/yyyy HH:mm')
     }
+  } catch (e) {
+    // silent
   }
+  return ''
+})
+
+const cQDate = computed(() => {
+  return cDisplayValue.value || format(new Date(), 'dd/MM/yyyy HH:mm')
+})
+
+const cError = computed(() => {
+  if (props.error === 'NI') {
+    return props.hasErrors
+  }
+  return props.error
+})
+
+const cErrorMessage = computed(() => {
+  if (props.errorMessage === '') {
+    return props.firstErrorMessage
+  }
+  return props.errorMessage
+})
+
+const handleInput = val => {
+  if (!val || val.includes('_')) return
+  try {
+    const date = parse(val, 'dd/MM/yyyy HH:mm', new Date())
+    if (isValid(date)) {
+      emit('update:modelValue', format(date, 'yyyy-MM-dd HH:mm'))
+    }
+  } catch (e) {
+    // silent
+  }
+}
+
+const emitDate = value => {
+  if (!value) return
+  const parseDate = parse(value, 'dd/MM/yyyy HH:mm', new Date())
+  emit('update:modelValue', format(parseDate, 'yyyy-MM-dd HH:mm'))
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

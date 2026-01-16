@@ -1,68 +1,68 @@
 <template>
-  <div v-if="parsedContact.name" class="contact-card">
-    <div v-if="parsedContact.photo">
-      <img :src="'data:image/jpeg;base64,' + parsedContact.photo" alt="Contact Photo" />
-    </div>
-    <div>
-      <h3>{{ parsedContact.name }}</h3>
-      <p>{{ parsedContact.number }}</p>
+  <div
+    v-if="parsedContact.name"
+    class="contact-card q-pa-sm rounded-borders bg-grey-2"
+  >
+    <div class="row items-center no-wrap q-gutter-sm">
+      <q-avatar size="50px">
+        <img
+          v-if="parsedContact.photo"
+          :src="'data:image/jpeg;base64,' + parsedContact.photo"
+        />
+        <q-icon
+          v-else
+          name="mdi-account"
+          color="grey-7"
+        />
+      </q-avatar>
+      <div class="col overflow-hidden">
+        <div class="text-bold text-black ellipsis">
+          {{ parsedContact.name }}
+        </div>
+        <div class="text-caption text-grey-8 ellipsis">
+          {{ parsedContact.number }}
+        </div>
+      </div>
+      <q-btn
+        flat
+        round
+        dense
+        icon="mdi-account-plus"
+        color="primary"
+        @click="emit('openContactModal', parsedContact)"
+      >
+        <q-tooltip>Adicionar Contato</q-tooltip>
+      </q-btn>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ContatoCard',
-  props: {
-    mensagem: {
-      type: Object,
-      required: true
-    }
-  },
-  data () {
-    return {
-      parsedContact: {}
-    }
-  },
-  methods: {
-    parseVCard (vcard) {
-      const lines = vcard.split('\n')
-      const contact = {
-        name: '',
-        number: '',
-        photo: ''
-      }
-      lines.forEach(line => {
-        if (line.startsWith('FN:')) {
-          contact.name = line.substring(3)
-        } else if (line.startsWith('TEL') || line.includes('.TEL')) {
-          contact.number = line.split(':')[1]
-        } else if (line.startsWith('PHOTO;BASE64')) {
-          contact.photo = line.split(':')[1]
-        }
-      })
-      return contact
-    },
-    addContact (contact) {
-      this.$emit('openContactModal', contact)
-    }
-  },
-  mounted () {
-    this.parsedContact = this.parseVCard(this.mensagem.body)
-  }
-}
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  mensagem: { type: Object, required: true }
+})
+
+const emit = defineEmits(['openContactModal'])
+
+const parsedContact = computed(() => {
+  const vcard = props.mensagem.body || ''
+  const lines = vcard.split('\n')
+  const contact = { name: '', number: '', photo: '' }
+
+  lines.forEach(line => {
+    if (line.startsWith('FN:')) contact.name = line.substring(3).trim()
+    else if (line.startsWith('TEL') || line.includes('.TEL')) contact.number = line.split(':')[1]?.trim()
+    else if (line.startsWith('PHOTO;BASE64')) contact.photo = line.split(':')[1]?.trim()
+  })
+  return contact
+})
 </script>
 
 <style scoped>
 .contact-card {
-  border: 1px solid #ccc;
-  padding: 1em;
-  margin: 1em 0;
-  border-radius: 8px;
-  background: #f9f9f9;
-}
-.contact-card img {
-  max-width: 100px;
-  border-radius: 50%;
+  border: 1px solid #ddd;
+  min-width: 250px;
 }
 </style>

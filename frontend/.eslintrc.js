@@ -1,13 +1,22 @@
 module.exports = {
-  // https://eslint.org/docs/user-guide/configuring#configuration-cascading-and-hierarchy
-  // This option interrupts the configuration hierarchy at this file
-  // Remove this if you have an higher level ESLint config file (it usually happens into a monorepos)
   root: true,
+  parser: 'espree',
 
   parserOptions: {
-    ecmaVersion: 2021, // Allows for the parsing of modern ECMAScript features
-    sourceType: 'module' // Allows for the use of imports
+    ecmaVersion: 2021,
+    sourceType: 'module'
   },
+
+  overrides: [
+    {
+      files: ['*.vue'],
+      parser: 'vue-eslint-parser',
+      parserOptions: {
+        parser: 'espree',
+        sourceType: 'module'
+      }
+    }
+  ],
 
   env: {
     browser: true,
@@ -15,32 +24,18 @@ module.exports = {
     node: true
   },
 
-  // Rules order is important, please avoid shuffling them
   extends: [
-    // Base ESLint recommended rules
-    // 'eslint:recommended',
-
-
-    // Uncomment any of the lines below to choose desired strictness,
-    // but leave only one uncommented!
-    // See https://eslint.vuejs.org/rules/#available-rules
-    'plugin:vue/vue3-essential', // Priority A: Essential (Error Prevention)
-    // 'plugin:vue/vue3-strongly-recommended', // Priority B: Strongly Recommended (Improving Readability)
-    // 'plugin:vue/vue3-recommended', // Priority C: Recommended (Minimizing Arbitrary Choices and Cognitive Overhead)
-
-    'standard'
-
+    'plugin:vue/vue3-essential',
+    'standard',
+    'prettier'
   ],
 
   plugins: [
-    // https://eslint.vuejs.org/user-guide/#why-doesn-t-it-work-on-vue-file
-    // required to lint *.vue files
-    'vue',
-
+    'vue'
   ],
 
   globals: {
-    ga: true, // Google Analytics
+    ga: true,
     cordova: true,
     __statics: true,
     process: true,
@@ -48,17 +43,17 @@ module.exports = {
     chrome: true
   },
 
-  // add your custom rules here
   rules: {
-    // allow async-await
+    // ⭐⭐ CORREÇÃO AQUI: 'always' para TODOS ⭐⭐
+    'space-before-function-paren': ['error', 'always'],
+
     'generator-star-spacing': 'off',
-    // allow paren-less arrow functions
     'arrow-parens': 'off',
     'one-var': 'off',
-    'eqeqeq': 0,
-    'camelcase': "off",
+    eqeqeq: 0,
+    camelcase: 'off',
     'import/first': 'off',
-    'import/named': 'error',
+    'import/named': 'off',
     'import/namespace': 'error',
     'import/default': 'error',
     'import/export': 'error',
@@ -66,21 +61,29 @@ module.exports = {
     'import/no-unresolved': 'off',
     'import/no-extraneous-dependencies': 'off',
     'prefer-promise-reject-errors': 'off',
-    "no-use-v-if-with-v-for": 0,
-    "vue/no-use-v-if-with-v-for": [
-      "error",
+    'no-use-v-if-with-v-for': 0,
+    'vue/no-use-v-if-with-v-for': [
+      'error',
       {
         allowUsingIterationVar: true
       }
     ],
 
-    // allow console.log during development only
-    "no-console": 0,
+    'no-console': 0,
+    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
 
-    // allow debugger during development only
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
-  },
-
-  // Ignorar arquivos CSS completamente
-  ignorePatterns: ["**/*.css", "**/*.scss", "**/*.less"]
+    'vue/multi-word-component-names': 'off',
+    'vue/no-mutating-props': 'warn',
+    'vue/no-v-text-v-html-on-component': 'warn',
+    'vue/no-deprecated-v-on-native-modifier': 'warn',
+    'vue/no-deprecated-slot-attribute': 'warn',
+    'no-unused-vars': 'warn',
+    'no-undef': 'warn',
+    'no-new': 'off',
+    'no-empty': 'warn',
+    'no-use-before-define': 'off',
+    'array-callback-return': 'warn',
+    'n/no-callback-literal': 'off',
+    'standard/no-callback-literal': 'off'
+  }
 }

@@ -2,11 +2,11 @@
   <q-item
     clickable
     v-ripple
-    :active="routeName == cRouterName"
+    :active="routeName === cRouterName"
     active-class="bg-blue-1 text-grey-8 text-bold menu-link-active-item-top"
-    @click=" () => !(routeName == cRouterName) ? $router.push({ name: routeName }) : ''"
+    @click="navigateTo"
     class="houverList"
-    :class="{'text-negative text-bolder': color === 'negative'}"
+    :class="{ 'text-negative text-bolder': color === 'negative' }"
   >
     <q-item-section
       v-if="icon"
@@ -17,53 +17,50 @@
 
     <q-item-section>
       <q-item-label>{{ title }}</q-item-label>
-      <q-item-label caption>
-      </q-item-label>
+      <q-item-label caption> </q-item-label>
     </q-item-section>
   </q-item>
 </template>
 
-<script>
-export default {
-  name: 'EssentialLink',
-  data () {
-    return {
-      menuAtivo: 'dashboard'
-    }
+<script setup>
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+const props = defineProps({
+  title: {
+    type: String,
+    required: true
   },
-  props: {
-    title: {
-      type: String,
-      required: true
-    },
-
-    caption: {
-      type: String,
-      default: ''
-    },
-
-    color: {
-      type: String,
-      default: ''
-    },
-
-    routeName: {
-      type: String,
-      default: 'dashboard'
-    },
-
-    icon: {
-      type: String,
-      default: ''
-    }
+  caption: {
+    type: String,
+    default: ''
   },
-  computed: {
-    cRouterName () {
-      return this.$route.name
-    }
+  color: {
+    type: String,
+    default: ''
+  },
+  routeName: {
+    type: String,
+    default: 'dashboard'
+  },
+  icon: {
+    type: String,
+    default: ''
+  }
+})
+
+const route = useRoute()
+const router = useRouter()
+
+const cRouterName = computed(() => route.name)
+
+const navigateTo = () => {
+  if (props.routeName !== cRouterName.value) {
+    router.push({ name: props.routeName })
   }
 }
 </script>
+
 <style lang="sass">
 .menu-link-active-item-top
   border-left: 3px solid rgb(21, 120, 173)

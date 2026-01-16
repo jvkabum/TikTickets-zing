@@ -4,7 +4,7 @@
     v-ripple
     clickable
     dense
-    class="full-width full-height "
+    class="full-width full-height"
   >
     <q-item-section avatar>
       <q-icon
@@ -14,9 +14,7 @@
       />
     </q-item-section>
     <q-item-section>
-      <q-item-label lines="1">
-        Nome: {{ wbot.name }}
-      </q-item-label>
+      <q-item-label lines="1"> Nome: {{ wbot.name }} </q-item-label>
       <q-item-label
         caption
         lines="1"
@@ -35,82 +33,78 @@
       v-if="!isIconStatusMenu"
       content-class="bg-light-blue-1 text-black q-pa-sm shadow-4"
     >
-      <span class="text-weight-medium"> {{ status[wbot.status].description }} </span>
+      <span class="text-weight-medium">
+        {{ status[wbot.status].description }}
+      </span>
     </q-tooltip>
   </q-item>
 </template>
 
-<script>
-export default {
-  name: 'ItemStatusWhatsapp',
-  props: {
-    wbot: {
-      type: Object,
-      default: () => { }
-    },
-    isIconStatusMenu: {
-      type: Boolean,
-      default: true
-    }
+<script setup>
+const props = defineProps({
+  wbot: {
+    type: Object,
+    default: () => ({})
   },
-  data () {
-    return {
-      status: {
-        PAIRING: {
-          color: 'info',
-          icon: 'mdi-cellphone-wireles',
-          status: 'Emparelhando',
-          description: 'Emparelhando sessão Whatsapp.'
-        },
-        TIMEOUT: {
-          color: 'warning',
-          icon: 'mdi-timer-outline',
-          status: 'Timeout',
-          description: 'As tentativas de conexão falharam. Verifique a internet no celular.'
-        },
-        DISCONNECTED: {
-          color: 'negative',
-          icon: 'mdi-wifi-strength-1-alert',
-          status: 'Desconectado',
-          description: 'Verifique se o celular do Whatsapp possui conexão com internet.'
-        },
-        qrcode: {
-          color: 'positive',
-          icon: 'mdi-qrcode-scan',
-          status: 'Qr Code',
-          description: 'Necessário Ler o Qr Code'
-        },
-        DESTROYED: {
-          color: 'primary',
-          icon: 'mdi-close-network-outline',
-          status: 'Inativo',
-          description: 'Necessário iniciar a conexão com o Whatsapp e Ler o Qr Code.'
-        },
-        CONFLICT: {
-          color: 'warning',
-          icon: 'mdi-equal',
-          status: 'Conflito',
-          description: 'Whatsapp Web sendo utilizado.'
-        },
-        OPENING: {
-          color: 'black',
-          icon: 'mdi-connection',
-          status: 'Conectando',
-          description: 'Iniciando conexão com o Whatsapp.'
-        },
-        CONNECTED: {
-          color: 'green-8',
-          icon: 'mdi-wifi-arrow-up-down',
-          status: 'Conectado',
-          description: 'Conexão estabelecida com sucesso!'
-        }
-      }
-    }
+  isIconStatusMenu: {
+    type: Boolean,
+    default: true
+  }
+})
+
+const status = {
+  PAIRING: {
+    color: 'info',
+    icon: 'mdi-cellphone-wireles',
+    status: 'Emparelhando',
+    description: 'Emparelhando sessão Whatsapp.'
+  },
+  TIMEOUT: {
+    color: 'warning',
+    icon: 'mdi-timer-outline',
+    status: 'Timeout',
+    description: 'As tentativas de conexão falharam. Verifique a internet no celular.'
+  },
+  DISCONNECTED: {
+    color: 'negative',
+    icon: 'mdi-wifi-strength-1-alert',
+    status: 'Desconectado',
+    description: 'Verifique se o celular do Whatsapp possui conexão com internet.'
+  },
+  qrcode: {
+    color: 'positive',
+    icon: 'mdi-qrcode-scan',
+    status: 'Qr Code',
+    description: 'Necessário Ler o Qr Code'
+  },
+  DESTROYED: {
+    color: 'primary',
+    icon: 'mdi-close-network-outline',
+    status: 'Inativo',
+    description: 'Necessário iniciar a conexão com o Whatsapp e Ler o Qr Code.'
+  },
+  CONFLICT: {
+    color: 'warning',
+    icon: 'mdi-equal',
+    status: 'Conflito',
+    description: 'Whatsapp Web sendo utilizado.'
+  },
+  OPENING: {
+    color: 'black',
+    icon: 'mdi-connection',
+    status: 'Conectando',
+    description: 'Iniciando conexão com o Whatsapp.'
+  },
+  CONNECTED: {
+    color: 'green-8',
+    icon: 'mdi-wifi-arrow-up-down',
+    status: 'Conectado',
+    description: 'Conexão estabelecida com sucesso!'
   }
 }
 </script>
 
-<style lang="scss" >
+<style lang="scss">
 .notification-box {
   text-align: center;
 }
@@ -142,7 +136,7 @@ export default {
 }
 .bell-bottom::before,
 .bell-bottom::after {
-  content: "";
+  content: '';
   position: absolute;
   top: -4px;
 }

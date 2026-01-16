@@ -10,10 +10,11 @@
       class="q-pa-lg"
     >
       <q-card-section>
-        <div class="text-caption">
-          Auto Resposta: {{ autoReply.name }}
+        <div class="text-caption">Auto Resposta: {{ autoReply.name }}</div>
+        <div class="text-h6">
+          {{ etapaAutoRespostaEdicao.id ? 'Editar' : 'Criar' }} Etapa
+          {{ etapaAutoRespostaEdicao.id ? `(ID: ${etapaAutoRespostaEdicao.id})` : '' }}
         </div>
-        <div class="text-h6">{{ etapaAutoRespostaEdicao.id ? 'Editar': 'Criar' }} Etapa {{ etapaAutoRespostaEdicao.id  ? `(ID: ${etapaAutoRespostaEdicao.id})` : '' }}</div>
       </q-card-section>
       <q-card-section class="q-pa-none">
         <div class="row items-center">
@@ -27,9 +28,7 @@
                 size="2em"
                 name="mdi-emoticon-happy-outline"
               />
-              <q-tooltip>
-                Emoji
-              </q-tooltip>
+              <q-tooltip> Emoji </q-tooltip>
               <q-menu
                 anchor="top right"
                 self="bottom middle"
@@ -45,27 +44,29 @@
                 />
               </q-menu>
             </q-btn>
-
           </div>
           <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
             <label class="text-caption">Mensagem da Etapa:</label>
-            <textarea
-              ref="inputEnvioMensagem"
-              style="min-height: 15vh; max-height: 15vh;"
-              class="q-pa-sm bg-white full-width"
-              placeholder="Digita sua mensagem"
-              autogrow
-              dense
-              outlined
-              @input="(v) => etapa.reply = v.target.value"
-              :value="etapa.reply"
-            />
+            <div class="row col q-mt-md">
+              <q-input
+                class="full-width"
+                square
+                outlined
+                v-model="reply"
+                v-bind="replyProps"
+                type="textarea"
+                label="Mensagem de retorno"
+                :error="!!errors.reply"
+                :error-message="errors.reply"
+              />
+            </div>
           </div>
         </div>
         <div class="row col q-mt-md">
           <q-checkbox
-            v-model="etapa.initialStep"
-            label="Etapa inicial"
+            v-model="initialStep"
+            v-bind="initialStepProps"
+            label="Etapa Inicial"
           />
         </div>
       </q-card-section>
@@ -84,153 +85,135 @@
           flat
           label="Salvar"
           color="primary"
-          @click="handleEtapaAutoresposta"
+          @click="handleEtapaAutoResposta"
         />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
-<script>
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
+import { useQuasar } from 'quasar'
+import { useAutoRespostaStore } from 'src/stores/useAutoRespostaStore'
+import { useForm } from 'vee-validate'
+import { reactive } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
+import { z } from 'zod'
 
-import { CriarEtapaResposta, EditarEtapaResposta } from 'src/service/autoResposta'
-export default {
-  name: 'ModalEtapaAutoResposta',
-  components: { EmojiPicker },
-  props: {
-    modalEtapaAutoResposta: {
-      type: Boolean,
-      default: false
-    },
-    autoReply: {
-      type: Object,
-      default: () => {
-        return { id: null, name: '' }
-      }
-    },
-    etapaAutoRespostaEdicao: {
-      type: Object,
-      default: () => {
-        return { id: null }
-      }
-    }
+const props = defineProps({
+  modalEtapaAutoResposta: {
+    type: Boolean,
+    default: false
   },
-  data () {
-    return {
-      etapa: {
-        reply: null,
-        idAutoReply: null,
-        action: null,
-        initialStep: false
-      }
-    }
+  etapaAutoRespostaEdicao: {
+    type: Object,
+    default: () => ({ id: null })
   },
-  methods: {
-    onInsertSelectEmoji (emoji) {
-      const self = this
-      var tArea = this.$refs.inputEnvioMensagem
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!emoji.data) {
-        return
-      }
-      // insert:
-      self.txtContent = this.etapa.reply
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
-      this.etapa.reply = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
-      }, 10)
-    },
-    fecharModal () {
-      this.$emit('update:etapaAutoRespostaEdicao', { id: null })
-      this.$emit('update:modalEtapaAutoResposta', false)
-    },
-    abrirModal () {
-      if (this.etapaAutoRespostaEdicao.id) {
-        this.etapa = { ...this.etapaAutoRespostaEdicao }
-      } else {
-        this.etapa = {
-          reply: null,
-          idAutoReply: null,
-          initialStep: false
-        }
-        this.etapa.idAutoReply = this.autoReply.id
-      }
-    },
-    verificarEtapaInicial (dataParams) {
-      const isInitialExists = this.autoReply.stepsReply ? this.autoReply.stepsReply.find(s => s.initialStep && s.id !== dataParams.id) : {}
-      if (isInitialExists && dataParams.initialStep) {
-        this.$q.notify({
-          type: 'negative',
-          progress: true,
-          timeout: 100000,
-          position: 'top',
-          closeBtn: true,
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }],
-          message: `Cada Auto Resposta poderá ter apenas uma etapa inicial. A etapa de "ID: ${isInitialExists.id}" está indicada como a etapa inicial. Caso deseje alterar, precisa primerio editar a etapa ("ID: ${isInitialExists.id}") para que não seja a etapa inicial.`
-        })
-        throw new Error('Etapa Inicial na Auto Resposta já existente')
-      }
-    },
-    async handleEtapaAutoresposta () {
-      this.loading = true
-      const dataParams = {
-        ...this.etapa,
-        idAutoReply: this.autoReply.id
-      }
-      this.verificarEtapaInicial(dataParams)
-      try {
-        if (this.etapa.id) {
-          const { data } = await EditarEtapaResposta(dataParams)
-          this.$emit('etapaAutoResposta:editada', { ...dataParams, ...data })
-          this.$q.notify({
-            type: 'info',
-            progress: true,
-            position: 'top',
-            textColor: 'black',
-            message: 'Etapa editada!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        } else {
-          const { data } = await CriarEtapaResposta(dataParams)
-          this.$emit('etapaAutoResposta:criada', data)
-          this.$q.notify({
-            type: 'positive',
-            progress: true,
-            position: 'top',
-            message: 'Etapa criada!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        }
-        this.fecharModal()
-      } catch (error) {
-        console.error(error)
-      }
-      this.loading = false
-    }
+  autoReply: {
+    type: Object,
+    default: () => ({ id: null })
+  }
+})
+
+const emit = defineEmits(['update:modalEtapaAutoResposta', 'update:etapaAutoRespostaEdicao'])
+
+const $q = useQuasar()
+const autoRespostaStore = useAutoRespostaStore()
+const { criarEtapa, editarEtapa } = autoRespostaStore
+
+const validationSchema = toTypedSchema(
+  z.object({
+    reply: z.string().min(1, 'Mensagem de retorno é obrigatória'),
+    initialStep: z.boolean().optional()
+  })
+)
+
+const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
+  validationSchema,
+  initialValues: {
+    reply: '',
+    initialStep: false
+  }
+})
+
+const [reply, replyProps] = defineField('reply')
+const [initialStep, initialStepProps] = defineField('initialStep')
+
+const etapa = reactive({
+  id: null
+})
+
+const onInsertSelectEmoji = emoji => {
+  if (!emoji.i) return
+  // Insert emoji at end or replace specific logic if user wants cursor insertion.
+  // Implementing simple append for now or standard cursor logic if possible.
+  // Since VeeValidate v-model is bound, we update `reply` value.
+  const currentText = reply.value || ''
+  reply.value = currentText + emoji.i
+}
+
+const fecharModal = () => {
+  resetForm()
+  etapa.id = null
+  emit('update:etapaAutoRespostaEdicao', { id: null })
+  emit('update:modalEtapaAutoResposta', false)
+}
+
+const abrirModal = () => {
+  if (props.etapaAutoRespostaEdicao.id) {
+    etapa.id = props.etapaAutoRespostaEdicao.id
+    setValues({
+      reply: props.etapaAutoRespostaEdicao.reply,
+      initialStep: props.etapaAutoRespostaEdicao.initialStep
+    })
+  } else {
+    resetForm()
+    etapa.id = null
   }
 }
+
+const verificarEtapaInicial = dataParams => {
+  // Check in store usually, but here we check the props passed usually populated.
+  // The prop `autoReply` has the steps.
+  const isInitialExists = props.autoReply.stepsReply
+    ? props.autoReply.stepsReply.find(s => s.initialStep && s.id !== dataParams.id)
+    : null
+
+  if (isInitialExists && dataParams.initialStep) {
+    $q.notify({
+      type: 'negative',
+      progress: true,
+      timeout: 10000,
+      position: 'top',
+      closeBtn: true,
+      actions: [{ icon: 'close', round: true, color: 'white' }],
+      message: `Cada Auto Resposta poderá ter apenas uma etapa inicial. A etapa de "ID: ${isInitialExists.id}" já é a inicial.`
+    })
+    throw new Error('Etapa Inicial duplicada')
+  }
+}
+
+const handleEtapaAutoResposta = handleSubmit(async values => {
+  const dataToSave = {
+    ...values,
+    id: etapa.id,
+    idAutoReply: props.autoReply.id
+  }
+
+  try {
+    verificarEtapaInicial(dataToSave)
+    if (etapa.id) {
+      await editarEtapa(dataToSave)
+    } else {
+      await criarEtapa(dataToSave)
+    }
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+  }
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

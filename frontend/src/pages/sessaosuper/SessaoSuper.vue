@@ -12,8 +12,11 @@
         </q-card-section>
       </q-card>
     </div>
-    <div class="row full-width q-py-lg q-px-md ">
-      <template v-for="item in whatsapps" :key="item.id">
+    <div class="row full-width q-py-lg q-px-md">
+      <template
+        v-for="item in whatsapps"
+        :key="item.id"
+      >
         <q-card
           flat
           bordered
@@ -33,10 +36,11 @@
               <q-item-label class="text-h6 text-caption">
                 {{ item.type }}
               </q-item-label>
-              <q-item-label class="text-bold text-primary text-body1">Cliente: {{ `${item.tenant && item.tenant.id} - ${item.tenant && item.tenant.name}` }}</q-item-label>
+              <q-item-label class="text-bold text-primary text-body1"
+                >Cliente: {{ `${item.tenant && item.tenant.id} - ${item.tenant && item.tenant.name}` }}</q-item-label
+              >
             </q-item-section>
-            <q-item-section side>
-            </q-item-section>
+            <q-item-section side> </q-item-section>
           </q-item>
           <q-separator />
           <q-card-section>
@@ -57,114 +61,66 @@
       </template>
     </div>
 
-<q-inner-loading :showing="loading">
-  <q-spinner-gears
-    size="50px"
-    color="primary"
-  />
-</q-inner-loading>
-</div>
+    <q-inner-loading :showing="loading">
+      <q-spinner-gears
+        size="50px"
+        color="primary"
+      />
+    </q-inner-loading>
+  </div>
 </template>
 
-<script>
+<script setup>
 import { format, parseISO } from 'date-fns'
-import pt from 'date-fns/locale/pt-BR/index'
-import { mapGetters } from 'vuex'
+import pt from 'date-fns/locale/pt-BR'
+import { storeToRefs } from 'pinia'
+import { useWhatsappStore } from 'src/stores/useWhatsappStore'
+import { onMounted, ref } from 'vue'
 import { AdminListarChannels } from '../../service/channels'
 import { AdminListarEmpresas } from '../../service/empresas'
+import ItemStatusChannelSuper from './ItemStatusChannelSuper.vue'
+
+const whatsappStore = useWhatsappStore()
+const { whatsapps } = storeToRefs(whatsappStore)
 
 const userLogado = JSON.parse(localStorage.getItem('usuario'))
+const userProfile = ref('user')
+const loading = ref(false)
+const empresas = ref([])
+const isAdmin = ref(false)
 
-export default {
-  name: 'IndexSessoesWhatsapp',
-  components: {
-  },
-  data () {
-    return {
-      userProfile: 'user',
-      loading: false,
-      userLogado,
-      empresas: [],
-      isAdmin: false,
-      whatsappSelecionado: {},
-      whatsAppId: null,
-      objStatus: {
-        qrcode: ''
-      },
-      columns: [
-        {
-          name: 'name',
-          label: 'Nome',
-          field: 'name',
-          align: 'left'
-        },
-        {
-          name: 'status',
-          label: 'Status',
-          field: 'status',
-          align: 'center'
-        },
-        {
-          name: 'session',
-          label: 'Sessão',
-          field: 'status',
-          align: 'center'
-        },
-        {
-          name: 'number',
-          label: 'Número',
-          field: 'number',
-          align: 'center'
-        },
-        {
-          name: 'updatedAt',
-          label: 'Última Atualização',
-          field: 'updatedAt',
-          align: 'center',
-          format: d => this.formatarData(d, 'dd/MM/yyyy HH:mm')
-        },
-        {
-          name: 'isDefault',
-          label: 'Padrão',
-          field: 'isDefault',
-          align: 'center'
-        },
-        {
-          name: 'acoes',
-          label: 'Ações',
-          field: 'acoes',
-          align: 'center'
-        }
-      ]
-    }
-  },
-  computed: {
-    ...mapGetters(['whatsapps'])
-  },
-  methods: {
-    formatarData (data, formato) {
-      return format(parseISO(data), formato, { locale: pt })
-    },
-    async listarChannels () {
-      const { data } = await AdminListarChannels()
-      this.$store.commit('LOAD_WHATSAPPS', data)
-    },
-    async listarEmpresas () {
-      const { data } = await AdminListarEmpresas()
-      this.empresas = data
-    }
-  },
-  mounted () {
-    this.isAdmin = localStorage.getItem('profile')
-    this.listarChannels()
-    this.listarEmpresas()
-    this.userProfile = localStorage.getItem('profile')
-  },
-  unmounted () {
-    // this.$root.$off('UPDATE_SESSION')
+const formatarData = (data, formato) => {
+  return format(parseISO(data), formato, { locale: pt })
+}
+
+const listarChannels = async () => {
+  loading.value = true
+  try {
+    const { data } = await AdminListarChannels()
+    whatsappStore.setWhatsapps(data)
+  } catch (error) {
+    console.error(error)
+  } finally {
+    loading.value = false
   }
 }
+
+const listarEmpresas = async () => {
+  try {
+    const { data } = await AdminListarEmpresas()
+    empresas.value = data
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+onMounted(() => {
+  const profile = localStorage.getItem('profile')
+  userProfile.value = profile
+  isAdmin.value = profile === 'admin'
+  listarChannels()
+  listarEmpresas()
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

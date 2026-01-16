@@ -1,6 +1,9 @@
 <template>
   <div class="document-viewer">
-    <div v-if="isPDF" class="pdf-viewer-container">
+    <div
+      v-if="isPDF"
+      class="pdf-viewer-container"
+    >
       <!-- Visualizador de PDF -->
       <div
         ref="pdfViewerContainer"
@@ -13,37 +16,74 @@
           class="pdf-object"
           @load="onPdfLoad"
         >
-          <p>Seu navegador não suporta a visualização de PDF. <a :href="src" target="_blank">Clique aqui para baixar o arquivo</a>.</p>
+          <p>
+            Seu navegador não suporta a visualização de PDF.
+            <a
+              :href="src"
+              target="_blank"
+              >Clique aqui para baixar o arquivo</a
+            >.
+          </p>
         </object>
 
         <!-- Spinner de carregamento -->
-        <div v-if="loading" class="pdf-loading">
-          <q-spinner color="primary" size="3em" />
+        <div
+          v-if="loading"
+          class="pdf-loading"
+        >
+          <q-spinner
+            color="primary"
+            size="3em"
+          />
           <div class="pdf-loading-text">Carregando documento...</div>
         </div>
       </div>
     </div>
 
     <!-- Visualizador de Excel -->
-    <div v-else-if="isExcel" class="file-container" :data-file-type="fileExtension" @click="showExcelPreview = true">
+    <div
+      v-else-if="isExcel"
+      class="file-container"
+      :data-file-type="fileExtension"
+      @click="showExcelPreview = true"
+    >
       <div class="preview-container">
-        <div class="file-icon" :style="{ color: fileColor }">
+        <div
+          class="file-icon"
+          :style="{ color: fileColor }"
+        >
           <q-icon :name="fileIcon" />
         </div>
         <div class="file-details">
           <div class="file-name">{{ computedFileName }}</div>
           <div class="file-type">{{ fileExtension.toUpperCase() }}</div>
         </div>
-        <div v-if="excelData.length" class="excel-preview">
+        <div
+          v-if="excelData.length"
+          class="excel-preview"
+        >
           <table>
             <thead>
               <tr>
-                <th v-for="(header, index) in excelHeaders" :key="index">{{ header }}</th>
+                <th
+                  v-for="(header, index) in excelHeaders"
+                  :key="index"
+                >
+                  {{ header }}
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, rowIndex) in excelPreviewRows" :key="rowIndex">
-                <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+              <tr
+                v-for="(row, rowIndex) in excelPreviewRows"
+                :key="rowIndex"
+              >
+                <td
+                  v-for="(cell, cellIndex) in row"
+                  :key="cellIndex"
+                >
+                  {{ cell }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -63,8 +103,15 @@
     </div>
 
     <!-- Visualizador de outros arquivos -->
-    <div v-else class="file-container" :data-file-type="fileExtension">
-      <div class="file-icon" :style="{ color: fileColor }">
+    <div
+      v-else
+      class="file-container"
+      :data-file-type="fileExtension"
+    >
+      <div
+        class="file-icon"
+        :style="{ color: fileColor }"
+      >
         <q-icon :name="fileIcon" />
       </div>
       <div class="file-details">
@@ -74,12 +121,22 @@
     </div>
 
     <!-- Modal para visualização completa do Excel -->
-    <q-dialog v-model="showExcelPreview" full-width full-height>
+    <q-dialog
+      v-model="showExcelPreview"
+      full-width
+      full-height
+    >
       <q-card class="excel-preview-modal">
         <q-card-section class="row items-center q-pb-none">
           <div class="text-h6">{{ computedFileName }}</div>
           <q-space />
-          <q-btn icon="close" flat round dense v-close-popup />
+          <q-btn
+            icon="close"
+            flat
+            round
+            dense
+            v-close-popup
+          />
         </q-card-section>
 
         <q-card-section class="excel-preview-content">
@@ -87,12 +144,25 @@
             <table>
               <thead>
                 <tr>
-                  <th v-for="(header, index) in excelHeaders" :key="index">{{ header }}</th>
+                  <th
+                    v-for="(header, index) in excelHeaders"
+                    :key="index"
+                  >
+                    {{ header }}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, rowIndex) in excelData" :key="rowIndex">
-                  <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+                <tr
+                  v-for="(row, rowIndex) in excelData"
+                  :key="rowIndex"
+                >
+                  <td
+                    v-for="(cell, cellIndex) in row"
+                    :key="cellIndex"
+                  >
+                    {{ cell }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -103,252 +173,241 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as XLSX from 'xlsx'
 
-export default {
-  name: 'DocumentViewer',
-  props: {
-    src: {
-      type: String,
-      required: true
-    },
-    fileName: {
-      type: String,
-      default: ''
-    }
+const props = defineProps({
+  src: {
+    type: String,
+    required: true
   },
-  data () {
-    return {
-      showExcelPreview: false,
-      excelData: [],
-      excelHeaders: [],
-      loading: true,
-      pdfDocument: null
-    }
-  },
-  watch: {
-    src: {
-      handler () {
-        if (this.isPDF) {
-          this.loading = true
-          this.$nextTick(() => {
-            setTimeout(() => {
-              this.onPdfLoad()
-            }, 500)
-          })
-        } else if (this.isExcel) {
-          this.loadExcelFile()
-        }
-      },
-      immediate: true
-    }
-  },
-  computed: {
-    isPDF () {
-      return this.src && (
-        this.src.toLowerCase().endsWith('.pdf') ||
-        this.src.toLowerCase().includes('.pdf?') ||
-        this.src.toLowerCase().includes('application/pdf')
-      )
-    },
-    isExcel () {
-      return this.fileExtension === 'xlsx' || this.fileExtension === 'xls'
-    },
-    fileExtension () {
-      try {
-        const url = new URL(this.src)
-        const pathname = url.pathname
-        const extension = pathname.split('.').pop().toLowerCase()
-        return extension || 'desconhecido'
-      } catch (error) {
-        const extension = this.src.split('.').pop().toLowerCase()
-        return extension || 'desconhecido'
-      }
-    },
-    currentPdfSrc () {
-      if (!this.isPDF || !this.src) return ''
-      return this.src
-    },
-    fileIcon () {
-      const extensionMap = {
-        pdf: 'mdi-file-pdf-box',
-        doc: 'mdi-file-word-box',
-        docx: 'mdi-file-word-box',
-        xls: 'mdi-file-excel-box',
-        xlsx: 'mdi-file-excel-box',
-        ppt: 'mdi-file-powerpoint-box',
-        pptx: 'mdi-file-powerpoint-box',
-        txt: 'mdi-file-document-box',
-        rtf: 'mdi-file-document-box',
-        zip: 'mdi-folder-zip',
-        rar: 'mdi-folder-zip',
-        mp3: 'mdi-file-music-box',
-        wav: 'mdi-file-music-box',
-        ogg: 'mdi-file-music-box'
-      }
-      return extensionMap[this.fileExtension] || 'mdi-file-box'
-    },
-    fileColor () {
-      const colorMap = {
-        pdf: 'red',
-        doc: 'blue',
-        docx: 'blue',
-        xls: 'green',
-        xlsx: 'green',
-        ppt: 'orange',
-        pptx: 'orange',
-        txt: 'grey-8',
-        rtf: 'grey-8',
-        zip: 'purple',
-        rar: 'purple',
-        mp3: 'deep-purple',
-        wav: 'deep-purple',
-        ogg: 'deep-purple'
-      }
-      return colorMap[this.fileExtension] || 'grey'
-    },
-    computedFileName () {
-      if (this.fileName && this.fileName.trim()) return this.fileName
-      try {
-        const url = new URL(this.src)
-        const pathname = url.pathname
-        const filename = pathname.split('/').pop()
-        return decodeURIComponent(filename)
-      } catch (error) {
-        const parts = this.src.split('/')
-        return parts[parts.length - 1] || 'arquivo'
-      }
-    },
-    excelPreviewRows () {
-      return this.excelData.slice(0, 5)
-    }
-  },
-  methods: {
-    onPdfLoad () {
-      try {
-        this.loading = false
-        this.adjustPdfHeight()
-        this.removeHorizontalScrollbars()
-      } catch (error) {
-        console.warn('Erro ao carregar PDF:', error)
-        this.loading = false
-      }
-    },
-    adjustPdfHeight () {
-      try {
-        const container = this.$refs.pdfViewerContainer
-        const object = this.$refs.pdfObject
+  fileName: {
+    type: String,
+    default: ''
+  }
+})
 
-        if (!container || !object) return
+const showExcelPreview = ref(false)
+const excelData = ref([])
+const excelHeaders = ref([])
+const loading = ref(true)
+const pdfViewerContainer = ref(null)
+const pdfObject = ref(null)
 
-        // Obtém a largura real disponível
-        const containerWidth = container.clientWidth
+const isPDF = computed(() => {
+  return (
+    props.src &&
+    (props.src.toLowerCase().endsWith('.pdf') ||
+      props.src.toLowerCase().includes('.pdf?') ||
+      props.src.toLowerCase().includes('application/pdf'))
+  )
+})
 
-        // Garante que o objeto não ultrapasse a largura do contêiner
-        object.style.width = '100%'
-        object.style.maxWidth = `${containerWidth}px`
+const isExcel = computed(() => {
+  return fileExtension.value === 'xlsx' || fileExtension.value === 'xls'
+})
 
-        // Calcula a altura proporcional mantendo a proporção de página A4
-        const aspectRatio = 1.414 // Proporção A4 (297/210)
-        let calculatedHeight = containerWidth * aspectRatio
+const fileExtension = computed(() => {
+  try {
+    const url = new URL(props.src)
+    const pathname = url.pathname
+    const extension = pathname.split('.').pop().toLowerCase()
+    return extension || 'desconhecido'
+  } catch (error) {
+    const extension = props.src.split('.').pop().toLowerCase()
+    return extension || 'desconhecido'
+  }
+})
 
-        // Limites de altura baseados no viewport
-        const viewportHeight = window.innerHeight
-        const minHeight = Math.round(viewportHeight * 0.4)
-        const maxHeight = Math.round(viewportHeight * 0.8)
+const currentPdfSrc = computed(() => {
+  if (!isPDF.value || !props.src) return ''
+  return props.src
+})
 
-        // Aplica os limites
-        calculatedHeight = Math.min(Math.max(calculatedHeight, minHeight), maxHeight)
+const fileIcon = computed(() => {
+  const extensionMap = {
+    pdf: 'mdi-file-pdf-box',
+    doc: 'mdi-file-word-box',
+    docx: 'mdi-file-word-box',
+    xls: 'mdi-file-excel-box',
+    xlsx: 'mdi-file-excel-box',
+    ppt: 'mdi-file-powerpoint-box',
+    pptx: 'mdi-file-powerpoint-box',
+    txt: 'mdi-file-document-box',
+    rtf: 'mdi-file-document-box',
+    zip: 'mdi-folder-zip',
+    rar: 'mdi-folder-zip',
+    mp3: 'mdi-file-music-box',
+    wav: 'mdi-file-music-box',
+    ogg: 'mdi-file-music-box'
+  }
+  return extensionMap[fileExtension.value] || 'mdi-file-box'
+})
 
-        // Define a altura
-        object.style.height = `${calculatedHeight}px`
-        container.style.height = `${calculatedHeight}px`
-      } catch (error) {
-        console.warn('Erro ao ajustar altura do PDF:', error)
-      }
-    },
-    openInNewTab () {
-      window.open(this.src, '_blank')
-    },
-    // Método para remover barras de rolagem horizontais
-    removeHorizontalScrollbars () {
-      try {
-        // Obtém o elemento visualizador de PDF
-        const pdfViewer = this.$refs.pdfViewerContainer
-        if (!pdfViewer) return
+const fileColor = computed(() => {
+  const colorMap = {
+    pdf: 'red',
+    doc: 'blue',
+    docx: 'blue',
+    xls: 'green',
+    xlsx: 'green',
+    ppt: 'orange',
+    pptx: 'orange',
+    txt: 'grey-8',
+    rtf: 'grey-8',
+    zip: 'purple',
+    rar: 'purple',
+    mp3: 'deep-purple',
+    wav: 'deep-purple',
+    ogg: 'deep-purple'
+  }
+  return colorMap[fileExtension.value] || 'grey'
+})
 
-        // Procura por todos os elementos pais até o body
-        let parent = pdfViewer.parentElement
-        while (parent && parent !== document.body) {
-          // Aplica overflow-x hidden
-          parent.style.overflowX = 'hidden'
-          // Vai para o próximo pai
-          parent = parent.parentElement
-        }
+const computedFileName = computed(() => {
+  if (props.fileName && props.fileName.trim()) return props.fileName
+  try {
+    const url = new URL(props.src)
+    const pathname = url.pathname
+    const filename = pathname.split('/').pop()
+    return decodeURIComponent(filename)
+  } catch (error) {
+    const parts = props.src.split('/')
+    return parts[parts.length - 1] || 'arquivo'
+  }
+})
 
-        // Ajusta o PDF object
-        const object = this.$refs.pdfObject
-        if (!object) return
+const excelPreviewRows = computed(() => {
+  return excelData.value.slice(0, 5)
+})
 
-        // Aplicar estilos diretamente para garantir
-        object.style.overflow = 'hidden'
-        object.style.maxWidth = '100%'
-        object.style.width = '100%'
+const adjustPdfHeight = () => {
+  try {
+    const container = pdfViewerContainer.value
+    const object = pdfObject.value
 
-        // Tentativa de acessar o conteúdo interno
-        try {
-          if (object.contentDocument) {
-            const style = document.createElement('style')
-            style.textContent = `
-              body, html, div, embed, object {
-                overflow-x: hidden !important;
-                max-width: 100% !important;
-              }
-              embed[type="application/pdf"] {
-                object-fit: contain !important;
-              }
-            `
-            object.contentDocument.head.appendChild(style)
-          }
-        } catch (e) {
-          console.warn('Acesso ao conteúdo do PDF bloqueado por segurança do navegador')
-        }
-      } catch (error) {
-        console.warn('Erro ao remover barras de rolagem horizontais:', error)
-      }
-    },
-    async loadExcelFile () {
-      if (!this.isExcel) return
+    if (!container || !object) return
 
-      try {
-        this.loading = true
-        const response = await fetch(this.src)
-        const blob = await response.blob()
-        const buffer = await blob.arrayBuffer()
-        const workbook = XLSX.read(buffer, { type: 'array' })
+    const containerWidth = container.clientWidth
+    object.style.width = '100%'
+    object.style.maxWidth = `${containerWidth}px`
 
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-        const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
+    const aspectRatio = 1.414
+    let calculatedHeight = containerWidth * aspectRatio
 
-        if (data.length > 0) {
-          this.excelHeaders = data[0]
-          this.excelData = data.slice(1)
-        }
-      } catch (error) {
-        console.error('Erro ao carregar arquivo Excel:', error)
-      } finally {
-        this.loading = false
-      }
-    }
-  },
-  mounted () {
-    window.addEventListener('resize', this.adjustPdfHeight)
-  },
-  beforeDestroy () {
-    window.removeEventListener('resize', this.adjustPdfHeight)
+    const viewportHeight = window.innerHeight
+    const minHeight = Math.round(viewportHeight * 0.4)
+    const maxHeight = Math.round(viewportHeight * 0.8)
+
+    calculatedHeight = Math.min(Math.max(calculatedHeight, minHeight), maxHeight)
+
+    object.style.height = `${calculatedHeight}px`
+    container.style.height = `${calculatedHeight}px`
+  } catch (error) {
+    console.warn('Erro ao ajustar altura do PDF:', error)
   }
 }
+
+const removeHorizontalScrollbars = () => {
+  try {
+    const pdfViewer = pdfViewerContainer.value
+    if (!pdfViewer) return
+
+    let parent = pdfViewer.parentElement
+    while (parent && parent !== document.body) {
+      parent.style.overflowX = 'hidden'
+      parent = parent.parentElement
+    }
+
+    const object = pdfObject.value
+    if (!object) return
+
+    object.style.overflow = 'hidden'
+    object.style.maxWidth = '100%'
+    object.style.width = '100%'
+
+    try {
+      if (object.contentDocument) {
+        const style = document.createElement('style')
+        style.textContent = `
+          body, html, div, embed, object {
+            overflow-x: hidden !important;
+            max-width: 100% !important;
+          }
+          embed[type="application/pdf"] {
+            object-fit: contain !important;
+          }
+        `
+        object.contentDocument.head.appendChild(style)
+      }
+    } catch (e) {
+      console.warn('Acesso ao conteúdo do PDF bloqueado por segurança do navegador')
+    }
+  } catch (error) {
+    console.warn('Erro ao remover barras de rolagem horizontais:', error)
+  }
+}
+
+const onPdfLoad = () => {
+  try {
+    loading.value = false
+    adjustPdfHeight()
+    removeHorizontalScrollbars()
+  } catch (error) {
+    console.warn('Erro ao carregar PDF:', error)
+    loading.value = false
+  }
+}
+
+const loadExcelFile = async () => {
+  if (!isExcel.value) return
+
+  try {
+    loading.value = true
+    const response = await fetch(props.src)
+    const blob = await response.blob()
+    const buffer = await blob.arrayBuffer()
+    const workbook = XLSX.read(buffer, { type: 'array' })
+
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+    const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
+
+    if (data.length > 0) {
+      excelHeaders.value = data[0]
+      excelData.value = data.slice(1)
+    }
+  } catch (error) {
+    console.error('Erro ao carregar arquivo Excel:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(
+  () => props.src,
+  () => {
+    if (isPDF.value) {
+      loading.value = true
+      nextTick(() => {
+        setTimeout(() => {
+          onPdfLoad()
+        }, 500)
+      })
+    } else if (isExcel.value) {
+      loadExcelFile()
+    }
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  window.addEventListener('resize', adjustPdfHeight)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', adjustPdfHeight)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -448,8 +507,8 @@ export default {
   font-size: 40px;
 }
 
-.file-container[data-file-type="xlsx"] .q-icon,
-.file-container[data-file-type="xls"] .q-icon {
+.file-container[data-file-type='xlsx'] .q-icon,
+.file-container[data-file-type='xls'] .q-icon {
   font-size: 40px;
   color: #1d6f42;
 }
@@ -520,8 +579,8 @@ export default {
     font-size: 32px;
   }
 
-  .file-container[data-file-type="xlsx"] .q-icon,
-  .file-container[data-file-type="xls"] .q-icon {
+  .file-container[data-file-type='xlsx'] .q-icon,
+  .file-container[data-file-type='xls'] .q-icon {
     font-size: 32px;
   }
 
@@ -553,7 +612,8 @@ export default {
     width: 100%;
     border-collapse: collapse;
     font-size: 12px;
-    th, td {
+    th,
+    td {
       padding: 8px;
       text-align: left;
       border: 1px solid #eee;
@@ -601,7 +661,8 @@ export default {
   table {
     width: 100%;
     border-collapse: collapse;
-    th, td {
+    th,
+    td {
       padding: 8px;
       text-align: left;
       border: 1px solid #eee;
@@ -655,7 +716,8 @@ export default {
   .excel-table-container table {
     font-size: 11px;
 
-    th, td {
+    th,
+    td {
       padding: 6px;
     }
   }

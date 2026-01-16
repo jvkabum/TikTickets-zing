@@ -55,7 +55,10 @@
         class="q-pa-none q-ma-none full-width bg-amber"
         height="90px"
       >
-        <template v-for="(wbot, index) in whatsapps" :key="wbot.id + index">
+        <template
+          v-for="(wbot, index) in whatsapps"
+          :key="wbot.id + index"
+        >
           <q-carousel-slide
             :name="index"
             class="q-pa-none q-ma-none"
@@ -191,66 +194,51 @@
         </q-menu>
 
       </q-btn> -->
-
   </div>
 </template>
 
-<script>
+<script setup>
+import { storeToRefs } from 'pinia'
+import { useWhatsappStore } from 'src/stores/useWhatsappStore'
+import { computed, onMounted, ref, watch } from 'vue'
 import ItemStatusWhatsapp from './ItemStatusWhatsapp.vue'
-import { mapGetters } from 'vuex'
 
-export default {
-  name: 'StatusWhatsapp',
-  components: {
-    ItemStatusWhatsapp
-  },
-  props: {
-    isIconStatusMenu: {
-      type: Boolean,
-      default: false
-    }
-  },
-  data () {
-    return {
-      idWbotVisible: 0,
-      isProblemConnect: false
-    }
-  },
-  watch: {
-    whatsapps: {
-      handler () {
-        const problem = this.whatsapps.findIndex(w => w.status !== 'CONNECTED') !== -1
-        setTimeout(() => {
-          this.isProblemConnect = problem
-        }, 3000)
-      },
-      deep: true,
-      immediate: true
-    }
-  },
-  computed: {
-    ...mapGetters(['whatsapps']),
-    isBtnSlider () {
-      const len = this.whatsapps.filter(w => w.status !== 'CONNECTED')
-      return len > 1
-    }
-  },
-  methods: {
-    isInvalidConnect (wbot) {
-      const statusAlert = [
-        'PAIRING',
-        'TIMEOUT',
-        'DISCONNECTED',
-        'qrcode',
-        'DESTROYED',
-        'CONFLICT'
-      ]
-      const idx = statusAlert.findIndex(w => w === wbot.status)
-      return (idx !== -1)
-    }
-  },
-  mounted () {
-    this.isProblemConnect = this.whatsapps.findIndex(w => w.status !== 'CONNECTED') !== -1
+const props = defineProps({
+  isIconStatusMenu: {
+    type: Boolean,
+    default: false
   }
+})
+
+const whatsappStore = useWhatsappStore()
+const { whatsapps } = storeToRefs(whatsappStore)
+
+const idWbotVisible = ref(0)
+const isProblemConnect = ref(false)
+const carouselStatusWhatsapp = ref(null)
+
+const isInvalidConnect = wbot => {
+  const statusAlert = ['PAIRING', 'TIMEOUT', 'DISCONNECTED', 'qrcode', 'DESTROYED', 'CONFLICT']
+  return statusAlert.includes(wbot.status)
 }
+
+const isBtnSlider = computed(() => {
+  const problemBots = whatsapps.value.filter(w => w.status !== 'CONNECTED')
+  return problemBots.length > 1
+})
+
+watch(
+  whatsapps,
+  () => {
+    const problem = whatsapps.value.some(w => w.status !== 'CONNECTED')
+    setTimeout(() => {
+      isProblemConnect.value = problem
+    }, 3000)
+  },
+  { deep: true, immediate: true }
+)
+
+onMounted(() => {
+  isProblemConnect.value = whatsapps.value.some(w => w.status !== 'CONNECTED')
+})
 </script>

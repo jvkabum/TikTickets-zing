@@ -7,15 +7,15 @@
 // https://quasar.dev/quasar-cli/quasar-conf-js
 
 /* eslint-env node */
-import path from 'path';
-import { configure } from 'quasar/wrappers';
-import Components from 'unplugin-vue-components/vite';
-import { fileURLToPath } from 'url';
+import path from 'path'
+import { configure } from 'quasar/wrappers'
+import Components from 'unplugin-vue-components/vite'
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-export default configure(function (ctx) {
+export default configure(function(ctx) {
   return {
     // https://quasar.dev/quasar-cli/supporting-ts
     // supportTS: false,
@@ -27,6 +27,9 @@ export default configure(function (ctx) {
     // --> boot files are part of "main.js"
     // https://quasar.dev/quasar-cli/boot-files
     boot: [
+      'pinia',
+      'vue-query',
+      'vee-validate',
       'vuelidate',
       'ccComponents',
       'apex'
@@ -104,21 +107,21 @@ export default configure(function (ctx) {
             ],
             extensions: ['vue'],
             deep: true,
-            dts: false,
+            dts: false
           })
         )
         viteConf.resolve = viteConf.resolve || {}
         viteConf.resolve.alias = {
           ...viteConf.resolve.alias,
-          'src': path.resolve(__dirname, './src'),
-          'pages': path.resolve(__dirname, './src/pages'),
-          'layouts': path.resolve(__dirname, './src/layouts'),
-          'components': path.resolve(__dirname, './src/components'),
-          'boot': path.resolve(__dirname, './src/boot'),
-          'stores': path.resolve(__dirname, './src/stores'),
-          'assets': path.resolve(__dirname, './src/assets')
+          src: path.resolve(__dirname, './src'),
+          pages: path.resolve(__dirname, './src/pages'),
+          layouts: path.resolve(__dirname, './src/layouts'),
+          components: path.resolve(__dirname, './src/components'),
+          boot: path.resolve(__dirname, './src/boot'),
+          stores: path.resolve(__dirname, './src/stores'),
+          assets: path.resolve(__dirname, './src/assets')
         }
-      },
+      }
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
@@ -269,17 +272,17 @@ export default configure(function (ctx) {
       // "chain" is a webpack-chain object for the main process
       extendMainConf(/* cfg */) {
         // do something with cfg
-      },
+      }
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-browser-extensions/configuring-bex
     bex: {
       contentScripts: [
         'my-content-script'
-      ],
+      ]
 
       // extendBexScriptsConf (cfg) {}
       // extendBexManifestJson (json) {}
     }
   }
-});
+})

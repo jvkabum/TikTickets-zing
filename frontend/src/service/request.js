@@ -116,11 +116,16 @@ service.interceptors.response.use(
     const status = error?.response?.status
 
     // Verifica erros específicos de sessão
-    const sessionErrors = ['ERR_SESSION_EXPIRED', 'Invalid token', 'JWT must be provided', 'Token was not provided', 'Invalid token or not Admin']
+    const sessionErrors = [
+      'ERR_SESSION_EXPIRED',
+      'Invalid token',
+      'JWT must be provided',
+      'Token was not provided',
+      'Invalid token or not Admin'
+    ]
     const isSessionError = sessionErrors.includes(errorMessage)
 
-    if ((status === 403 || status === 401 || isSessionError) &&
-      !originalRequest.url.includes('/auth/login')) {
+    if ((status === 403 || status === 401 || isSessionError) && !originalRequest.url.includes('/auth/login')) {
       // Se for erro no refresh token, vai direto para login
       if (originalRequest.url.includes('/auth/refresh_token')) {
         redirectToLogin()

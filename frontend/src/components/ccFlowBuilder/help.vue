@@ -12,9 +12,7 @@
       </el-tab-pane>
       <el-tab-pane label="如何删除">
         <el-divider content-position="left">页面删除</el-divider>
-        <div>
-          鼠标点中需要删除的节点，点击左上角的删除图标
-        </div>
+        <div>鼠标点中需要删除的节点，点击左上角的删除图标</div>
         <el-divider content-position="left">通过代码删除</el-divider>
         <pre>this.deleteNode(nodeId)</pre>
       </el-tab-pane>
@@ -38,20 +36,18 @@
   </q-dialog>
 </template>
 
-<script>
-export default {
-  data () {
-    return {
-      dialogVisible: false
-    }
-  },
-  components: {},
-  methods: {
-    init () {
-      this.dialogVisible = true
-    }
-  }
+<script setup>
+import { ref } from 'vue'
+
+const dialogVisible = ref(false)
+
+const init = () => {
+  dialogVisible.value = true
 }
+
+defineExpose({
+  init
+})
 </script>
 
 <style>

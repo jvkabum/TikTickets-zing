@@ -44,7 +44,7 @@
           <span class="text-weight-medium"> Esperando leitura do QR Code </span>
           <span class="row col"> Solicite que seu cliente leia o QR Code </span>
         </q-item-label>
-        <q-item-label v-if="item.status == 'DESTROYED' ">
+        <q-item-label v-if="item.status == 'DESTROYED'">
           <span class="text-weight-medium"> Esperando leitura do QR Code </span>
           <span class="row col"> Solicite que seu cliente leia o QR Code </span>
         </q-item-label>
@@ -53,50 +53,57 @@
           <span
             class="row col"
             v-if="item.type === 'whatsapp'"
-          > Certifique-se de que seu celular esteja conectado à internet e tente novamente, ou solicite um novo QR Code </span>
+          >
+            Certifique-se de que seu celular esteja conectado à internet e tente novamente, ou solicite um novo QR Code
+          </span>
           <span
             class="row col"
             v-if="item.type === 'telegram'"
-          > Tente conectar novamente. Caso o erro permaneça, confirme se o token está correto.</span>
+          >
+            Tente conectar novamente. Caso o erro permaneça, confirme se o token está correto.</span
+          >
           <span
             class="row col"
             v-if="item.type === 'instagram'"
-          > Tente conectar novamente. Caso o erro permaneça, confirme se as credenciais estão corretas.</span>
+          >
+            Tente conectar novamente. Caso o erro permaneça, confirme se as credenciais estão corretas.</span
+          >
         </q-item-label>
         <q-item-label v-if="item.status == 'CONNECTED'">
           <span class="text-weight-medium"> Conexão estabelecida! </span>
         </q-item-label>
         <q-item-label v-if="['PAIRING', 'TIMEOUT'].includes(item.status)">
           <span class="text-weight-medium"> A conexão com o celular foi perdida </span>
-          <span class="row col"> Certifique-se de que seu celular esteja conectado à internet e o WhatsApp esteja aberto, ou clique no botão 'Desconectar' para obter um novo QR Code </span>
+          <span class="row col">
+            Certifique-se de que seu celular esteja conectado à internet e o WhatsApp esteja aberto, ou clique no botão
+            'Desconectar' para obter um novo QR Code
+          </span>
         </q-item-label>
         <q-item-label v-if="item.status == 'OPENING'">
           <span class="text-weight-medium"> Estabelecendo conexão. </span>
           <span class="row col"> Isso poderá demorar um pouco... </span>
         </q-item-label>
         <q-item-label caption>
-          Última Atualização: {{ formatarData(item.updatedAt, 'dd/MM/yyyy HH:mm') }}
+          Última Atualização:
+          {{ formatarData(item.updatedAt, 'dd/MM/yyyy HH:mm') }}
         </q-item-label>
       </q-item-section>
     </q-item>
   </div>
 </template>
-<script>
+<script setup>
 import { format, parseISO } from 'date-fns'
-import pt from 'date-fns/locale/pt-BR/index'
+import pt from 'date-fns/locale/pt-BR'
 
-export default {
-  name: 'ItemStatusChannel',
-  props: {
-    item: {
-      type: Object,
-      default: () => { }
-    }
-  },
-  methods: {
-    formatarData (data, formato) {
-      return format(parseISO(data), formato, { locale: pt })
-    }
+const props = defineProps({
+  item: {
+    type: Object,
+    default: () => ({})
   }
+})
+
+const formatarData = (data, formato) => {
+  if (!data) return ''
+  return format(parseISO(data), formato, { locale: pt })
 }
 </script>

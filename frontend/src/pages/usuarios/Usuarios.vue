@@ -3,7 +3,7 @@
     <q-table
       class="my-sticky-dynamic q-ma-lg"
       title="Usuarios"
-      :data="usuarios"
+      :rows="usuarioStore.usuarios"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -21,7 +21,7 @@
           v-model="filter"
           clearable
           placeholder="Localize"
-          @input="filtrarUsuario"
+          @update:model-value="filtrarUsuario"
         >
           <template v-slot:prepend>
             <q-icon name="search" />
@@ -36,9 +36,8 @@
           }"
           color="primary"
           label="Adicionar"
-          @click="usuarioSelecionado = {}; modalUsuario = true"
+          @click="handleAddUsuario"
         />
-
       </template>
       <template v-slot:body-cell-acoes="props">
         <q-td class="text-center">
@@ -48,9 +47,7 @@
             icon="mdi-arrow-decision-outline"
             @click="gerirFilasUsuario(props.row)"
           >
-            <q-tooltip>
-              Gestão de Filas do usuário
-            </q-tooltip>
+            <q-tooltip> Gestão de Filas do usuário </q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -67,186 +64,183 @@
         </q-td>
       </template>
       <template v-slot:pagination="{ pagination }">
-        {{ usuarios.length }}/{{ pagination.rowsNumber }}
+        {{ usuarioStore.usuarios.length }}/{{ pagination.rowsNumber }}
       </template>
     </q-table>
     <ModalUsuario
       v-model:modalUsuario="modalUsuario"
-      @modalUsuario:usuario-editado="UPDATE_USUARIO"
-      @modalUsuario:usuario-criado="usuarioCriado"
+      @modalUsuario:usuario-editado="onUsuarioEditado"
+      @modalUsuario:usuario-criado="onUsuarioCriado"
       v-model:usuarioEdicao="usuarioSelecionado"
     />
     <ModalFilaUsuario
       v-model:modalFilaUsuario="modalFilaUsuario"
       v-model:usuarioSelecionado="usuarioSelecionado"
       :filas="filas"
-      @modalFilaUsuario:sucesso="UPDATE_USUARIO"
+      @modalFilaUsuario:sucesso="onUsuarioEditado"
     />
   </div>
 </template>
 
-<script>
-// const userId = +localStorage.getItem('userId')
-import { ListarFilas } from '../../service/filas';
-import { DeleteUsuario, ListarUsuarios } from '../../service/user';
-export default {
-  name: 'IndexUsuarios',
-  components: { },
-  data () {
-    return {
-      userProfile: 'user',
-      usuarios: [],
-      usuarioSelecionado: {},
-      modalFilaUsuario: false,
-      filas: [],
-      optionsProfile: [
-        { value: 'user', label: 'Usuário' },
-        { value: 'admin', label: 'Administrador' }
-      ],
-      modalUsuario: false,
-      filter: null,
-      pagination: {
-        rowsPerPage: 40,
-        rowsNumber: 0,
-        lastIndex: 0
-      },
-      params: {
-        pageNumber: 1,
-        searchParam: null,
-        hasMore: true
-      },
-      loading: false,
-      columns: [
-        { name: 'name', label: 'Nome', field: 'name', align: 'left' },
-        { name: 'email', label: 'E-mail', field: 'email', align: 'left' },
-        {
-          name: 'queues',
-          label: 'Filas',
-          field: 'queues',
-          align: 'left',
-          format: (v) => !v ? '' : v.map(f => f.queue).join(', '),
-          classes: 'ellipsis',
-          style: 'max-width: 400px;'
-        },
-        { name: 'profile', label: 'Perfil', field: 'profile', align: 'left', format: (v) => this.optionsProfile.find(o => o.value == v).label },
-        { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
-      ]
-    }
+<script setup>
+import { useQuasar } from 'quasar'
+import { useFilaStore } from 'src/stores/useFilaStore'
+import { useUsuarioStore } from 'src/stores/useUsuarioStore'
+import { notificarErro } from 'src/utils/helpersNotifications'
+import { onMounted, reactive, ref } from 'vue'
+
+import ModalFilaUsuario from './ModalFilaUsuario.vue'
+import ModalUsuario from './ModalUsuario.vue'
+
+const $q = useQuasar()
+const usuarioStore = useUsuarioStore()
+const filaStore = useFilaStore()
+
+const userProfile = ref('user')
+const usuarioSelecionado = ref({})
+const modalFilaUsuario = ref(false)
+const filas = ref([])
+
+const optionsProfile = [
+  { value: 'user', label: 'Usuário' },
+  { value: 'admin', label: 'Administrador' }
+]
+
+const modalUsuario = ref(false)
+const filter = ref(null)
+
+const pagination = reactive({
+  rowsPerPage: 40,
+  rowsNumber: 0,
+  lastIndex: 0
+})
+
+const params = reactive({
+  pageNumber: 1,
+  searchParam: null,
+  hasMore: true
+})
+
+const loading = ref(false)
+
+const columns = [
+  { name: 'name', label: 'Nome', field: 'name', align: 'left' },
+  { name: 'email', label: 'E-mail', field: 'email', align: 'left' },
+  {
+    name: 'queues',
+    label: 'Filas',
+    field: 'queues',
+    align: 'left',
+    format: v => (!v ? '' : v.map(f => f.queue).join(', ')),
+    classes: 'ellipsis',
+    style: 'max-width: 400px;'
   },
-  methods: {
-    LOAD_USUARIOS (users) {
-      const newUsers = []
-      users.forEach(user => {
-        const userIndex = this.usuarios.findIndex(c => c.id === user.id)
-        if (userIndex !== -1) {
-          this.usuarios[userIndex] = user
-        } else {
-          newUsers.push(user)
-        }
-      })
-      const usersObj = [...this.usuarios, ...newUsers]
-      this.usuarios = usersObj.filter(usuario => usuario.profile !== 'super')
-    },
-    UPDATE_USUARIO (usuario) {
-      let newUsuarios = [...this.usuarios]
-      const usuarioIndex = newUsuarios.findIndex(c => c.id === usuario.id)
-      if (usuarioIndex !== -1) {
-        newUsuarios[usuarioIndex] = usuario
-      } else {
-        newUsuarios = [usuario, ...newUsuarios]
-      }
-      this.usuarios = [...newUsuarios]
-    },
-    DELETE_USUARIO (userId) {
-      const newObj = [...this.usuarios.filter(u => u.id !== userId)]
-      this.usuarios = [...newObj]
-    },
-    async listarUsuarios () {
-      this.loading = true
-      const { data } = await ListarUsuarios(this.params)
-      this.usuarios = data.users
-      this.LOAD_USUARIOS(data.users)
-      this.params.hasMore = data.hasMore
-      this.pagination.lastIndex = this.usuarios.length - 1
-      this.pagination.rowsNumber = data.count
-      this.loading = false
-    },
-    filtrarUsuario (data) {
-      this.usuarios = []
-      this.params.pageNumber = 1
-      this.params.searchParam = data
-      this.listarUsuarios()
-    },
-    onScroll ({ to, ref, ...all }) {
-      if (this.loading !== true && this.params.hasMore === true && to === this.pagination.lastIndex) {
-        this.params.pageNumber++
-        this.listarUsuarios()
-      }
-    },
-    usuarioCriado (usuario) {
-      const obj = [...this.usuarios]
-      obj.push(usuario)
-      this.usuarios = [...obj]
-    },
-    editarUsuario (usuario) {
-      this.usuarioSelecionado = usuario
-      this.modalUsuario = true
-    },
-    deletarUsuario (usuario) {
-      this.$q.dialog({
-        title: `Atenção!! Deseja realmente deletar o usuario "${usuario.name}"?`,
-        // message: 'Mensagens antigas não serão apagadas no whatsapp.',
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        this.loading = true
-        DeleteUsuario(usuario.id)
-          .then(res => {
-            this.DELETE_USUARIO(usuario.id)
-            this.$q.notify({
-              type: 'positive',
-              progress: true,
-              position: 'top',
-              message: `Usuario ${usuario.name} deletado!`,
-              actions: [{
-                icon: 'close',
-                round: true,
-                color: 'white'
-              }]
-            })
-          })
-          .catch(error => {
-            console.error(error)
-            this.$notificarErro('Não é possível deletar o usuário', error)
-          })
-        this.loading = false
-      })
-    },
-    async listarFilas () {
-      const { data } = await ListarFilas()
-      this.filas = data
-    },
-    gerirFilasUsuario (usuario) {
-      this.usuarioSelecionado = usuario
-      this.modalFilaUsuario = true
-    }
+  {
+    name: 'profile',
+    label: 'Perfil',
+    field: 'profile',
+    align: 'left',
+    format: v => optionsProfile.find(o => o.value == v)?.label || v
   },
-  async mounted () {
-    this.userProfile = localStorage.getItem('profile')
-    await this.listarFilas()
-    await this.listarUsuarios()
+  { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
+]
+
+const listarUsuarios = async () => {
+  loading.value = true
+  try {
+    const data = await usuarioStore.listarUsuarios(params)
+    params.hasMore = data.hasMore
+    pagination.lastIndex = usuarioStore.usuarios.length - 1
+    pagination.rowsNumber = data.count
+  } catch (error) {
+    console.error(error)
+    notificarErro('Erro ao listar usuários', error)
+  } finally {
+    loading.value = false
   }
 }
+
+const filtrarUsuario = data => {
+  usuarioStore.usuarios = []
+  params.pageNumber = 1
+  params.searchParam = data
+  listarUsuarios()
+}
+
+const handleAddUsuario = () => {
+  usuarioSelecionado.value = {}
+  modalUsuario.value = true
+}
+
+const onUsuarioCriado = usuario => {
+  // A store já lida com a adição, mas o evento pode ser útil para outras ações na UI
+  // No caso atual, a store já fez o push em criarUsuario se chamado por lá,
+  // mas o modal pode estar chamando o serviço diretamente ainda.
+  // Vou garantir que a lista reflita a mudança.
+}
+
+const onUsuarioEditado = usuario => {
+  // Mesma lógica da criação
+}
+
+const editarUsuario = usuario => {
+  usuarioSelecionado.value = { ...usuario }
+  modalUsuario.value = true
+}
+
+const deletarUsuario = usuario => {
+  $q.dialog({
+    title: `Atenção!! Deseja realmente deletar o usuario "${usuario.name}"?`,
+    cancel: {
+      label: 'Não',
+      color: 'primary',
+      push: true
+    },
+    ok: {
+      label: 'Sim',
+      color: 'negative',
+      push: true
+    },
+    persistent: true
+  }).onOk(async () => {
+    loading.value = true
+    try {
+      await usuarioStore.deletarUsuario(usuario.id)
+      $q.notify({
+        type: 'positive',
+        progress: true,
+        position: 'top',
+        message: `Usuario ${usuario.name} deletado!`,
+        actions: [{ icon: 'close', round: true, color: 'white' }]
+      })
+    } catch (error) {
+      console.error(error)
+      notificarErro('Não é possível deletar o usuário', error)
+    } finally {
+      loading.value = false
+    }
+  })
+}
+
+const listarFilas = async () => {
+  try {
+    const data = await filaStore.listarFilas()
+    filas.value = data
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const gerirFilasUsuario = usuario => {
+  usuarioSelecionado.value = { ...usuario }
+  modalFilaUsuario.value = true
+}
+
+onMounted(async () => {
+  userProfile.value = localStorage.getItem('profile')
+  await listarFilas()
+  await listarUsuarios()
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

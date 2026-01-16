@@ -1,16 +1,26 @@
-/dist
-/src-bex/www
-/src-capacitor
-/src-cordova
-/.quasar
-/node_modules
+# Diretórios
+node_modules/
+dist/
+src-cordova/
+.quasar/
+src-pwa/
+coverage/
+.quasar/
+build/
 
-/src/components/ccFlowBuilder/jsplumb.js
+# Arquivos
+*.log
+*.min.js
+*.min.css
+.DS_Store
+Thumbs.db
 
-# Ignorar arquivos CSS
-**/*.css
-**/*.scss
-**/*.less
+# Configurações
+.env
+.env.local
+.env.*.local
 
-# Ignorar a pasta de componentes especificamente se necessário
-src/components/ccFlowBuilder/index.css
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

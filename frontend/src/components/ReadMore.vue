@@ -4,8 +4,7 @@
       class="formatHTML"
       v-html="formattedString"
       v-if="!renderPre"
-    >
-    </div>
+    ></div>
     <pre v-else>
       {{ formattedString }}
     </pre>
@@ -29,7 +28,8 @@
           <div class="blob blue"></div>
           <div class="blob blue"></div>
           <div class="blob blue"></div>
-        </div> Ler mais
+        </div>
+        Ler mais
       </q-btn>
 
       <q-btn
@@ -47,82 +47,76 @@
           <div class="blob yellow"></div>
           <div class="blob yellow"></div>
           <div class="blob yellow"></div>
-        </div> Resumir
+        </div>
+        Resumir
       </q-btn>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref } from 'vue'
 
-export default {
-  props: {
-    text: {
-      type: String,
-      required: true
-    },
-    renderPre: {
-      type: Boolean,
-      required: false
-    },
-    link: {
-      type: [String, Number],
-      default: '#'
-    },
-    maxChars: {
-      type: Number,
-      default: 400
-    }
+const props = defineProps({
+  text: {
+    type: String,
+    required: true
   },
-
-  data () {
-    return {
-      isReadMore: false,
-      mostrarBotao: false,
-      lines: 10
-    }
+  renderPre: {
+    type: Boolean,
+    default: false
   },
-
-  computed: {
-    formattedString () {
-      let maxChars = this.maxChars
-      let text = this.text
-      if (!this.renderPre) {
-        text = text.replace(/<(\w+)\b(?:\s+[\w\-.:]+(?:\s*=\s*(?:"[^"]*"|"[^"]*"|[\w\-.:]+))?)*\s*\/?>\s*<\/\1\s*>/igm, '')
-        text = text.replace(/<p/g, '<p class="formatP" ')
-        text = text.replace(/(\r\n|\n|\r)/g, '')
-        text = text.replace(/<br>/g, '')
-        maxChars = maxChars + 1000
-      }
-
-      if (!this.isReadMore && this.text.length > maxChars) {
-        text = text.substring(0, maxChars) + ' ...'
-        // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-        this.mostrarBotao = true
-      }
-
-      return (text)
-    }
+  link: {
+    type: [String, Number],
+    default: '#'
   },
+  maxChars: {
+    type: Number,
+    default: 400
+  }
+})
 
-  methods: {
-    triggerReadMore (e, b, link) {
-      if (link === '#') {
-        e.preventDefault()
-      }
-      if (this.lessStr !== null || this.lessStr !== '') {
-        this.isReadMore = b
-      }
+const emit = defineEmits(['read-more:focar-ref'])
 
-      if (!this.isReadMore) {
-        this.$emit('read-more:focar-ref', link)
-      }
-    }
+const isReadMore = ref(false)
+
+const cMaxChars = computed(() => {
+  return props.renderPre ? props.maxChars : props.maxChars + 1000
+})
+
+const mostrarBotao = computed(() => {
+  return props.text.length > cMaxChars.value
+})
+
+const formattedString = computed(() => {
+  let text = props.text
+  if (!props.renderPre) {
+    text = text.replace(/<(\w+)\b(?:\s+[\w\-.:]+(?:\s*=\s*(?:"[^"]*"|"[^"]*"|[\w\-.:]+))?)*\s*\/?>\s*<\/\1\s*>/gim, '')
+    text = text.replace(/<p/g, '<p class="formatP" ')
+    text = text.replace(/(\r\n|\n|\r)/g, '')
+    text = text.replace(/<br>/g, '')
+  }
+
+  if (!isReadMore.value && props.text.length > cMaxChars.value) {
+    text = text.substring(0, cMaxChars.value) + ' ...'
+  }
+
+  return text
+})
+
+const triggerReadMore = (e, status, link) => {
+  if (link === '#') {
+    e.preventDefault()
+  }
+  isReadMore.value = status
+
+  if (!isReadMore.value) {
+    emit('read-more:focar-ref', link)
   }
 }
 </script>
 
-<style >
+<style>
 .formatP,
 pre {
   white-space: pre-wrap !important; /* css-3 */

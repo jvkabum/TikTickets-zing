@@ -1,8 +1,8 @@
 <template>
   <q-dialog
-    @show="fetchContact"
-    @hide="$emit('update:modalContato', false)"
-    :value="modalContato"
+    @show="abrirModal"
+    @hide="fecharModal"
+    :model-value="modalContato"
     persistent
   >
     <q-card
@@ -11,27 +11,25 @@
     >
       <q-card-section>
         <div class="text-h6">
-          {{ contactId ? 'Editar Contato' : 'Adicionar Contato'  }}
+          {{ contactId ? 'Editar Contato' : 'Adicionar Contato' }}
         </div>
       </q-card-section>
-      <q-card-section class="q-pa-sm q-pl-md text-bold">
-        Dados Contato
-      </q-card-section>
+      <q-card-section class="q-pa-sm q-pl-md text-bold"> Dados Contato </q-card-section>
       <q-card-section class="q-pa-sm q-pl-md row q-col-gutter-md">
-        <c-input
+        <q-input
           class="col-12"
           outlined
-          v-model="contato.name"
-          :validator="$v.contato.name"
-          @blur="$v.contato.name.$touch"
+          v-model="name"
+          :error="!!errors.name"
+          :error-message="errors.name"
           label="Nome"
         />
-        <c-input
+        <q-input
           class="col-12"
           outlined
-          v-model="contato.number"
-          :validator="$v.contato.number"
-          @blur="$v.contato.number.$touch"
+          v-model="number"
+          :error="!!errors.number"
+          :error-message="errors.number"
           mask="+#############"
           placeholder="+DDI DDD 99999 9999"
           fill-mask
@@ -39,99 +37,93 @@
           hint="Informe número com DDI e DDD"
           label="Número"
         />
-        <c-input
+        <q-input
           class="col-12"
           outlined
-          dense
-          rounded
-          :validator="$v.contato.email"
-          @blur="$v.contato.email.$touch"
-          v-model="contato.email"
+          v-model="email"
+          :error="!!errors.email"
+          :error-message="errors.email"
           label="E-mail"
         />
       </q-card-section>
-        <q-card
-          class="bg-white q-mt-sm btn-rounded"
-          style="width: 100%"
-          bordered
-          flat
-        >
-          <q-card-section class="text-bold q-pb-none">
-            Carteira
-            <q-separator />
-          </q-card-section>
-          <q-card-section class="q-pa-none">
-            <q-select
-              square
-              borderless
-              v-model="contato.wallets"
-              multiple
-              :max-values="1"
-              :options="usuarios"
-              use-chips
-              option-value="id"
-              option-label="name"
-              emit-value
-              map-options
-              dropdown-icon="add"
-            >
-              <template v-slot:option="{ itemProps, itemEvents, opt, selected, toggleOption }">
-                <q-item
-                  v-bind="itemProps"
-                  v-on="itemEvents"
-                >
-                  <q-item-section>
-                    <q-item-label v-html="opt.name"></q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-checkbox
-                      :value="selected"
-                      @input="toggleOption(opt)"
-                    />
-                  </q-item-section>
-                </q-item>
-              </template>
-              <template v-slot:selected-item="{ opt }">
-                <q-chip
-                  dense
-                  square
-                  color="white"
-                  text-color="primary"
-                  class="q-ma-xs row col-12 text-body1"
-                >
-                  {{ opt.name }}
-                </q-chip>
-              </template>
-              <template v-slot:no-option="{ itemProps, itemEvents }">
-                <q-item
-                  v-bind="itemProps"
-                  v-on="itemEvents"
-                >
-                  <q-item-section>
-                    <q-item-label class="text-negative text-bold">
-                      Ops... Sem carteiras disponíveis!!
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-              </template>
-
-            </q-select>
-          </q-card-section>
-        </q-card>
-      <q-card-section class="q-pa-sm q-pl-md text-bold">
-        Informações adicionais
-      </q-card-section>
-      <q-card-section class="q-pa-sm q-pl-md row q-col-gutter-md justify-center">
-        <template v-for="(extraInfo, index) in contato.extraInfo" :key="index">
-          <div
-            class="col-12 row justify-center q-col-gutter-sm"
+      <q-card
+        class="bg-white q-mt-sm btn-rounded"
+        style="width: 100%"
+        bordered
+        flat
+      >
+        <q-card-section class="text-bold q-pb-none">
+          Carteira / Usuário Responsável
+          <q-separator />
+        </q-card-section>
+        <q-card-section class="q-pa-none">
+          <q-select
+            square
+            borderless
+            v-model="wallets"
+            multiple
+            :max-values="1"
+            :options="usuarios"
+            use-chips
+            option-value="id"
+            option-label="name"
+            emit-value
+            map-options
+            dropdown-icon="add"
           >
+            <template v-slot:option="{ itemProps, itemEvents, opt, selected, toggleOption }">
+              <q-item
+                v-bind="itemProps"
+                v-on="itemEvents"
+              >
+                <q-item-section>
+                  <q-item-label><span v-html="opt.name"></span></q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-checkbox
+                    :model-value="selected"
+                    @update:model-value="toggleOption(opt)"
+                  />
+                </q-item-section>
+              </q-item>
+            </template>
+            <template v-slot:selected-item="{ opt }">
+              <q-chip
+                dense
+                square
+                color="white"
+                text-color="primary"
+                class="q-ma-xs row col-12 text-body1"
+              >
+                {{ opt.name }}
+              </q-chip>
+            </template>
+            <template v-slot:no-option="{ itemProps, itemEvents }">
+              <q-item
+                v-bind="itemProps"
+                v-on="itemEvents"
+              >
+                <q-item-section>
+                  <q-item-label class="text-negative text-bold"> Ops... Sem usuários disponíveis!! </q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
+        </q-card-section>
+      </q-card>
+      <q-card-section class="q-pa-sm q-pl-md text-bold"> Informações adicionais </q-card-section>
+      <q-card-section class="q-pa-sm q-pl-md row q-col-gutter-md justify-center">
+        <template
+          v-for="(extra, index) in extraInfo"
+          :key="index"
+        >
+          <div class="col-12 row justify-center q-col-gutter-sm">
             <q-input
               class="col-6"
               outlined
               dense
               rounded
-              v-model="extraInfo.name"
+              v-model="extra.name"
               label="Descrição"
             />
             <q-input
@@ -140,11 +132,10 @@
               dense
               rounded
               label="Informação"
-              v-model="extraInfo.value"
+              v-model="extra.value"
             />
             <div class="col q-pt-md">
               <q-btn
-                :key="index"
                 icon="delete"
                 round
                 flat
@@ -161,7 +152,7 @@
             outline
             rounded
             label="Adicionar Informação"
-            @click="contato.extraInfo.push({name: null, value: null})"
+            @click="addExtraInfo"
           />
         </div>
       </q-card-section>
@@ -174,149 +165,151 @@
           label="Sair"
           color="negative"
           v-close-popup
-          class="q-px-md "
+          class="q-px-md"
         />
         <q-btn
           class="q-ml-lg q-px-md"
           rounded
           label="Salvar"
           color="positive"
-          @click="saveContact"
+          @click="onSubmit"
         />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
-<script>
-import { required, email, minLength, maxLength } from '@vuelidate/validators'
-import { ObterContato, CriarContato, EditarContato } from 'src/service/contatos'
-import { ListarUsuarios } from 'src/service/user'
-export default {
-  name: 'ContatoModal',
-  props: {
-    modalContato: {
-      type: Boolean,
-      default: false
-    },
-    contactId: {
-      type: Number,
-      default: null
-    }
-  },
-  data () {
-    return {
-      contato: {
-        name: null,
-        number: null,
-        email: '',
-        extraInfo: [],
-        wallets: []
-      },
-      usuarios: []
-    }
-  },
-  validations: {
-    contato: {
-      name: { required, minLength: minLength(3), maxLength: maxLength(50) },
-      email: { email },
-      number: { required, minLength: minLength(8) }
-    }
-  },
-  methods: {
-    async fetchContact () {
-      try {
-        await this.listarUsuarios()
-        if (!this.contactId) return
-        const { data } = await ObterContato(this.contactId)
-        this.contato = data
-        if (data.number.substring(0, 2) === '55') {
-          this.contato.number = data.number.substring(0)
-        }
-      } catch (error) {
-        console.error(error)
-        this.$notificarErro('Ocorreu um erro!', error)
-      }
-    },
-    removeExtraInfo (index) {
-      const newData = { ...this.contato }
-      newData.extraInfo.splice(index, 1)
-      this.contato = { ...newData }
-    },
-    async saveContact () {
-      this.$v.contato.$touch()
-      if (this.$v.contato.$error) {
-        return this.$q.notify({
-          type: 'warning',
-          progress: true,
-          position: 'top',
-          message: 'Ops! Verifique os erros...',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-      }
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
+import { useQuasar } from 'quasar'
+import { useContatoStore } from 'src/stores/useContatoStore'
+import { useUsuarioStore } from 'src/stores/useUsuarioStore'
+import { notificarErro } from 'src/utils/helpersNotifications'
+import { useField, useForm } from 'vee-validate'
+import { ref } from 'vue'
+import * as zod from 'zod'
 
-      const contato = {
-        ...this.contato,
-        number: '' + this.contato.number // inserir o DDI do brasil para consultar o número
-      }
-
-      try {
-        if (this.contactId) {
-          const { data } = await EditarContato(this.contactId, contato)
-          this.$emit('contatoModal:contato-editado', data)
-          this.$q.notify({
-            type: 'info',
-            progress: true,
-            position: 'top',
-            textColor: 'black',
-            message: 'Contato editado!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        } else {
-          const { data } = await CriarContato(contato)
-          this.$q.notify({
-            type: 'positive',
-            progress: true,
-            position: 'top',
-            message: 'Contato criado!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-          this.$emit('contatoModal:contato-criado', data)
-        }
-        this.$emit('update:modalContato', false)
-      } catch (error) {
-        console.error(error)
-        this.$notificarErro('Ocorreu um erro ao criar o contato', error)
-      }
-    },
-    async listarUsuarios () {
-      try {
-        const { data } = await ListarUsuarios()
-        this.usuarios = data.users
-      } catch (error) {
-        console.error(error)
-        this.$notificarErro('Problema ao carregar usuários', error)
-      }
-    }
-
+const props = defineProps({
+  modalContato: {
+    type: Boolean,
+    default: false
   },
-  destroyed () {
-    this.$v.contato.$reset()
+  contactId: {
+    type: Number,
+    default: null
+  }
+})
+
+const emit = defineEmits(['update:modalContato', 'contatoModal:contato-editado', 'contatoModal:contato-criado'])
+
+const $q = useQuasar()
+const contatoStore = useContatoStore()
+const usuarioStore = useUsuarioStore()
+
+const usuarios = ref([])
+const extraInfo = ref([])
+
+const validationSchema = toTypedSchema(
+  zod.object({
+    name: zod.string().min(3, 'Mínimo de 3 caracteres').max(50, 'Máximo de 50 caracteres'),
+    email: zod.string().email('E-mail inválido').optional().or(zod.literal('')),
+    number: zod.string().min(8, 'Número inválido'),
+    wallets: zod.array(zod.any()).optional()
+  })
+)
+
+const { handleSubmit, errors, resetForm, setValues } = useForm({
+  validationSchema,
+  initialValues: {
+    name: '',
+    number: '',
+    email: '',
+    wallets: []
+  }
+})
+
+const { value: name } = useField('name')
+const { value: number } = useField('number')
+const { value: email } = useField('email')
+const { value: wallets } = useField('wallets')
+
+const listarUsuarios = async () => {
+  try {
+    const data = await usuarioStore.listarUsuarios()
+    usuarios.value = data.users || []
+  } catch (error) {
+    console.error(error)
+    notificarErro('Problema ao carregar usuários', error)
   }
 }
+
+const abrirModal = async () => {
+  await listarUsuarios()
+  if (props.contactId) {
+    try {
+      const data = await contatoStore.obterContato(props.contactId)
+      setValues({
+        name: data.name,
+        number: data.number,
+        email: data.email || '',
+        wallets: data.wallets ? data.wallets.map(w => w.id || w) : []
+      })
+      extraInfo.value = data.extraInfo || []
+    } catch (error) {
+      console.error(error)
+      notificarErro('Ocorreu um erro ao carregar o contato!', error)
+    }
+  } else {
+    resetForm()
+    extraInfo.value = []
+  }
+}
+
+const fecharModal = () => {
+  emit('update:modalContato', false)
+  resetForm()
+  extraInfo.value = []
+}
+
+const addExtraInfo = () => {
+  extraInfo.value.push({ name: '', value: '' })
+}
+
+const removeExtraInfo = index => {
+  extraInfo.value.splice(index, 1)
+}
+
+const onSubmit = handleSubmit(async values => {
+  try {
+    const payload = {
+      ...values,
+      extraInfo: extraInfo.value,
+      number: '' + values.number
+    }
+
+    if (props.contactId) {
+      const data = await contatoStore.editarContato(props.contactId, payload)
+      emit('contatoModal:contato-editado', data)
+      $q.notify({
+        type: 'info',
+        message: 'Contato editado!',
+        position: 'top'
+      })
+    } else {
+      const data = await contatoStore.criarContato(payload)
+      emit('contatoModal:contato-criado', data)
+      $q.notify({
+        type: 'positive',
+        message: 'Contato criado!',
+        position: 'top'
+      })
+    }
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+    notificarErro('Ocorreu um erro ao salvar o contato', error)
+  }
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

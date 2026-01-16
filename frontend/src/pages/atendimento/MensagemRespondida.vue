@@ -4,19 +4,14 @@
     v-ripple
     class="q-pa-none fit btn-rounded q-mt-md q-mb-sm row justify-center"
     dense
+    @click="focarEmoji"
   >
     <q-chat-message
-      :key="mensagem.id"
       :sent="mensagem.fromMe"
       class="text-weight-medium fit q-ma-none"
-      id="chat-message-resp"
       style="min-width: 200px; max-width: 400px"
-      :bg-color="mensagem.fromMe ? 'grey-2' : $q.dark.isActive ? 'blue-2' : 'blue-1' "
+      :bg-color="mensagem.fromMe ? 'grey-2' : $q.dark.isActive ? 'blue-2' : 'blue-1'"
     >
-      <!-- @click="focarElemento(mensagem)" -->
-
-      <!-- :bg-color="mensagem.fromMe ? '' : 'green-3' " -->
-      <!-- :bg-color="mensagem.fromMe ? 'grey-2' : 'secondary' " -->
       <div
         class="full-width"
         :style="mensagem.isDeleted ? 'color: rgba(0, 0, 0, 0.36) !important;' : ''"
@@ -24,303 +19,109 @@
         <div
           v-if="mensagem.isDeleted"
           class="text-italic"
-        > Mensagem apagada em {{ formatarData(mensagem.updatedAt, 'dd/MM/yyyy') }}.</div>
+        >
+          Mensagem apagada em
+          {{ formatarData(mensagem.updatedAt, 'dd/MM/yyyy') }}.
+        </div>
+
         <div
           v-if="isGroupLabel(mensagem)"
-          class="q-mb-sm"
-          style="display: flex; color: rgb(59 23 251); fontWeight: 500;"
+          class="q-mb-sm text-bold text-primary"
+          style="font-size: 0.8rem"
         >
-          {{ isGroupLabel(mensagem) }}
+          {{ mensagem.contact?.name }}
         </div>
         <div
-          v-if="!isGroupLabel(mensagem) && !mensagem.fromMe"
-          class="q-mb-sm"
-          style="display: flex; color: rgb(59 23 251); fontWeight: 500;"
+          v-else-if="!mensagem.fromMe"
+          class="q-mb-sm text-bold text-primary"
+          style="font-size: 0.8rem"
         >
-          {{ mensagem.contact && mensagem.contact.name }}
+          {{ mensagem.contact?.name }}
         </div>
+
+        <!-- Renderers -->
         <template v-if="mensagem.mediaType === 'audio'">
-          <div class="column items-center q-my-sm full-width">
+          <div class="column items-center q-my-sm">
             <audio
-              style="max-width: 400px; margin: 0 auto; width: 100%;"
               controls
+              style="max-width: 100%"
             >
-              <source :src="mensagem.mediaUrl" type="audio/mp3" />
+              <source
+                :src="mensagem.mediaUrl"
+                type="audio/mp3"
+              />
             </audio>
           </div>
         </template>
-        <template v-if="mensagem.mediaType === 'vcard'">
-          <div class="column items-center q-my-sm full-width">
-            <q-btn
-              type="a"
-              color="black"
-              outline
-              dense
-              class="q-px-sm text-center"
-              download="vCard"
-              :href="`data:text/x-vcard;charset=utf-8;base64,${returnCardContato(mensagem.body)}`"
-            >
-              Download Contato
-            </q-btn>
-          </div>
-        </template>
-        <template v-if="mensagem.mediaType === 'image'">
-          <!-- @click="buscarImageCors(mensagem.mediaUrl)" -->
-          <div class="column items-center q-my-sm full-width">
+
+        <template v-else-if="mensagem.mediaType === 'image'">
+          <div class="column items-center q-my-sm">
             <q-img
-              @click="urlMedia=mensagem.mediaUrl; abrirModalImagem=true"
               :src="mensagem.mediaUrl"
-              spinner-color="primary"
-              height="auto"
-              width="200px"
-              style="cursor: pointer; margin: 0 auto;"
+              width="150px"
               class="rounded-borders"
             />
           </div>
-          <VueEasyLightbox
-            moveDisabled
-            :visible="abrirModalImagem"
-            :imgs="urlMedia"
-            :index="mensagem.ticketId || 1"
-            @hide="abrirModalImagem = false"
-          />
         </template>
-        <template v-if="mensagem.mediaType === 'video'">
-          <div class="column items-center q-my-sm full-width">
+
+        <template v-else-if="mensagem.mediaType === 'video'">
+          <div class="column items-center q-my-sm">
             <video
               :src="mensagem.mediaUrl"
-              controls
-              style="objectFit: cover;
-                    width: 200px;
-                    height: auto;
-                    margin: 0 auto;
-                    borderTopLeftRadius: 8px;
-                    borderTopRightRadius: 8px;
-                    borderBottomLeftRadius: 8px;
-                    borderBottomRightRadius: 8px;"
-            >
-            </video>
+              style="width: 150px; border-radius: 8px"
+            />
           </div>
         </template>
-        <template v-if="mensagem.mediaType === 'application'">
-          <div class="column items-center q-my-sm full-width">
-            <q-btn
-              type="a"
-              color="grey-3"
-              no-wrap
-              no-caps
-              stack
-              class="q-my-sm text-center text-black btn-rounded text-grey-9 ellipsis"
-              style="max-width: 400px; margin: 0 auto;"
-              download
-              :target="isPDF(mensagem.mediaUrl) ? '_blank' : ''"
-              :href="mensagem.mediaUrl"
-            >
-              <q-tooltip
-                v-if="mensagem.mediaUrl"
-                content-class="bg-padrao text-grey-9 text-bold"
-              >
-                Baixar: {{ mensagem.body }}
-              </q-tooltip>
-              <template slot>
-                <div
-                  class="row items-center q-my-sm"
-                  style="max-width: 400px"
-                >
-                  <div class="ellipsis col-grow q-pr-sm">
-                    {{ farmatarMensagemWhatsapp(mensagem.body) }}
-                  </div>
-                  <q-icon
-                    class="col"
-                    name="mdi-download"
-                  />
-                </div>
-              </template>
-            </q-btn>
-          </div>
-        </template>
-        <template v-if="mensagem.mediaType === 'poll_creation'">
-          <div class="column items-center q-my-sm full-width">
-            <div class="poll-container" style="margin: 0 auto;">
-              <div class="poll-header">
-                <q-icon name="poll" size="20px" class="q-mr-sm" />
-                <div class="poll-title">
-                  {{ mensagem.pollData?.name || 'Enquete' }}
-                </div>
-              </div>
-              <div class="poll-subtitle">
-                {{ mensagem.pollData?.options?.length || 0 }} opções
-              </div>
+
+        <template v-else-if="mensagem.mediaType === 'poll_creation'">
+          <div class="poll-container q-pa-sm rounded-borders bg-grey-9 text-white">
+            <div class="row items-center">
+              <q-icon
+                name="poll"
+                class="q-mr-xs"
+              />
+              {{ mensagem.pollData?.name || 'Enquete' }}
             </div>
           </div>
         </template>
+
         <div
-          v-linkified
-          v-if="!['vcard', 'application', 'audio', 'image', 'video', 'poll_creation'].includes(mensagem.mediaType)"
-          :class="{'q-mt-sm': mensagem.mediaType !== 'chat'}"
-          class="q-message-container row items-end no-wrap ellipsis-3-lines"
-        >
-          <div v-html="farmatarMensagemWhatsapp(mensagem.body)">
-          </div>
-        </div>
+          v-if="!['audio', 'image', 'video', 'poll_creation', 'vcard'].includes(mensagem.mediaType)"
+          class="q-message-text-content ellipsis-3-lines"
+          v-html="formatarMensagemWhatsapp(mensagem.body)"
+        />
       </div>
     </q-chat-message>
   </q-item>
-
 </template>
 
-<script>
-import { Base64 } from 'js-base64'
+<script setup>
+import { format, parseISO } from 'date-fns'
+import pt from 'date-fns/locale/pt-BR'
+import { storeToRefs } from 'pinia'
+import { useTicketStore } from 'src/stores/useTicketStore'
+import { formatarMensagemWhatsapp } from 'src/utils/formatMessage'
 
-import mixinCommon from './mixinCommon'
-import VueEasyLightbox from 'vue-easy-lightbox'
+const props = defineProps({
+  mensagem: { type: Object, default: () => ({}) }
+})
 
-export default {
-  name: 'MensagemChat',
-  mixins: [mixinCommon],
-  props: {
-    mensagem: {
-      type: Object,
-      default: () => { }
-    },
-    size: {
-      type: [String, Number],
-      default: '5'
-    },
-    isLineDate: {
-      type: Boolean,
-      default: true
-    },
-    replyingMessage: {
-      type: Object,
-      default: () => { }
-    }
-  },
-  data () {
-    return {
-      abrirModalImagem: false,
-      urlMedia: '',
-      selectedPollOption: null,
-      ackIcons: { // Se ACK == 3 ou 4 entao color green
-        0: 'mdi-clock-outline',
-        1: 'mdi-check',
-        2: 'mdi-check-all',
-        3: 'mdi-check-all',
-        4: 'mdi-check-all'
-      }
-    }
-  },
-  components: {
-    VueEasyLightbox
-  },
-  methods: {
-    isPDF (url) {
-      if (!url) return false
-      const split = url.split('.')
-      const ext = split[split.length - 1]
-      return ext === 'pdf'
-    },
-    isGroupLabel (mensagem) {
-      try {
-        return this.ticketFocado.isGroup ? mensagem.contact.name : ''
-      } catch (error) {
-        return ''
-      }
-    },
-    returnCardContato (str) {
-      // return btoa(str)
-      return Base64.encode(str)
-    },
-    focarElemento (mensagem) {
-      this.$emit('mensagem-respondida:focar-mensagem', mensagem)
-    }
-  }
+const emit = defineEmits(['mensagem-respondida:focar-mensagem'])
+
+const ticketStore = useTicketStore()
+const { ticketFocado } = storeToRefs(ticketStore)
+
+const formatarData = (data, formato = 'dd/MM/yyyy') => (data ? format(parseISO(data), formato, { locale: pt }) : '')
+
+const isGroupLabel = m => ticketFocado.value.isGroup && m.contact?.name
+
+const focarEmoji = () => {
+  emit('mensagem-respondida:focar-mensagem', props.mensagem)
 }
 </script>
 
-<style lang="scss">
-// .q-message-text {
-//   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14),
-//     0 2px 1px -1px rgba(0, 0, 0, 0.12);
-// }
-
+<style lang="scss" scoped>
 .poll-container {
-  padding: 8px;
-  border-radius: 6px;
-  background: #202C33;
-  min-width: 200px;
-  max-width: 600px;
-  color: white;
-  font-size: 0.9em;
-}
-
-.poll-header {
-  display: flex;
-  align-items: center;
-}
-
-.poll-title {
-  font-weight: 500;
-  color: white;
-}
-
-.poll-subtitle {
-  font-size: 0.85em;
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 4px;
-}
-
-.poll-button {
-  margin-top: 4px;
-  :deep(.q-btn) {
-    min-height: 20px;
-    padding: 4px 0;
-    font-size: 0.9em;
-  }
-}
-
-.poll-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 12px 0;
-}
-
-.poll-option {
-  .q-radio {
-    width: 100%;
-    :deep(.q-radio__label) {
-      color: white;
-      font-size: 0.9em;
-    }
-    :deep(.q-radio__inner) {
-      color: white;
-    }
-  }
-}
-
-// Estilos de alinhamento para todos os tipos de mídia
-.q-chat-message {
-  .q-message-text {
-    .column.items-center {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-    }
-
-    img, video, audio {
-      display: block;
-      margin: 0 auto;
-    }
-  }
-}
-
-@media (max-width: 400px) {
-  .poll-container {
-    min-width: 200px;
-    max-width: 100%;
-  }
+  min-width: 150px;
 }
 </style>

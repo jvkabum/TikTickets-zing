@@ -11,7 +11,7 @@
       :columns="columns"
       :loading="loading"
       row-key="id"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[0]"
     >
       <template v-slot:top-right>
@@ -19,7 +19,12 @@
           color="primary"
           label="Adicionar"
           rounded
-          @click="etiquetaEdicao = {}; modalEtiqueta = true"
+          @click="
+            () => {
+              etiquetaEdicao = {}
+              modalEtiqueta = true
+            }
+          "
         />
       </template>
       <template v-slot:body-cell-color="props">
@@ -64,110 +69,88 @@
       </template>
     </q-table>
     <ModalEtiqueta
-      :modalEtiqueta.sync="modalEtiqueta"
-      :etiquetaEdicao.sync="etiquetaEdicao"
-      @modal-etiqueta:criada="etiquetaCriada"
-      @modal-etiqueta:editada="etiquetaEditada"
+      v-model:modalEtiqueta="modalEtiqueta"
+      v-model:etiquetaEdicao="etiquetaEdicao"
     />
   </div>
 </template>
 
-<script>
-import { DeletarEtiqueta, ListarEtiquetas } from 'src/service/etiquetas';
-export default {
-  name: 'Etiquetas',
-  components: {
-  },
-  data () {
-    return {
-      userProfile: 'user',
-      etiquetaEdicao: {},
-      modalEtiqueta: false,
-      etiquetas: [],
-      pagination: {
-        rowsPerPage: 40,
-        rowsNumber: 0,
-        lastIndex: 0
-      },
-      loading: false,
-      columns: [
-        { name: 'id', label: '#', field: 'id', align: 'left' },
-        { name: 'tag', label: 'Etiqueta', field: 'tag', align: 'left' },
-        { name: 'color', label: 'Cor', field: 'color', align: 'center' },
-        { name: 'isActive', label: 'Ativo', field: 'isActive', align: 'center' },
-        { name: 'autoTag', label: 'Auto Tag', field: 'autoTag', align: 'center' }, // Nova coluna
-        { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
-      ]
-    }
-  },
-  methods: {
-    async listarEtiquetas () {
-      const { data } = await ListarEtiquetas()
-      this.etiquetas = data
-    },
-    etiquetaCriada (etiqueta) {
-      const newEtiquetas = [...this.etiquetas]
-      newEtiquetas.push(etiqueta)
-      this.etiquetas = [...newEtiquetas]
-    },
-    etiquetaEditada (etiqueta) {
-      const newEtiquetas = [...this.etiquetas]
-      const idx = newEtiquetas.findIndex(f => f.id === etiqueta.id)
-      if (idx > -1) {
-        newEtiquetas[idx] = etiqueta
-      }
-      this.etiquetas = [...newEtiquetas]
-    },
-    editarEtiqueta (etiqueta) {
-      this.etiquetaEdicao = { ...etiqueta }
-      this.modalEtiqueta = true
-    },
-    deletarEtiqueta (etiqueta) {
-      this.$q.dialog({
-        title: 'Atenção!!',
-        message: `Deseja realmente deletar a Etiqueta "${etiqueta.tag}"?`,
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        this.loading = true
-        DeletarEtiqueta(etiqueta)
-          .then(res => {
-            let newEtiquetas = [...this.etiquetas]
-            newEtiquetas = newEtiquetas.filter(f => f.id !== etiqueta.id)
+<script setup>
+import { storeToRefs } from 'pinia'
+import { useQuasar } from 'quasar'
+import { useEtiquetaStore } from 'src/stores/useEtiquetaStore'
+import { onMounted, ref } from 'vue'
 
-            this.etiquetas = [...newEtiquetas]
-            this.$q.notify({
-              type: 'positive',
-              progress: true,
-              position: 'top',
-              message: `Etiqueta ${etiqueta.tag} deletada!`,
-              actions: [{
-                icon: 'close',
-                round: true,
-                color: 'white'
-              }]
-            })
-          })
-        this.loading = false
-      })
-    }
+const $q = useQuasar()
+const store = useEtiquetaStore()
+const { etiquetas, loading } = storeToRefs(store)
+const { listarEtiquetas, deletarEtiqueta: deletarEtiquetaStore } = store
 
-  },
-  mounted () {
-    this.userProfile = localStorage.getItem('profile')
-    this.listarEtiquetas()
-  }
+const userProfile = ref('user')
+const etiquetaEdicao = ref({})
+const modalEtiqueta = ref(false)
+
+const pagination = ref({
+  rowsPerPage: 40,
+  rowsNumber: 0,
+  lastIndex: 0
+})
+
+const columns = [
+  { name: 'id', label: '#', field: 'id', align: 'left' },
+  { name: 'tag', label: 'Etiqueta', field: 'tag', align: 'left' },
+  { name: 'color', label: 'Cor', field: 'color', align: 'center' },
+  { name: 'isActive', label: 'Ativo', field: 'isActive', align: 'center' },
+  { name: 'autoTag', label: 'Auto Tag', field: 'autoTag', align: 'center' },
+  { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
+]
+
+const editarEtiqueta = etiqueta => {
+  etiquetaEdicao.value = { ...etiqueta }
+  modalEtiqueta.value = true
 }
+
+const deletarEtiqueta = etiqueta => {
+  $q.dialog({
+    title: 'Atenção!!',
+    message: `Deseja realmente deletar a Etiqueta "${etiqueta.tag}"?`,
+    cancel: {
+      label: 'Não',
+      color: 'primary',
+      push: true
+    },
+    ok: {
+      label: 'Sim',
+      color: 'negative',
+      push: true
+    },
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await deletarEtiquetaStore(etiqueta)
+      $q.notify({
+        type: 'positive',
+        progress: true,
+        position: 'top',
+        message: `Etiqueta ${etiqueta.tag} deletada!`,
+        actions: [
+          {
+            icon: 'close',
+            round: true,
+            color: 'white'
+          }
+        ]
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  })
+}
+
+onMounted(() => {
+  userProfile.value = localStorage.getItem('profile')
+  listarEtiquetas()
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

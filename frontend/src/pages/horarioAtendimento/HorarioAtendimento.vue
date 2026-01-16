@@ -1,7 +1,7 @@
 <template>
   <div v-if="userProfile === 'admin'">
     <q-card
-      class="q-ma-sm "
+      class="q-ma-sm"
       square
     >
       <div class="text-h5 q-pa-sm q-ma-sm">
@@ -13,10 +13,12 @@
               Aberto: Estabelecimento aberto durante todo o dia. Não será feito envio de mensagem de ausência;
             </span>
             <span class="row col">
-              Fechado: Estabelecimento fechado durante todo o dia. Será feito envio de mensagem de ausência, independente do horário;
+              Fechado: Estabelecimento fechado durante todo o dia. Será feito envio de mensagem de ausência,
+              independente do horário;
             </span>
             <span class="row col">
-              Horário: Representa o horário de funcionamento do estabelecimento. O sistema enviará mensagem de ausênica quando mensagens forem recebidas fora dos horários estabelecidos.
+              Horário: Representa o horário de funcionamento do estabelecimento. O sistema enviará mensagem de ausênica
+              quando mensagens forem recebidas fora dos horários estabelecidos.
             </span>
             <span class="row col">
               **Importante: A mensagem de ausência será enviada após o encerramento do atendimento automático.
@@ -137,9 +139,7 @@
                 size="2em"
                 name="mdi-emoticon-happy-outline"
               />
-              <q-tooltip>
-                Emoji
-              </q-tooltip>
+              <q-tooltip> Emoji </q-tooltip>
               <q-menu
                 anchor="top right"
                 self="bottom middle"
@@ -155,38 +155,44 @@
                 />
               </q-menu>
             </q-btn>
-            <q-btn round
-            flat
-            dense>
-            <q-icon size="2em"
-              name="mdi-variable" />
-            <q-tooltip>
-              Variáveis
-            </q-tooltip>
-            <q-menu touch-position>
-              <q-list dense
-                style="min-width: 100px">
-                <q-item v-for="variavel in variaveis"
-                  :key="variavel.label"
-                  clickable
-                  @click="onInsertSelectVariable(variavel.value)"
-                  v-close-popup>
-                  <q-item-section>{{ variavel.label }}</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-btn>
+            <q-btn
+              round
+              flat
+              dense
+            >
+              <q-icon
+                size="2em"
+                name="mdi-variable"
+              />
+              <q-tooltip> Variáveis </q-tooltip>
+              <q-menu touch-position>
+                <q-list
+                  dense
+                  style="min-width: 100px"
+                >
+                  <q-item
+                    v-for="variavel in variaveis"
+                    :key="variavel.label"
+                    clickable
+                    @click="onInsertSelectVariable(variavel.value)"
+                    v-close-popup
+                  >
+                    <q-item-section>{{ variavel.label }}</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
           </div>
           <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
             <textarea
               ref="inputEnvioMensagem"
-              style="min-height: 9vh; max-height: 9vh;"
+              style="min-height: 9vh; max-height: 9vh"
               class="q-pa-sm bg-white rounded-all full-width"
               placeholder="Digite a mensagem"
               autogrow
               dense
               outlined
-              @input="(v) => messageBusinessHours = v.target.value"
+              @input="v => (messageBusinessHours = v.target.value)"
               :value="messageBusinessHours"
             />
           </div>
@@ -196,102 +202,75 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { storeToRefs } from 'pinia'
+import { useHorarioAtendimentoStore } from 'src/stores/useHorarioAtendimentoStore'
+import { nextTick, onMounted, ref } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
-import { MostrarHorariosAtendiemento, AtualizarHorariosAtendiemento, AtualizarMensagemHorariosAtendiemento } from 'src/service/empresas'
-export default {
-  name: 'HorarioAtendimento',
-  components: { EmojiPicker },
-  data () {
-    return {
-      userProfile: 'user',
-      optType: [
-        { value: 'O', label: 'Aberto' },
-        { value: 'C', label: 'Fechado' },
-        { value: 'H', label: 'Horário' }
-      ],
-      variaveis: [
-        { label: 'Nome', value: '{{name}}' },
-        { label: 'Saudação', value: '{{greeting}}' }
-      ],
-      businessHours: [
-        { day: 0, label: 'Domingo', type: 'O', hr1: '08:00', hr2: '12:00', hr3: '14:00', hr4: '18:00' },
-        { day: 1, label: 'Segunda-Feira', type: 'O', hr1: '08:00', hr2: '12:00', hr3: '14:00', hr4: '18:00' },
-        { day: 2, label: 'Terça-Feira', type: 'O', hr1: '08:00', hr2: '12:00', hr3: '14:00', hr4: '18:00' },
-        { day: 3, label: 'Quarta-Feira', type: 'O', hr1: '08:00', hr2: '12:00', hr3: '14:00', hr4: '18:00' },
-        { day: 4, label: 'Quinta-Feira', type: 'O', hr1: '08:00', hr2: '12:00', hr3: '14:00', hr4: '18:00' },
-        { day: 5, label: 'Sexta-Feira', type: 'O', hr1: '08:00', hr2: '12:00', hr3: '14:00', hr4: '18:00' },
-        { day: 6, label: 'Sábado', type: 'O', hr1: '08:00', hr2: '12:00', hr3: '14:00', hr4: '18:00' }
-      ],
-      messageBusinessHours: null
-    }
-  },
-  methods: {
-    onInsertSelectVariable (variable) {
-      const self = this
-      var tArea = this.$refs.inputEnvioMensagem
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!variable) {
-        return
-      }
-      // insert:
-      self.txtContent = this.messageBusinessHours
-      self.txtContent = tmpStr.substring(0, startPos) + variable + tmpStr.substring(endPos, tmpStr.length)
-      this.messageBusinessHours = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + 1
-      }, 10)
-    },
-    onInsertSelectEmoji (emoji) {
-      const self = this
-      var tArea = this.$refs.inputEnvioMensagem
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!emoji.data) {
-        return
-      }
-      // insert:
-      self.txtContent = this.messageBusinessHours
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
-      this.messageBusinessHours = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
-      }, 10)
-    },
-    async listarMensagemHorariosAtendimento () {
-      const { data } = await MostrarHorariosAtendiemento()
-      this.businessHours = data.businessHours
-      this.messageBusinessHours = data.messageBusinessHours
-    },
-    async salvarHorariosAtendimento () {
-      const { data } = await AtualizarHorariosAtendiemento(this.businessHours)
-      this.businessHours = data.businessHours
-    },
-    async salvarMensagemAusencia () {
-      const { data } = await AtualizarMensagemHorariosAtendiemento({
-        messageBusinessHours: this.messageBusinessHours
-      })
-      this.messageBusinessHours = data.messageBusinessHours
-    }
-  },
-  mounted () {
-    this.userProfile = localStorage.getItem('profile')
-    this.listarMensagemHorariosAtendimento()
-  }
+
+const horarioAtendimentoStore = useHorarioAtendimentoStore()
+const { listarHorariosAtendimento, atualizarHorariosAtendimento, atualizarMensagemAusencia } = horarioAtendimentoStore
+const { businessHours, messageBusinessHours } = storeToRefs(horarioAtendimentoStore)
+
+const userProfile = ref('user')
+const inputEnvioMensagem = ref(null)
+
+const optType = [
+  { value: 'O', label: 'Aberto' },
+  { value: 'C', label: 'Fechado' },
+  { value: 'H', label: 'Horário' }
+]
+
+const variaveis = [
+  { label: 'Nome', value: '{{name}}' },
+  { label: 'Saudação', value: '{{greeting}}' }
+]
+
+const salvarHorariosAtendimento = async () => {
+  await atualizarHorariosAtendimento(businessHours.value)
 }
+
+const salvarMensagemAusencia = async () => {
+  await atualizarMensagemAusencia(messageBusinessHours.value)
+}
+
+const onInsertSelectEmoji = emoji => {
+  const tArea = inputEnvioMensagem.value
+  if (!tArea || !emoji.data) return
+
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const tmpStr = messageBusinessHours.value || ''
+
+  messageBusinessHours.value = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos)
+
+  nextTick(() => {
+    tArea.selectionStart = tArea.selectionEnd = startPos + emoji.data.length
+    tArea.focus()
+  })
+}
+
+const onInsertSelectVariable = variable => {
+  const tArea = inputEnvioMensagem.value
+  if (!tArea || !variable) return
+
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const tmpStr = messageBusinessHours.value || ''
+
+  messageBusinessHours.value = tmpStr.substring(0, startPos) + variable + tmpStr.substring(endPos)
+
+  nextTick(() => {
+    tArea.selectionStart = tArea.selectionEnd = startPos + variable.length
+    tArea.focus()
+  })
+}
+
+onMounted(() => {
+  userProfile.value = localStorage.getItem('profile')
+  listarHorariosAtendimento()
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

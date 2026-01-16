@@ -17,8 +17,15 @@
       :fileName="mediaName"
     />
 
-    <div v-else class="unknown-media">
-      <q-icon name="help_outline" size="50px" color="grey-6" />
+    <div
+      v-else
+      class="unknown-media"
+    >
+      <q-icon
+        name="help_outline"
+        size="50px"
+        color="grey-6"
+      />
       <div class="q-mt-sm text-weight-medium">Tipo de mídia não suportado</div>
       <q-btn
         outline

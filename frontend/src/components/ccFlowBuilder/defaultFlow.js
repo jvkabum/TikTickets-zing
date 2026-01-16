@@ -56,15 +56,17 @@ const data = {
       // ico: 'el-icon-present'
     }
   ],
-  lineList: [{
-    from: 'start',
-    to: 'nodeC',
-    // connector: 'Bezier',
-    // connector: 'Straight',
-    // connector: 'Flowchart',
-    // anchors: ['Top', 'Bottom'],
-    paintStyle: { strokeWidth: 3, stroke: '#8db1dd' }
-  }]
+  lineList: [
+    {
+      from: 'start',
+      to: 'nodeC',
+      // connector: 'Bezier',
+      // connector: 'Straight',
+      // connector: 'Flowchart',
+      // anchors: ['Top', 'Bottom'],
+      paintStyle: { strokeWidth: 3, stroke: '#8db1dd' }
+    }
+  ]
 }
 
 export function getDefaultFlow () {

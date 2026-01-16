@@ -1,44 +1,44 @@
 <template>
   <q-dialog
     persistent
-    :value="modalUsuario"
+    :model-value="modalUsuario"
     @hide="fecharModal"
     @show="abrirModal"
   >
     <q-card style="width: 600px">
       <q-card-section>
-        <div class="text-h6">Cadastrar Usuário</div>
+        <div class="text-h6">{{ usuario.id ? 'Editar' : 'Cadastrar' }} Usuário</div>
       </q-card-section>
       <q-card-section class="q-col-gutter-sm">
         <div class="row q-col-gutter-sm">
           <div class="col-12">
-            <c-input
+            <q-input
               outlined
-              v-model.trim="usuario.name"
-              :validator="$v.usuario.name"
-              @blur="$v.usuario.name.$touch"
+              v-model="name"
               label="Nome"
+              :error="!!errors.name"
+              :error-message="errors.name"
             />
           </div>
           <div class="col-12">
-            <c-input
+            <q-input
               outlined
-              :validator="$v.usuario.email"
-              @blur="$v.usuario.email.$touch"
-              v-model.trim="usuario.email"
+              v-model="email"
               label="E-mail"
+              :error="!!errors.email"
+              :error-message="errors.email"
             />
           </div>
         </div>
         <div class="row q-col-gutter-sm">
           <div class="col-12">
-            <c-input
+            <q-input
               outlined
-              v-model="usuario.password"
-              :validator="$v.usuario.password"
-              @blur="$v.usuario.password.$touch"
+              v-model="password"
               :type="isPwd ? 'password' : 'text'"
               label="Senha"
+              :error="!!errors.password"
+              :error-message="errors.password"
             >
               <template v-slot:append>
                 <q-icon
@@ -47,7 +47,7 @@
                   @click="isPwd = !isPwd"
                 />
               </template>
-            </c-input>
+            </q-input>
           </div>
           <div class="col-12">
             <q-select
@@ -55,13 +55,15 @@
               outlined
               rounded
               dense
-              v-model="usuario.profile"
+              v-model="profile"
               :options="optionsProfile"
               option-value="value"
               option-label="label"
               emit-value
               map-options
               label="Perfil"
+              :error="!!errors.profile"
+              :error-message="errors.profile"
             />
           </div>
         </div>
@@ -79,166 +81,168 @@
           label="Salvar"
           class="q-px-md"
           color="primary"
-          @click="handleUsuario"
+          @click="onSubmit"
         />
       </q-card-actions>
     </q-card>
   </q-dialog>
-
 </template>
 
-<script>
-import { required, email, minLength, maxLength } from '@vuelidate/validators'
-import { CriarUsuario, UpdateUsuarios } from 'src/service/user'
-import { Notify } from 'quasar'
-export default {
-  name: 'ModalUsuario',
-  props: {
-    modalUsuario: {
-      type: Boolean,
-      default: false
-    },
-    isProfile: {
-      type: Boolean,
-      default: false
-    },
-    usuarioEdicao: {
-      type: Object,
-      default: () => { return { id: null } }
-    }
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
+import { useQuasar } from 'quasar'
+import { useAuthStore } from 'src/stores/useAuthStore'
+import { useUsuarioStore } from 'src/stores/useUsuarioStore'
+import { useField, useForm } from 'vee-validate'
+import { reactive, ref } from 'vue'
+import * as zod from 'zod'
+
+const props = defineProps({
+  modalUsuario: {
+    type: Boolean,
+    default: false
   },
-  data () {
-    return {
-      isPwd: false,
-      optionsProfile: [
-        { value: 'user', label: 'Usuário' },
-        { value: 'admin', label: 'Administrador' }
-      ],
-      usuario: {
-        name: '',
-        email: '',
-        password: '',
-        profile: 'user'
-      }
-    }
+  isProfile: {
+    type: Boolean,
+    default: false
   },
-  validations () {
-    let usuario = {
-      name: { required, minLength: minLength(3), maxLength: maxLength(50) },
-      email: { required, email },
-      profile: { required },
-      password: {}
-    }
-    if (!this.usuario.id) {
-      usuario = {
-        ...usuario,
-        password: { required, minLength: minLength(6), maxLength: maxLength(50) }
-      }
-    }
-    return { usuario }
-  },
-  methods: {
-    abrirModal () {
-      if (this.usuarioEdicao.id) {
-        this.usuario = { ...this.usuarioEdicao }
-      }
-      if (this.usuarioEdicao.userId) {
-        this.usuario = {
-          ...this.usuarioEdicao,
-          id: this.usuarioEdicao.userId,
-          name: this.usuarioEdicao.username,
-          profile: this.usuarioEdicao.profile
+  usuarioEdicao: {
+    type: Object,
+    default: () => ({ id: null })
+  }
+})
+
+const emit = defineEmits([
+  'update:modalUsuario',
+  'update:usuarioEdicao',
+  'modalUsuario:usuario-editado',
+  'modalUsuario:usuario-criado'
+])
+
+const $q = useQuasar()
+const usuarioStore = useUsuarioStore()
+const authStore = useAuthStore()
+
+const isPwd = ref(true)
+const optionsProfile = [
+  { value: 'user', label: 'Usuário' },
+  { value: 'admin', label: 'Administrador' }
+]
+
+const usuario = reactive({
+  id: null
+})
+
+const validationSchema = toTypedSchema(
+  zod
+    .object({
+      name: zod.string().min(3, 'Mínimo de 3 caracteres').max(50, 'Máximo de 50 caracteres'),
+      email: zod.string().email('E-mail inválido'),
+      profile: zod.string(),
+      password: zod
+        .string()
+        .min(6, 'Mínimo de 6 caracteres')
+        .max(50, 'Máximo de 50 caracteres')
+        .optional()
+        .or(zod.literal(''))
+    })
+    .refine(
+      data => {
+        if (!usuario.id && (!data.password || data.password.length < 6)) {
+          return false
         }
+        return true
+      },
+      {
+        message: 'Senha obrigatória para novo usuário (mínimo 6 caracteres)',
+        path: ['password']
       }
-    },
-    fecharModal () {
-      if (!this.isProfile) {
-        this.$emit('update:usuarioEdicao', {})
-      }
-      this.$emit('update:modalUsuario', false)
-      this.usuario = {
-        name: '',
-        email: '',
-        password: '',
-        profile: 'user'
-      }
-      this.isPwd = false
-      this.$v.usuario.$reset()
-    },
-    async handleUsuario () {
-      this.$v.usuario.$touch()
-      if (this.$v.usuario.$error) {
-        return this.$q.notify({
-          type: 'warning',
-          progress: true,
-          position: 'top',
-          message: 'Ops! Verifique os erros...',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-      }
+    )
+)
 
-      try {
-        if (this.usuario.id) {
-          const {
-            email, id, name, tenantId, password
-          } = this.usuario
+const { handleSubmit, errors, resetForm, setValues } = useForm({
+  validationSchema,
+  initialValues: {
+    name: '',
+    email: '',
+    password: '',
+    profile: 'user'
+  }
+})
 
-          const params = { email, id, name, tenantId, password }
+const { value: name } = useField('name')
+const { value: email } = useField('email')
+const { value: password } = useField('password')
+const { value: profile } = useField('profile')
 
-          if (this.$store.state.user.isAdmin) {
-            params.profile = this.usuario.profile
-          }
-
-          const { data } = await UpdateUsuarios(this.usuario.id, params)
-          this.$emit('modalUsuario:usuario-editado', data)
-          this.$q.notify({
-            type: 'info',
-            progress: true,
-            position: 'top',
-            textColor: 'black',
-            message: 'Usuário editado!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        } else {
-          const { data } = await CriarUsuario(this.usuario)
-          this.$emit('modalUsuario:usuario-criado', data)
-          this.$q.notify({
-            type: 'positive',
-            progress: true,
-            position: 'top',
-            message: 'Usuário criado!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        }
-        this.$emit('update:modalUsuario', false)
-      } catch (error) {
-        console.error(error, error.data.error === 'ERR_USER_LIMIT_USER_CREATION')
-        if (error.data.error === 'ERR_USER_LIMIT_USER_CREATION') {
-          Notify.create({
-            type: 'negative',
-            message: 'Limite de usuario atingido.',
-            caption: 'ERR_USER_LIMIT_USER_CREATION',
-            position: 'top',
-            progress: true
-          })
-        }
-      }
-    }
+const abrirModal = () => {
+  if (props.usuarioEdicao.id) {
+    usuario.id = props.usuarioEdicao.id
+    setValues({
+      name: props.usuarioEdicao.name,
+      email: props.usuarioEdicao.email,
+      profile: props.usuarioEdicao.profile,
+      password: ''
+    })
+  } else if (props.usuarioEdicao.userId) {
+    // Legado ou caso específico
+    usuario.id = props.usuarioEdicao.userId
+    setValues({
+      name: props.usuarioEdicao.username || props.usuarioEdicao.name,
+      email: props.usuarioEdicao.email,
+      profile: props.usuarioEdicao.profile,
+      password: ''
+    })
+  } else {
+    usuario.id = null
+    resetForm()
   }
 }
+
+const fecharModal = () => {
+  if (!props.isProfile) {
+    emit('update:usuarioEdicao', { id: null })
+  }
+  emit('update:modalUsuario', false)
+  resetForm()
+  isPwd.value = true
+}
+
+const onSubmit = handleSubmit(async values => {
+  try {
+    if (usuario.id) {
+      const payload = { ...values }
+      if (!payload.password) delete payload.password
+
+      const data = await usuarioStore.atualizarUsuario(usuario.id, payload)
+      emit('modalUsuario:usuario-editado', data)
+      $q.notify({
+        type: 'info',
+        message: 'Usuário editado!',
+        position: 'top'
+      })
+    } else {
+      const data = await usuarioStore.criarUsuario(values)
+      emit('modalUsuario:usuario-criado', data)
+      $q.notify({
+        type: 'positive',
+        message: 'Usuário criado!',
+        position: 'top'
+      })
+    }
+    emit('update:modalUsuario', false)
+  } catch (error) {
+    console.error(error)
+    if (error.data?.error === 'ERR_USER_LIMIT_USER_CREATION') {
+      $q.notify({
+        type: 'negative',
+        message: 'Limite de usuário atingido.',
+        caption: 'ERR_USER_LIMIT_USER_CREATION',
+        position: 'top'
+      })
+    }
+  }
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

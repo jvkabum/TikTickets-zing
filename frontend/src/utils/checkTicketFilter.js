@@ -1,4 +1,4 @@
-const checkTicketFilter = (ticket) => {
+const checkTicketFilter = ticket => {
   const filtroPadrao = {
     searchParam: '',
     pageNumber: 1,
@@ -15,19 +15,19 @@ const checkTicketFilter = (ticket) => {
   const NotViewTicketsChatBot = () => {
     const configuracoes = JSON.parse(localStorage.getItem('configuracoes'))
     const conf = configuracoes?.find(c => c.key === 'NotViewTicketsChatBot')
-    return (conf?.value === 'enabled')
+    return conf?.value === 'enabled'
   }
 
   const DirectTicketsToWallets = () => {
     const configuracoes = JSON.parse(localStorage.getItem('configuracoes'))
     const conf = configuracoes?.find(c => c.key === 'DirectTicketsToWallets')
-    return (conf?.value === 'enabled')
+    return conf?.value === 'enabled'
   }
 
   const isNotViewAssignedTickets = () => {
     const configuracoes = JSON.parse(localStorage.getItem('configuracoes'))
     const conf = configuracoes?.find(c => c.key === 'NotViewAssignedTickets')
-    return (conf?.value === 'enabled')
+    return conf?.value === 'enabled'
   }
   const filtros = JSON.parse(localStorage.getItem('filtrosAtendimento')) || filtroPadrao
   const usuario = JSON.parse(localStorage.getItem('usuario'))
@@ -126,7 +126,11 @@ const checkTicketFilter = (ticket) => {
 
   // verificar se filtro somente tickets não assinados (isNotAssingned) ativo
   if (filtros.isNotAssignedUser) {
-    console.log('isNotAssignedUser ativo para exibir somente tickets não assinados', filtros.isNotAssignedUser, !ticket.userId)
+    console.log(
+      'isNotAssignedUser ativo para exibir somente tickets não assinados',
+      filtros.isNotAssignedUser,
+      !ticket.userId
+    )
     return filtros.isNotAssignedUser && !ticket.userId
   }
 

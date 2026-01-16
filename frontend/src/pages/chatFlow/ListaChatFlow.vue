@@ -9,11 +9,11 @@
           class="my-sticky-dynamic q-ma-lg"
           title="Fluxos"
           hide-bottom
-          :data="listachatFlow"
+          :rows="listachatFlow"
           :columns="columns"
           :loading="loading"
           row-key="id"
-          :pagination.sync="pagination"
+          v-model:pagination="pagination"
           :rows-per-page-options="[0]"
         >
           <template v-slot:top-right>
@@ -22,7 +22,12 @@
               color="primary"
               label="Adicionar"
               rounded
-              @click="chatFlowSelecionado = {}; modalChatFlow = true"
+              @click="
+                () => {
+                  chatFlowSelecionado = {}
+                  modalChatFlow = true
+                }
+              "
             />
           </template>
           <template v-slot:body-cell-isActive="props">
@@ -33,7 +38,9 @@
                 :color="props.value ? 'positive' : 'negative'"
                 class=""
               />
-              <span class="q-mx-xs text-bold"> {{ props.value ? 'Ativo' : 'Inativo' }} </span>
+              <span class="q-mx-xs text-bold">
+                {{ props.value ? 'Ativo' : 'Inativo' }}
+              </span>
             </q-td>
           </template>
           <template v-slot:body-cell-acoes="props">
@@ -46,9 +53,7 @@
                 class="bg-padrao"
                 @click="editFlow(props.row)"
               >
-                <q-tooltip>
-                  Editar informações
-                </q-tooltip>
+                <q-tooltip> Editar informações </q-tooltip>
               </q-btn>
               <q-btn
                 color="blue-3"
@@ -58,9 +63,7 @@
                 class="bg-padrao q-mx-sm"
                 @click="duplicarFluxo(props.row)"
               >
-                <q-tooltip>
-                  Duplicar Fluxo
-                </q-tooltip>
+                <q-tooltip> Duplicar Fluxo </q-tooltip>
               </q-btn>
               <q-btn
                 color="blue-3"
@@ -70,9 +73,7 @@
                 class="bg-padrao"
                 @click="abrirFluxo(props.row)"
               >
-                <q-tooltip>
-                  Abrir Fluxo
-                </q-tooltip>
+                <q-tooltip> Abrir Fluxo </q-tooltip>
               </q-btn>
               <q-btn
                 color="blue-3"
@@ -82,19 +83,16 @@
                 class="bg-padrao"
                 @click="deletarFluxo(props.row)"
               >
-                <q-tooltip>
-                  Excluir
-                </q-tooltip>
+                <q-tooltip> Excluir </q-tooltip>
               </q-btn>
             </q-td>
           </template>
-
         </q-table>
       </div>
     </div>
     <ModalChatFlow
-      :modalChatFlow.sync="modalChatFlow"
-      :chatFlowEdicao.sync="chatFlowSelecionado"
+      v-model:modalChatFlow="modalChatFlow"
+      v-model:chatFlowEdicao="chatFlowSelecionado"
       @chatFlow:criada="novoFluxoCriado"
       @chatFlow:editado="fluxoEditado"
     />
@@ -130,97 +128,103 @@
   </div>
 </template>
 
-<script>
-import { ListarFilas } from 'src/service/filas'
-import { ListarChatFlow, DeletarChatFlow } from 'src/service/chatFlow'
+<script setup>
+import { storeToRefs } from 'pinia'
 import { ListarUsuarios } from 'src/service/user'
+import { useChatFlowStore } from 'src/stores/useChatFlowStore'
+import { useFilaStore } from 'src/stores/useFilaStore'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import ModalChatFlow from './ModalChatFlow.vue'
 
-export default {
-  name: 'ChatFlowIndex',
-  components: { ModalChatFlow },
-  data () {
-    return {
-      confirmDelete: false,
-      listachatFlow: [],
-      modalChatFlow: false,
-      chatFlowSelecionado: {},
-      pagination: {
-        rowsPerPage: 40,
-        rowsNumber: 0,
-        lastIndex: 0
-      },
-      params: {
-        pageNumber: 1,
-        searchParam: null,
-        hasMore: true
-      },
-      loading: false,
-      columns: [
-        { name: 'name', label: 'Nome', field: 'name', align: 'left' },
-        { name: 'isActive', label: 'Status', field: 'isActive', align: 'center' },
-        { name: 'celularTeste', label: 'Celular Teste', field: 'celularTeste', align: 'center' },
-        { name: 'acoes', label: '', field: 'acoes', align: 'center' }
-      ],
-      filas: [],
-      usuarios: []
-    }
+const router = useRouter()
+const chatFlowStore = useChatFlowStore()
+const { chatFlows: listachatFlow, loading } = storeToRefs(chatFlowStore)
+const { listarChatFlows, deletarChatFlow, setFlowData } = chatFlowStore
+
+const filaStore = useFilaStore()
+const { filas } = storeToRefs(filaStore)
+const { listarFilas } = filaStore
+
+const confirmDelete = ref(false)
+const modalChatFlow = ref(false)
+const chatFlowSelecionado = ref({})
+const usuarios = ref([])
+
+const pagination = ref({
+  rowsPerPage: 40,
+  rowsNumber: 0,
+  lastIndex: 0
+})
+
+const params = ref({
+  pageNumber: 1,
+  searchParam: null,
+  hasMore: true
+})
+
+const columns = [
+  { name: 'name', label: 'Nome', field: 'name', align: 'left' },
+  { name: 'isActive', label: 'Status', field: 'isActive', align: 'center' },
+  {
+    name: 'celularTeste',
+    label: 'Celular Teste',
+    field: 'celularTeste',
+    align: 'center'
   },
-  methods: {
-    async listarChatFlow () {
-      const { data } = await ListarChatFlow()
-      this.listachatFlow = data.chatFlow
-    },
-    async listarFilas () {
-      const { data } = await ListarFilas({ isActive: true })
-      this.filas = data.filter(q => q.isActive)
-    },
-    async listarUsuarios () {
-      const { data } = await ListarUsuarios(this.params)
-      this.usuarios = data.users
-    },
-    novoFluxoCriado (flow) {
-      const lista = [...this.listachatFlow]
-      lista.push(flow)
-      this.listachatFlow = lista
-    },
-    duplicarFluxo (flow) {
-      this.chatFlowSelecionado = { ...flow, isDuplicate: true }
-      this.modalChatFlow = true
-    },
-    fluxoEditado (flow) {
-      const lista = [...this.listachatFlow.filter(f => f.id !== flow.id)]
-      lista.push(flow)
-      this.listachatFlow = lista
-    },
-    editFlow (flow) {
-      this.chatFlowSelecionado = flow
-      this.modalChatFlow = true
-    },
-    async abrirFluxo (flow) {
-      await this.$store.commit('SET_FLOW_DATA', {
-        usuarios: this.usuarios,
-        filas: this.filas,
-        flow
-      })
-      this.$router.push({ name: 'chat-flow-builder' })
-    },
-    deletarFluxo (flow) {
-      this.chatFlowSelecionado = flow
-      this.confirmDelete = true
-    },
-    async confirmDeleteFoo (flow) {
-      await DeletarChatFlow(this.chatFlowSelecionado)
-      await this.listarChatFlow()
-    }
-  },
-  async mounted () {
-    await this.listarChatFlow()
-    await this.listarFilas()
-    await this.listarUsuarios()
+  { name: 'acoes', label: '', field: 'acoes', align: 'center' }
+]
+
+const listarUsuarios = async () => {
+  try {
+    const { data } = await ListarUsuarios(params.value)
+    usuarios.value = data.users
+  } catch (error) {
+    console.error(error)
   }
 }
+
+const duplicarFluxo = flow => {
+  chatFlowSelecionado.value = { ...flow, isDuplicate: true }
+  modalChatFlow.value = true
+}
+
+const editFlow = flow => {
+  chatFlowSelecionado.value = flow
+  modalChatFlow.value = true
+}
+
+const abrirFluxo = async flow => {
+  setFlowData({
+    usuarios: usuarios.value,
+    filas: filas.value,
+    flow
+  })
+  router.push({ name: 'chat-flow-builder' })
+}
+
+const deletarFluxo = flow => {
+  chatFlowSelecionado.value = flow
+  confirmDelete.value = true
+}
+
+const confirmDeleteFoo = async () => {
+  try {
+    await deletarChatFlow(chatFlowSelecionado.value)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+// Handlers for modal events - can be placeholders as store handles logic
+const novoFluxoCriado = () => {}
+const fluxoEditado = () => {}
+
+onMounted(async () => {
+  await listarChatFlows()
+  await listarFilas()
+  await listarUsuarios()
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

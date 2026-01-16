@@ -7,11 +7,11 @@
       hide-bottom
       class="my-sticky-dynamic q-ma-lg"
       title="Filas"
-      :data="filas"
+      :rows="filas"
       :columns="columns"
       :loading="loading"
       row-key="id"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[0]"
     >
       <template v-slot:top-right>
@@ -19,7 +19,12 @@
           color="primary"
           label="Adicionar"
           rounded
-          @click="filaEdicao = {}; modalFila = true"
+          @click="
+            () => {
+              filaEdicao = {}
+              modalFila = true
+            }
+          "
         />
       </template>
       <template v-slot:body-cell-isActive="props">
@@ -49,108 +54,82 @@
       </template>
     </q-table>
     <ModalFila
-      :modalFila.sync="modalFila"
-      :filaEdicao.sync="filaEdicao"
+      v-model:modalFila="modalFila"
+      v-model:filaEdicao="filaEdicao"
       @modal-fila:criada="filaCriada"
       @modal-fila:editada="filaEditada"
     />
   </div>
 </template>
 
-<script>
-import { DeletarFila, ListarFilas } from 'src/service/filas';
-export default {
-  name: 'Filas',
-  components: {
-  },
-  data () {
-    return {
-      userProfile: 'user',
-      filaEdicao: {},
-      modalFila: false,
-      filas: [],
-      pagination: {
-        rowsPerPage: 40,
-        rowsNumber: 0,
-        lastIndex: 0
-      },
-      loading: false,
-      columns: [
-        { name: 'id', label: '#', field: 'id', align: 'left' },
-        { name: 'queue', label: 'Fila', field: 'queue', align: 'left' },
-        { name: 'isActive', label: 'Ativo', field: 'isActive', align: 'center' },
-        { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
-      ]
-    }
-  },
-  methods: {
-    async listarFilas () {
-      const { data } = await ListarFilas()
-      this.filas = data
-    },
-    filaCriada (fila) {
-      const newFilas = [...this.filas]
-      newFilas.push(fila)
-      this.filas = [...newFilas]
-    },
-    filaEditada (fila) {
-      const newFilas = [...this.filas]
-      const idx = newFilas.findIndex(f => f.id === fila.id)
-      if (idx > -1) {
-        newFilas[idx] = fila
-      }
-      this.filas = [...newFilas]
-    },
-    editarFila (fila) {
-      this.filaEdicao = { ...fila }
-      this.modalFila = true
-    },
-    deletarFila (fila) {
-      this.$q.dialog({
-        title: 'Atenção!!',
-        message: `Deseja realmente deletar a Fila "${fila.queue}"?`,
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        this.loading = true
-        DeletarFila(fila)
-          .then(res => {
-            let newFilas = [...this.filas]
-            newFilas = newFilas.filter(f => f.id !== fila.id)
+<script setup>
+import { storeToRefs } from 'pinia'
+import { useQuasar } from 'quasar'
+import { useFilaStore } from 'src/stores/useFilaStore'
+import { onMounted, ref } from 'vue'
+import ModalFila from './ModalFila.vue'
 
-            this.filas = [...newFilas]
-            this.$q.notify({
-              type: 'positive',
-              progress: true,
-              position: 'top',
-              message: `Fila ${fila.queue} deletada!`,
-              actions: [{
-                icon: 'close',
-                round: true,
-                color: 'white'
-              }]
-            })
-          })
-        this.loading = false
-      })
-    }
+const $q = useQuasar()
+const filaStore = useFilaStore()
+const { filas, loading } = storeToRefs(filaStore)
+const { listarFilas, deletarFila: deletarFilaStore } = filaStore
 
-  },
-  mounted () {
-    this.userProfile = localStorage.getItem('profile')
-    this.listarFilas()
-  }
+const userProfile = ref('user')
+const filaEdicao = ref({})
+const modalFila = ref(false)
+
+const pagination = ref({
+  rowsPerPage: 40,
+  rowsNumber: 0,
+  lastIndex: 0
+})
+
+const columns = [
+  { name: 'id', label: '#', field: 'id', align: 'left' },
+  { name: 'queue', label: 'Fila', field: 'queue', align: 'left' },
+  { name: 'isActive', label: 'Ativo', field: 'isActive', align: 'center' },
+  { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
+]
+
+const filaCriada = fila => {
+  // Store updates automatically, but we might want to refresh list?
+  // Actually creation adds to store state, so no action needed if push was done.
 }
+
+const filaEditada = fila => {
+  // Store updates automatically
+}
+
+const editarFila = fila => {
+  filaEdicao.value = { ...fila }
+  modalFila.value = true
+}
+
+const deletarFila = fila => {
+  $q.dialog({
+    title: 'Atenção!!',
+    message: `Deseja realmente deletar a Fila "${fila.queue}"?`,
+    cancel: { label: 'Não', color: 'primary', push: true },
+    ok: { label: 'Sim', color: 'negative', push: true },
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await deletarFilaStore(fila)
+      $q.notify({
+        type: 'positive',
+        message: `Fila ${fila.queue} deletada!`,
+        position: 'top'
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  })
+}
+
+onMounted(() => {
+  userProfile.value = localStorage.getItem('profile')
+  listarFilas()
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

@@ -1,6 +1,9 @@
 <template>
   <div class="video-viewer">
-    <div class="video-container" :style="containerStyle">
+    <div
+      class="video-container"
+      :style="containerStyle"
+    >
       <video
         ref="videoElement"
         :src="src"
@@ -15,55 +18,48 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'VideoViewer',
-  props: {
-    src: {
-      type: String,
-      required: true
-    },
-    posterUrl: {
-      type: String,
-      default: ''
-    }
-  },
-  data () {
-    return {
-      videoWidth: 0,
-      videoHeight: 0
-    }
-  },
-  computed: {
-    isVerticalVideo () {
-      return this.videoHeight > this.videoWidth
-    },
-    containerStyle () {
-      if (!this.videoWidth || !this.videoHeight) return {}
+<script setup>
+import { computed, ref } from 'vue'
 
-      const aspect = this.videoWidth / this.videoHeight
-      const width = '400px' // Largura fixa
-      let height
-
-      if (aspect >= 1) {
-        // Vídeo horizontal (landscape)
-        height = `${400 / aspect}px` // Altura baseada na proporção
-      } else {
-        // Vídeo vertical (portrait)
-        height = `${Math.min(400 / aspect, 600)}px` // Altura máxima de 700px
-      }
-
-      return { width, height }
-    }
+const props = defineProps({
+  src: {
+    type: String,
+    required: true
   },
-  methods: {
-    onVideoMetadata () {
-      const video = this.$refs.videoElement
-      if (video) {
-        this.videoWidth = video.videoWidth
-        this.videoHeight = video.videoHeight
-      }
-    }
+  posterUrl: {
+    type: String,
+    default: ''
+  }
+})
+
+const videoWidth = ref(0)
+const videoHeight = ref(0)
+const videoElement = ref(null)
+
+const isVerticalVideo = computed(() => {
+  return videoHeight.value > videoWidth.value
+})
+
+const containerStyle = computed(() => {
+  if (!videoWidth.value || !videoHeight.value) return {}
+
+  const aspect = videoWidth.value / videoHeight.value
+  const width = '400px'
+  let height
+
+  if (aspect >= 1) {
+    height = `${400 / aspect}px`
+  } else {
+    height = `${Math.min(400 / aspect, 600)}px`
+  }
+
+  return { width, height }
+})
+
+const onVideoMetadata = () => {
+  if (videoElement.value) {
+    videoWidth.value = videoElement.value.videoWidth
+    videoHeight.value = videoElement.value.videoHeight
   }
 }
 </script>

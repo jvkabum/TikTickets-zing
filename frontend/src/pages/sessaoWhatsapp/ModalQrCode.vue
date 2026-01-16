@@ -1,192 +1,195 @@
 <template>
-  <q-dialog :value="abrirModalQR"
+  <q-dialog
+    :model-value="abrirModalQR"
     @hide="fecharModalQrModal"
-    persistent>
+    persistent
+  >
     <q-card style="bg-white">
       <q-card-section>
         <div class="text-h6 text-primary">
           Leia o QrCode para iniciar a sessão
-          <q-btn round
+          <q-btn
+            round
             class="q-ml-md"
             color="negative"
             icon="mdi-close"
-            @click="fecharModalQrModal" />
+            @click="fecharModalQrModal"
+          />
         </div>
       </q-card-section>
-      <q-card-section class="text-center"
-        :style="$q.dark.isActive ? 'background: white !important' : ''">
-        <QrcodeVue v-if="cQrcode"
+      <q-card-section
+        class="text-center"
+        :style="$q.dark.isActive ? 'background: white !important' : ''"
+      >
+        <QrcodeVue
+          v-if="cQrcode"
           :value="cQrcode"
           :size="300"
-          level="H" />
-        <span v-else>
-          Aguardando o Qr Code
-        </span>
+          level="H"
+        />
+        <span v-else> Aguardando o Qr Code </span>
         <!-- Temporizador para expiração do QR code -->
-        <div v-if="cQrcode" class="qr-timer q-mt-sm">
+        <div
+          v-if="cQrcode"
+          class="qr-timer q-mt-sm"
+        >
           <q-linear-progress
             size="10px"
             :value="timeProgressValue"
             :color="timeProgressColor"
             track-color="grey-3"
           />
-          <div class="text-caption q-mt-xs" :class="qrTimerClass">
+          <div
+            class="text-caption q-mt-xs"
+            :class="qrTimerClass"
+          >
             {{ timeoutMessage }}
           </div>
         </div>
       </q-card-section>
       <q-card-section>
-        <div class="row">Caso tenha problema com a leitura, solicite um novo Qr Code </div>
+        <div class="row">Caso tenha problema com a leitura, solicite um novo Qr Code</div>
         <div class="row col-12 justify-center">
-          <q-btn color="primary"
+          <q-btn
+            color="primary"
             glossy
             ripple
             outline
             label="Novo QR Code"
             @click="solicitarQrCode"
-            icon="watch_later" />
+            icon="watch_later"
+          />
         </div>
       </q-card-section>
     </q-card>
   </q-dialog>
-
 </template>
 
-<script>
-
+<script setup>
 import QrcodeVue from 'qrcode.vue'
+import { useQuasar } from 'quasar'
+import { computed, onUnmounted, ref, watch } from 'vue'
 
-export default {
-  name: 'ModalQrCode',
-  components: {
-    QrcodeVue
+const props = defineProps({
+  abrirModalQR: {
+    type: Boolean,
+    default: false
   },
-  props: {
-    abrirModalQR: {
-      type: Boolean,
-      default: false
-    },
-    channel: {
-      type: Object,
-      default: () => ({
-        id: null,
-        qrcode: '',
-        qrTimestamp: null
-      })
-    }
-  },
-  data () {
-    return {
-      qrTimer: null,
-      qrExpirationTime: 60, // 60 segundos de vida útil
-      timeElapsed: 0
-    }
-  },
-  watch: {
-    abrirModalQR (newVal) {
-      if (newVal) {
-        this.startQrTimer()
-      } else {
-        this.stopQrTimer()
-      }
-    },
-    channel: {
-      handler (v) {
-        if (this.channel.status === 'CONNECTED') {
-          this.fecharModalQrModal()
-        }
+  channel: {
+    type: Object,
+    default: () => ({
+      id: null,
+      qrcode: '',
+      qrTimestamp: null,
+      status: ''
+    })
+  }
+})
 
-        // Reinicia o timer quando receber um novo QR code
-        if (this.channel.qrcode && this.abrirModalQR) {
-          this.timeElapsed = 0
-          this.startQrTimer()
-        }
-      },
-      deep: true
-    },
-    cQrcode (newVal) {
-      if (newVal) {
-        this.timeElapsed = 0
-        this.startQrTimer()
-      } else {
-        this.stopQrTimer()
-      }
-    }
-  },
-  computed: {
-    cQrcode () {
-      return this.channel.qrcode
-    },
-    // Calcula o valor da barra de progresso (de 0 a 1)
-    timeProgressValue () {
-      return 1 - (this.timeElapsed / this.qrExpirationTime)
-    },
-    // Define a cor da barra de progresso com base no tempo restante
-    timeProgressColor () {
-      if (this.timeElapsed > this.qrExpirationTime * 0.75) return 'red'
-      if (this.timeElapsed > this.qrExpirationTime * 0.5) return 'orange'
-      return 'green'
-    },
-    // Mensagem de timeout baseada no tempo restante
-    timeoutMessage () {
-      const timeLeft = Math.max(0, this.qrExpirationTime - this.timeElapsed)
+const emit = defineEmits(['update:abrirModalQR', 'gerar-novo-qrcode'])
 
-      if (timeLeft === 0) {
-        return 'QR Code expirado! Solicitando um novo...'
-      }
-      return `Tempo restante: ${timeLeft} segundos`
-    },
-    // Classe CSS para o texto do temporizador
-    qrTimerClass () {
-      if (this.timeElapsed > this.qrExpirationTime * 0.75) return 'text-red'
-      if (this.timeElapsed > this.qrExpirationTime * 0.5) return 'text-orange'
-      return 'text-green'
-    }
-  },
-  methods: {
-    // Inicia o temporizador do QR code
-    startQrTimer () {
-      this.stopQrTimer() // Limpa o timer existente se houver
+const $q = useQuasar()
 
-      this.timeElapsed = 0
-      this.qrTimer = setInterval(() => {
-        this.timeElapsed++
+const qrTimer = ref(null)
+const qrExpirationTime = ref(60)
+const timeElapsed = ref(0)
 
-        // Se o tempo expirou e o status não é OPENING, solicita um novo QR code
-        if (this.timeElapsed >= this.qrExpirationTime && this.channel.status !== 'OPENING') {
-          this.solicitarQrCode()
-          this.stopQrTimer()
-        }
-      }, 1000)
-    },
-    // Para o temporizador do QR code
-    stopQrTimer () {
-      if (this.qrTimer) {
-        clearInterval(this.qrTimer)
-        this.qrTimer = null
-      }
-    },
-    solicitarQrCode () {
-      // Verifica se está em processo de conexão
-      if (this.channel.status === 'OPENING') {
-        this.$q.notify({
-          message: 'Conexão em andamento. Aguarde a conclusão.',
-          type: 'warning'
-        })
-        return
-      }
+const cQrcode = computed(() => props.channel.qrcode)
 
-      this.$emit('gerar-novo-qrcode', this.channel)
-    },
-    fecharModalQrModal () {
-      this.stopQrTimer()
-      this.$emit('update:abrirModalQR', false)
-    }
-  },
-  beforeDestroy () {
-    this.stopQrTimer()
+const timeProgressValue = computed(() => {
+  return 1 - timeElapsed.value / qrExpirationTime.value
+})
+
+const timeProgressColor = computed(() => {
+  if (timeElapsed.value > qrExpirationTime.value * 0.75) return 'red'
+  if (timeElapsed.value > qrExpirationTime.value * 0.5) return 'orange'
+  return 'green'
+})
+
+const timeoutMessage = computed(() => {
+  const timeLeft = Math.max(0, qrExpirationTime.value - timeElapsed.value)
+  if (timeLeft === 0) return 'QR Code expirado! Solicitando um novo...'
+  return `Tempo restante: ${timeLeft} segundos`
+})
+
+const qrTimerClass = computed(() => {
+  if (timeElapsed.value > qrExpirationTime.value * 0.75) return 'text-red'
+  if (timeElapsed.value > qrExpirationTime.value * 0.5) return 'text-orange'
+  return 'text-green'
+})
+
+const stopQrTimer = () => {
+  if (qrTimer.value) {
+    clearInterval(qrTimer.value)
+    qrTimer.value = null
   }
 }
+
+const solicitarQrCode = () => {
+  if (props.channel.status === 'OPENING') {
+    $q.notify({
+      message: 'Conexão em andamento. Aguarde a conclusão.',
+      type: 'warning'
+    })
+    return
+  }
+  emit('gerar-novo-qrcode', props.channel)
+}
+
+const startQrTimer = () => {
+  stopQrTimer()
+  timeElapsed.value = 0
+  qrTimer.value = setInterval(() => {
+    timeElapsed.value++
+    if (timeElapsed.value >= qrExpirationTime.value && props.channel.status !== 'OPENING') {
+      solicitarQrCode()
+      stopQrTimer()
+    }
+  }, 1000)
+}
+
+const fecharModalQrModal = () => {
+  stopQrTimer()
+  emit('update:abrirModalQR', false)
+}
+
+watch(
+  () => props.abrirModalQR,
+  newVal => {
+    if (newVal) {
+      startQrTimer()
+    } else {
+      stopQrTimer()
+    }
+  }
+)
+
+watch(
+  () => props.channel,
+  v => {
+    if (v.status === 'CONNECTED') {
+      fecharModalQrModal()
+    }
+    if (v.qrcode && props.abrirModalQR) {
+      timeElapsed.value = 0
+      startQrTimer()
+    }
+  },
+  { deep: true }
+)
+
+watch(cQrcode, newVal => {
+  if (newVal) {
+    timeElapsed.value = 0
+    startQrTimer()
+  } else {
+    stopQrTimer()
+  }
+})
+
+onUnmounted(() => {
+  stopQrTimer()
+})
 </script>
 
 <style lang="scss" scoped>

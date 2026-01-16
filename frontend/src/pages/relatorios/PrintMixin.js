@@ -3,23 +3,23 @@ import ccPrintModelLandscape from './ccPrintModelLandscape.vue'
 
 export default {
   components: { ccPrintModelLandscape },
-  data() {
+  data () {
     return {
       imprimir: false,
       imprimirFiltros: false
     }
   },
   methods: {
-    async printFiltros(id = 'filtrosRelatorio', mostrarFiltros = false) {
+    async printFiltros (id = 'filtrosRelatorio', mostrarFiltros = false) {
       const node = await document.getElementById('footerAppendFiltros')
       // Excluir todos os filhos da div
       node.innerHTML = ''
       if (mostrarFiltros) {
-        let filtros = document.getElementById(id)
+        const filtros = document.getElementById(id)
         // filtros.removeChild(filtros.getElementsByTagName('button'))
 
         const canvas = await html2canvas(filtros)
-        let img = document.createElement('img')
+        const img = document.createElement('img')
         img.src = canvas.toDataURL()
         img.height = canvas.height
         img.width = canvas.width

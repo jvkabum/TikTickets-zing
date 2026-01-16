@@ -12,20 +12,36 @@
       >
         <template v-slot:loading>
           <div class="absolute-full flex flex-center">
-            <q-spinner-dots color="primary" size="40px" />
+            <q-spinner-dots
+              color="primary"
+              size="40px"
+            />
           </div>
         </template>
         <template v-slot:error>
-          <div class="absolute-full flex flex-center bg-negative text-white">
-            Erro ao carregar imagem
-          </div>
+          <div class="absolute-full flex flex-center bg-negative text-white">Erro ao carregar imagem</div>
         </template>
       </q-img>
       <div class="image-actions">
-        <q-btn round flat color="white" icon="fullscreen" @click="openLightbox" class="shadow-3">
+        <q-btn
+          round
+          flat
+          color="white"
+          icon="fullscreen"
+          @click="openLightbox"
+          class="shadow-3"
+        >
           <q-tooltip>Ampliar imagem</q-tooltip>
         </q-btn>
-        <q-btn round flat color="white" icon="download" :href="src" download class="shadow-3">
+        <q-btn
+          round
+          flat
+          color="white"
+          icon="download"
+          :href="src"
+          download
+          class="shadow-3"
+        >
           <q-tooltip>Baixar imagem</q-tooltip>
         </q-btn>
       </div>
@@ -41,54 +57,41 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref } from 'vue'
 import VueEasyLightbox from 'vue-easy-lightbox'
 
-export default {
-  name: 'ImageViewer',
-  components: {
-    VueEasyLightbox
+const props = defineProps({
+  src: {
+    type: String,
+    required: true
   },
-  props: {
-    src: {
-      type: String,
-      required: true
-    },
-    alt: {
-      type: String,
-      default: 'Imagem'
-    }
-  },
-  data () {
-    return {
-      isLightboxOpen: false,
-      imageWidth: 0,
-      imageHeight: 0
-    }
-  },
-  computed: {
-    aspectRatio () {
-      if (!this.imageWidth || !this.imageHeight) return 16 / 9
-      return this.imageWidth / this.imageHeight
-    },
-    imageRatio () {
-      return 16 / 9
-    }
-  },
-  methods: {
-    openLightbox () {
-      this.isLightboxOpen = true
-    },
-    onImageLoad (e) {
-      // Acessa a imagem depois que carregou
-      const img = new Image()
-      img.onload = () => {
-        this.imageWidth = img.width
-        this.imageHeight = img.height
-      }
-      img.src = this.src
-    }
+  alt: {
+    type: String,
+    default: 'Imagem'
   }
+})
+
+const isLightboxOpen = ref(false)
+const imageWidth = ref(0)
+const imageHeight = ref(0)
+
+const aspectRatio = computed(() => {
+  if (!imageWidth.value || !imageHeight.value) return 16 / 9
+  return imageWidth.value / imageHeight.value
+})
+
+const openLightbox = () => {
+  isLightboxOpen.value = true
+}
+
+const onImageLoad = () => {
+  const img = new Image()
+  img.onload = () => {
+    imageWidth.value = img.width
+    imageHeight.value = img.height
+  }
+  img.src = props.src
 }
 </script>
 

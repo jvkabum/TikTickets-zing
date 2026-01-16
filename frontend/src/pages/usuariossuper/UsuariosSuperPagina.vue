@@ -3,7 +3,7 @@
     <q-table
       class="my-sticky-dynamic q-ma-lg"
       title="Usuarios"
-      :data="usuarios"
+      :rows="usuarioStore.usuarios.filter(u => u.profile !== 'super')"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -25,13 +25,13 @@
           v-model="filter"
           clearable
           placeholder="Localize"
-          @input="filtrarUsuario"
+          @update:model-value="filtrarUsuario"
         >
           <template v-slot:prepend>
             <q-icon name="search" />
           </template>
         </q-input>
-         <q-btn
+        <q-btn
           rounded
           class="q-ml-md col"
           :class="{
@@ -39,9 +39,13 @@
           }"
           color="primary"
           label="Adicionar"
-          @click="usuarioSelecionado = {}; modalUsuario = true"
-          />
-
+          @click="
+            () => {
+              usuarioSelecionado = {}
+              modalUsuario = true
+            }
+          "
+        />
       </template>
       <template v-slot:body-cell-acoes="props">
         <q-td class="text-center">
@@ -54,136 +58,119 @@
         </q-td>
       </template>
       <template v-slot:pagination="{ pagination }">
-        {{ usuarios.length }}/{{ pagination.rowsNumber }}
+        {{ usuarioStore.usuarios.length }}/{{ pagination.rowsNumber }}
       </template>
     </q-table>
     <ModalUsuarioSuper
       v-model:modalUsuario="modalUsuario"
-      @modalUsuario:usuario-editado="UPDATE_USUARIO"
-      @modalUsuario:usuario-criado="usuarioCriado"
+      @modalUsuario:usuario-editado="listarUsuarios"
+      @modalUsuario:usuario-criado="listarUsuarios"
       v-model:usuarioEdicao="usuarioSelecionado"
     />
     <ModalUsuarioEditSuper
       v-model:modalUsuario="modalUsuarioEdit"
-      @modalUsuario:usuario-editado="UPDATE_USUARIO"
+      @modalUsuario:usuario-editado="listarUsuarios"
       v-model:usuarioEdicao="usuarioSelecionado"
     />
   </div>
 </template>
 
-<script>
-// const userId = +localStorage.getItem('userId')
-import { AdminListarUsuarios } from '../../service/user';
-export default {
-  name: 'IndexUsuarios',
-  components: { },
-  data () {
-    return {
-      userProfile: 'user',
-      usuarios: [],
-      usuarioSelecionado: {},
-      filas: [],
-      optionsProfile: [
-        { value: 'user', label: 'Usuário' },
-        { value: 'admin', label: 'Administrador' },
-        { value: 'super', label: 'Super' }
-      ],
-      modalUsuario: false,
-      modalUsuarioEdit: false,
-      filter: null,
-      pagination: {
-        rowsPerPage: 40,
-        rowsNumber: 0,
-        lastIndex: 0
-      },
-      params: {
-        pageNumber: 1,
-        searchParam: null,
-        hasMore: true
-      },
-      loading: false,
-      columns: [
-        { name: 'tenantId', label: 'Empresa', field: 'tenant', align: 'left', format: v => `${v.id} - ${v.name}` },
-        { name: 'id', label: 'ID', field: 'id', align: 'left' },
-        { name: 'name', label: 'Nome', field: 'name', align: 'left' },
-        { name: 'email', label: 'E-mail', field: 'email', align: 'left' },
-        { name: 'profile', label: 'Perfil', field: 'profile', align: 'left', format: (v) => this.optionsProfile.find(o => o.value == v).label },
-        { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
-      ]
-    }
+<script setup>
+import { useQuasar } from 'quasar'
+import { useUsuarioStore } from 'src/stores/useUsuarioStore'
+import { onMounted, reactive, ref } from 'vue'
+import ModalUsuarioEditSuper from './ModalUsuarioEditSuper.vue'
+import ModalUsuarioSuper from './ModalUsuarioSuper.vue'
+
+const $q = useQuasar()
+const usuarioStore = useUsuarioStore()
+
+const userProfile = ref('user')
+const usuarioSelecionado = ref({})
+const modalUsuario = ref(false)
+const modalUsuarioEdit = ref(false)
+const filter = ref(null)
+const loading = ref(false)
+
+const pagination = reactive({
+  rowsPerPage: 40,
+  rowsNumber: 0,
+  lastIndex: 0
+})
+
+const params = reactive({
+  pageNumber: 1,
+  searchParam: null,
+  hasMore: true
+})
+
+const optionsProfile = [
+  { value: 'user', label: 'Usuário' },
+  { value: 'admin', label: 'Administrador' },
+  { value: 'super', label: 'Super' }
+]
+
+const columns = [
+  {
+    name: 'tenantId',
+    label: 'Empresa',
+    field: 'tenant',
+    align: 'left',
+    format: v => (v ? `${v.id} - ${v.name}` : '')
   },
-  methods: {
-    LOAD_USUARIOS (users) {
-      const newUsers = []
-      users.forEach(user => {
-        const userIndex = this.usuarios.findIndex(c => c.id === user.id)
-        if (userIndex !== -1) {
-          this.usuarios[userIndex] = user
-        } else {
-          newUsers.push(user)
-        }
-      })
-      const usersObj = [...this.usuarios, ...newUsers]
-      this.usuarios = usersObj.filter(usuario => usuario.profile !== 'super')
-    },
-    UPDATE_USUARIO (usuario) {
-      let newUsuarios = [...this.usuarios]
-      const usuarioIndex = newUsuarios.findIndex(c => c.id === usuario.id)
-      if (usuarioIndex !== -1) {
-        newUsuarios[usuarioIndex] = usuario
-      } else {
-        newUsuarios = [usuario, ...newUsuarios]
-      }
-      this.usuarios = [...newUsuarios]
-    },
-    DELETE_USUARIO (userId) {
-      const newObj = [...this.usuarios.filter(u => u.id !== userId)]
-      this.usuarios = [...newObj]
-    },
-    async listarUsuarios () {
-      this.loading = true
-      const { data } = await AdminListarUsuarios(this.params)
-      this.usuarios = data.users
-      this.LOAD_USUARIOS(data.users)
-      this.params.hasMore = data.hasMore
-      this.pagination.lastIndex = this.usuarios.length - 1
-      this.pagination.rowsNumber = data.count
-      this.loading = false
-    },
-    filtrarUsuario (data) {
-      this.usuarios = []
-      this.params.pageNumber = 1
-      this.params.searchParam = data
-      this.listarUsuarios()
-    },
-    onScroll ({ to, ref, ...all }) {
-      if (this.loading !== true && this.params.hasMore === true && to === this.pagination.lastIndex) {
-        this.params.pageNumber++
-        this.listarUsuarios()
-      }
-    },
-    usuarioCriado (usuario) {
-      this.usuarios.push(usuario)
-      this.listarUsuarios()
-    },
-    editarUsuario (usuario) {
-      this.usuarioSelecionado = usuario
-      this.modalUsuarioEdit = true
-    }
+  { name: 'id', label: 'ID', field: 'id', align: 'left' },
+  { name: 'name', label: 'Nome', field: 'name', align: 'left' },
+  { name: 'email', label: 'E-mail', field: 'email', align: 'left' },
+  {
+    name: 'profile',
+    label: 'Perfil',
+    field: 'profile',
+    align: 'left',
+    format: v => optionsProfile.find(o => o.value == v)?.label || v
   },
-  async mounted () {
-    await this.listarUsuarios()
-    this.userProfile = localStorage.getItem('profile')
-    // Ouça o evento 'usuario-editado'
-    // this.$root.$on('usuario-editado', () => {
-      // Atualize a página aqui
-      // this.listarUsuarios()
-    // })
+  { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
+]
+
+const listarUsuarios = async () => {
+  loading.value = true
+  try {
+    const data = await usuarioStore.adminListarUsuarios(params)
+    params.hasMore = data.hasMore
+    pagination.lastIndex = usuarioStore.usuarios.length - 1
+    pagination.rowsNumber = data.count
+  } catch (error) {
+    console.error(error)
+  } finally {
+    loading.value = false
   }
 }
+
+const filtrarUsuario = data => {
+  usuarioStore.usuarios = []
+  params.pageNumber = 1
+  params.searchParam = data
+  listarUsuarios()
+}
+
+const onScroll = ({ to }) => {
+  if (loading.value !== true && params.hasMore === true && to === pagination.lastIndex) {
+    params.pageNumber++
+    listarUsuarios()
+  }
+}
+
+const editarUsuario = usuario => {
+  usuarioSelecionado.value = { ...usuario }
+  modalUsuarioEdit.value = true
+}
+
+onMounted(() => {
+  userProfile.value = localStorage.getItem('profile')
+  listarUsuarios()
+})
 </script>
 
-<style lang="sass" >
+<style lang="sass">
 .my-sticky-dynamic
   /* height or max-height is important */
   height: 85vh

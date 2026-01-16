@@ -19,9 +19,7 @@
                 size="2em"
                 name="mdi-emoticon-happy-outline"
               />
-              <q-tooltip>
-                Emoji
-              </q-tooltip>
+              <q-tooltip> Emoji </q-tooltip>
               <q-menu
                 anchor="top right"
                 self="bottom middle"
@@ -43,16 +41,12 @@
             style="min-height: 10vh; max-height: 15vh; flex: auto"
             class="q-pa-sm bg-white"
             placeholder="Digite a mensagem"
-            autogrow
-            dense
-            outlined
-            @input="(v) => $attrs.element.data.message = v.target.value"
-            :value="$attrs.element.data.message"
+            v-model="element.data.message"
           />
         </div>
         <div class="row col q-py-sm q-mb-md">
           <q-select
-            v-model="$attrs.element.data.values"
+            v-model="element.data.values"
             use-input
             outlined
             use-chips
@@ -67,45 +61,43 @@
             dense
             hint="Opções serão tratados como Lista/Botões ou texto simples dependendo do suporte do canal de destino."
           />
-
         </div>
       </q-card-section>
     </q-card>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 
-export default {
-  name: 'MessageField',
-  components: { EmojiPicker },
-  methods: {
-    onInsertSelectEmoji (emoji) {
-      const self = this
-      var tArea = this.$refs.inputEnvioMensagem
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!emoji.data) {
-        return
-      }
-      // insert:
-      self.txtContent = this.$attrs.element.data.message
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
-      this.$attrs.element.data.message = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
-      }, 10)
-    }
+const props = defineProps({
+  element: {
+    type: Object,
+    required: true
   }
+})
+
+const inputEnvioMensagem = ref(null)
+
+const onInsertSelectEmoji = emoji => {
+  const tArea = inputEnvioMensagem.value
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const cursorPos = startPos
+  const tmpStr = tArea.value
+
+  if (!emoji.i) return
+
+  const txtContent = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos, tmpStr.length)
+  props.element.data.message = txtContent
+
+  setTimeout(() => {
+    tArea.focus()
+    tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.i.length
+  }, 10)
 }
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

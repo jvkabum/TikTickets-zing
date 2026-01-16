@@ -7,13 +7,11 @@
   >
     <q-card
       class="q-pa-sm"
-      style="min-width: 70vw;"
+      style="min-width: 70vw"
     >
       <q-card-section class="q-pa-none q-px-md">
         <div class="text-h6 text-bold">{{ campanhaEdicao.id ? 'Editar' : 'Criar' }} Campanha</div>
-        <div class="row">
-          As mensagens sempre serão enviadas em horário comercial e dias úteis.
-        </div>
+        <div class="row">As mensagens sempre serão enviadas em horário comercial e dias úteis.</div>
       </q-card-section>
       <q-card-section class="q-pb-none">
         <div class="row q-gutter-sm">
@@ -22,19 +20,19 @@
             dense
             rounded
             style="width: 500px"
-            v-model="campanha.name"
+            v-model="name"
+            v-bind="nameProps"
             label="Nome da Campanha"
-            @blur="v$.campanha.name.$touch()"
-            :error="v$.campanha.name.$error"
-            error-message="Obrigatório"
+            :error="!!errors.name"
+            :error-message="errors.name"
           />
           <cDateTimePick
             style="width: 200px"
             label="Data/Hora início"
-            v-model="campanha.start"
-            @blur="v$.campanha.start.$touch()"
-            :error="v$.campanha.start.$error"
-            error-message="Não pode ser inferior ao dia atual"
+            v-model="start"
+            v-bind="startProps"
+            :error="!!errors.start"
+            :error-message="errors.start"
           />
           <q-select
             rounded
@@ -44,15 +42,15 @@
             map-options
             label="Enviar por"
             color="primary"
-            v-model="campanha.sessionId"
+            v-model="sessionId"
+            v-bind="sessionIdProps"
             :options="cSessions"
             :input-debounce="700"
             option-value="id"
             option-label="name"
             input-style="width: 280px; max-width: 280px;"
-            @blur="v$.campanha.sessionId.$touch()"
-            :error="v$.campanha.sessionId.$error"
-            error-message="Obrigatório"
+            :error="!!errors.sessionId"
+            :error-message="errors.sessionId"
             style="width: 250px"
           />
           <q-input
@@ -60,29 +58,33 @@
             outlined
             dense
             style="width: 160px"
-            v-model="campanha.delay"
+            v-model="delay"
+            v-bind="delayProps"
             input-class="text-right"
             suffix="segundos"
             label="Delay"
-            error-message="Obrigatório"
+            :error="!!errors.delay"
+            :error-message="errors.delay"
           />
           <q-select
             outlined
             dense
             rounded
             label="Status"
-            v-model="campanha.status"
+            v-model="status"
+            v-bind="statusProps"
             :options="[
               { label: 'Pendente', value: 'pending' },
               { label: 'Programada', value: 'scheduled' }
             ]"
-            :rules="[val => !!val || 'O status é obrigatório']"
+            :error="!!errors.status"
+            :error-message="errors.status"
             style="width: 200px"
           />
           <q-file
             dense
             rounded
-            v-if="!campanha.mediaUrl"
+            v-if="!campanhaState.mediaUrl"
             :loading="loading"
             label="Mídia composição mensagem"
             ref="PickerFileMessage"
@@ -103,12 +105,12 @@
             style="width: 350px"
           />
           <q-input
-            v-if="campanha.mediaUrl"
+            v-if="campanhaState.mediaUrl"
             readonly
             rounded
             label="Mídia composição mensagem"
             :value="cArquivoName"
-            class=" col-grow "
+            class="col-grow"
             bg-color="blue-grey-1"
             input-style="max-height: 30vh"
             outlined
@@ -123,14 +125,14 @@
                 dense
                 flat
                 icon="close"
-                @click="campanha.mediaUrl = null; arquivos = []"
+                @click="handleResetMedia"
               />
             </template>
           </q-input>
         </div>
       </q-card-section>
       <q-card-section class="row q-pt-sm q-gutter-sm justify-center">
-        <div style="min-width: 400px;">
+        <div style="min-width: 400px">
           <div class="row items-center q-pt-none">
             <label class="text-heading text-bold">1ª Mensagem</label>
             <div class="col-xs-3 col-sm-2 col-md-1">
@@ -143,9 +145,7 @@
                   size="2em"
                   name="mdi-emoticon-happy-outline"
                 />
-                <q-tooltip>
-                  Emoji
-                </q-tooltip>
+                <q-tooltip> Emoji </q-tooltip>
                 <q-menu
                   anchor="top right"
                   self="bottom middle"
@@ -155,43 +155,48 @@
                     :native="true"
                     :hide-search="false"
                     :disable-skin-tones="true"
-                    @select="(v) => onInsertSelectEmoji(v, 'message1')"
+                    @select="v => onInsertSelectEmoji(v, 'message1')"
                   />
                 </q-menu>
               </q-btn>
             </div>
             <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
               <textarea
-                ref="message1"
-                style="min-height: 12.5vh; max-height: 12.5vh;"
+                ref="message1Ref"
+                style="min-height: 12.5vh; max-height: 12.5vh"
                 class="q-pa-sm bg-white full-width rounded-all"
                 :class="{
-                  'bg-red-1': v$.campanha.message1.$error
+                  'bg-red-1': !!errors.message1
                 }"
-                @blur="v$.campanha.message1.$touch()"
                 placeholder="Digite a mensagem"
                 autogrow
                 dense
                 outlined
-                @input="(v) => campanha.message1 = v.target.value"
-                :value="campanha.message1"
+                v-model="message1"
+                v-bind="message1Props"
               />
-              <q-btn round
+              <q-btn
+                round
                 flat
-                dense>
-                <q-icon size="2em"
-                  name="mdi-variable" />
-                <q-tooltip>
-                  Variáveis
-                </q-tooltip>
+                dense
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-variable"
+                />
+                <q-tooltip> Variáveis </q-tooltip>
                 <q-menu touch-position>
-                  <q-list dense
-                    style="min-width: 100px">
-                    <q-item v-for="variavel in variaveis"
+                  <q-list
+                    dense
+                    style="min-width: 100px"
+                  >
+                    <q-item
+                      v-for="variavel in variaveis"
                       :key="variavel.label"
                       clickable
                       @click="onInsertSelectVariable(variavel.value, 'message1', 'message1')"
-                      v-close-popup>
+                      v-close-popup
+                    >
                       <q-item-section>{{ variavel.label }}</q-item-section>
                     </q-item>
                   </q-list>
@@ -212,9 +217,7 @@
                   size="2em"
                   name="mdi-emoticon-happy-outline"
                 />
-                <q-tooltip>
-                  Emoji
-                </q-tooltip>
+                <q-tooltip> Emoji </q-tooltip>
                 <q-menu
                   anchor="top right"
                   self="bottom middle"
@@ -223,43 +226,48 @@
                   <EmojiPicker
                     :native="true"
                     :hide-search="false"
-                    @select="(v) => onInsertSelectEmoji(v, 'message2')"
+                    @select="v => onInsertSelectEmoji(v, 'message2')"
                   />
                 </q-menu>
               </q-btn>
             </div>
             <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
               <textarea
-                ref="message2"
-                style="min-height: 12.5vh; max-height: 12.5vh;"
+                ref="message2Ref"
+                style="min-height: 12.5vh; max-height: 12.5vh"
                 class="q-pa-sm bg-white full-width rounded-all"
                 placeholder="Digite a mensagem"
                 autogrow
                 dense
                 outlined
                 :class="{
-                  'bg-red-1': v$.campanha.message2.$error
+                  'bg-red-1': !!errors.message2
                 }"
-                @blur="v$.campanha.message2.$touch()"
-                @input="(v) => campanha.message2 = v.target.value"
-                :value="campanha.message2"
+                v-model="message2"
+                v-bind="message2Props"
               />
-              <q-btn round
+              <q-btn
+                round
                 flat
-                dense>
-                <q-icon size="2em"
-                  name="mdi-variable" />
-                <q-tooltip>
-                  Variáveis
-                </q-tooltip>
+                dense
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-variable"
+                />
+                <q-tooltip> Variáveis </q-tooltip>
                 <q-menu touch-position>
-                  <q-list dense
-                    style="min-width: 100px">
-                    <q-item v-for="variavel in variaveis"
+                  <q-list
+                    dense
+                    style="min-width: 100px"
+                  >
+                    <q-item
+                      v-for="variavel in variaveis"
                       :key="variavel.label"
                       clickable
                       @click="onInsertSelectVariable(variavel.value, 'message2', 'message2')"
-                      v-close-popup>
+                      v-close-popup
+                    >
                       <q-item-section>{{ variavel.label }}</q-item-section>
                     </q-item>
                   </q-list>
@@ -280,9 +288,7 @@
                   size="2em"
                   name="mdi-emoticon-happy-outline"
                 />
-                <q-tooltip>
-                  Emoji
-                </q-tooltip>
+                <q-tooltip> Emoji </q-tooltip>
                 <q-menu
                   anchor="top right"
                   self="bottom middle"
@@ -291,43 +297,48 @@
                   <EmojiPicker
                     :native="true"
                     :hide-search="false"
-                    @select="(v) => onInsertSelectEmoji(v, 'message3')"
+                    @select="v => onInsertSelectEmoji(v, 'message3')"
                   />
                 </q-menu>
               </q-btn>
             </div>
             <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
               <textarea
-                ref="message3"
-                style="min-height: 12.5vh; max-height: 12.5vh;"
+                ref="message3Ref"
+                style="min-height: 12.5vh; max-height: 12.5vh"
                 class="q-pa-sm bg-white full-width rounded-all"
                 placeholder="Digite a mensagem"
                 autogrow
                 dense
                 outlined
                 :class="{
-                  'bg-red-1': v$.campanha.message3.$error
+                  'bg-red-1': !!errors.message3
                 }"
-                @blur="v$.campanha.message3.$touch()"
-                @input="(v) => campanha.message3 = v.target.value"
-                :value="campanha.message3"
+                v-model="message3"
+                v-bind="message3Props"
               />
-              <q-btn round
+              <q-btn
+                round
                 flat
-                dense>
-                <q-icon size="2em"
-                  name="mdi-variable" />
-                <q-tooltip>
-                  Variáveis
-                </q-tooltip>
+                dense
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-variable"
+                />
+                <q-tooltip> Variáveis </q-tooltip>
                 <q-menu touch-position>
-                  <q-list dense
-                    style="min-width: 100px">
-                    <q-item v-for="variavel in variaveis"
+                  <q-list
+                    dense
+                    style="min-width: 100px"
+                  >
+                    <q-item
+                      v-for="variavel in variaveis"
                       :key="variavel.label"
                       clickable
                       @click="onInsertSelectVariable(variavel.value, 'message3', 'message3')"
-                      v-close-popup>
+                      v-close-popup
+                    >
                       <q-item-section>{{ variavel.label }}</q-item-section>
                     </q-item>
                   </q-list>
@@ -336,15 +347,13 @@
             </div>
           </div>
         </div>
-        <div style="width: 500px;">
+        <div style="width: 500px">
           <q-card
             bordered
             flat
             class="full-width"
           >
-            <div class="text-body1 text-bold q-pa-sm full-width text-center bg-grey-3">
-              Visualização
-            </div>
+            <div class="text-body1 text-bold q-pa-sm full-width text-center bg-grey-3">Visualização</div>
             <q-card-section class="row justify-center">
               <q-option-group
                 class="q-mb-sm"
@@ -368,7 +377,6 @@
             </q-card-section>
           </q-card>
         </div>
-
       </q-card-section>
       <q-card-section>
         <div class="row justify-center">
@@ -390,342 +398,355 @@
       </q-card-section>
     </q-card>
   </q-dialog>
-
 </template>
 
-<script>
-import { useVuelidate } from '@vuelidate/core'
-import { required } from '@vuelidate/validators'
-import axios from 'axios'
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
 import { parseISO, startOfDay } from 'date-fns'
-import { AlterarCampanha, CriarCampanha } from 'src/service/campanhas'
+import { storeToRefs } from 'pinia'
+import { useQuasar } from 'quasar'
+import { useCampanhaStore } from 'src/stores/useCampanhaStore'
+import { useWhatsappStore } from 'src/stores/useWhatsappStore'
+import { notificarErro } from 'src/utils/helpersNotifications'
+import { useForm } from 'vee-validate'
+import { computed, nextTick, reactive, ref } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
-import { mapGetters } from 'vuex'
+import { z } from 'zod'
 
-const isValidDate = (v) => {
-  if (!v) return true
-  return startOfDay(new Date(parseISO(v))).getTime() >= startOfDay(new Date()).getTime()
-}
-
-const downloadImageCors = axios.create({
-  baseURL: process.env.VUE_URL_API,
-  timeout: 20000,
-  headers: {
-    responseType: 'blob'
+const props = defineProps({
+  modalCampanha: {
+    type: Boolean,
+    default: false
+  },
+  campanhaEdicao: {
+    type: Object,
+    default: () => ({ id: null })
   }
 })
 
-export default {
-  name: 'ModalCampanha',
-  components: { EmojiPicker },
-  props: {
-    modalCampanha: {
-      type: Boolean,
-      default: false
-    },
-    campanhaEdicao: {
-      type: Object,
-      default: () => {
-        return { id: null }
-      }
-    }
-  },
-  setup (props, { emit }) {
-    return {
-      v$: useVuelidate()
-    }
-  },
-  data () {
-    return {
-      variaveis: [
-        { label: 'Nome', value: '{{name}}' },
-        { label: 'Saudação', value: '{{greeting}}' }
-      ],
-      optRadio: [
-        { label: 'Msg.1', value: 'message1' },
-        { label: 'Msg. 2', value: 'message2' },
-        { label: 'Msg. 3', value: 'message3' }
-      ],
-      messagemPreview: 'message1',
-      loading: false,
-      abrirModalImagem: false,
-      urlMedia: '',
-      campanha: {
-        name: null,
-        start: null,
-        mediaUrl: null,
-        message1: null,
-        message2: null,
-        message3: null,
-        sessionId: null,
-        delay: 10
-      },
-      messageTemplate: {
-        mediaUrl: null,
-        id: null,
-        ack: 3,
-        read: true,
-        fromMe: true,
-        body: null,
-        mediaType: 'chat',
-        isDeleted: false,
-        createdAt: '2021-02-20T20:09:04.736Z',
-        updatedAt: '2021-02-20T23:26:24.311Z',
-        quotedMsgId: null,
-        delay: 61,
-        ticketId: 0,
-        contactId: null,
-        userId: null,
-        contact: null,
-        quotedMsg: null
-      },
-      arquivos: []
-    }
-  },
-  validations () {
-    return {
-      campanha: {
-        name: { required },
-        start: { required, isValidDate },
-        message1: { required },
-        message2: { required },
-        message3: { required },
-        sessionId: { required }
-      }
-    }
-  },
-  computed: {
-    modalCampanhaModel: {
-      get () {
-        return this.modalCampanha
-      },
-      set (v) {
-        this.$emit('update:modalCampanha', v)
-      }
-    },
-    ...mapGetters(['whatsapps']),
-    cSessions () {
-      return this.whatsapps.filter(w => w.type === 'whatsapp' && !w.isDeleted)
-    },
-    cKey () {
-      return this.campanha.message1 + this.campanha.message2 + this.campanha.message3
-    },
-    cArquivoName () {
-      const split = this.campanha.mediaUrl.split('/')
-      const name = split[split.length - 1]
-      return name
-    },
-    cMessages () {
-      const messages = []
-      const msgArray = ['message1', 'message2', 'message3']
-      if (this.arquivos?.type) {
-        const blob = new Blob([this.arquivos], { type: this.arquivos.type })
-        messages.push({
-          ...this.messageTemplate,
-          id: 'mediaUrl',
-          mediaUrl: window.URL.createObjectURL(blob),
-          body: this.arquivos.name,
-          mediaType: this.arquivos.type.substr(0, this.arquivos.type.indexOf('/'))
-        })
-      } else if (this.campanha.mediaUrl) {
-        messages.push({
-          ...this.messageTemplate,
-          id: 'mediaUrl',
-          mediaUrl: this.campanha.mediaUrl,
-          body: '',
-          mediaType: this.campanha.mediaType
-        })
-      }
-      msgArray.forEach(el => {
-        if (this.messagemPreview === el) {
-          const body = this.campanha[el]
-          const msg = {
-            ...this.messageTemplate,
-            id: el,
-            body
-          }
-          messages.push(msg)
-        }
-      })
-      return messages
-    }
-  },
-  methods: {
-    onInsertSelectVariable (variable, ref, messageField) {
-      var tArea = this.$refs[ref]
-      if (!tArea) {
-        return
-      }
+const emit = defineEmits([
+  'update:modalCampanha',
+  'update:campanhaEdicao',
+  'modal-campanha:criada',
+  'modal-campanha:editada'
+])
 
-      var startPos = tArea.selectionStart
-      var endPos = tArea.selectionEnd
-      var originalText = tArea.value
+const $q = useQuasar()
+const whatsappStore = useWhatsappStore()
+const { whatsapps } = storeToRefs(whatsappStore)
+const campanhaStore = useCampanhaStore()
+const { criarCampanha, alterarCampanha } = campanhaStore
 
-      if (!variable) {
-        return
-      }
-      var newText = originalText.substring(0, startPos) + variable + originalText.substring(endPos)
-      this.campanha[messageField] = newText
-      var newCursorPos = startPos + variable.length
-      tArea.setSelectionRange(newCursorPos, newCursorPos)
-    },
-    onInsertSelectEmoji (emoji, ref) {
-      const self = this
-      var tArea = this.$refs[ref]
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!emoji.i) {
-        return
-      }
-      // insert:
-      self.txtContent = this.campanha[ref]
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos, tmpStr.length)
-      this.campanha[ref] = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.i.length
-      }, 10)
-    },
-    resetarCampanha () {
-      this.campanha = {
-        id: null,
-        name: null,
-        start: null,
-        message1: null,
-        message2: null,
-        message3: null,
-        message4: null,
-        mediaUrl: null,
-        userId: null,
-        delay: 61,
-        sessionId: null
-      }
-    },
-    fecharModal () {
-      this.resetarCampanha()
-      this.$emit('update:campanhaEdicao', { id: null })
-      this.$emit('update:modalCampanha', false)
-    },
-    abrirModal () {
-      if (this.campanhaEdicao.id) {
-        this.campanha = { ...this.campanhaEdicao }
-      } else {
-        this.resetarCampanha()
-      }
-    },
-    onRejectedFiles (rejectedEntries) {
-      this.$q.notify({
-        html: true,
-        message: `Ops... Ocorreu um erro! <br>
-        <ul>
-          <li>Arquivo deve ter no máximo 10MB.</li>
-          <li>Priorize o envio de imagem ou vídeo.</li>
-        </ul>`,
-        type: 'negative',
-        progress: true,
-        position: 'top',
-        actions: [{
-          icon: 'close',
-          round: true,
-          color: 'white'
-        }]
-      })
-    },
-    async buscarImageCors (imageUrl) {
-      this.loading = true
-      try {
-        const { data, headers } = await downloadImageCors.get(imageUrl, {
-          responseType: 'blob'
-        })
-        const url = window.URL.createObjectURL(
-          new Blob([data], { type: headers['content-type'] })
-        )
-        this.urlMedia = url
-        this.abrirModalImagem = true
-      } catch (error) {
-        this.$notificarErro('Algum problema ao carregar a imagem', error)
-      }
-      this.loading = false
-    },
-    async handleCampanha () {
-      if (this.campanha.message1 === this.campanha.message2 || this.campanha.message1 === this.campanha.message3 || this.campanha.message2 === this.campanha.message3) {
-        this.$q.notify({
-          type: 'negative',
-          message: 'As mensagens não podem ser iguais'
-        })
-        return
-      }
-      if (this.campanha.delay < 61) {
-        this.$q.notify({
-          type: 'negative',
-          message: 'O campo delay deve ser no mínimo 61'
-        })
-        return
-      }
-      this.v$.campanha.$touch()
-      if (this.v$.campanha.$error) {
-        this.$q.notify({
-          type: 'negative',
-          message: 'Verifique se todas os campos obrigatórios estão preenchidos '
-        })
-        return
-      }
-      try {
-        this.loading = true
-        const campanha = { ...this.campanha }
-        const medias = new FormData()
-        Object.keys(campanha).forEach((key) => {
-          medias.append(key, campanha[key])
-        })
-        medias.append('medias', this.arquivos)
-        if (this.campanha.id) {
-          const { data } = await AlterarCampanha(medias, campanha.id)
-          this.$emit('modal-campanha:editada', data)
-          this.$q.notify({
-            type: 'info',
-            progress: true,
-            position: 'top',
-            textColor: 'black',
-            message: 'Campanha editada!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        } else {
-          const { data } = await CriarCampanha(medias)
-          this.$emit('modal-campanha:criada', data)
-          this.$q.notify({
-            type: 'positive',
-            progress: true,
-            position: 'top',
-            message: 'Campanha criada!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        }
-        this.loading = false
-        this.fecharModal()
-      } catch (error) {
-        console.error(error)
-        this.$notificarErro('Algum problema ao criar campanha', error)
-      }
-    }
+const variaveis = [
+  { label: 'Nome', value: '{{name}}' },
+  { label: 'Saudação', value: '{{greeting}}' }
+]
+
+const optRadio = [
+  { label: 'Msg.1', value: 'message1' },
+  { label: 'Msg. 2', value: 'message2' },
+  { label: 'Msg. 3', value: 'message3' }
+]
+
+const messagemPreview = ref('message1')
+const loading = ref(false)
+const arquivos = ref([])
+const message1Ref = ref(null)
+const message2Ref = ref(null)
+const message3Ref = ref(null)
+
+const isValidDate = dateString => {
+  const date = parseISO(dateString)
+  return startOfDay(date).getTime() >= startOfDay(new Date()).getTime()
+}
+
+const validationSchema = toTypedSchema(
+  z.object({
+    name: z.string().min(1, 'Obrigatório'),
+    start: z.string().min(1, 'Obrigatório').refine(isValidDate, 'Não pode ser inferior ao dia atual'),
+    message1: z.string().min(1, 'Obrigatório'),
+    message2: z.string().min(1, 'Obrigatório'),
+    message3: z.string().min(1, 'Obrigatório'),
+    sessionId: z.any().refine(val => !!val, 'Obrigatório'), // Adjust based on sessionId type
+    delay: z.coerce.number().min(61, 'Deve ser no mínimo 61'),
+    status: z.string().min(1, 'Obrigatório')
+  })
+)
+
+const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
+  validationSchema
+})
+
+const [name, nameProps] = defineField('name')
+const [start, startProps] = defineField('start')
+const [message1, message1Props] = defineField('message1')
+const [message2, message2Props] = defineField('message2')
+const [message3, message3Props] = defineField('message3')
+const [sessionId, sessionIdProps] = defineField('sessionId')
+const [delay, delayProps] = defineField('delay')
+const [status, statusProps] = defineField('status')
+
+// State for non-form fields matching exact previous behavior
+const campanhaState = reactive({
+  id: null,
+  mediaUrl: null
+})
+
+const modalCampanhaModel = computed({
+  get: () => props.modalCampanha,
+  set: v => emit('update:modalCampanha', v)
+})
+
+const handleResetMedia = () => {
+  campanhaState.mediaUrl = null
+  arquivos.value = []
+}
+
+const cSessions = computed(() => {
+  return whatsapps.value.filter(w => w.type === 'whatsapp' && !w.isDeleted)
+})
+
+const cKey = computed(() => {
+  return (message1.value || '') + (message2.value || '') + (message3.value || '')
+})
+
+const cArquivoName = computed(() => {
+  if (!campanhaState.mediaUrl) return ''
+  const split = campanhaState.mediaUrl.split('/')
+  return split[split.length - 1]
+})
+
+const cMessages = computed(() => {
+  const messages = []
+  if (arquivos.value && arquivos.value.type) {
+    const blob = new Blob([arquivos.value], { type: arquivos.value.type })
+    messages.push({
+      ...messageTemplate,
+      id: 'mediaUrl',
+      mediaUrl: window.URL.createObjectURL(blob),
+      body: arquivos.value.name,
+      mediaType: arquivos.value.type.substr(0, arquivos.value.type.indexOf('/'))
+    })
+  } else if (campanhaState.mediaUrl) {
+    messages.push({
+      ...messageTemplate,
+      id: 'mediaUrl',
+      mediaUrl: campanhaState.mediaUrl,
+      body: '',
+      mediaType: 'chat'
+    })
   }
 
+  const el = messagemPreview.value
+  let bodyValue = ''
+  if (el === 'message1') bodyValue = message1.value
+  if (el === 'message2') bodyValue = message2.value
+  if (el === 'message3') bodyValue = message3.value
+
+  if (bodyValue) {
+    messages.push({
+      ...messageTemplate,
+      id: el,
+      body: bodyValue
+    })
+  }
+  return messages
+})
+
+const messageTemplate = {
+  mediaUrl: null,
+  id: null,
+  ack: 3,
+  read: true,
+  fromMe: true,
+  body: null,
+  mediaType: 'chat',
+  isDeleted: false,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  quotedMsgId: null,
+  delay: 61,
+  ticketId: 0,
+  contactId: null,
+  userId: null,
+  contact: null,
+  quotedMsg: null
 }
+
+const onInsertSelectVariable = (variable, textAreaRefName, fieldName) => {
+  const refs = {
+    message1: message1Ref,
+    message2: message2Ref,
+    message3: message3Ref
+  }
+  const tArea = refs[textAreaRefName].value
+  if (!tArea || !variable) return
+
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const originalText = tArea.value
+
+  const newText = originalText.substring(0, startPos) + variable + originalText.substring(endPos)
+
+  const fieldSetters = {
+    message1: v => (message1.value = v),
+    message2: v => (message2.value = v),
+    message3: v => (message3.value = v)
+  }
+  fieldSetters[fieldName](newText)
+
+  nextTick(() => {
+    const newCursorPos = startPos + variable.length
+    tArea.setSelectionRange(newCursorPos, newCursorPos)
+    tArea.focus()
+  })
+}
+
+const onInsertSelectEmoji = (emoji, textAreaRefName) => {
+  const refs = {
+    message1: message1Ref,
+    message2: message2Ref,
+    message3: message3Ref
+  }
+  const tArea = refs[textAreaRefName].value
+  if (!tArea || !emoji.i) return
+
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const tmpStr = tArea.value
+
+  const newText = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos)
+
+  const fieldSetters = {
+    message1: v => (message1.value = v),
+    message2: v => (message2.value = v),
+    message3: v => (message3.value = v)
+  }
+  fieldSetters[textAreaRefName](newText)
+
+  nextTick(() => {
+    tArea.selectionStart = tArea.selectionEnd = startPos + emoji.i.length
+    tArea.focus()
+  })
+}
+
+const resetarCampanha = () => {
+  resetForm()
+  campanhaState.id = null
+  campanhaState.mediaUrl = null
+  arquivos.value = []
+  // Set default values
+  setValues({
+    name: '',
+    start: '',
+    message1: '',
+    message2: '',
+    message3: '',
+    sessionId: null,
+    delay: 61,
+    status: 'pending'
+  })
+}
+
+const fecharModal = () => {
+  resetarCampanha()
+  emit('update:campanhaEdicao', { id: null })
+  emit('update:modalCampanha', false)
+}
+
+const abrirModal = () => {
+  if (props.campanhaEdicao.id) {
+    campanhaState.id = props.campanhaEdicao.id
+    campanhaState.mediaUrl = props.campanhaEdicao.mediaUrl
+    setValues({
+      name: props.campanhaEdicao.name,
+      start: props.campanhaEdicao.start,
+      message1: props.campanhaEdicao.message1,
+      message2: props.campanhaEdicao.message2,
+      message3: props.campanhaEdicao.message3,
+      sessionId: props.campanhaEdicao.sessionId,
+      delay: props.campanhaEdicao.delay || 10, // Adjust default if needed
+      status: props.campanhaEdicao.status
+    })
+  } else {
+    resetarCampanha()
+  }
+}
+
+const onRejectedFiles = () => {
+  $q.notify({
+    html: true,
+    message: `Ops... Ocorreu um erro! <br>
+    <ul>
+      <li>Arquivo deve ter no máximo 10MB.</li>
+      <li>Priorize o envio de imagem ou vídeo.</li>
+    </ul>`,
+    type: 'negative',
+    progress: true,
+    position: 'top',
+    actions: [{ icon: 'close', round: true, color: 'white' }]
+  })
+}
+
+const handleCampanha = handleSubmit(async values => {
+  if (
+    values.message1 === values.message2 ||
+    values.message1 === values.message3 ||
+    (values.message2 && values.message2 === values.message3)
+  ) {
+    $q.notify({
+      type: 'negative',
+      message: 'As mensagens não podem ser iguais'
+    })
+    return
+  }
+
+  try {
+    loading.value = true
+    const medias = new FormData()
+    // Append form values
+    Object.keys(values).forEach(key => {
+      if (values[key] !== null && values[key] !== undefined) {
+        medias.append(key, values[key])
+      }
+    })
+    // Append extra state if needed
+    if (campanhaState.id) {
+      medias.append('id', campanhaState.id)
+    }
+    if (campanhaState.mediaUrl) {
+      medias.append('mediaUrl', campanhaState.mediaUrl)
+    }
+
+    if (arquivos.value && !Array.isArray(arquivos.value)) {
+      medias.append('medias', arquivos.value)
+    }
+
+    if (campanhaState.id) {
+      const data = await alterarCampanha(medias)
+      emit('modal-campanha:editada', data)
+      $q.notify({ type: 'info', message: 'Campanha editada!', position: 'top' })
+    } else {
+      const data = await criarCampanha(medias)
+      emit('modal-campanha:criada', data)
+      $q.notify({
+        type: 'positive',
+        message: 'Campanha criada!',
+        position: 'top'
+      })
+    }
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+    notificarErro('Algum problema ao processar campanha', error)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
-<style lang="scss" >
+<style lang="scss">
 border-error {
   border: 3px solid red;
   background: red !important;

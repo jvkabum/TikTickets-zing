@@ -3,8 +3,7 @@
     <div class="main">
       <div class="inner">
         <div class="top-bar">
-          <div class="cam">
-          </div>
+          <div class="cam"></div>
           <div class="speaker"></div>
         </div>
         <div class="screen">

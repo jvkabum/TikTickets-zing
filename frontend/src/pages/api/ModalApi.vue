@@ -1,7 +1,7 @@
 <template>
   <q-dialog
     persistent
-    :value="modalApi"
+    :model-value="modalApi"
     @hide="fecharModal"
     @show="abrirModal"
   >
@@ -10,7 +10,7 @@
       class="q-pa-lg"
     >
       <q-card-section>
-        <div class="text-h6">{{  apiEdicao.id ? 'Editar' : 'Criar'  }} Configuração API</div>
+        <div class="text-h6">{{ apiEdicao.id ? 'Editar' : 'Criar' }} Configuração API</div>
       </q-card-section>
       <q-card-section>
         <fieldset class="q-pa-md full-width rounded-all">
@@ -21,10 +21,11 @@
                 rounded
                 dense
                 outlined
-                v-model="api.name"
+                v-model="name"
+                v-bind="nameProps"
                 label="Nome da API"
-                @blur="$v.api.name.$touch"
-                :error="$v.api.name.$error"
+                :error="!!errors.name"
+                :error-message="errors.name"
               />
             </div>
             <div class="col-xs-12 col-sm-6">
@@ -36,18 +37,17 @@
                 map-options
                 label="Enviar por"
                 color="primary"
-                v-model="api.sessionId"
+                v-model="sessionId"
+                v-bind="sessionIdProps"
                 :options="cSessions"
                 :input-debounce="700"
                 option-value="id"
                 option-label="name"
-                @blur="$v.api.sessionId.$touch"
-                :error="$v.api.sessionId.$error"
+                :error="!!errors.sessionId"
+                :error-message="errors.sessionId"
                 input-style="width: 280px; max-width: 280px;"
-                error-message="Obrigatório"
               />
             </div>
-
           </div>
         </fieldset>
         <fieldset class="q-pa-md full-width q-mt-lg rounded-all">
@@ -58,9 +58,10 @@
                 rounded
                 dense
                 outlined
-                v-model="api.urlServiceStatus"
-                @blur="$v.api.urlServiceStatus.$touch"
-                :error="$v.api.urlServiceStatus.$error"
+                v-model="urlServiceStatus"
+                v-bind="urlServiceStatusProps"
+                :error="!!errors.urlServiceStatus"
+                :error-message="errors.urlServiceStatus"
                 label="URL WebHook Status Sessão"
                 hint="Dispara a ação sempre que o status da sessão conectada ao whatsapp é alterado."
               />
@@ -70,9 +71,10 @@
                 rounded
                 dense
                 outlined
-                v-model="api.urlMessageStatus"
-                @blur="$v.api.urlMessageStatus.$touch"
-                :error="$v.api.urlMessageStatus.$error"
+                v-model="urlMessageStatus"
+                v-bind="urlMessageStatusProps"
+                :error="!!errors.urlMessageStatus"
+                :error-message="errors.urlMessageStatus"
                 label="URL WebHook Status Mensagem"
                 hint="Dispara ação sempre que o status de uma mensagem é atualizado."
               />
@@ -82,7 +84,10 @@
                 rounded
                 dense
                 outlined
-                v-model="api.authToken"
+                v-model="authToken"
+                v-bind="authTokenProps"
+                :error="!!errors.authToken"
+                :error-message="errors.authToken"
                 label="Token de autenticação"
                 hint="Será enviado como authorization no header. Se existir prefixo, deverá ser informado aqui. Ex.: Bearer, Token"
               />
@@ -116,104 +121,128 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
-import { required, url } from '@vuelidate/validators'
-const isValidURL = (v) => url(v) || !v
-import { CriarAPI, EditarAPI } from 'src/service/api'
-export default {
-  name: 'ModalFila',
-  props: {
-    modalApi: {
-      type: Boolean,
-      default: false
-    },
-    apiEdicao: {
-      type: Object,
-      default: () => {
-        return { id: null }
-      }
-    }
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
+import { storeToRefs } from 'pinia'
+import { useApiStore } from 'src/stores/useApiStore'
+import { useWhatsappStore } from 'src/stores/useWhatsappStore'
+import { useForm } from 'vee-validate'
+import { computed, reactive, ref } from 'vue'
+import { z } from 'zod'
+// Checking task, useWhatsappStore exists. Let's try to use it if populated.
+// But wait, the component uses store.getters.whatsapps. I should check if useWhatsappStore has this data.
+// For safety in this migration step, I'll keep legacy store access for whatsapps only, as the user didn't ask to migrate whatsapp handling yet.
+// Actually, task.md says "SessaoWhatsapp" is later. I will check if I can use legacy store. Yes.
+
+const props = defineProps({
+  modalApi: {
+    type: Boolean,
+    default: false
   },
-  data () {
-    return {
-      api: {
-        id: null,
-        name: null,
-        sessionId: null,
-        urlServiceStatus: null,
-        urlMessageStatus: null,
-        authToken: null,
-        isActive: true
-      }
-    }
-  },
-  validations: {
-    api: {
-      name: { required },
-      sessionId: { required },
-      authToken: {},
-      urlServiceStatus: { isValidURL },
-      urlMessageStatus: { isValidURL }
-    }
-  },
-  computed: {
-    ...mapGetters(['whatsapps']),
-    cSessions () {
-      return this.whatsapps.filter(w => w.type === 'whatsapp' && !w.isDeleted)
-    }
-  },
-  methods: {
-    resetarApi () {
-      this.api = {
-        id: null,
-        queue: null,
-        isActive: true
-      }
-    },
-    fecharModal () {
-      this.resetarApi()
-      this.$emit('update:apiEdicao', { id: null })
-      this.$emit('update:modalApi', false)
-    },
-    abrirModal () {
-      if (this.apiEdicao.id) {
-        this.api = { ...this.apiEdicao }
-      } else {
-        this.resetarApi()
-      }
-    },
-    async handleAPI () {
-      this.$v.api.$touch()
-      if (this.$v.api.$error) {
-        this.$notificarErro('Verifique os campos obrigatórios e inconsistências.')
-        return
-      }
-      try {
-        this.loading = true
-        if (this.api.id) {
-          const { data } = await EditarAPI(this.api)
-          this.$emit('modal-api:editada', data)
-          this.$notificarSucesso('API Editada')
-        } else {
-          const { data } = await CriarAPI(this.api)
-          this.$emit('modal-api:criada', data)
-          this.$notificarSucesso('API criada')
-        }
-        this.loading = false
-        this.fecharModal()
-      } catch (error) {
-        console.error(error)
-        this.$notificarErro('Ocorreu um erro!', error)
-      }
-    }
+  apiEdicao: {
+    type: Object,
+    default: () => ({ id: null })
+  }
+})
+
+const emit = defineEmits(['update:modalApi', 'update:apiEdicao', 'modal-api:criada', 'modal-api:editada'])
+
+const whatsappStore = useWhatsappStore()
+const { whatsapps } = storeToRefs(whatsappStore)
+const apiStore = useApiStore()
+const { criarAPI, editarAPI } = apiStore
+
+const loading = ref(false)
+
+const validationSchema = toTypedSchema(
+  z.object({
+    name: z.string().min(1, 'Nome é obrigatório'),
+    sessionId: z.union([z.number(), z.string()]).refine(val => val !== null && val !== '', 'Sessão é obrigatória'),
+    urlServiceStatus: z.string().url('URL inválida').optional().or(z.literal('')),
+    urlMessageStatus: z.string().url('URL inválida').optional().or(z.literal('')),
+    authToken: z.string().optional()
+  })
+)
+
+const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
+  validationSchema,
+  initialValues: {
+    name: '',
+    sessionId: null,
+    urlServiceStatus: '',
+    urlMessageStatus: '',
+    authToken: ''
+  }
+})
+
+const [name, nameProps] = defineField('name')
+const [sessionId, sessionIdProps] = defineField('sessionId')
+const [urlServiceStatus, urlServiceStatusProps] = defineField('urlServiceStatus')
+const [urlMessageStatus, urlMessageStatusProps] = defineField('urlMessageStatus')
+const [authToken, authTokenProps] = defineField('authToken')
+
+const api = reactive({
+  id: null,
+  isActive: true
+})
+
+const cSessions = computed(() => {
+  return whatsapps.value?.filter(w => w.type === 'whatsapp' && !w.isDeleted) || []
+})
+
+const resetarApi = () => {
+  resetForm()
+  api.id = null
+  api.isActive = true
+}
+
+const fecharModal = () => {
+  resetarApi()
+  emit('update:apiEdicao', { id: null })
+  emit('update:modalApi', false)
+}
+
+const abrirModal = () => {
+  if (props.apiEdicao.id) {
+    api.id = props.apiEdicao.id
+    api.isActive = props.apiEdicao.isActive
+    setValues({
+      name: props.apiEdicao.name,
+      sessionId: props.apiEdicao.sessionId,
+      urlServiceStatus: props.apiEdicao.urlServiceStatus || '',
+      urlMessageStatus: props.apiEdicao.urlMessageStatus || '',
+      authToken: props.apiEdicao.authToken || ''
+    })
+  } else {
+    resetarApi()
+  }
+}
+
+const handleAPI = handleSubmit(async values => {
+  const apiData = {
+    ...values,
+    id: api.id,
+    isActive: api.isActive
   }
 
-}
+  loading.value = true
+  try {
+    if (api.id) {
+      const data = await editarAPI(apiData)
+      emit('modal-api:editada', data)
+    } else {
+      const data = await criarAPI(apiData)
+      emit('modal-api:criada', data)
+    }
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

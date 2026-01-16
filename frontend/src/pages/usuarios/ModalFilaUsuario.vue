@@ -1,7 +1,7 @@
 <template>
   <q-dialog
     persistent
-    :value="modalFilaUsuario"
+    :model-value="modalFilaUsuario"
     @hide="fecharModal"
     @show="abrirModal"
   >
@@ -11,18 +11,23 @@
         <div
           style="font-size: 1em"
           class="text-caption text-bold row col q-px-sm q-pt-sm"
-        >Nome: {{ usuarioSelecionado.name }}</div>
+        >
+          Nome: {{ usuarioSelecionado.name }}
+        </div>
         <div
           style="font-size: 1em"
           class="text-caption text-bold row col q-px-sm"
-        >Email: {{ usuarioSelecionado.email }}</div>
+        >
+          Email: {{ usuarioSelecionado.email }}
+        </div>
         <q-separator spaced />
       </q-card-section>
       <q-card-section>
-        <template v-for="fila in filas" :key="fila.id">
-          <div
-            class="row col"
-          >
+        <template
+          v-for="fila in filas"
+          :key="fila.id"
+        >
+          <div class="row col">
             <q-checkbox
               :disable="!fila.isActive"
               v-model="filasUsuario"
@@ -52,63 +57,64 @@
   </q-dialog>
 </template>
 
-<script>
-import { UpdateUsuarios } from 'src/service/user'
-export default {
-  name: 'ModalFilaUsuario',
-  props: {
-    modalFilaUsuario: {
-      type: Boolean,
-      default: false
-    },
-    usuarioSelecionado: {
-      type: Object,
-      default: () => { return { id: null } }
-    },
-    filas: {
-      type: Array,
-      default: () => []
-    }
-  },
-  data () {
-    return {
-      filasUsuario: []
-    }
-  },
-  methods: {
-    abrirModal () {
-      if (this.usuarioSelecionado.id) {
-        this.filasUsuario = [...this.usuarioSelecionado.queues.map(f => f.id)]
-      }
-    },
-    fecharModal () {
-      this.$emit('update:usuarioSelecionado', {})
-      this.$emit('update:modalFilaUsuario', false)
-    },
-    async handleFilaUsuario () {
-      const req = {
-        ...this.usuarioSelecionado,
-        queues: [...this.filasUsuario]
-      }
-      const { data } = await UpdateUsuarios(req.id, req)
-      this.$emit('modalFilaUsuario:sucesso', data)
-      this.$q.notify({
-        type: 'positive',
-        progress: true,
-        position: 'top',
-        message: 'Filas do usuário editadas com sucesso!',
-        actions: [{
-          icon: 'close',
-          round: true,
-          color: 'white'
-        }]
-      })
-      this.fecharModal()
-    }
-  }
+<script setup>
+import { useQuasar } from 'quasar'
+import { useUsuarioStore } from 'src/stores/useUsuarioStore'
+import { ref } from 'vue'
 
+const props = defineProps({
+  modalFilaUsuario: {
+    type: Boolean,
+    default: false
+  },
+  usuarioSelecionado: {
+    type: Object,
+    default: () => ({ id: null })
+  },
+  filas: {
+    type: Array,
+    default: () => []
+  }
+})
+
+const emit = defineEmits(['update:modalFilaUsuario', 'update:usuarioSelecionado', 'modalFilaUsuario:sucesso'])
+
+const $q = useQuasar()
+const usuarioStore = useUsuarioStore()
+const filasUsuario = ref([])
+
+const abrirModal = () => {
+  if (props.usuarioSelecionado.id) {
+    filasUsuario.value = props.usuarioSelecionado.queues?.map(f => f.id) || []
+  }
+}
+
+const fecharModal = () => {
+  emit('update:usuarioSelecionado', {})
+  emit('update:modalFilaUsuario', false)
+  filasUsuario.value = []
+}
+
+const handleFilaUsuario = async () => {
+  try {
+    const payload = {
+      ...props.usuarioSelecionado,
+      queues: [...filasUsuario.value]
+    }
+    const data = await usuarioStore.atualizarUsuario(payload.id, payload)
+    emit('modalFilaUsuario:sucesso', data)
+    $q.notify({
+      type: 'positive',
+      progress: true,
+      position: 'top',
+      message: 'Filas do usuário editadas com sucesso!',
+      actions: [{ icon: 'close', round: true, color: 'white' }]
+    })
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+  }
 }
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

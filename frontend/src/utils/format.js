@@ -2,10 +2,7 @@ export function formatarMensagemWhatsapp (text) {
   if (!text) return ''
 
   // Escapar caracteres HTML para evitar injeção de código
-  let formattedText = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+  let formattedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
   // Substituir quebras de linha por <br>
   formattedText = formattedText.replace(/\n/g, '<br>')

@@ -1,6 +1,6 @@
 <template>
   <q-dialog
-    :value="modalWhatsapp"
+    :model-value="modalWhatsapp"
     @hide="fecharModal"
     @show="abrirModal"
     persistent
@@ -15,9 +15,8 @@
             size="50px"
             class="q-mr-md"
             :name="whatsapp.type ? `img:${whatsapp.type}-logo.png` : 'mdi-alert'"
-          /> {{ whatsapp.id ? 'Editar' :
-              'Adicionar'
-            }}
+          />
+          {{ whatsAppEdit.id ? 'Editar' : 'Adicionar' }}
           Canal
         </div>
       </q-card-section>
@@ -25,7 +24,7 @@
         <div class="row">
           <div class="col-12 q-my-sm">
             <q-select
-              :disable="!!whatsapp.id"
+              :disable="!!whatsAppEdit.id"
               v-model="whatsapp.type"
               :options="optionsWhatsappsTypes"
               label="Tipo"
@@ -37,14 +36,15 @@
             />
           </div>
           <div class="col-12">
-            <c-input
+            <q-input
               outlined
               rounded
               label="Nome"
               dense
               v-model="whatsapp.name"
-              :validator="$v.whatsapp.name"
-              @blur="$v.whatsapp.name.$touch"
+              v-bind="nameProps"
+              :error="!!errors.name"
+              :error-message="errors.name"
             />
           </div>
 
@@ -52,10 +52,11 @@
             class="col-12 q-mt-md"
             v-if="whatsapp.type === 'telegram'"
           >
-            <c-input
+            <q-input
               outlined
               dense
               label="Token Telegram"
+              rounded
               v-model="whatsapp.tokenTelegram"
             />
           </div>
@@ -70,9 +71,10 @@
                   class="col-12 q-mb-md"
                   v-if="whatsapp.type === 'instagram'"
                 >
-                  <c-input
+                  <q-input
                     outlined
                     dense
+                    rounded
                     label="Usuário"
                     v-model="whatsapp.instagramUser"
                     hint="Seu usuário do Instagram (sem @)"
@@ -86,21 +88,21 @@
                     color="positive"
                     icon="edit"
                     label="Nova senha"
+                    rounded
                     @click="isEdit = !isEdit"
                   >
-                    <q-tooltip>
-                      Alterar senha
-                    </q-tooltip>
+                    <q-tooltip> Alterar senha </q-tooltip>
                   </q-btn>
                 </div>
                 <div
                   class="col-12"
                   v-if="whatsapp.type === 'instagram' && isEdit"
                 >
-                  <c-input
+                  <q-input
                     outlined
                     rounded
                     label="Senha"
+                    dense
                     :type="isPwd ? 'password' : 'text'"
                     v-model="whatsapp.instagramKey"
                     hint="Senha utilizada para logar no Instagram"
@@ -116,10 +118,7 @@
                         icon="mdi-close"
                         @click="isEdit = !isEdit"
                       >
-                        <q-tooltip>
-                          Cancelar alteração de senha
-                        </q-tooltip>
-
+                        <q-tooltip> Cancelar alteração de senha </q-tooltip>
                       </q-btn>
                     </template>
                     <template v-slot:append>
@@ -129,71 +128,62 @@
                         @click="isPwd = !isPwd"
                       />
                     </template>
-                  </c-input>
+                  </q-input>
                 </div>
               </fieldset>
-
             </div>
           </div>
         </div>
 
         <div class="row q-my-md">
           <div class="col-12 relative-position">
-            <label class="text-caption">Mensagem Despedida:
-            </label>
+            <label class="text-caption">Mensagem Despedida: </label>
             <textarea
               ref="inputFarewellMessage"
-              style="min-height: 15vh; max-height: 15vh;"
-              class="q-pa-sm rounded-all bg-white full-width"
+              style="min-height: 15vh; max-height: 15vh"
+              class="q-pa-sm rounded-all bg-white full-width border-quasar"
               placeholder="Digite a mensagem"
-              autogrow
-              dense
-              outlined
               v-model="whatsapp.farewellMessage"
             >
             </textarea>
-            <div class="absolute-top-right">
+            <div class="absolute-top-right q-pa-xs">
               <q-btn
                 rounded
                 dense
+                flat
                 color="black"
-                style="margin-bottom: -120px; margin-right: -30px"
               >
-              <q-icon
-                size="1.5em"
-                name="mdi-emoticon-happy-outline"
-              />
-              <q-tooltip>
-                Emoji
-              </q-tooltip>
-              <q-menu
-                anchor="top right"
-                self="bottom middle"
-                :offset="[5, 40]"
-              >
-                <EmojiPicker
-                  style="width: 40vw"
-                  :showSearch="false"
-                  :emojisByRow="20"
-                  labelSearch="Localizar..."
-                  lang="pt-BR"
-                  @select="onInsertSelectEmoji"
+                <q-icon
+                  size="1.5em"
+                  name="mdi-emoticon-happy-outline"
                 />
-              </q-menu>
-            </q-btn>
+                <q-tooltip> Emoji </q-tooltip>
+                <q-menu
+                  anchor="top right"
+                  self="bottom middle"
+                  :offset="[5, 40]"
+                >
+                  <EmojiPicker
+                    style="width: 40vw"
+                    :showSearch="false"
+                    :emojisByRow="20"
+                    labelSearch="Localizar..."
+                    lang="pt-BR"
+                    @select="onInsertSelectEmoji"
+                  />
+                </q-menu>
+              </q-btn>
               <q-btn
                 rounded
                 dense
+                flat
                 color="black"
-                style="margin-bottom: -40px; margin-right: -10px"
               >
                 <q-icon
                   size="1.5em"
                   name="mdi-variable"
                 />
-                <q-tooltip>
-                  Variáveis
-                </q-tooltip>
+                <q-tooltip> Variáveis </q-tooltip>
                 <q-menu touch-position>
                   <q-list
                     dense
@@ -217,7 +207,7 @@
       </q-card-section>
       <q-card-actions
         align="center"
-        class="q-mt-lg"
+        class="q-mt-md"
       >
         <q-btn
           rounded
@@ -231,204 +221,186 @@
           color="positive"
           rounded
           class="q-px-md"
-          @click="handleSaveWhatsApp(whatsapp)"
+          @click="handleSave"
         />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
-<script>
-import { required, minLength, maxLength } from '@vuelidate/validators'
-import { UpdateWhatsapp, CriarWhatsapp } from 'src/service/sessoesWhatsapp'
-import cInput from 'src/components/cInput.vue'
-import { copyToClipboard, Notify } from 'quasar'
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
+import { useQuasar } from 'quasar'
+import { CriarWhatsapp, UpdateWhatsapp } from 'src/service/sessoesWhatsapp'
+import { useForm } from 'vee-validate'
+import { nextTick, reactive, ref } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
+import { z } from 'zod'
 
-export default {
-  components: { cInput, EmojiPicker },
-  name: 'ModalWhatsapp',
-  props: {
-    modalWhatsapp: {
-      type: Boolean,
-      default: false
-    },
-    whatsAppId: {
-      type: Number,
-      default: null
-    },
-    whatsAppEdit: {
-      type: Object,
-      default: () => { }
-    }
+const props = defineProps({
+  modalWhatsapp: {
+    type: Boolean,
+    default: false
   },
-  data () {
-    return {
-      isPwd: true,
-      isEdit: false,
-      whatsapp: {
-        name: '',
-        isDefault: false,
-        tokenTelegram: '',
-        instagramUser: '',
-        instagramKey: '',
-        tokenAPI: '',
-        type: 'whatsapp',
-        farewellMessage: ''
-      },
-      optionsWhatsappsTypes: [
-        { label: 'Whatsapp', value: 'whatsapp' },
-        { label: 'Telegram', value: 'telegram' }
-        // { label: 'Instagram', value: 'instagram' }
-      ],
-      variaveis: [
-        { label: 'Nome', value: '{{name}}' },
-        { label: 'Saudação', value: '{{greeting}}' },
-        { label: 'Protocolo', value: '{{protocol}}' }
-      ]
-    }
-  },
-  validations: {
-    whatsapp: {
-      name: { required, minLength: minLength(3), maxLength: maxLength(50) },
-      isDefault: {}
-    }
-  },
-  computed: {
-    cBaseUrlIntegração () {
-      return this.whatsapp.UrlMessengerWebHook
-    }
-  },
-  methods: {
-    onInsertSelectEmoji (emoji) {
-      const self = this
-      var tArea = this.$refs.inputFarewellMessage
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!emoji.data) {
-        return
-      }
-      // insert:
-      self.txtContent = this.whatsapp.farewellMessage
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
-      this.whatsapp.farewellMessage = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
-      }, 10)
-    },
-    copy (text) {
-      copyToClipboard(text)
-        .then(this.$notificarSucesso('URL de integração copiada!'))
-        .catch()
-    },
+  whatsAppEdit: {
+    type: Object,
+    default: () => ({})
+  }
+})
 
-    onInsertSelectVariable (variable) {
-      const self = this
-      var tArea = this.$refs.inputFarewellMessage
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!variable) {
-        return
-      }
-      // insert:
-      self.txtContent = this.whatsapp.farewellMessage
-      self.txtContent = tmpStr.substring(0, startPos) + variable + tmpStr.substring(endPos, tmpStr.length)
-      this.whatsapp.farewellMessage = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + 1
-      }, 10)
-    },
+const emit = defineEmits(['update:modalWhatsapp', 'update:whatsAppEdit', 'recarregar-lista'])
 
-    fecharModal () {
-      this.whatsapp = {
-        name: '',
-        isDefault: false
-      }
-      this.$emit('update:whatsAppEdit', {})
-      this.$emit('update:modalWhatsapp', false)
-    },
-    abrirModal () {
-      if (this.whatsAppEdit.id) {
-        this.whatsapp = { ...this.whatsAppEdit }
-      }
-    },
-    async handleSaveWhatsApp (whatsapp) {
-      this.$v.whatsapp.$touch()
-      if (this.$v.whatsapp.$error) {
-        return this.$q.notify({
-          type: 'warning',
-          progress: true,
-          position: 'top',
-          message: 'Ops! Verifique os erros...',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-      }
-      try {
-        if (this.whatsAppEdit.id) {
-          await UpdateWhatsapp(this.whatsAppEdit.id, whatsapp)
-        } else {
-          await CriarWhatsapp(whatsapp)
-        }
-        this.$q.notify({
-          type: 'positive',
-          progress: true,
-          position: 'top',
-          message: `Whatsapp ${this.whatsAppEdit.id ? 'editado' : 'criado'} com sucesso!`,
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-        this.$emit('recarregar-lista')
-        this.fecharModal()
-      } catch (error) {
-        console.error(error, error.data.error === 'ERR_NO_PERMISSION_CONNECTIONS_LIMIT')
-        if (error.data.error === 'ERR_NO_PERMISSION_CONNECTIONS_LIMIT') {
-          Notify.create({
-            type: 'negative',
-            message: 'Limite de conexões atingida.',
-            caption: 'ERR_NO_PERMISSION_CONNECTIONS_LIMIT',
-            position: 'top',
-            progress: true
-          })
-        } else {
-          console.error(error)
-          return this.$q.notify({
-            type: 'error',
-            progress: true,
-            position: 'top',
-            message: 'Ops! Verifique os erros... O nome da conexão não pode existir na plataforma, é um identificador único.',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        }
-      }
-    }
-  },
-  destroyed () {
-    this.$v.whatsapp.$reset()
+const $q = useQuasar()
+
+const isPwd = ref(true)
+const isEdit = ref(false)
+const inputFarewellMessage = ref(null)
+
+const validationSchema = toTypedSchema(
+  z.object({
+    name: z.string().min(3, 'Mínimo 3 caracteres').max(50, 'Máximo 50 caracteres'),
+    type: z.string(),
+    tokenTelegram: z.string().optional(),
+    instagramUser: z.string().optional(),
+    instagramKey: z.string().optional(),
+    farewellMessage: z.string().optional()
+  })
+)
+
+const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
+  validationSchema,
+  initialValues: {
+    name: '',
+    type: 'whatsapp',
+    tokenTelegram: '',
+    instagramUser: '',
+    instagramKey: '',
+    farewellMessage: ''
+  }
+})
+
+const [name, nameProps] = defineField('name')
+const [type] = defineField('type')
+const [tokenTelegram] = defineField('tokenTelegram')
+const [instagramUser] = defineField('instagramUser')
+const [instagramKey] = defineField('instagramKey')
+const [farewellMessage] = defineField('farewellMessage')
+
+// Reactive object for binding other fields not explicitly validated or needed in initialValues
+const whatsapp = reactive({
+  name,
+  type,
+  tokenTelegram,
+  instagramUser,
+  instagramKey,
+  farewellMessage
+})
+
+const optionsWhatsappsTypes = [
+  { label: 'Whatsapp', value: 'whatsapp' },
+  { label: 'Telegram', value: 'telegram' }
+]
+
+const variaveis = [
+  { label: 'Nome', value: '{{name}}' },
+  { label: 'Saudação', value: '{{greeting}}' },
+  { label: 'Protocolo', value: '{{protocol}}' }
+]
+
+const onInsertSelectEmoji = emoji => {
+  const tArea = inputFarewellMessage.value
+  if (!tArea || !emoji.i) return
+
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const tmpStr = tArea.value
+
+  const newText = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos)
+  setValues({ farewellMessage: newText })
+
+  nextTick(() => {
+    tArea.selectionStart = tArea.selectionEnd = startPos + emoji.i.length
+    tArea.focus()
+  })
+}
+
+const onInsertSelectVariable = variable => {
+  const tArea = inputFarewellMessage.value
+  if (!tArea || !variable) return
+
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const tmpStr = tArea.value
+
+  const newText = tmpStr.substring(0, startPos) + variable + tmpStr.substring(endPos)
+  setValues({ farewellMessage: newText })
+
+  nextTick(() => {
+    tArea.selectionStart = tArea.selectionEnd = startPos + variable.length
+    tArea.focus()
+  })
+}
+
+const fecharModal = () => {
+  resetForm()
+  emit('update:whatsAppEdit', {})
+  emit('update:modalWhatsapp', false)
+}
+
+const abrirModal = () => {
+  if (props.whatsAppEdit.id) {
+    setValues({
+      name: props.whatsAppEdit.name || '',
+      type: props.whatsAppEdit.type || 'whatsapp',
+      tokenTelegram: props.whatsAppEdit.tokenTelegram || '',
+      instagramUser: props.whatsAppEdit.instagramUser || '',
+      instagramKey: props.whatsAppEdit.instagramKey || '',
+      farewellMessage: props.whatsAppEdit.farewellMessage || ''
+    })
+  } else {
+    resetForm()
   }
 }
+
+const handleSave = handleSubmit(async values => {
+  try {
+    if (props.whatsAppEdit.id) {
+      await UpdateWhatsapp(props.whatsAppEdit.id, values)
+    } else {
+      await CriarWhatsapp(values)
+    }
+    $q.notify({
+      type: 'positive',
+      message: `Whatsapp ${props.whatsAppEdit.id ? 'editado' : 'criado'} com sucesso!`,
+      position: 'top'
+    })
+    emit('recarregar-lista')
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+    const errorMsg =
+      error.data?.error === 'ERR_NO_PERMISSION_CONNECTIONS_LIMIT'
+        ? 'Limite de conexões atingida.'
+        : 'Ops! Verifique os erros... O nome da conexão não pode existir na plataforma, é um identificador único.'
+
+    $q.notify({
+      type: 'negative',
+      message: errorMsg,
+      position: 'top'
+    })
+  }
+})
 </script>
 
 <style lang="scss" scoped>
+.border-quasar {
+  border: 1px solid rgba(0, 0, 0, 0.24);
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.3s;
+  &:focus {
+    border-color: var(--q-primary);
+  }
+}
 </style>

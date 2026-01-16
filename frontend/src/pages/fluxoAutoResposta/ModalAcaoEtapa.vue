@@ -11,7 +11,7 @@
       class="q-pa-lg"
     >
       <q-card-section>
-        <div class="text-h6">{{ acaoEtapaEdicao.id ? 'Editar': 'Criar' }} Ação Etapa</div>
+        <div class="text-h6">{{ acaoEtapaEdicao.id ? 'Editar' : 'Criar' }} Ação Etapa</div>
       </q-card-section>
       <q-card-section>
         <div class="row">
@@ -20,8 +20,11 @@
               dense
               square
               outlined
-              v-model="acaoEtapa.words"
+              v-model="words"
+              v-bind="wordsProps"
               label="Chave"
+              :error="!!errors.words"
+              :error-message="errors.words"
             />
           </div>
         </div>
@@ -29,7 +32,8 @@
           <div class="col">
             <q-option-group
               inline
-              v-model="acaoEtapa.action"
+              v-model="action"
+              v-bind="actionProps"
               :options="optionsAcao"
               color="primary"
             />
@@ -38,11 +42,12 @@
         <div class="row q-mt-md">
           <div class="col">
             <q-select
-              v-if="acaoEtapa.action === 0"
+              v-if="action === 0"
               dense
               outlined
               class="full-width"
-              v-model="acaoEtapa.nextStepId"
+              v-model="nextStepId"
+              v-bind="nextStepIdProps"
               :options="autoReply.stepsReply"
               option-label="id"
               option-value="id"
@@ -50,14 +55,16 @@
               map-options
               emit-value
               clearable
-              @input="acaoEtapa.queueId = null; acaoEtapa.userIdDestination = null"
+              :error="!!errors.nextStepId"
+              :error-message="errors.nextStepId"
             />
             <q-select
-              v-if="acaoEtapa.action === 1"
+              v-if="action === 1"
               dense
               outlined
               class="full-width"
-              v-model="acaoEtapa.queueId"
+              v-model="queueId"
+              v-bind="queueIdProps"
               :options="filas"
               option-label="queue"
               option-value="id"
@@ -65,14 +72,16 @@
               map-options
               emit-value
               clearable
-              @input="acaoEtapa.nextStepId = null; acaoEtapa.userIdDestination = null"
+              :error="!!errors.queueId"
+              :error-message="errors.queueId"
             />
             <q-select
-              v-if="acaoEtapa.action === 2"
+              v-if="action === 2"
               dense
               outlined
               class="full-width"
-              v-model="acaoEtapa.userIdDestination"
+              v-model="userIdDestination"
+              v-bind="userIdDestinationProps"
               :options="usuarios"
               option-label="name"
               option-value="id"
@@ -80,7 +89,8 @@
               map-options
               emit-value
               clearable
-              @input="acaoEtapa.nextStepId = null; acaoEtapa.queueId = null"
+              :error="!!errors.userIdDestination"
+              :error-message="errors.userIdDestination"
             />
           </div>
         </div>
@@ -94,9 +104,7 @@
                 size="2em"
                 name="mdi-emoticon-happy-outline"
               />
-              <q-tooltip>
-                Emoji
-              </q-tooltip>
+              <q-tooltip> Emoji </q-tooltip>
               <q-menu
                 anchor="top right"
                 self="bottom middle"
@@ -115,16 +123,16 @@
           </div>
           <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
             <label class="text-caption">Mensagem retorno:</label>
-            <textarea
-              ref="inputEnvioMensagem"
-              style="min-height: 10vh; max-height: 10vh;"
-              class="q-pa-sm bg-white full-width"
-              placeholder="Digita a mensagem"
+            <q-input
+              class="full-width"
+              square
+              outlined
+              v-model="replyDefinition"
+              v-bind="replyDefinitionProps"
+              type="textarea"
+              label="Mensagem de retorno"
               autogrow
               dense
-              outlined
-              @input="(v) => acaoEtapa.replyDefinition = v.target.value"
-              :value="acaoEtapa.replyDefinition"
             />
           </div>
         </div>
@@ -149,157 +157,187 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-
 </template>
 
-<script>
-const userId = +localStorage.getItem('userId')
-import { CriarAcaoEtapa, EditarAcaoEtapa } from 'src/service/autoResposta'
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
+import { useAutoRespostaStore } from 'src/stores/useAutoRespostaStore'
+import { useForm } from 'vee-validate'
+import { reactive, watch } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
+import { z } from 'zod'
 
-export default {
-  name: 'ModalAcaoEtapa',
-  components: { VEmojiPicker },
-  props: {
-    modalAcaoEtapa: {
-      type: Boolean,
-      default: false
-    },
-    acaoEtapaEdicao: {
-      type: Object,
-      default: () => {
-        return { id: null }
-      }
-    },
-    etapaAutoResposta: {
-      type: Object,
-      default: () => {
-        return { id: null }
-      }
-    },
-    filas: {
-      type: Array,
-      default: () => []
-    },
-    usuarios: {
-      type: Array,
-      default: () => []
-    },
-    autoReply: {
-      type: Object,
-      default: () => { }
-    }
+const props = defineProps({
+  modalAcaoEtapa: {
+    type: Boolean,
+    default: false
   },
-  data () {
-    return {
-      acaoEtapa: {
-        stepReplyId: null,
-        words: null,
-        action: null,
-        userId,
-        queueId: null,
-        userIdDestination: null,
-        nextStepId: null,
-        replyDefinition: null
-      },
-      optionsAcao: [
-        { value: 0, label: 'Proxima Etapa' },
-        { value: 1, label: 'Enviar para Fila' },
-        { value: 2, label: 'Enviar para usuário' }
-      ]
-    }
+  acaoEtapaEdicao: {
+    type: Object,
+    default: () => ({ id: null })
   },
-  methods: {
-    resetAcaoEtapa () {
-      this.acaoEtapa = {
-        stepReplyId: null,
-        words: null,
-        action: null,
-        userId,
-        queueId: null,
-        userIdDestination: null,
-        nextStepId: null,
-        replyDefinition: null
-      }
-    },
-    abrirModal () {
-      if (this.acaoEtapaEdicao.id) {
-        this.acaoEtapa = {
-          ...this.acaoEtapaEdicao,
-          userId
-        }
-      } else {
-        this.resetAcaoEtapa()
-      }
-    },
-    fecharModal () {
-      this.resetAcaoEtapa()
-      this.$emit('update:acaoEtapaEdicao', { id: null })
-      this.$emit('update:modalAcaoEtapa', false)
-    },
-    async handleAcaoEtapa () {
-      const params = {
-        ...this.acaoEtapa,
-        stepReplyId: this.etapaAutoResposta.id
-      }
-      if (params.id) {
-        const { data } = await EditarAcaoEtapa(params)
-        this.$emit('acaoEtapa:editada', data)
-        this.$q.notify({
-          type: 'info',
-          progress: true,
-          position: 'top',
-          textColor: 'black',
-          message: 'Ação editada!',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-      } else {
-        const { data } = await CriarAcaoEtapa(params)
-        this.$emit('acaoEtapa:criada', data)
-        this.$q.notify({
-          type: 'positive',
-          progress: true,
-          position: 'top',
-          message: 'Ação criada!',
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
+  etapaAutoResposta: {
+    type: Object,
+    default: () => ({ id: null })
+  },
+  filas: {
+    type: Array,
+    default: () => []
+  },
+  usuarios: {
+    type: Array,
+    default: () => []
+  },
+  autoReply: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
+const emit = defineEmits(['update:modalAcaoEtapa', 'update:acaoEtapaEdicao'])
+
+const autoRespostaStore = useAutoRespostaStore()
+const { criarAcao, editarAcao } = autoRespostaStore
+
+const userId = +localStorage.getItem('userId')
+
+const validationSchema = toTypedSchema(
+  z
+    .object({
+      words: z.string().min(1, 'Chave é obrigatória'),
+      action: z.number(),
+      queueId: z.number().nullable().optional(),
+      userIdDestination: z.number().nullable().optional(),
+      nextStepId: z.number().nullable().optional(),
+      replyDefinition: z.string().nullable().optional()
+    })
+    .superRefine((data, ctx) => {
+      if (data.action === 0 && !data.nextStepId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Selecione a etapa',
+          path: ['nextStepId']
         })
       }
-      this.fecharModal()
-    },
-    onInsertSelectEmoji (emoji) {
-      const self = this
-      var tArea = this.$refs.inputEnvioMensagem
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!emoji.data) {
-        return
+      if (data.action === 1 && !data.queueId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Selecione a fila',
+          path: ['queueId']
+        })
       }
-      // insert:
-      self.txtContent = this.acaoEtapa.replyDefinition
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
-      this.acaoEtapa.replyDefinition = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
-      }, 10)
-    }
+      if (data.action === 2 && !data.userIdDestination) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Selecione o usuário',
+          path: ['userIdDestination']
+        })
+      }
+    })
+)
+
+const { handleSubmit, errors, defineField, setValues, resetForm, values } = useForm({
+  validationSchema,
+  initialValues: {
+    words: '',
+    action: 0,
+    queueId: null,
+    userIdDestination: null,
+    nextStepId: null,
+    replyDefinition: ''
+  }
+})
+
+const [words, wordsProps] = defineField('words')
+const [action, actionProps] = defineField('action')
+const [queueId, queueIdProps] = defineField('queueId')
+const [userIdDestination, userIdDestinationProps] = defineField('userIdDestination')
+const [nextStepId, nextStepIdProps] = defineField('nextStepId')
+const [replyDefinition, replyDefinitionProps] = defineField('replyDefinition')
+
+const acaoEtapa = reactive({
+  id: null
+})
+
+const optionsAcao = [
+  { value: 0, label: 'Proxima Etapa' },
+  { value: 1, label: 'Enviar para Fila' },
+  { value: 2, label: 'Enviar para usuário' }
+]
+
+watch(action, () => {
+  // Clear other fields when action changes?
+  // But defineField is reactive, so we can manual setValues or let user clear
+  // Might be good UX to clear irrelevant fields, but keeping it simple for now as original did manual clear on @input
+})
+
+// Original clear logic in template was on @input, I'll rely on user or store to handle,
+// or I can add watchers:
+watch(action, val => {
+  if (val === 0) {
+    queueId.value = null
+    userIdDestination.value = null
+  }
+  if (val === 1) {
+    nextStepId.value = null
+    userIdDestination.value = null
+  }
+  if (val === 2) {
+    nextStepId.value = null
+    queueId.value = null
+  }
+})
+
+const onInsertSelectEmoji = emoji => {
+  if (!emoji.i) return
+  const currentText = replyDefinition.value || ''
+  replyDefinition.value = currentText + emoji.i
+}
+
+const fecharModal = () => {
+  resetForm()
+  acaoEtapa.id = null
+  emit('update:acaoEtapaEdicao', { id: null })
+  emit('update:modalAcaoEtapa', false)
+}
+
+const abrirModal = () => {
+  if (props.acaoEtapaEdicao.id) {
+    acaoEtapa.id = props.acaoEtapaEdicao.id
+    setValues({
+      words: props.acaoEtapaEdicao.words,
+      action: props.acaoEtapaEdicao.action,
+      queueId: props.acaoEtapaEdicao.queueId,
+      userIdDestination: props.acaoEtapaEdicao.userIdDestination,
+      nextStepId: props.acaoEtapaEdicao.nextStepId,
+      replyDefinition: props.acaoEtapaEdicao.replyDefinition
+    })
+  } else {
+    resetForm()
+    acaoEtapa.id = null
+  }
+}
+
+const handleAcaoEtapa = handleSubmit(async values => {
+  const params = {
+    ...values,
+    id: acaoEtapa.id,
+    userId,
+    stepReplyId: props.etapaAutoResposta.id
   }
 
-}
+  try {
+    if (params.id) {
+      await editarAcao(params)
+    } else {
+      await criarAcao(params)
+    }
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+  }
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

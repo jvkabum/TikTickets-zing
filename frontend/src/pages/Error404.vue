@@ -1,13 +1,11 @@
 <template>
   <div class="fullscreen bg-negative text-white text-center q-pa-md flex flex-center">
     <div>
-      <div style="font-size: 30vh">
-        404
-      </div>
+      <div style="font-size: 30vh">404</div>
 
       <div
         class="text-h2 text-white"
-        style="opacity:.4"
+        style="opacity: 0.4"
       >
         Oooooops... Nada por aqui...
       </div>

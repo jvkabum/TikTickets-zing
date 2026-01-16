@@ -7,23 +7,28 @@
   >
     <q-card-section class="row wrap justify-start items-center content-center q-pa-sm q-mb-md">
       <q-list
-        v-for="menu in cRelatorios"
+        v-for="menu in relatorios"
         :key="menu.name"
         class="q-pa-md items-center"
       >
         <q-item
-          style="min-width: 340px; max-width: 340px; width: 340px;
-            min-height: 90px; height: 90px; max-height: 90px;
-            border-left: solid #3E72AF 3px
-            "
+          style="
+            min-width: 340px;
+            max-width: 340px;
+            width: 340px;
+            min-height: 90px;
+            height: 90px;
+            max-height: 90px;
+            border-left: solid #3e72af 3px;
+          "
           class="shadow-1 q-px-sm items-start"
           clickable
           v-ripple
-          :to="{name: menu.name}"
+          :to="{ name: menu.name }"
         >
           <q-item-section>
-            <q-item-label class="text-primary">{{menu.titulo}}</q-item-label>
-            <q-item-label caption>{{menu.objetivo}}</q-item-label>
+            <q-item-label class="text-primary">{{ menu.titulo }}</q-item-label>
+            <q-item-label caption>{{ menu.objetivo }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
@@ -31,25 +36,15 @@
   </q-card>
 </template>
 
-<script>
+<script setup>
+import { onMounted, ref } from 'vue'
 import relatorios from './relatorios.json'
-export default {
-  name: 'ccListaRelatorios',
-  computed: {
-    cRelatorios () {
-      return relatorios
-    }
-  },
-  data () {
-    return {
-      userProfile: 'user'
-    }
-  },
-  mounted () {
-    this.userProfile = localStorage.getItem('profile')
-  }
-}
+
+const userProfile = ref('user')
+
+onMounted(() => {
+  userProfile.value = localStorage.getItem('profile')
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

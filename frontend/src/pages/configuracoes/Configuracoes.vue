@@ -4,12 +4,14 @@
       <q-item-label
         header
         class="text-bold text-h6 q-mb-lg"
-      >Configurações</q-item-label>
+        >Configurações</q-item-label
+      >
 
       <q-item-label
         caption
         class="q-mt-lg q-pl-sm"
-      >Módulo: Atendimento</q-item-label>
+        >Módulo: Atendimento</q-item-label
+      >
       <q-separator spaced />
 
       <q-item
@@ -18,19 +20,21 @@
       >
         <q-item-section>
           <q-item-label>Não visualizar Tickets já atribuidos à outros usuários</q-item-label>
-          <q-item-label caption>Somente o usuário responsável pelo ticket e/ou os administradores visualizarão a atendimento.</q-item-label>
+          <q-item-label caption
+            >Somente o usuário responsável pelo ticket e/ou os administradores visualizarão a atendimento.</q-item-label
+          >
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
-            v-model="NotViewAssignedTickets"
+            v-model="settings.NotViewAssignedTickets"
             false-value="disabled"
             true-value="enabled"
             checked-icon="check"
             keep-color
-            :color="NotViewAssignedTickets === 'enabled' ? 'green' : 'negative'"
+            :color="settings.NotViewAssignedTickets === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @input="atualizarConfiguracao('NotViewAssignedTickets')"
+            @update:model-value="atualizarConfiguracao('NotViewAssignedTickets')"
           />
         </q-item-section>
       </q-item>
@@ -41,19 +45,21 @@
       >
         <q-item-section>
           <q-item-label>Não visualizar Tickets no ChatBot</q-item-label>
-          <q-item-label caption>Somente administradores poderão visualizar tickets que estivem interagindo com o ChatBot.</q-item-label>
+          <q-item-label caption
+            >Somente administradores poderão visualizar tickets que estivem interagindo com o ChatBot.</q-item-label
+          >
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
-            v-model="NotViewTicketsChatBot"
+            v-model="settings.NotViewTicketsChatBot"
             false-value="disabled"
             true-value="enabled"
             checked-icon="check"
             keep-color
-            :color="NotViewTicketsChatBot === 'enabled' ? 'green' : 'negative'"
+            :color="settings.NotViewTicketsChatBot === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @input="atualizarConfiguracao('NotViewTicketsChatBot')"
+            @update:model-value="atualizarConfiguracao('NotViewTicketsChatBot')"
           />
         </q-item-section>
       </q-item>
@@ -64,19 +70,22 @@
       >
         <q-item-section>
           <q-item-label>Forçar atendimento via Carteira</q-item-label>
-          <q-item-label caption>Caso o contato tenha carteira vínculada, o sistema irá direcionar o atendimento somente para os donos da carteira de clientes.</q-item-label>
+          <q-item-label caption
+            >Caso o contato tenha carteira vínculada, o sistema irá direcionar o atendimento somente para os donos da
+            carteira de clientes.</q-item-label
+          >
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
-            v-model="DirectTicketsToWallets"
+            v-model="settings.DirectTicketsToWallets"
             false-value="disabled"
             true-value="enabled"
             checked-icon="check"
             keep-color
-            :color="DirectTicketsToWallets === 'enabled' ? 'green' : 'negative'"
+            :color="settings.DirectTicketsToWallets === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @input="atualizarConfiguracao('DirectTicketsToWallets')"
+            @update:model-value="atualizarConfiguracao('DirectTicketsToWallets')"
           />
         </q-item-section>
       </q-item>
@@ -95,13 +104,13 @@
             outlined
             dense
             rounded
-            v-model="botTicketActive"
+            v-model="settings.botTicketActive"
             :options="listaChatFlow"
             map-options
             emit-value
             option-value="id"
             option-label="name"
-            @input="atualizarConfiguracao('botTicketActive')"
+            @update:model-value="atualizarConfiguracao('botTicketActive')"
           />
         </q-item-section>
       </q-item>
@@ -116,15 +125,15 @@
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
-            v-model="ignoreGroupMsg"
+            v-model="settings.ignoreGroupMsg"
             false-value="disabled"
             true-value="enabled"
             checked-icon="check"
             keep-color
-            :color="ignoreGroupMsg === 'enabled' ? 'green' : 'negative'"
+            :color="settings.ignoreGroupMsg === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @input="atualizarConfiguracao('ignoreGroupMsg')"
+            @update:model-value="atualizarConfiguracao('ignoreGroupMsg')"
           />
         </q-item-section>
       </q-item>
@@ -135,31 +144,33 @@
       >
         <q-item-section>
           <q-item-label>Recusar chamadas no Whatsapp</q-item-label>
-          <q-item-label caption>Quando ativo, as ligações de aúdio e vídeo serão recusadas, automaticamente.</q-item-label>
+          <q-item-label caption
+            >Quando ativo, as ligações de aúdio e vídeo serão recusadas, automaticamente.</q-item-label
+          >
         </q-item-section>
         <q-item-section avatar>
           <q-toggle
-            v-model="rejectCalls"
+            v-model="settings.rejectCalls"
             false-value="disabled"
             true-value="enabled"
             checked-icon="check"
             keep-color
-            :color="rejectCalls === 'enabled' ? 'green' : 'negative'"
+            :color="settings.rejectCalls === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @input="atualizarConfiguracao('rejectCalls')"
+            @update:model-value="atualizarConfiguracao('rejectCalls')"
           />
         </q-item-section>
       </q-item>
 
       <div
         class="row q-px-md"
-        v-if="rejectCalls === 'enabled'"
+        v-if="settings.rejectCalls === 'enabled'"
       >
         <div class="col-12">
           <q-input
             rounded
-            v-model="callRejectMessage"
+            v-model="settings.callRejectMessage"
             type="textarea"
             autogrow
             dense
@@ -167,7 +178,7 @@
             label="Mensagem ao rejeitar ligação:"
             input-style="min-height: 6vh; max-height: 9vh;"
             debounce="700"
-            @input="atualizarConfiguracao('callRejectMessage')"
+            @update:model-value="atualizarConfiguracao('callRejectMessage')"
           />
         </div>
       </div>
@@ -179,17 +190,19 @@
       >
         <q-item-section>
           <q-item-label>Fechamento Automático de Tickets</q-item-label>
-          <q-item-label caption>Defina o número de dias após os quais os tickets pendentes serão fechados automaticamente.</q-item-label>
+          <q-item-label caption
+            >Defina o número de dias após os quais os tickets pendentes serão fechados automaticamente.</q-item-label
+          >
         </q-item-section>
         <q-item-section avatar>
           <q-input
-            v-model="daysToClose"
+            v-model="settings.daysToClose"
             type="number"
             min="1"
             outlined
             dense
             label="Dias para fechar tickets"
-            @input="atualizarConfiguracao('daysToClose')"
+            @update:model-value="atualizarConfiguracao('daysToClose')"
           />
         </q-item-section>
       </q-item>
@@ -197,77 +210,31 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { storeToRefs } from 'pinia'
 import { ListarChatFlow } from 'src/service/chatFlow'
-import { ListarConfiguracoes, AlterarConfiguracao } from 'src/service/configuracoes'
+import { useConfiguracaoStore } from 'src/stores/useConfiguracaoStore'
+import { onMounted, ref } from 'vue'
 
-export default {
-  name: 'IndexConfiguracoes',
-  data () {
-    return {
-      userProfile: 'user',
-      configuracoes: [],
-      listaChatFlow: [],
-      NotViewAssignedTickets: null,
-      NotViewTicketsChatBot: null,
-      DirectTicketsToWallets: null,
-      botTicketActive: null,
-      ignoreGroupMsg: null,
-      rejectCalls: null,
-      callRejectMessage: '',
-      daysToClose: 3 // Valor inicial para o fechamento de tickets
-    }
-  },
-  methods: {
-    async listarConfiguracoes () {
-      const { data } = await ListarConfiguracoes()
-      this.configuracoes = data
-      this.configuracoes.forEach(el => {
-        let value = el.value
-        if (el.key === 'botTicketActive' && el.value) {
-          value = +el.value
-        }
-        this.$data[el.key] = value
-      })
-    },
-    async listarChatFlow () {
-      const { data } = await ListarChatFlow()
-      this.listaChatFlow = data.chatFlow
-    },
-    async atualizarConfiguracao (key, value = null) {
-      const params = {
-        key,
-        value: value !== null ? value : this.$data[key]
-      }
-      try {
-        // Atualiza a configuração
-        await AlterarConfiguracao(params)
-        this.$q.notify({
-          type: 'positive',
-          message: 'Configuração alterada com sucesso!',
-          progress: true,
-          actions: [{
-            icon: 'close',
-            round: true,
-            color: 'white'
-          }]
-        })
-      } catch (error) {
-        console.error('Erro ao alterar configuração:', error)
+const configuracaoStore = useConfiguracaoStore()
+const { settings } = storeToRefs(configuracaoStore)
+const { listarConfiguracoes, atualizarConfiguracao } = configuracaoStore
 
-        // Verificação da estrutura do erro
-        if (error && error.response && error.response.data) {
-          this.$notificarErro('Erro ao alterar configuração', error.response.data.message)
-        } else {
-          this.$notificarErro('Erro desconhecido', 'Ocorreu um erro ao tentar alterar a configuração')
-        }
-      }
-    }
-  },
-  async mounted () {
-    this.userProfile = localStorage.getItem('profile')
-    this.listarConfiguracoes()
-    this.listarChatFlow()
+const userProfile = ref('user')
+const listaChatFlow = ref([])
+
+const listarChatFlow = async () => {
+  try {
+    const { data } = await ListarChatFlow()
+    listaChatFlow.value = data.chatFlow
+  } catch (error) {
+    console.error(error)
   }
 }
+
+onMounted(() => {
+  userProfile.value = localStorage.getItem('profile')
+  listarConfiguracoes()
+  listarChatFlow()
+})
 </script>

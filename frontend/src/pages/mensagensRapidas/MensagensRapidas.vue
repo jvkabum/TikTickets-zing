@@ -19,7 +19,12 @@
           color="primary"
           label="Adicionar"
           rounded
-          @click="mensagemRapidaEmEdicao = {}; modalMensagemRapida = true"
+          @click="
+            () => {
+              mensagemRapidaEmEdicao = {}
+              modalMensagemRapida = true
+            }
+          "
         />
       </template>
       <template v-slot:body-cell-isActive="props">
@@ -33,30 +38,58 @@
       </template>
       <template v-slot:body-cell-hasAttachment="props">
         <q-td class="text-center">
-          <div class="cursor-pointer" @mouseenter="showPopup = true" @mouseleave="showPopup = false">
+          <div
+            class="cursor-pointer"
+            @mouseenter="showPopup = true"
+            @mouseleave="showPopup = false"
+          >
             <q-icon
               v-if="props.value"
               name="mdi-attachment"
               size="24px"
               color="primary"
             >
-              <q-popup-proxy hover escape-key>
+              <q-popup-proxy
+                hover
+                escape-key
+              >
                 <q-card class="preview-card">
                   <q-card-section>
                     <div class="text-subtitle2">Anexos:</div>
-                    <div v-for="(media, index) in props.row.medias" :key="index" class="q-mt-sm">
-                      <div v-if="isImage(media)" class="row items-center justify-center preview-container">
+                    <div
+                      v-for="(media, index) in props.row.medias"
+                      :key="index"
+                      class="q-mt-sm"
+                    >
+                      <div
+                        v-if="isImage(media)"
+                        class="row items-center justify-center preview-container"
+                      >
                         <q-img
                           :src="getMediaUrl(media)"
                           class="preview-image"
                           fit="contain"
                         />
                       </div>
-                      <div v-else-if="isVideo(media)" class="row items-center justify-center">
-                        <q-icon name="movie" size="200px" color="primary"/>
+                      <div
+                        v-else-if="isVideo(media)"
+                        class="row items-center justify-center"
+                      >
+                        <q-icon
+                          name="movie"
+                          size="200px"
+                          color="primary"
+                        />
                       </div>
-                      <div v-else class="row items-center justify-center">
-                        <q-icon :name="getFileIcon(media)" size="200px" color="primary"/>
+                      <div
+                        v-else
+                        class="row items-center justify-center"
+                      >
+                        <q-icon
+                          :name="getFileIcon(media)"
+                          size="200px"
+                          color="primary"
+                        />
                       </div>
                     </div>
                   </q-card-section>
@@ -78,7 +111,7 @@
             flat
             round
             icon="mdi-delete"
-            @click="deletarMensagem(props.row)"
+            @click="handleDeletarMensagem(props.row)"
           />
         </q-td>
       </template>
@@ -92,130 +125,115 @@
   </div>
 </template>
 
-<script>
-import { DeletarMensagemRapida, ListarMensagensRapidas } from '../../service/mensagensRapidas';
-export default {
-  name: 'MensagensRapidas',
-  components: { },
-  data () {
-    return {
-      loading: false,
-      mensagensRapidas: [],
-      modalMensagemRapida: false,
-      mensagemRapidaEmEdicao: {},
-      showPopup: false,
-      columns: [
-        { name: 'id', label: '#', field: 'id', align: 'left' },
-        { name: 'key', label: 'Chave', field: 'key', align: 'left' },
-        { name: 'message', label: 'Mensagem', field: 'message', align: 'left', classes: 'ellipsis', style: 'max-width: 400px;' },
-        {
-          name: 'hasAttachment',
-          label: '',
-          field: row => row.medias && row.medias.length > 0,
-          align: 'center',
-          format: val => val ? 'mdi-attachment' : '',
-          style: 'width: 50px'
-        },
-        { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
-      ],
-      pagination: {
-        rowsPerPage: 40,
-        rowsNumber: 0,
-        lastIndex: 0
-      }
-    }
-  },
-  methods: {
-    async listarMensagensRapidas () {
-      const { data } = await ListarMensagensRapidas()
-      this.mensagensRapidas = data
-    },
-    mensagemCriada (mensagem) {
-      this.mensagensRapidas.unshift(mensagem)
-    },
-    mensagemEditada (mensagem) {
-      const newMensagens = [...this.mensagensRapidas]
-      const idx = newMensagens.findIndex(m => m.id === mensagem.id)
-      if (idx > -1) {
-        newMensagens[idx] = mensagem
-      }
-      this.mensagensRapidas = [...newMensagens]
-    },
-    editarMensagem (mensagem) {
-      this.mensagemRapidaEmEdicao = { ...mensagem }
-      this.modalMensagemRapida = true
-    },
-    deletarMensagem (mensagem) {
-      this.$q.dialog({
-        title: 'Atenção!!',
-        message: `Deseja realmente deletar a mensagem de chave "${mensagem.key}"?`,
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        this.loading = true
-        DeletarMensagemRapida(mensagem)
-          .then(res => {
-            let newMensagens = [...this.mensagensRapidas]
-            newMensagens = newMensagens.filter(m => m.id !== mensagem.id)
+<script setup>
+import { storeToRefs } from 'pinia'
+import { useQuasar } from 'quasar'
+import { useMensagemRapidaStore } from 'src/stores/useMensagemRapidaStore'
+import { onMounted, ref } from 'vue'
+import ModalMensagemRapida from './ModalMensagemRapida.vue'
 
-            this.mensagensRapidas = [...newMensagens]
-            this.$q.notify({
-              type: 'positive',
-              progress: true,
-              position: 'top',
-              message: 'Mensagem deletada!',
-              actions: [{
-                icon: 'close',
-                round: true,
-                color: 'white'
-              }]
-            })
-          })
-        this.loading = false
-      })
-    },
-    isImage (media) {
-      return media.endsWith('.jpg') || media.endsWith('.jpeg') || media.endsWith('.png') || media.endsWith('.gif')
-    },
-    isVideo (media) {
-      return media.endsWith('.mp4') || media.endsWith('.webm') || media.endsWith('.ogg')
-    },
-    getFileIcon (media) {
-      if (media.endsWith('.pdf')) return 'picture_as_pdf'
-      if (media.endsWith('.mp3') || media.endsWith('.wav')) return 'audio_file'
-      if (this.isVideo(media)) return 'video_file'
-      if (this.isImage(media)) return 'image'
-      if (media.endsWith('.apk')) return 'android'
-      return 'insert_drive_file'
-    },
-    getFileType (media) {
-      if (this.isImage(media)) return 'Imagem'
-      if (this.isVideo(media)) return 'Vídeo'
-      if (media.endsWith('.pdf')) return 'PDF'
-      if (media.endsWith('.mp3') || media.endsWith('.wav')) return 'Áudio'
-      if (media.endsWith('.apk')) return 'APK'
-      return 'Arquivo'
-    },
-    getMediaUrl (media) {
-      if (media instanceof File) {
-        return URL.createObjectURL(media)
-      }
-      return media
-    }
+const $q = useQuasar()
+const mensagemRapidaStore = useMensagemRapidaStore()
+const { mensagensRapidas, loading } = storeToRefs(mensagemRapidaStore)
+const { listarMensagensRapidas, deletarMensagemRapida } = mensagemRapidaStore
+
+const modalMensagemRapida = ref(false)
+const mensagemRapidaEmEdicao = ref({})
+const showPopup = ref(false)
+
+const pagination = ref({
+  rowsPerPage: 40,
+  rowsNumber: 0,
+  lastIndex: 0
+})
+
+const columns = [
+  { name: 'id', label: '#', field: 'id', align: 'left' },
+  { name: 'key', label: 'Chave', field: 'key', align: 'left' },
+  {
+    name: 'message',
+    label: 'Mensagem',
+    field: 'message',
+    align: 'left',
+    classes: 'ellipsis',
+    style: 'max-width: 400px;'
   },
-  mounted () {
-    this.listarMensagensRapidas()
-  }
+  {
+    name: 'hasAttachment',
+    label: '',
+    field: row => row.medias && row.medias.length > 0,
+    align: 'center',
+    format: val => (val ? 'mdi-attachment' : ''),
+    style: 'width: 50px'
+  },
+  { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
+]
+
+const isImage = media => {
+  return (
+    typeof media === 'string' &&
+    (media.endsWith('.jpg') || media.endsWith('.jpeg') || media.endsWith('.png') || media.endsWith('.gif'))
+  )
 }
+
+const isVideo = media => {
+  return typeof media === 'string' && (media.endsWith('.mp4') || media.endsWith('.webm') || media.endsWith('.ogg'))
+}
+
+const getFileIcon = media => {
+  if (typeof media !== 'string') return 'insert_drive_file'
+  if (media.endsWith('.pdf')) return 'picture_as_pdf'
+  if (media.endsWith('.mp3') || media.endsWith('.wav')) return 'audio_file'
+  if (isVideo(media)) return 'video_file'
+  if (isImage(media)) return 'image'
+  if (media.endsWith('.apk')) return 'android'
+  return 'insert_drive_file'
+}
+
+const getMediaUrl = media => {
+  if (media instanceof File) {
+    return URL.createObjectURL(media)
+  }
+  return media
+}
+
+const mensagemCriada = mensagem => {
+  // Store updates automatically, no local state management needed.
+}
+
+const mensagemEditada = mensagem => {
+  // Store updates automatically, no local state management needed.
+}
+
+const editarMensagem = mensagem => {
+  mensagemRapidaEmEdicao.value = { ...mensagem }
+  modalMensagemRapida.value = true
+}
+
+const handleDeletarMensagem = mensagem => {
+  $q.dialog({
+    title: 'Atenção!!',
+    message: `Deseja realmente deletar a mensagem de chave "${mensagem.key}"?`,
+    cancel: { label: 'Não', color: 'primary', push: true },
+    ok: { label: 'Sim', color: 'negative', push: true },
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await deletarMensagemRapida(mensagem)
+      $q.notify({
+        type: 'positive',
+        message: 'Mensagem deletada!',
+        position: 'top'
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  })
+}
+
+onMounted(() => {
+  listarMensagensRapidas()
+})
 </script>
 
 <style lang="scss" scoped>

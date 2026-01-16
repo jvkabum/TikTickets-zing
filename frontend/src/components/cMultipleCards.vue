@@ -28,7 +28,7 @@ export default {
       let contentClass = 'col'
       for (const size of ['xl', 'lg', 'md', 'sm', 'xs']) {
         if (this.sizes[size]) {
-          contentClass += ' col-' + size + '-' + (12 / this.sizes[size])
+          contentClass += ' col-' + size + '-' + 12 / this.sizes[size]
         }
       }
       return contentClass
@@ -55,10 +55,12 @@ export default {
     }
   },
   render (h) {
-    return this.$scopedSlots.default({ sets: this.sets, contentClass: this.contentClass })[0]
+    return this.$slots.default({
+      sets: this.sets,
+      contentClass: this.contentClass
+    })[0]
   }
 }
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

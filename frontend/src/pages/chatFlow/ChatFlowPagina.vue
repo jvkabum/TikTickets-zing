@@ -4,11 +4,10 @@
   </div>
 </template>
 
-<script>
-export default {
+<script setup>
+defineOptions({
   name: 'IndexChatFlow'
-}
+})
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

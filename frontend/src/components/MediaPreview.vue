@@ -1,7 +1,10 @@
 <template>
   <div class="media-preview">
     <!-- Imagem -->
-    <div v-if="isImage" class="media-container">
+    <div
+      v-if="isImage"
+      class="media-container"
+    >
       <q-img
         :src="mediaUrl"
         spinner-color="primary"
@@ -11,7 +14,10 @@
     </div>
 
     <!-- Video -->
-    <div v-else-if="isVideo" class="media-container">
+    <div
+      v-else-if="isVideo"
+      class="media-container"
+    >
       <video
         controls
         class="media-content"
@@ -20,9 +26,16 @@
     </div>
 
     <!-- Audio -->
-    <div v-else-if="isAudio" class="media-container">
+    <div
+      v-else-if="isAudio"
+      class="media-container"
+    >
       <div class="audio-preview">
-        <q-icon name="music_note" size="48px" color="primary" />
+        <q-icon
+          name="music_note"
+          size="48px"
+          color="primary"
+        />
         <audio
           controls
           class="media-content q-mt-md"
@@ -32,7 +45,10 @@
     </div>
 
     <!-- Documento -->
-    <div v-else class="media-container document-preview">
+    <div
+      v-else
+      class="media-container document-preview"
+    >
       <div class="document-content">
         <q-icon
           :name="documentIcon"
@@ -77,9 +93,15 @@ export default {
     documentIcon () {
       const fileType = this.file.type
       if (fileType.includes('pdf')) return 'mdi-file-pdf'
-      if (fileType.includes('word') || fileType.includes('doc')) return 'mdi-file-word'
-      if (fileType.includes('excel') || fileType.includes('sheet')) return 'mdi-file-excel'
-      if (fileType.includes('powerpoint') || fileType.includes('presentation')) return 'mdi-file-powerpoint'
+      if (fileType.includes('word') || fileType.includes('doc')) {
+        return 'mdi-file-word'
+      }
+      if (fileType.includes('excel') || fileType.includes('sheet')) {
+        return 'mdi-file-excel'
+      }
+      if (fileType.includes('powerpoint') || fileType.includes('presentation')) {
+        return 'mdi-file-powerpoint'
+      }
       return 'mdi-file-document-outline'
     }
   },
@@ -97,7 +119,7 @@ export default {
     this.fileName = this.file.name || 'Arquivo'
     this.fileSize = this.formatFileSize(this.file.size)
   },
-  beforeDestroy () {
+  beforeUnmount () {
     URL.revokeObjectURL(this.mediaUrl)
   }
 }

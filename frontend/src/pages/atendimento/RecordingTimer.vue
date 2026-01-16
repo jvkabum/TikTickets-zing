@@ -1,54 +1,36 @@
 <template>
-  <div class="timerBox">
-    {{ addZero(timer.minutes) }}:{{ addZero(timer.seconds) }}
-  </div>
+  <div class="timerBox">{{ addZero(timer.minutes) }}:{{ addZero(timer.seconds) }}</div>
 </template>
 
-<script>
-export default {
-  name: 'RecordingTimer',
-  data () {
-    return {
-      timer: {
-        minutes: 0,
-        seconds: 0
-      },
-      intervalId: null
+<script setup>
+import { onMounted, onUnmounted, reactive } from 'vue'
+
+const timer = reactive({
+  minutes: 0,
+  seconds: 0
+})
+
+let intervalId = null
+
+const addZero = n => (n < 10 ? '0' + n : n)
+
+const startInterval = () => {
+  intervalId = setInterval(() => {
+    if (timer.seconds === 59) {
+      timer.minutes++
+      timer.seconds = 0
+    } else {
+      timer.seconds++
     }
-  },
-  methods: {
-    interval () {
-      this.intervalId = setInterval(() => {
-        if (this.timer.seconds === 59) {
-          this.timer = {
-            ...this.timer,
-            minutes: this.timer.minutes + 1,
-            seconds: 0
-          }
-        } else {
-          this.timer = {
-            ...this.timer,
-            seconds: this.timer.seconds + 1
-          }
-        }
-      }, 1000)
-    },
-    stopInteval () {
-      if (this.intervalId) {
-        clearInterval(this.intervalId)
-      }
-    },
-    addZero (n) {
-      return n < 10 ? '0' + n : n
-    }
-  },
-  mounted () {
-    this.interval()
-  },
-  unmounted () {
-    this.stopInteval()
-  }
+  }, 1000)
 }
+
+const stopInterval = () => {
+  if (intervalId) clearInterval(intervalId)
+}
+
+onMounted(startInterval)
+onUnmounted(stopInterval)
 </script>
 
 <style lang="scss" scoped>

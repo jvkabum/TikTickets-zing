@@ -4,17 +4,17 @@ import $router from 'src/router'
 import { orderBy } from 'lodash'
 import { parseISO } from 'date-fns'
 
-const orderMessages = (messages) => {
-  const newMessages = orderBy(messages, (obj) => parseISO(obj.timestamp || obj.createdAt), ['asc'])
+const orderMessages = messages => {
+  const newMessages = orderBy(messages, obj => parseISO(obj.timestamp || obj.createdAt), ['asc'])
   return [...newMessages]
 }
 
-const orderTickets = (tickets) => {
-  const newTickes = orderBy(tickets, (obj) => parseISO(obj.lastMessageAt || obj.updatedAt), ['asc'])
+const orderTickets = tickets => {
+  const newTickes = orderBy(tickets, obj => parseISO(obj.lastMessageAt || obj.updatedAt), ['asc'])
   return [...newTickes]
 }
 
-const checkTicketFilter = (ticket) => {
+const checkTicketFilter = ticket => {
   const filtroPadrao = {
     searchParam: '',
     pageNumber: 1,
@@ -31,19 +31,19 @@ const checkTicketFilter = (ticket) => {
   const NotViewTicketsChatBot = () => {
     const configuracoes = JSON.parse(localStorage.getItem('configuracoes'))
     const conf = configuracoes?.find(c => c.key === 'NotViewTicketsChatBot')
-    return (conf?.value === 'enabled')
+    return conf?.value === 'enabled'
   }
 
   const DirectTicketsToWallets = () => {
     const configuracoes = JSON.parse(localStorage.getItem('configuracoes'))
     const conf = configuracoes?.find(c => c.key === 'DirectTicketsToWallets')
-    return (conf?.value === 'enabled')
+    return conf?.value === 'enabled'
   }
 
   const isNotViewAssignedTickets = () => {
     const configuracoes = JSON.parse(localStorage.getItem('configuracoes'))
     const conf = configuracoes?.find(c => c.key === 'NotViewAssignedTickets')
-    return (conf?.value === 'enabled')
+    return conf?.value === 'enabled'
   }
   const filtros = JSON.parse(localStorage.getItem('filtrosAtendimento')) || filtroPadrao
   const usuario = JSON.parse(localStorage.getItem('usuario'))
@@ -142,7 +142,11 @@ const checkTicketFilter = (ticket) => {
 
   // verificar se filtro somente tickets não assinados (isNotAssingned) ativo
   if (filtros.isNotAssignedUser) {
-    console.log('isNotAssignedUser ativo para exibir somente tickets não assinados', filtros.isNotAssignedUser, !ticket.userId)
+    console.log(
+      'isNotAssignedUser ativo para exibir somente tickets não assinados',
+      filtros.isNotAssignedUser,
+      !ticket.userId
+    )
     return filtros.isNotAssignedUser && !ticket.userId
   }
 
@@ -212,7 +216,8 @@ const atendimentoTicket = {
           ...payload,
           // ajustar informações por conta das mudanças no front
           username: payload?.user?.name || payload?.username || tickets[ticketIndex].username,
-          profilePicUrl: payload?.contact?.profilePicUrl || payload?.profilePicUrl || tickets[ticketIndex].profilePicUrl,
+          profilePicUrl:
+            payload?.contact?.profilePicUrl || payload?.profilePicUrl || tickets[ticketIndex].profilePicUrl,
           name: payload?.contact?.name || payload?.name || tickets[ticketIndex].name
         }
         state.tickets = tickets.filter(t => checkTicketFilter(t))
@@ -370,7 +375,7 @@ const atendimentoTicket = {
         return
       }
 
-      state.mensagens = state.mensagens.map((m) => {
+      state.mensagens = state.mensagens.map(m => {
         if (m.id == payload.id) {
           return { ...m, ...payload }
         }
@@ -379,7 +384,7 @@ const atendimentoTicket = {
       })
 
       if (state.ticketFocado?.scheduledMessages) {
-        state.ticketFocado.scheduledMessages = state.ticketFocado.scheduledMessages.map((m) => {
+        state.ticketFocado.scheduledMessages = state.ticketFocado.scheduledMessages.map(m => {
           if (m.id == payload.id) {
             return { ...m, ...payload }
           }
@@ -419,7 +424,11 @@ const atendimentoTicket = {
         }
         await dispatch('LocalizarMensagensTicket', params)
 
-        await $router.push({ name: 'chat', params, query: { t: new Date().getTime() } })
+        await $router.push({
+          name: 'chat',
+          params,
+          query: { t: new Date().getTime() }
+        })
       } catch (error) {
         // posteriormente é necessário investigar o motivo de está caindo em erro
         if (!error) return

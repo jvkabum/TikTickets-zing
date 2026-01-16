@@ -1,7 +1,7 @@
 import request from 'src/service/request'
 
 // Consultar tickets com paginação
-export const ConsultarTickets = async (params) => {
+export const ConsultarTickets = async params => {
   const queryParams = new URLSearchParams()
   // Adicionar apenas parâmetros não nulos
   Object.entries(params).forEach(([key, value]) => {
@@ -38,7 +38,7 @@ export const AtualizarStatusTicket = async (ticketId, status) => {
 }
 
 // Criar novo ticket
-export const CriarTicket = async (data) => {
+export const CriarTicket = async data => {
   return request({
     url: '/tickets',
     method: 'post',
@@ -47,7 +47,7 @@ export const CriarTicket = async (data) => {
 }
 
 // Deletar ticket
-export const DeletarTicket = async (ticketId) => {
+export const DeletarTicket = async ticketId => {
   return request({
     url: `/tickets/${ticketId}`,
     method: 'delete'
@@ -55,7 +55,7 @@ export const DeletarTicket = async (ticketId) => {
 }
 
 // Buscar ticket por ID
-export const BuscarTicketPorId = async (ticketId) => {
+export const BuscarTicketPorId = async ticketId => {
   return request({
     url: `/tickets/${ticketId}`,
     method: 'get'
@@ -169,7 +169,7 @@ export function EditarMensagem (mensagem) {
 }
 
 // Sincronizar mensagens do ticket
-export const SincronizarMensagensTicket = async (ticketId) => {
+export const SincronizarMensagensTicket = async ticketId => {
   return request({
     url: `/tickets/${ticketId}/sync`,
     method: 'post'
