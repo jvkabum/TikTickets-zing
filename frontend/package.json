@@ -15,7 +15,8 @@
     "test": "echo \"No test specified\" && exit 0",
     "start": "pm2 start server.js --name FlowDeskPro-frontend",
     "stop": "pm2 stop server.js --name FlowDeskPro-frontend",
-    "build": "export NODE_OPTIONS=--openssl-legacy-provider && npx quasar build -P -m pwa"
+    "build": "set NODE_OPTIONS=--openssl-legacy-provider && npx quasar build -P -m pwa",
+    "dev": "set NODE_OPTIONS=--openssl-legacy-provider && npx quasar dev"
   },
   "dependencies": {
     "@quasar/cli": "^2.4.0",
