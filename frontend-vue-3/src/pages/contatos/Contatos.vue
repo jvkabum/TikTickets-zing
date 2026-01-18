@@ -1,0 +1,438 @@
+<template>
+  <div>
+    <q-table
+      class="my-sticky-dynamic"
+      title="Contatos"
+      :id="`tabela-contatos-${isChatContact ? 'atendimento' : ''}`"
+      :rows="contatos"
+      :columns="columns"
+      :loading="loading"
+      row-key="id"
+      virtual-scroll
+      :virtual-scroll-item-size="48"
+      :virtual-scroll-sticky-size-start="48"
+      v-model:pagination="pagination"
+      :rows-per-page-options="[0]"
+      @virtual-scroll="onScroll"
+      :bordered="isChatContact"
+      :square="isChatContact"
+      :flat="isChatContact"
+      :separator="isChatContact ? 'vertical' : 'horizontal'"
+      :class="{
+        'q-ma-lg': !isChatContact,
+        'q-ml-md heightChat': isChatContact
+      }"
+    >
+      <template v-slot:top>
+        <div class="row col-2 q-table__title items-center">
+          <q-btn
+            v-if="isChatContact"
+            class="q-mr-sm"
+            color="black"
+            round
+            flat
+            icon="mdi-close"
+            @click="$router.push({ name: 'chat-empty' })"
+          />
+          Contatos
+        </div>
+        <q-space />
+        <q-input
+          :class="{
+            'order-last q-mt-md': $q.screen.width < 500
+          }"
+          style="width: 300px"
+          dense
+          outlined
+          rounded
+          debounce="500"
+          v-model="params.searchParam"
+          clearable
+          placeholder="Localize"
+          @update:model-value="filtrarContato"
+        >
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+        <q-select
+          style="width: 300px"
+          class="q-ml-sm"
+          dense
+          outlined
+          rounded
+          v-model="params.tagsIds"
+          multiple
+          label="Filtrar por Tags"
+          :options="etiquetas"
+          use-chips
+          option-value="id"
+          option-label="tag"
+          emit-value
+          map-options
+          @update:model-value="filtrarContato"
+        >
+          <template v-slot:selected-item="{ opt }">
+            <q-chip
+              dense
+              square
+              color="white"
+              text-color="primary"
+              class="q-ma-xs"
+            >
+              <q-icon
+                :style="`color: ${opt.color}`"
+                name="mdi-pound-box-outline"
+                size="20px"
+                class="q-mr-xs"
+              />
+              {{ opt.tag }}
+            </q-chip>
+          </template>
+        </q-select>
+        <q-space />
+        <q-btn-dropdown
+          color="primary"
+          label="Adicionar"
+          rounded
+          split
+          class="glossy"
+          @click="
+            () => {
+              selectedContactId = null
+              modalContato = true
+            }
+          "
+        >
+          <q-list>
+            <q-item
+              clickable
+              v-close-popup
+              @click="modalImportarContatos = true"
+            >
+              <q-item-section>
+                <q-item-label>Importar</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item
+              clickable
+              v-close-popup
+              @click="handleExportContacts"
+            >
+              <q-item-section>
+                <q-item-label>Exportar</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+      </template>
+
+      <template v-slot:body-cell-profilePicUrl="props">
+        <q-td :props="props">
+          <q-avatar
+            size="40px"
+            flat
+            class="bg-grey-3"
+          >
+            <template v-if="props.row.profilePicUrl">
+              <q-img :src="props.row.profilePicUrl" />
+            </template>
+            <q-icon
+              name="mdi-account"
+              v-else
+              size="24px"
+            />
+          </q-avatar>
+        </q-td>
+      </template>
+
+      <template v-slot:body-cell-acoes="props">
+        <q-td class="text-center">
+          <q-btn
+            flat
+            round
+            icon="img:whatsapp-logo.png"
+            @click="handleSaveTicket(props.row, 'whatsapp')"
+            v-if="props.row.number"
+          />
+          <q-btn
+            flat
+            round
+            icon="img:instagram-logo.png"
+            @click="handleSaveTicket(props.row, 'instagram')"
+            v-if="props.row.instagramPK"
+          />
+          <q-btn
+            flat
+            round
+            icon="img:telegram-logo.png"
+            @click="handleSaveTicket(props.row, 'telegram')"
+            v-if="props.row.telegramId"
+          />
+          <q-btn
+            flat
+            round
+            icon="edit"
+            @click="editContact(props.row.id)"
+          />
+          <q-btn
+            flat
+            round
+            icon="mdi-delete"
+            @click="deleteContact(props.row.id)"
+          />
+        </q-td>
+      </template>
+      <template v-slot:pagination> {{ contatos.length }}/{{ totalContatos }} </template>
+    </q-table>
+    <ContatoModal
+      v-model:contact-id="selectedContactId"
+      v-model:modal-contato="modalContato"
+    />
+
+    <q-dialog
+      v-model="modalImportarContatos"
+      persistent
+      position="top"
+    >
+      <q-card style="width: 400px">
+        <q-card-section class="row items-center">
+          <div class="text-h6">Selecione o arquivo</div>
+        </q-card-section>
+        <q-card-section>
+          <q-file
+            outlined
+            dense
+            rounded
+            use-chips
+            accept=".csv"
+            v-model="file"
+            label="Arquivo de contatos"
+            hint="Colunas: Nome; Numero"
+          >
+            <template v-slot:prepend>
+              <q-icon name="cloud_upload" />
+            </template>
+          </q-file>
+        </q-card-section>
+        <q-card-section class="row q-gutter-sm">
+          <div class="col-12">
+            <q-select
+              class="full-width"
+              outlined
+              dense
+              rounded
+              v-model="tags"
+              multiple
+              label="Etiquetas"
+              :options="etiquetas"
+              use-chips
+              option-value="id"
+              option-label="tag"
+              emit-value
+              map-options
+            >
+              <template v-slot:option="{ itemProps, itemEvents, opt, selected, toggleOption }">
+                <q-item
+                  v-bind="itemProps"
+                  v-on="itemEvents"
+                >
+                  <q-item-section>
+                    <q-item-label><span v-html="opt.tag"></span></q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-checkbox
+                      :model-value="selected"
+                      @update:model-value="toggleOption(opt)"
+                    />
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn
+            rounded
+            label="Sair"
+            color="negative"
+            v-close-popup
+            class="q-px-md"
+          />
+          <q-btn
+            class="q-ml-lg q-px-md"
+            rounded
+            label="Importar"
+            color="positive"
+            @click="handleImportarContatos"
+            :loading="loading"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </div>
+</template>
+
+<script setup>
+import { storeToRefs } from 'pinia'
+import { useQuasar } from 'quasar'
+import { CriarTicket } from 'src/service/tickets'
+import { useContatoStore } from 'src/stores/useContatoStore'
+import { useEtiquetaStore } from 'src/stores/useEtiquetaStore'
+import { useTicketStore } from 'src/stores/useTicketStore'
+import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
+import { onMounted, reactive, ref } from 'vue'
+import ContatoModal from './ContatoModal.vue'
+
+const props = defineProps({
+  isChatContact: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const $q = useQuasar()
+const contatoStore = useContatoStore()
+const etiquetaStore = useEtiquetaStore()
+const ticketStore = useTicketStore()
+
+const { contatos, loading, totalContatos, hasMore } = storeToRefs(contatoStore)
+const { etiquetas } = storeToRefs(etiquetaStore)
+
+const selectedContactId = ref(null)
+const modalContato = ref(false)
+const modalImportarContatos = ref(false)
+const file = ref(null)
+const tags = ref([])
+
+const params = reactive({
+  searchParam: '',
+  pageNumber: 1,
+  hasMore: true,
+  tagsIds: []
+})
+
+const pagination = ref({
+  rowsPerPage: 40,
+  rowsNumber: 0,
+  lastIndex: 0
+})
+
+const columns = [
+  {
+    name: 'profilePicUrl',
+    label: '',
+    field: 'profilePicUrl',
+    align: 'center',
+    style: 'width: 50px'
+  },
+  { name: 'name', label: 'Nome', field: 'name', align: 'left', sortable: true },
+  { name: 'number', label: 'Número', field: 'number', align: 'left' },
+  { name: 'email', label: 'E-mail', field: 'email', align: 'left' },
+  { name: 'acoes', label: 'Ações', field: 'acoes', align: 'center' }
+]
+
+const listarContatos = async () => {
+  try {
+    const data = await contatoStore.listarContatos(params)
+    pagination.value.lastIndex = contatos.value.length - 1
+    pagination.value.rowsNumber = data.count
+  } catch (error) {
+    notificarErro('Erro ao listar contatos', error)
+  }
+}
+
+const filtrarContato = () => {
+  params.pageNumber = 1
+  listarContatos()
+}
+
+const onScroll = ({ to }) => {
+  if (loading.value !== true && hasMore.value === true && to === pagination.value.lastIndex) {
+    params.pageNumber++
+    listarContatos()
+  }
+}
+
+const editContact = id => {
+  selectedContactId.value = id
+  modalContato.value = true
+}
+
+const deleteContact = id => {
+  $q.dialog({
+    title: 'Atenção!!',
+    message: 'Deseja realmente deletar o contato?',
+    cancel: { label: 'Não', color: 'primary', push: true },
+    ok: { label: 'Sim', color: 'negative', push: true },
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await contatoStore.deletarContato(id)
+      notificarSucesso('Contato deletado!')
+    } catch (error) {
+      notificarErro('Erro ao deletar contato', error)
+    }
+  })
+}
+
+const handleImportarContatos = async () => {
+  if (!file.value) return
+  const formData = new FormData()
+  formData.append('file', file.value)
+  if (tags.value.length > 0) {
+    formData.append('tagsIds', JSON.stringify(tags.value))
+  }
+  try {
+    await contatoStore.importarContatos(formData)
+    notificarSucesso('Contatos importados com sucesso!')
+    modalImportarContatos.value = false
+    filtrarContato()
+  } catch (error) {
+    notificarErro('Erro ao importar contatos', error)
+  }
+}
+
+const handleExportContacts = async () => {
+  try {
+    const data = await contatoStore.exportarContatos()
+    const link = document.createElement('a')
+    link.href = data.downloadLink
+    link.setAttribute('download', 'contatos.xlsx')
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  } catch (error) {
+    notificarErro('Erro ao exportar contatos', error)
+  }
+}
+
+const handleSaveTicket = async (contact, channel) => {
+  if (!contact.number && channel === 'whatsapp') return
+  try {
+    const { data } = await CriarTicket({
+      contactId: contact.id,
+      status: 'open',
+      userId: localStorage.getItem('userId'),
+      channel
+    })
+    ticketStore.setTicketFocado(data)
+    // Redirecionar para atendimento ou abrir chat?
+    // Aqui depende da lógica da aplicação. Geralmente redireciona.
+  } catch (error) {
+    notificarErro('Erro ao iniciar atendimento', error)
+  }
+}
+
+onMounted(() => {
+  etiquetaStore.listarEtiquetas(true)
+  listarContatos()
+})
+</script>
+
+<style lang="scss" scoped>
+.heightChat {
+  height: calc(100vh - 120px);
+}
+</style>

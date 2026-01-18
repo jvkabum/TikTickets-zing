@@ -1,0 +1,26 @@
+# Diretórios
+node_modules/
+dist/
+src-cordova/
+.quasar/
+src-pwa/
+coverage/
+.quasar/
+build/
+
+# Arquivos
+*.log
+*.min.js
+*.min.css
+.DS_Store
+Thumbs.db
+
+# Configurações
+.env
+.env.local
+.env.*.local
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

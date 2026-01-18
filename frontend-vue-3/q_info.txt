@@ -1,0 +1,39 @@
+
+Operating System - Windows_NT(10.0.22621) - win32/x64
+NodeJs - 20.18.0
+
+Global packages
+  NPM - 10.8.2
+  yarn - 1.22.22
+  @quasar/cli - undefined
+  @quasar/icongenie - Not installed
+  cordova - Not installed
+
+Important local packages
+  quasar - 2.18.6 -- Build high-performance VueJS user interfaces (SPA, PWA, SSR, Mobile and Desktop) in record time
+  @quasar/app-vite - 1.11.0 -- Quasar Framework App CLI with Vite
+  @quasar/extras - 1.17.0 -- Quasar Framework fonts, icons and animations
+  eslint-plugin-quasar - Not installed
+  vue - 3.5.26 -- The progressive JavaScript framework for building modern web UI.
+  vue-router - 4.6.4
+  pinia - Not installed
+  vuex - 4.1.0 -- state management for Vue.js
+  vite - 2.9.18 -- Native-ESM powered web dev build tool
+  eslint - 8.57.1 -- An AST-based pattern checker for JavaScript.
+  electron - Not installed
+  electron-packager - Not installed
+  @electron/packager - Not installed
+  electron-builder - Not installed
+  register-service-worker - 1.7.2 -- Script for registering service worker, with hooks
+  @capacitor/core - Not installed
+  @capacitor/cli - Not installed
+  @capacitor/android - Not installed
+  @capacitor/ios - Not installed
+
+Quasar App Extensions
+  *None installed*
+
+Networking
+  Host - kabum
+  Wi-Fi - 192.168.1.103
+
