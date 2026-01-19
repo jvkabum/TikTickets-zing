@@ -8,15 +8,23 @@ import { logger } from "../utils/logger";
 
 // Função principal de configuração do Express
 export default async function express(app: Application): Promise<void> {
-  // Define as origens permitidas para requisições CORS
-  // Por padrão, permite apenas o frontend definido nas variáveis de ambiente
-  const origin = [process.env.FRONTEND_URL || "https://app.tikanais.com.br"];
-
-  // Configura o CORS para permitir requisições da origem definida
-  // e habilita o envio de credenciais (cookies, headers de autenticação)
   app.use(
     cors({
-      origin,
+      origin: (requestOrigin, callback) => {
+        if (!requestOrigin) return callback(null, true);
+
+        // Allow any localhost origin in development environment
+        if (process.env.NODE_ENV === "dev" && requestOrigin.startsWith("http://localhost")) {
+          return callback(null, true);
+        }
+
+        const allowedOrigin = process.env.FRONTEND_URL || "https://app.tikanais.com.br";
+        if (requestOrigin === allowedOrigin) {
+          return callback(null, true);
+        }
+
+        callback(new Error("Not allowed by CORS"));
+      },
       credentials: true
     })
   );
@@ -25,7 +33,7 @@ export default async function express(app: Application): Promise<void> {
   if (process.env.NODE_ENV !== "dev") {
     // Adiciona headers de segurança usando o Helmet
     app.use(helmet());
-    
+
     // Configura a Política de Segurança de Conteúdo (CSP)
     // Define regras para carregamento de recursos (scripts, estilos, imagens, etc)
     app.use(
@@ -69,10 +77,10 @@ export default async function express(app: Application): Promise<void> {
   app.use(cookieParser()); // Parser para cookies
   app.use(json({ limit: "100MB" })); // Parser para JSON com limite de 100MB
   app.use(
-    urlencoded({ 
-      extended: true, 
-      limit: "100MB", 
-      parameterLimit: 200000 
+    urlencoded({
+      extended: true,
+      limit: "100MB",
+      parameterLimit: 200000
     }) // Parser para dados de formulário com limites
   );
 
@@ -81,7 +89,7 @@ export default async function express(app: Application): Promise<void> {
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     // Registra o erro no log
     logger.error("Erro ocorrido:", err.message);
-    
+
     // Retorna resposta de erro
     res.status(500).json({
       message: "Ocorreu um erro interno no servidor",

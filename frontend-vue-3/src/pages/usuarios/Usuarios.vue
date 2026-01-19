@@ -109,7 +109,7 @@ const optionsProfile = [
 const modalUsuario = ref(false)
 const filter = ref(null)
 
-const pagination = reactive({
+const pagination = ref({
   rowsPerPage: 40,
   rowsNumber: 0,
   lastIndex: 0
@@ -150,8 +150,8 @@ const listarUsuarios = async () => {
   try {
     const data = await usuarioStore.listarUsuarios(params)
     params.hasMore = data.hasMore
-    pagination.lastIndex = usuarioStore.usuarios.length - 1
-    pagination.rowsNumber = data.count
+    pagination.value.lastIndex = usuarioStore.usuarios.length - 1
+    pagination.value.rowsNumber = data.count
   } catch (error) {
     console.error(error)
     notificarErro('Erro ao listar usuários', error)

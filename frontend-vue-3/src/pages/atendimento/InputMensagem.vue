@@ -234,7 +234,6 @@
 </template>
 
 <script setup>
-import MicRecorder from 'mic-recorder-to-mp3'
 import { storeToRefs } from 'pinia'
 import { LocalStorage, uid, useQuasar } from 'quasar'
 import { EnviarMensagemTexto } from 'src/service/tickets'
@@ -247,7 +246,8 @@ import 'vue3-emoji-picker/css'
 import RecordingTimer from './RecordingTimer.vue'
 import { useTicketActions } from './useTicketActions'
 
-const Mp3Recorder = new MicRecorder({ bitRate: 128 })
+// Lazy-loaded recorder (evita erro com lamejs no Vite)
+let Mp3Recorder = null
 
 const props = defineProps({
   replyingMessage: { type: Object, default: null },
@@ -309,9 +309,17 @@ const mensagemRapidaSelecionada = m => {
 const handleSartRecordingAudio = async () => {
   try {
     await navigator.mediaDevices.getUserMedia({ audio: true })
+    
+    // Lazy load MicRecorder para evitar erro com lamejs
+    if (!Mp3Recorder) {
+      const MicRecorder = (await import('mic-recorder-to-mp3')).default
+      Mp3Recorder = new MicRecorder({ bitRate: 128 })
+    }
+    
     await Mp3Recorder.start()
     isRecordingAudio.value = true
   } catch (e) {
+    console.error('Erro ao iniciar gravação:', e)
     notificarErro('Erro ao acessar microfone')
   }
 }

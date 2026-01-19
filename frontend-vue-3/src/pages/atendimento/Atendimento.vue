@@ -224,6 +224,7 @@
             <TicketList
               :status="tab"
               :search-params="pesquisaTickets"
+              :filas="filas"
             />
           </q-tab-panel>
         </q-tab-panels>

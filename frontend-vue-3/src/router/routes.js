@@ -144,11 +144,11 @@ const routes = [
   {
     path: '/atendimento',
     name: 'atendimento',
-    // redirect: { name: 'chat-empty' },
+    redirect: { name: 'chat-empty' },
     component: () => import('../pages/atendimento/Atendimento.vue'),
     children: [
       {
-        path: '/chats/',
+        path: 'chats',
         name: 'chat-empty',
         component: () => import('../pages/atendimento/Chat.vue')
       },

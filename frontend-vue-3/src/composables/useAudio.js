@@ -1,4 +1,3 @@
-import MicRecorder from 'mic-recorder-to-mp3'
 import { ref } from 'vue'
 
 /**
@@ -15,12 +14,18 @@ export function useAudio() {
     let timerInterval = null
 
     /**
-     * Inicializa o gravador de áudio
+     * Inicializa o gravador de áudio (carrega dinamicamente para evitar erro com lamejs)
      */
-    const initRecorder = () => {
-        recorder = new MicRecorder({
-            bitRate: 128
-        })
+    const initRecorder = async () => {
+        try {
+            const MicRecorder = (await import('mic-recorder-to-mp3')).default
+            recorder = new MicRecorder({
+                bitRate: 128
+            })
+        } catch (error) {
+            console.error('Erro ao carregar MicRecorder:', error)
+            throw error
+        }
     }
 
     /**
@@ -28,7 +33,7 @@ export function useAudio() {
      */
     const startRecording = async () => {
         try {
-            if (!recorder) initRecorder()
+            if (!recorder) await initRecorder()
 
             await recorder.start()
             isRecording.value = true

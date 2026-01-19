@@ -5,7 +5,7 @@ import checkTicketFilter from 'src/utils/checkTicketFilter'
 import { socketIO } from 'src/utils/socket'
 import { useTicketStore } from './useTicketStore'
 
-export function useTicketSockets () {
+export function useTicketSockets() {
   const store = useTicketStore()
   const $q = useQuasar()
   const socket = socketIO()
@@ -31,6 +31,8 @@ export function useTicketSockets () {
   }
 
   const setupSockets = () => {
+    if (!usuario?.tenantId) return
+
     socket.on('connect', () => {
       socket.emit(`${usuario.tenantId}:joinNotification`)
 
