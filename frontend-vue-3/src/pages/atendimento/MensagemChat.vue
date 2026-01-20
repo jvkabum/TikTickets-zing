@@ -36,236 +36,94 @@
         <!-- Anchor for scrolling/identification -->
         <div :id="`chat-message-${mensagem.id}`" />
 
-        <q-chat-message
+        <MessageBubble
           :key="mensagem.id"
-          :stamp="dataInWords(mensagem.createdAt)"
-          :sent="mensagem.fromMe"
+          :body="mensagem.body"
+          :from-me="mensagem.fromMe"
+          :timestamp="mensagem.createdAt"
+          :ack="mensagem.ack"
+          :contact-name="mensagem.contact?.name"
+          :show-header="isGroupLabel(mensagem)"
+          :quoted-message="mensagem.quotedMsg"
+          :is-deleted="mensagem.isDeleted"
           class="text-weight-medium"
-          :bg-color="mensagem.fromMe ? 'grey-2' : $q.dark.isActive ? 'blue-2' : 'blue-1'"
           :class="{ 'pulseIdentications text-black': identificarMensagem === `chat-message-${mensagem.id}` }"
+          @quote-click="focarMensagem"
         >
-          <template #stamp>
-            <div class="row items-center no-wrap">
-              <span>{{ dataInWords(mensagem.createdAt) }}</span>
-              <template v-if="mensagem.mediaUrl && !['audio', 'vcard', 'image', 'video'].includes(mensagem.mediaType)">
-                <div class="document-stamp-actions">
-                  <q-btn
-                    flat
-                    dense
-                    color="primary"
-                    icon="open_in_new"
-                    size="xs"
-                    :href="mensagem.mediaUrl"
-                    target="_blank"
-                  >
-                    <q-tooltip>Abrir</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    flat
-                    dense
-                    color="primary"
-                    icon="download"
-                    size="xs"
-                    :href="mensagem.mediaUrl"
-                    download
-                  >
-                    <q-tooltip>Baixar</q-tooltip>
-                  </q-btn>
-                </div>
+          <template #media>
+            <MessageMediaDisplay
+              :mensagem="mensagem"
+              :media-type="mensagem.mediaType"
+              :media-url="mensagem.mediaUrl"
+              :is-deleted="mensagem.isDeleted"
+              :contact="mensagem.contact"
+              :from-me="mensagem.fromMe"
+              :my-avatar="ticketFocado?.whatsapp?.profilePicUrl"
+              :contact-avatar="mensagem.contact?.profilePicUrl"
+              @open-contact-modal="openContactModal"
+            >
+              <template #checkbox-forward>
+                 <q-checkbox
+                  v-if="ativarMultiEncaminhamento"
+                  :model-value="mensagensParaEncaminhar.some(m => m.id === mensagem.id)"
+                  @update:model-value="(val) => selecionarMensagem(val, mensagem)"
+                  class="absolute-top-right z-top"
+                  style="right: -10px; top: -10px"
+                  dense
+                  color="blue"
+                />
               </template>
-            </div>
-          </template>
-
-          <div
-            :style="[
-              mensagem.isDeleted ? 'color: rgba(0, 0, 0, 0.36) !important;' : '',
-              ['image', 'video'].includes(mensagem.mediaType)
-                ? 'min-width: 100px;'
-                : 'min-width: 100px; max-width: 500px;'
-            ]"
-            class="relative-position"
-          >
-            <!-- Checkbox for Multi-Forwarding -->
-            <q-checkbox
-              v-if="ativarMultiEncaminhamento"
-              :model-value="mensagensParaEncaminhar.some(m => m.id === mensagem.id)"
-              @update:model-value="verificarEncaminharMensagem(mensagem)"
-              dense
-              class="absolute-top"
-              :style="mensagem.fromMe ? 'left: -40px' : 'right: -40px'"
-            />
-
-            <!-- Scheduled Icon -->
-            <q-icon
-              v-if="mensagem.scheduleDate"
-              name="mdi-calendar"
-              size="18px"
-              class="q-ma-xs"
-              :class="mensagem.status === 'pending' ? 'text-primary' : 'text-positive'"
-            >
-              <q-tooltip>
-                <div v-if="mensagem.isDeleted">Cancelado em: {{ formatarData(mensagem.updatedAt, 'dd/MM/yyyy') }}</div>
-                <div>Criado em: {{ formatarData(mensagem.createdAt, 'dd/MM/yyyy HH:mm') }}</div>
-                <div>Programado para: {{ formatarData(mensagem.scheduleDate, 'dd/MM/yyyy HH:mm') }}</div>
-              </q-tooltip>
-            </q-icon>
-
-            <!-- Edit/Deleted Labels -->
-            <div
-              v-if="mensagem.edited"
-              class="text-italic text-caption"
-            >
-              Editada
-            </div>
-            <div
-              v-if="mensagem.isDeleted"
-              class="text-italic text-caption"
-            >
-              Mensagem apagada
-            </div>
-
-            <!-- Group Contact Name -->
-            <div
-              v-if="isGroupLabel(mensagem)"
-              class="q-mb-xs text-bold text-primary"
-              style="font-size: 0.8rem"
-            >
-              {{ mensagem.contact?.name }}
-            </div>
-
-            <!-- Quoted Message -->
-            <div
-              v-if="mensagem.quotedMsg"
-              class="q-mb-sm bg-grey-3 rounded-borders q-pa-xs cursor-pointer"
-              @click="focarMensagem(mensagem.quotedMsg)"
-            >
-              <MensagemRespondida :mensagem="mensagem.quotedMsg" />
-            </div>
-
-            <!-- Message Options Menu -->
-            <q-btn
-              v-if="!mensagem.isDeleted && isShowOptions"
-              flat
-              round
-              dense
-              icon="mdi-chevron-down"
-              class="absolute-top-right mostar-btn-opcoes-chat"
-              size="sm"
-            >
-              <q-menu auto-close>
-                <q-list dense>
-                  <q-item
-                    clickable
-                    @click="citarMensagem(mensagem)"
-                  >
-                    <q-item-section>Responder</q-item-section>
-                  </q-item>
-                  <q-item
-                    clickable
-                    @click="encaminharMensagem(mensagem)"
-                  >
-                    <q-item-section>Encaminhar</q-item-section>
-                  </q-item>
-                  <q-item
-                    clickable
-                    @click="marcarMultiEncaminhamento"
-                  >
-                    <q-item-section>Selecionar Várias</q-item-section>
-                  </q-item>
-                  <q-item
-                    v-if="mensagem.fromMe && mensagem.mediaType === 'chat'"
-                    clickable
-                    @click="abrirEdicao(mensagem)"
-                  >
-                    <q-item-section>Editar</q-item-section>
-                  </q-item>
-                  <q-separator />
-                  <q-item
-                    v-if="mensagem.fromMe"
-                    clickable
-                    @click="confirmarDelecao(mensagem)"
-                  >
-                    <q-item-section class="text-negative">Deletar</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
-
-            <!-- Media Renderers -->
-            <template v-if="mensagem.mediaType === 'audio'">
-              <AudioVisualizer
-                :url="mensagem.mediaUrl"
-                :contact="mensagem.contact"
-                :avatar-src="mensagem.fromMe ? ticketFocado?.whatsapp?.profilePicUrl : mensagem.contact?.profilePicUrl"
-              />
-            </template>
-
-            <template v-else-if="mensagem.mediaType === 'vcard'">
-              <ContatoCard
-                :mensagem="mensagem"
-                @open-contact-modal="openContactModal"
-              />
-            </template>
-
-            <template v-else-if="mensagem.mediaType === 'image'">
-              <MediaViewer
-                media-type="image"
-                :media-url="mensagem.mediaUrl"
-              />
-            </template>
-
-            <template v-else-if="mensagem.mediaType === 'video'">
-              <MediaViewer
-                media-type="video"
-                :media-url="mensagem.mediaUrl"
-              />
-            </template>
-
-            <template v-else-if="mensagem.mediaType === 'poll_creation'">
-              <div class="poll-container q-pa-sm rounded-borders bg-grey-10 text-white">
-                <div class="text-bold row items-center no-wrap">
-                  <q-icon
-                    name="poll"
-                    class="q-mr-xs"
-                  />
-                  {{ mensagem.pollData?.name || 'Enquete' }}
-                </div>
-                <div class="text-caption opacity-70 q-mb-xs">{{ totalVotes(mensagem) }} votos</div>
-                <div
-                  v-for="opt in mensagem.pollData?.options"
-                  :key="opt.name"
-                  class="q-mb-xs"
-                >
-                  <div class="row items-center justify-between no-wrap">
-                    <span class="ellipsis">{{ opt.name }}</span>
-                    <span class="text-caption">{{ opt.votes || 0 }}</span>
-                  </div>
-                  <q-linear-progress
-                    :value="getVotePercentage(opt, mensagem.pollData.options) / 100"
-                    color="secondary"
-                  />
-                </div>
-              </div>
-            </template>
-
-            <!-- Text Content -->
-            <div
-              v-if="!['vcard', 'audio', 'poll_creation'].includes(mensagem.mediaType) && !isFileNameOnly(mensagem)"
-              :class="{ 'q-mt-xs': mensagem.mediaType !== 'chat' }"
-              class="q-message-text-content"
-              v-html="formatarMensagemWhatsapp(mensagem.body)"
-            />
-
-            <!-- Message Status (Ack) -->
-            <q-icon
-              v-if="mensagem.fromMe"
-              :name="ackIcons[mensagem.ack] || 'mdi-clock-outline'"
-              size="14px"
-              class="absolute-bottom-right q-pr-xs q-pb-xs"
-              :color="mensagem.ack >= 3 ? 'blue-12' : 'grey-7'"
-            />
-          </div>
-        </q-chat-message>
+              <template #options-menu>
+                <q-btn
+                v-if="!mensagem.isDeleted && isShowOptions"
+                flat
+                round
+                dense
+                icon="mdi-chevron-down"
+                class="absolute-top-right mostar-btn-opcoes-chat"
+                size="sm"
+              >
+                <q-menu auto-close>
+                  <q-list dense>
+                    <q-item
+                      clickable
+                      @click="citarMensagem(mensagem)"
+                    >
+                      <q-item-section>Responder</q-item-section>
+                    </q-item>
+                    <q-item
+                      clickable
+                      @click="encaminharMensagem(mensagem)"
+                    >
+                      <q-item-section>Encaminhar</q-item-section>
+                    </q-item>
+                    <q-item
+                      clickable
+                      @click="marcarMensagem(mensagem)"
+                    >
+                      <q-item-section>Marcar</q-item-section>
+                    </q-item>
+                    <q-separator />
+                    <q-item
+                      v-if="mensagem.fromMe && mensagem.mediaType === 'chat'"
+                      clickable
+                      @click="editarMensagem(mensagem)"
+                    >
+                      <q-item-section>Editar</q-item-section>
+                    </q-item>
+                    <q-item
+                      v-if="mensagem.fromMe"
+                      clickable
+                      @click="confirmarDelecao(mensagem)"
+                    >
+                      <q-item-section class="text-negative">Deletar</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+              </template>
+            </MessageMediaDisplay>          </template>
+        </MessageBubble>
       </div>
     </transition-group>
 
@@ -326,13 +184,16 @@
 import { format, parseISO } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR'
 import { formatarMensagemWhatsapp } from 'src/utils/formatMessage'
-import ContatoCard from './ContatoCard.vue'
-import ContatoModalReduzido from './ContatoModalReduzido.vue'
-import MensagemRespondida from './MensagemRespondida.vue'
+import InforCabecalhoChat from './InforCabecalhoChat.vue'
+import MessageBubble from 'src/components/chat/MessageBubble.vue'
+import MessageMediaDisplay from 'src/components/atendimento/MessageMediaDisplay.vue'
+import ContatoModalReduzido from 'src/pages/atendimento/ContatoModalReduzido.vue'
 
 const ticketStore = useTicketStore()
 const { ticketFocado, protocolos } = storeToRefs(ticketStore)
 const $q = useQuasar()
+
+import bus from 'src/utils/eventBus'
 
 const props = defineProps({
   mensagens: { type: Array, default: () => [] },

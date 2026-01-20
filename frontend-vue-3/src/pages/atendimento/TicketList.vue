@@ -43,7 +43,6 @@
 </template>
 
 <script setup>
-import ItemTicket from './ItemTicket.vue'
 
 const props = defineProps({
   filas: {

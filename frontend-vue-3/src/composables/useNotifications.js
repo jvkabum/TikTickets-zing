@@ -1,10 +1,13 @@
+import { useQuasar } from 'quasar'
+import { ref } from 'vue'
 
 export function useNotifications() {
     const $q = useQuasar()
+    const permission = ref('Notification' in window ? Notification.permission : 'denied')
+    const isWebSupported = ref('Notification' in window)
 
     /**
-     * Notificação de sucesso
-     * @param {string} message 
+     * Notificações UI (Quasar)
      */
     const notificarSucesso = (message) => {
         $q.notify({
@@ -16,11 +19,6 @@ export function useNotifications() {
         })
     }
 
-    /**
-     * Notificação de erro
-     * @param {string} message 
-     * @param {any} error 
-     */
     const notificarErro = (message, error = null) => {
         const detail = error?.response?.data?.message || error?.message || ''
         $q.notify({
@@ -32,10 +30,6 @@ export function useNotifications() {
         })
     }
 
-    /**
-     * Notificação de aviso
-     * @param {string} message 
-     */
     const notificarAviso = (message) => {
         $q.notify({
             type: 'warning',
@@ -46,10 +40,6 @@ export function useNotifications() {
         })
     }
 
-    /**
-     * Notificação de informação
-     * @param {string} message 
-     */
     const notificarInfo = (message) => {
         $q.notify({
             type: 'info',
@@ -60,10 +50,49 @@ export function useNotifications() {
         })
     }
 
+    /**
+     * Notificações Browser (Web Push)
+     */
+    const solicitarPermissaoWeb = async () => {
+        if (!isWebSupported.value) return false
+        const result = await Notification.requestPermission()
+        permission.value = result
+        return result === 'granted'
+    }
+
+    const exibirNotificacaoWeb = (title, options = {}) => {
+        if (!isWebSupported.value || permission.value !== 'granted') return null
+
+        const defaultOptions = {
+            icon: '/icons/icon-192x192.png',
+            badge: '/icons/icon-72x72.png',
+            tag: 'tiktickets',
+            renotify: true,
+            ...options
+        }
+
+        const notification = new Notification(title, defaultOptions)
+
+        notification.onclick = (event) => {
+            event.preventDefault()
+            window.focus()
+            if (options.onClick) options.onClick(notification)
+            notification.close()
+        }
+
+        return notification
+    }
+
     return {
+        // UI
         notificarSucesso,
         notificarErro,
         notificarAviso,
-        notificarInfo
+        notificarInfo,
+        // Web
+        isWebSupported,
+        permission,
+        solicitarPermissaoWeb,
+        exibirNotificacaoWeb
     }
 }

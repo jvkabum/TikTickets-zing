@@ -234,6 +234,7 @@
 </template>
 
 <script setup>
+import bus from 'src/utils/eventBus'
 const props = defineProps({
   replyingMessage: { type: Object, default: null },
   mensagensRapidas: { type: Array, default: () => [] },

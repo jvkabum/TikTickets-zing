@@ -1,3 +1,4 @@
+import { reactive, computed } from 'vue'
 
 /**
  * Composable para gerenciar filtros de tickets

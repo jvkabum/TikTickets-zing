@@ -1,3 +1,4 @@
+import { computed } from 'vue'
 
 /**
  * Composable para gerenciar permissões e perfis de usuário

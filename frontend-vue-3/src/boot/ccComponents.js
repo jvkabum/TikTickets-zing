@@ -1,9 +1,9 @@
 import { Dark, uid } from 'quasar'
 
 import { boot } from 'quasar/wrappers'
-import DatePick from '../components/cDatePick.vue'
-import cDateTimePick from '../components/cDateTimePick.vue'
-import cInput from '../components/cInput.vue'
+import DatePick from '../components/base/cDatePick.vue'
+import cDateTimePick from '../components/base/cDateTimePick.vue'
+import cInput from '../components/base/cInput.vue'
 import { notificarErro, notificarSucesso } from '../utils/helpersNotifications'
 
 import { format, parseISO } from 'date-fns'

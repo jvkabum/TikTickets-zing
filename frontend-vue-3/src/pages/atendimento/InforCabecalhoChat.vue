@@ -250,6 +250,7 @@
 
 <script setup>
 const ticketStore = useTicketStore()
+import bus from 'src/utils/eventBus'
 const { ticketFocado } = storeToRefs(ticketStore)
 const { atualizarStatusTicket } = useTicketActions()
 

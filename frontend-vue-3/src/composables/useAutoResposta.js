@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+import { useQuasar } from 'quasar'
 import {
     CriarAutoResposta,
     DeletarAutoResposta,
@@ -15,7 +17,7 @@ export function useAutoResposta() {
     const loading = ref(false)
     const autoRespostaAtual = ref(null)
     const etapas = ref([])
-	
+
     /**
      * Lista todas as auto respostas
      */

@@ -274,6 +274,8 @@ declare global {
   const useAsyncState: typeof import('@vueuse/core').useAsyncState
   const useAttrs: typeof import('vue').useAttrs
   const useAudio: typeof import('./composables/useAudio.js').useAudio
+  const useAudioRecorder: typeof import('./composables/useAudioRecorder.js').useAudioRecorder
+  const useAuth: typeof import('./composables/useAuth.js').useAuth
   const useAuthStore: typeof import('./stores/useAuthStore.js').useAuthStore
   const useAutoResposta: typeof import('./composables/useAutoResposta.js').useAutoResposta
   const useAutoRespostaStore: typeof import('./stores/useAutoRespostaStore.js').useAutoRespostaStore
@@ -645,6 +647,8 @@ declare module 'vue' {
     readonly useAsyncState: UnwrapRef<typeof import('@vueuse/core')['useAsyncState']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useAudio: UnwrapRef<typeof import('./composables/useAudio.js')['useAudio']>
+    readonly useAudioRecorder: UnwrapRef<typeof import('./composables/useAudioRecorder.js')['useAudioRecorder']>
+    readonly useAuth: UnwrapRef<typeof import('./composables/useAuth.js')['useAuth']>
     readonly useAuthStore: UnwrapRef<typeof import('./stores/useAuthStore.js')['useAuthStore']>
     readonly useAutoResposta: UnwrapRef<typeof import('./composables/useAutoResposta.js')['useAutoResposta']>
     readonly useAutoRespostaStore: UnwrapRef<typeof import('./stores/useAutoRespostaStore.js')['useAutoRespostaStore']>
@@ -826,7 +830,6 @@ declare module 'vue' {
     readonly useVirtualList: UnwrapRef<typeof import('@vueuse/core')['useVirtualList']>
     readonly useWakeLock: UnwrapRef<typeof import('@vueuse/core')['useWakeLock']>
     readonly useWebNotification: UnwrapRef<typeof import('@vueuse/core')['useWebNotification']>
-    readonly useWebNotifications: UnwrapRef<typeof import('./composables/useWebNotifications.js')['useWebNotifications']>
     readonly useWebSocket: UnwrapRef<typeof import('@vueuse/core')['useWebSocket']>
     readonly useWebWorker: UnwrapRef<typeof import('@vueuse/core')['useWebWorker']>
     readonly useWebWorkerFn: UnwrapRef<typeof import('@vueuse/core')['useWebWorkerFn']>

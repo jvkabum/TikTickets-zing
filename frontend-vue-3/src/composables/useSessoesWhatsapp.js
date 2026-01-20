@@ -1,3 +1,5 @@
+import { ref, computed } from 'vue'
+import { useQuasar } from 'quasar'
 import {
     CriarWhatsapp,
     DeletarWhatsapp,

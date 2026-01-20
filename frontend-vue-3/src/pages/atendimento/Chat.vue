@@ -230,6 +230,7 @@ const contatoStore = useContatoStore()
 import whatsBackground from 'src/assets/wa-background.png'
 import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
 const ticketStore = useTicketStore()
+import bus from 'src/utils/eventBus'
 const { mensagens, ticketFocado, hasMore, loading } = storeToRefs(ticketStore)
 
 const scrollContainer = ref(null)

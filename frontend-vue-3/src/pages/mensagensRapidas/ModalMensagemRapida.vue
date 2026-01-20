@@ -112,79 +112,12 @@
           </div>
         </div>
 
-        <!-- Área de Preview -->
-        <div
+        <!-- Componente de Preview -->
+        <MediaPreviewList
           v-if="mensagemRapida.medias && mensagemRapida.medias.length > 0"
-          class="media-preview-container q-mb-sm"
-        >
-          <!-- Previews dos Arquivos -->
-          <div
-            v-for="(media, index) in mensagemRapida.medias"
-            :key="index"
-            class="media-preview-item"
-          >
-            <q-card class="media-preview-card">
-              <q-img
-                v-if="isImage(media)"
-                :src="getMediaUrl(media)"
-                class="media-preview-image cursor-pointer"
-                fit="contain"
-                @click="visualizarImagem(media)"
-              >
-                <template v-slot:error>
-                  <div class="absolute-full flex flex-center bg-negative text-white">Erro ao carregar imagem</div>
-                </template>
-              </q-img>
-              <video
-                v-else-if="isVideo(media)"
-                class="media-preview-video"
-                controls
-                :src="getMediaUrl(media)"
-                :type="getMediaType(media)"
-              >
-                Seu navegador não suporta a reprodução de vídeos.
-              </video>
-              <div
-                v-else
-                class="file-preview-container flex flex-center column"
-              >
-                <q-icon
-                  :name="getFileIcon(media)"
-                  size="64px"
-                  color="primary"
-                />
-                <div class="text-subtitle2 q-mt-sm text-center text-truncate">
-                  {{ getMediaFileName(media) }}
-                </div>
-              </div>
-              <q-card-actions
-                align="center"
-                class="q-pa-sm bg-grey-2"
-              >
-                <q-btn
-                  flat
-                  dense
-                  round
-                  icon="remove_red_eye"
-                  color="primary"
-                  @click="abrirMedia(media)"
-                >
-                  <q-tooltip>Visualizar</q-tooltip>
-                </q-btn>
-                <q-btn
-                  flat
-                  dense
-                  round
-                  icon="delete"
-                  color="negative"
-                  @click="confirmarExclusao(media, index)"
-                >
-                  <q-tooltip>Excluir</q-tooltip>
-                </q-btn>
-              </q-card-actions>
-            </q-card>
-          </div>
-        </div>
+          :medias="mensagemRapida.medias"
+          @delete-media="handleDeleteMedia"
+        />
 
         <input
           type="file"
@@ -225,71 +158,6 @@
         />
       </q-card-actions>
     </q-card>
-
-    <!-- Modal de confirmação para exclusão -->
-    <q-dialog
-      v-model="confirmDialog"
-      persistent
-    >
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">Confirmação</div>
-          <p>Tem certeza de que deseja excluir esta mídia?</p>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn
-            flat
-            label="Cancelar"
-            color="primary"
-            v-close-popup
-          />
-          <q-btn
-            flat
-            label="Excluir"
-            color="negative"
-            @click="excluirMedia(mediaToDelete, indexToDelete)"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Modal de visualização da imagem -->
-    <q-dialog
-      v-model="showImageModal"
-      :maximized="false"
-      transition-show="fade"
-      transition-hide="fade"
-      @keyup.esc="showImageModal = false"
-    >
-      <q-card
-        class="bg-dark text-white"
-        style="min-width: 40vw; min-height: 40vh; max-width: 99vw; max-height: 99vh"
-      >
-        <q-bar class="bg-dark">
-          <q-space />
-          <q-btn
-            dense
-            flat
-            icon="close"
-            v-close-popup
-          >
-            <q-tooltip>Fechar</q-tooltip>
-          </q-btn>
-        </q-bar>
-
-        <q-card-section
-          class="flex flex-center"
-          style="padding: 0"
-        >
-          <q-img
-            :src="selectedImageUrl"
-            fit="scale-down"
-            style="min-width: 40vw; min-height: calc(40vh - 50px); max-width: 99vw; max-height: calc(99vh - 50px)"
-            @load="onImageLoad"
-          />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
   </q-dialog>
 </template>
 
@@ -297,6 +165,7 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
+import MediaPreviewList from 'src/components/mensagensRapidas/MediaPreviewList.vue'
 import { z } from 'zod'
 
 const props = defineProps({
@@ -322,11 +191,6 @@ const mensagemRapidaStore = useMensagemRapidaStore()
 const { criarMensagemRapida, alterarMensagemRapida, deletarImagemMensagemRapida } = mensagemRapidaStore
 
 const loading = ref(false)
-const confirmDialog = ref(false)
-const mediaToDelete = ref(null)
-const indexToDelete = ref(null)
-const showImageModal = ref(false)
-const selectedImageUrl = ref('')
 const fileInput = ref(null)
 const inputEnvioMensagem = ref(null)
 
@@ -392,65 +256,8 @@ const onFileInputChange = event => {
   event.target.value = null
 }
 
-const getMediaUrl = media => {
-  if (media instanceof File) {
-    return URL.createObjectURL(media)
-  }
-  return media
-}
-
-const isImage = media => {
-  if (media instanceof File) {
-    return media.type.startsWith('image/')
-  }
-  return typeof media === 'string' && (media.endsWith('.jpg') || media.endsWith('.jpeg') || media.endsWith('.png'))
-}
-
-const isVideo = media => {
-  if (media instanceof File) {
-    return media.type.startsWith('video/')
-  }
-  return typeof media === 'string' && (media.endsWith('.mp4') || media.endsWith('.webm') || media.endsWith('.ogg'))
-}
-
-const getMediaType = media => {
-  if (media instanceof File) return media.type
-  if (typeof media !== 'string') return ''
-  if (media.endsWith('.mp4')) return 'video/mp4'
-  if (media.endsWith('.webm')) return 'video/webm'
-  if (media.endsWith('.ogg')) return 'video/ogg'
-  return ''
-}
-
-const getFileIcon = media => {
-  const type = media instanceof File ? media.type : typeof media === 'string' ? media.toLowerCase() : ''
-  if (type.includes('pdf')) return 'picture_as_pdf'
-  if (type.includes('audio')) return 'audio_file'
-  if (type.includes('video')) return 'video_file'
-  if (type.includes('image')) return 'image'
-  if (type.includes('apk')) return 'android'
-  return 'insert_drive_file'
-}
-
-const getMediaFileName = media => {
-  if (media instanceof File) return media.name
-  return typeof media === 'string' ? media.split('/').pop() : ''
-}
-
-const abrirMedia = media => {
-  const url = getMediaUrl(media)
-  window.open(url, '_blank')
-}
-
-const confirmarExclusao = (media, index) => {
-  mediaToDelete.value = media
-  indexToDelete.value = index
-  confirmDialog.value = true
-}
-
-const excluirMedia = async (media, index) => {
+const handleDeleteMedia = async ({ media, index }) => {
   try {
-    confirmDialog.value = false
     if (mensagemRapida.id && typeof media === 'string') {
       await deletarImagemMensagemRapida(mensagemRapida.id, media)
     }
@@ -458,6 +265,7 @@ const excluirMedia = async (media, index) => {
     $q.notify({ type: 'positive', message: 'Mídia excluída com sucesso!' })
   } catch (error) {
     console.error('Erro ao excluir a imagem:', error)
+    $q.notify({ type: 'negative', message: 'Erro ao excluir mídia.' })
   }
 }
 
@@ -524,151 +332,7 @@ const handleMensagemRapida = handleSubmit(async values => {
     loading.value = false
   }
 })
-
-const visualizarImagem = media => {
-  selectedImageUrl.value = getMediaUrl(media)
-  showImageModal.value = true
-}
-
-const onImageLoad = () => {
-  // Logic for resizing if needed, but CSS handles containment mostly.
-  // Keeping simplified for now as per original logic if really needed, but it looked mostly DOM manipulation.
-  // Will rely on q-img component props for now.
-}
-
-watch(showImageModal, newValue => {
-  if (!newValue) {
-    const allVideos = document.querySelectorAll('.media-preview-video, .video-preview')
-    allVideos.forEach(video => {
-      if (video && !video.paused) {
-        video.pause()
-      }
-    })
-  }
-})
 </script>
 
 <style scoped>
-/* Estilos Comuns */
-.common-background {
-  background: #f5f5f5;
-}
-
-.common-flex-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Container Principal */
-.media-preview-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center; /* Centraliza horizontalmente */
-  align-items: center; /* Centraliza verticalmente */
-  gap: 16px;
-  padding: 8px;
-  min-height: 100px; /* Reduced min-height */
-  max-height: 600px;
-  width: 100%; /* Ocupa toda a largura disponível */
-  margin: 0 auto;
-}
-
-/* Itens de Pré-visualização */
-.media-preview-item,
-.file-preview-container {
-  position: relative;
-  width: 150px; /* Fixed width for better grid */
-  height: 150px; /* Fixed height for squares */
-  display: flex;
-  justify-content: center; /* Centraliza horizontalmente */
-  align-items: center; /* Centraliza verticalmente */
-  background: #f5f5f5;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-/* Cartão de Pré-visualização */
-.media-preview-card {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s ease;
-}
-
-.media-preview-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgb(255, 255, 255);
-  border-color: var(--q-primary);
-}
-
-/* Imagem e Vídeo */
-.media-preview-image,
-.media-preview-video,
-.video-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* Mantém a proporção da mídia */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: inherit;
-}
-
-/* Vídeo */
-.media-preview-video {
-  background: #000; /* Fundo preto para vídeos */
-}
-
-/* Container de Arquivo */
-.file-preview-container {
-  padding: 10px;
-  flex-direction: column;
-}
-
-/* Ícone no Preview de Arquivo */
-.file-preview-container .q-icon {
-  font-size: 40px !important;
-}
-
-/* Texto Truncado */
-.text-truncate {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 90%;
-  margin: 0 auto;
-  font-size: 0.8em;
-  text-align: center;
-}
-
-/* Ações do Cartão */
-.q-card-actions {
-  position: absolute; /* Overlay actions */
-  bottom: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4px;
-  background: rgba(255, 255, 255, 0.9);
-  transition: all 0.3s ease;
-  opacity: 0; /* Hide by default */
-}
-
-.media-preview-card:hover .q-card-actions {
-  opacity: 1; /* Show on hover */
-}
-
-/* Botões de ação no hover */
-.q-card-actions .q-btn {
-  transform: scale(0.9);
-}
-
-.q-card-actions .q-btn:hover {
-  transform: scale(1.1);
-}
 </style>

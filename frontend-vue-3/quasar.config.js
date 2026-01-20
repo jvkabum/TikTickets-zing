@@ -146,6 +146,14 @@ export default configure(function (ctx) {
           Components({
             dirs: [
               'src/components',
+              'src/components/base',
+              'src/components/layout',
+              'src/components/chat',
+              'src/components/dashboard',
+              'src/components/reports',
+              'src/components/campaigns',
+              'src/components/whatsapp',
+              'src/components/utils',
               'src/layouts',
               'src/pages/api',
               'src/pages/atendimento',
@@ -168,6 +176,7 @@ export default configure(function (ctx) {
             ],
             extensions: ['vue'],
             deep: true,
+            directoryAsNamespace: false,
             dts: 'src/components.d.ts',
             resolvers: [
               QuasarResolver({

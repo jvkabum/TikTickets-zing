@@ -6,6 +6,7 @@ import {
     EstatisticasTicketsPorUsuario
 } from 'src/service/estatisticas'
 import { computed, reactive, ref } from 'vue'
+import { useQuasar } from 'quasar'
 
 /**
  * Composable para gerenciar dados do dashboard

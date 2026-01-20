@@ -1,3 +1,4 @@
+import { computed } from 'vue'
 
 /**
  * Composable para ler e interpretar configurações do sistema

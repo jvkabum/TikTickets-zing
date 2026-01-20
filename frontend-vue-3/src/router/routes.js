@@ -31,11 +31,6 @@ const routes = [
         component: () => import('../pages/usuarios/Usuarios.vue')
       },
       {
-        path: '/auto-resposta',
-        name: 'auto-resposta',
-        component: () => import('../pages/fluxoAutoResposta/FluxoAutoResposta.vue')
-      },
-      {
         path: '/mensagens-rapidas',
         name: 'mensagens-rapidas',
         component: () => import('../pages/mensagensRapidas/MensagensRapidas.vue')

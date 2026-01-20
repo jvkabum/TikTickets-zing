@@ -34,130 +34,64 @@
       <q-card-section class="q-pa-md">
         <div class="row q-gutter-md justify-center">
           <div class="col-xs-12 col-sm-shrink">
-            <q-card
-              flat
-              bordered
-              class="my-card full-height"
-              style="min-width: 200px; background-color: #05d69e; color: white"
-            >
-              <q-card-section class="text-center">
-                <p class="text-h4 text-bold text-center">
-                  {{ ticketsAndTimes.qtd_total_atendimentos || 0 }}
-                </p>
-                <q-icon
-                  name="verified"
-                  size="lg"
-                  color="white"
-                  class="text-white"
-                />
-                Total Atendimentos
-              </q-card-section>
-            </q-card>
+            <StatCard
+              label="Total Atendimentos"
+              :value="ticketsAndTimes.qtd_total_atendimentos || 0"
+              icon="verified"
+              color="positive"
+              style="min-width: 200px"
+              class="full-height"
+            />
           </div>
           <div class="col-xs-12 col-sm-shrink">
-            <q-card
-              flat
-              bordered
-              class="my-card full-height"
-              style="min-width: 200px; background-color: #faad42; color: white"
-            >
-              <q-card-section class="text-center">
-                <p class="text-h4 text-bold text-center">
-                  {{ ticketsAndTimes.qtd_demanda_ativa || 0 }}
-                </p>
-                <q-icon
-                  name="mdi-comment-processing-outline"
-                  size="lg"
-                  color="white"
-                  class="text-white"
-                />
-                Ativo
-              </q-card-section>
-            </q-card>
+            <StatCard
+              label="Ativo"
+              :value="ticketsAndTimes.qtd_demanda_ativa || 0"
+              icon="mdi-comment-processing-outline"
+              color="warning"
+              style="min-width: 200px"
+              class="full-height"
+            />
           </div>
           <div class="col-xs-12 col-sm-shrink">
-            <q-card
-              flat
-              bordered
-              class="my-card full-height"
-              style="min-width: 200px; background-color: #0398e2; color: white"
-            >
-              <q-card-section class="text-center">
-                <p class="text-h4 text-bold text-center">
-                  {{ ticketsAndTimes.qtd_demanda_receptiva || 0 }}
-                </p>
-                <q-icon
-                  name="mdi-arrow-left-bold"
-                  size="lg"
-                  color="white"
-                  class="text-white"
-                />
-                Receptivo
-              </q-card-section>
-            </q-card>
+            <StatCard
+              label="Receptivo"
+              :value="ticketsAndTimes.qtd_demanda_receptiva || 0"
+              icon="mdi-arrow-left-bold"
+              color="info"
+              style="min-width: 200px"
+              class="full-height"
+            />
           </div>
           <div class="col-xs-12 col-sm-shrink">
-            <q-card
-              flat
-              bordered
-              class="my-card full-height"
-              style="min-width: 200px; background-color: #0398e2; color: white"
-            >
-              <q-card-section class="text-center">
-                <p class="text-h4 text-bold text-center">
-                  {{ ticketsAndTimes.new_contacts || 0 }}
-                </p>
-                <q-icon
-                  name="mdi-contacts-outline"
-                  size="lg"
-                  color="white"
-                  class="text-white"
-                />
-                Novos Contatos
-              </q-card-section>
-            </q-card>
+            <StatCard
+              label="Novos Contatos"
+              :value="ticketsAndTimes.new_contacts || 0"
+              icon="mdi-contacts-outline"
+              color="info"
+              style="min-width: 200px"
+              class="full-height"
+            />
           </div>
           <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
-            <q-card
-              flat
-              bordered
-              class="my-card full-height"
-              style="background-color: #ffa880; color: white"
-            >
-              <q-card-section class="text-center">
-                <p class="text-h5 text-bold text-center">
-                  <q-icon
-                    name="mdi-clock-outline"
-                    size="lg"
-                    color="white"
-                    class="text-white"
-                  />
-                  {{ cTmaFormat }}
-                </p>
-                Tempo Médio de Atendimento (TMA)
-              </q-card-section>
-            </q-card>
+            <StatCard
+              label="T.M.A"
+              :value="cTmaFormat"
+              icon="mdi-clock-outline"
+              color="deep-orange"
+              format-type="text"
+              class="full-height"
+            />
           </div>
           <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
-            <q-card
-              flat
-              bordered
-              class="my-card full-height"
-              style="background-color: #fc5881ff; color: white"
-            >
-              <q-card-section class="text-center">
-                <p class="text-h5 text-bold text-center">
-                  <q-icon
-                    name="mdi-timer-sand"
-                    size="lg"
-                    color="white"
-                    class="text-white"
-                  />
-                  {{ cTmeFormat }}
-                </p>
-                Tempo Médio 1º Resposta
-              </q-card-section>
-            </q-card>
+            <StatCard
+              label="T.M.E"
+              :value="cTmeFormat"
+              icon="mdi-timer-sand"
+              color="pink"
+              format-type="text"
+              class="full-height"
+            />
           </div>
         </div>
       </q-card-section>
@@ -249,7 +183,6 @@
 <script setup>
 import { format, formatDuration, subDays } from 'date-fns'
 import groupBy from 'lodash/groupBy'
-import DatePick from 'src/components/cDatePick.vue'
 
 const $q = useQuasar()
 const router = useRouter()

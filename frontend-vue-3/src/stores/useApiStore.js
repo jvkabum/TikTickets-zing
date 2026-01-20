@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ApagarAPI, CriarAPI, EditarAPI, ListarAPIs, NovoTokenAPI } from 'src/service/api'
+import { ApagarAPI, CriarAPI, EditarAPI, ListarAPIs, NovoTokenAPI } from 'src/service/apiConfig'
 import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
 
 export const useApiStore = defineStore('api', {
@@ -8,7 +8,7 @@ export const useApiStore = defineStore('api', {
     loading: false
   }),
   actions: {
-    async listarAPIs () {
+    async listarAPIs() {
       this.loading = true
       try {
         const { data } = await ListarAPIs()
@@ -19,7 +19,7 @@ export const useApiStore = defineStore('api', {
         this.loading = false
       }
     },
-    async criarAPI (api) {
+    async criarAPI(api) {
       this.loading = true
       try {
         const { data } = await CriarAPI(api)
@@ -33,7 +33,7 @@ export const useApiStore = defineStore('api', {
         this.loading = false
       }
     },
-    async editarAPI (api) {
+    async editarAPI(api) {
       this.loading = true
       try {
         const { data } = await EditarAPI(api)
@@ -50,7 +50,7 @@ export const useApiStore = defineStore('api', {
         this.loading = false
       }
     },
-    async novoTokenAPI (api) {
+    async novoTokenAPI(api) {
       this.loading = true
       try {
         const { data } = await NovoTokenAPI(api)
@@ -67,7 +67,7 @@ export const useApiStore = defineStore('api', {
         this.loading = false
       }
     },
-    async apagarAPI (api) {
+    async apagarAPI(api) {
       this.loading = true
       try {
         await ApagarAPI(api)
