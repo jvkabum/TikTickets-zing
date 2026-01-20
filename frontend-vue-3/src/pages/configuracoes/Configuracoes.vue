@@ -211,25 +211,19 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { ListarChatFlow } from 'src/service/chatFlow'
-import { useConfiguracaoStore } from 'src/stores/useConfiguracaoStore'
-import { onMounted, ref } from 'vue'
 
 const configuracaoStore = useConfiguracaoStore()
 const { settings } = storeToRefs(configuracaoStore)
 const { listarConfiguracoes, atualizarConfiguracao } = configuracaoStore
 
+const chatFlowStore = useChatFlowStore()
+const { chatFlows } = storeToRefs(chatFlowStore)
+
 const userProfile = ref('user')
-const listaChatFlow = ref([])
+const listaChatFlow = computed(() => chatFlows.value)
 
 const listarChatFlow = async () => {
-  try {
-    const { data } = await ListarChatFlow()
-    listaChatFlow.value = data.chatFlow
-  } catch (error) {
-    console.error(error)
-  }
+  await chatFlowStore.listarChatFlows()
 }
 
 onMounted(() => {

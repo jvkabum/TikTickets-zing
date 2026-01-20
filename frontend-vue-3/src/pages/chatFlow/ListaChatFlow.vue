@@ -129,18 +129,14 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { ListarUsuarios } from 'src/service/user'
-import { useChatFlowStore } from 'src/stores/useChatFlowStore'
-import { useFilaStore } from 'src/stores/useFilaStore'
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import ModalChatFlow from './ModalChatFlow.vue'
 
 const router = useRouter()
 const chatFlowStore = useChatFlowStore()
 const { chatFlows: listachatFlow, loading } = storeToRefs(chatFlowStore)
 const { listarChatFlows, deletarChatFlow, setFlowData } = chatFlowStore
+
+const usuarioStore = useUsuarioStore()
 
 const filaStore = useFilaStore()
 const { filas } = storeToRefs(filaStore)
@@ -177,7 +173,7 @@ const columns = [
 
 const listarUsuarios = async () => {
   try {
-    const { data } = await ListarUsuarios(params.value)
+    const data = await usuarioStore.listarUsuarios(params.value)
     usuarios.value = data.users
   } catch (error) {
     console.error(error)

@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia'
 import {
   AdminListarUsuarios,
   AdminUpdateUsuarios,
   CriarUsuario,
+  CriarUsuarioTenant,
   DeleteUsuario,
   ListarUsuarios,
   UpdateUsuarios
@@ -14,42 +14,50 @@ export const useUsuarioStore = defineStore('usuarios', {
     usersApp: []
   }),
   actions: {
-    async listarUsuarios (params) {
-      const { data } = await ListarUsuarios(params)
-      this.usuarios = data.users
-      return data
+    // ... rest of actions
+    async listarUsuarios(params) {
+      try {
+        const { data } = await ListarUsuarios(params)
+        this.usuarios = data.users
+        return data
+      } catch (error) {
+        throw error
+      }
     },
-    async adminListarUsuarios (params) {
-      const { data } = await AdminListarUsuarios(params)
-      this.usuarios = data.users
-      return data
-    },
-    async criarUsuario (data) {
+    async criarUsuario(data) {
       const { data: res } = await CriarUsuario(data)
       this.usuarios.push(res)
       return res
     },
-    async atualizarUsuario (userId, data) {
-      const { data: res } = await UpdateUsuarios(userId, data)
-      const index = this.usuarios.findIndex(u => u.id === userId)
-      if (index !== -1) {
-        this.usuarios[index] = res
-      }
+    async criarUsuarioTenant(data) {
+      const { data: res } = await CriarUsuarioTenant(data)
+      this.usuarios.push(res)
       return res
     },
-    async adminAtualizarUsuario (userId, data) {
-      const { data: res } = await AdminUpdateUsuarios(userId, data)
-      const index = this.usuarios.findIndex(u => u.id === userId)
-      if (index !== -1) {
-        this.usuarios[index] = res
+    async updateUsuarios(userId, data) {
+      try {
+        const { data: res } = await UpdateUsuarios(userId, data)
+        const index = this.usuarios.findIndex(u => u.id === userId)
+        if (index > -1) {
+          this.usuarios.splice(index, 1, res)
+        }
+        return res
+      } catch (error) {
+        throw error
       }
-      return res
     },
-    async deletarUsuario (userId) {
-      await DeleteUsuario(userId)
-      this.usuarios = this.usuarios.filter(u => u.id !== userId)
+    async deleteUsuario(userId) {
+      try {
+        await DeleteUsuario(userId)
+        const index = this.usuarios.findIndex(u => u.id === userId)
+        if (index > -1) {
+          this.usuarios.splice(index, 1)
+        }
+      } catch (error) {
+        throw error
+      }
     },
-    setUsersApp (data) {
+    setUsersApp(data) {
       this.usersApp = data
     }
   }

@@ -249,20 +249,6 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { AtualizarTicket, SincronizarMensagensTicket } from 'src/service/tickets'
-import { useFilaStore } from 'src/stores/useFilaStore'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import { useUsuarioStore } from 'src/stores/useUsuarioStore'
-import bus from 'src/utils/eventBus'
-import { notificarErro, notificarInfo, notificarSucesso } from 'src/utils/helpersNotifications'
-import { computed, reactive, ref } from 'vue'
-import { useTicketActions } from './useTicketActions'
-
-const emit = defineEmits(['abrir:modalAgendamentoMensagem'])
-
-const $q = useQuasar()
 const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)
 const { atualizarStatusTicket } = useTicketActions()
@@ -310,7 +296,7 @@ const confirmarTransferencia = async () => {
   transferindo.value = true
   try {
     const status = transferencia.usuarioId ? 'open' : 'pending'
-    await AtualizarTicket(ticketFocado.value.id, {
+    await ticketStore.atualizarTicket(ticketFocado.value.id, {
       userId: transferencia.usuarioId,
       queueId: transferencia.filaId,
       status: status,
@@ -330,7 +316,7 @@ const confirmarTransferencia = async () => {
 const sincronizarMensagens = async () => {
   sincronizando.value = true
   try {
-    await SincronizarMensagensTicket(ticketFocado.value.id)
+    await ticketStore.sincronizarMensagens(ticketFocado.value.id)
     notificarSucesso('Mensagens sincronizadas!')
   } catch (error) {
     notificarErro('Erro ao sincronizar', error)

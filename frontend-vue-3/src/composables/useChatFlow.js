@@ -1,6 +1,4 @@
-import { useQuasar } from 'quasar'
 import { CriarChatFlow, DeletarChatFlow, EditarChatFlow, ListarChatFlow } from 'src/service/chatFlow'
-import { ref } from 'vue'
 
 /**
  * Composable para gerenciar Chat Flows

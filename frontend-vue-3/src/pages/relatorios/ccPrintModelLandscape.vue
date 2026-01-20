@@ -63,8 +63,6 @@
 
 <script setup>
 import { format } from 'date-fns'
-import { Printd } from 'printd'
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   imprimirRelatorio: {

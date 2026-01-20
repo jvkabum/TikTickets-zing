@@ -1,14 +1,10 @@
-import { computed, reactive } from 'vue'
-import { useConfiguracoes } from './useConfiguracoes'
-import { useLocalStorage } from './useLocalStorage'
-import { usePermissoes } from './usePermissoes'
 
 /**
  * Composable para gerenciar filtros de tickets
  * Substitui a lógica duplicada de checkTicketFilter.js
  */
 export function useTicketFilters() {
-    const storage = useLocalStorage()
+    const storage = useAppLocalStorage()
     const config = useConfiguracoes()
     const permissoes = usePermissoes()
 

@@ -58,7 +58,6 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
 import VueEasyLightbox from 'vue-easy-lightbox'
 
 const props = defineProps({

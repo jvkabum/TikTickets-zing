@@ -90,8 +90,6 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import TicketAvatar from './TicketAvatar.vue'
 
 const props = defineProps({
   contact: {

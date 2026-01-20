@@ -76,9 +76,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { useUsuarioStore } from 'src/stores/useUsuarioStore'
-import { onMounted, reactive, ref } from 'vue'
 import ModalUsuarioEditSuper from './ModalUsuarioEditSuper.vue'
 import ModalUsuarioSuper from './ModalUsuarioSuper.vue'
 

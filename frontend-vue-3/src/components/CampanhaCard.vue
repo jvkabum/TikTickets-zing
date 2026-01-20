@@ -85,10 +85,6 @@
 </template>
 
 <script setup>
-import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { computed } from 'vue'
-import CampanhaStatus from './CampanhaStatus.vue'
 
 const props = defineProps({
   campanha: {

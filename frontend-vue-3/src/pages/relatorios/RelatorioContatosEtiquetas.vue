@@ -172,11 +172,18 @@
 </template>
 
 <script setup>
-import { RelatorioContatos } from 'src/service/estatisticas'
-import { ListarEtiquetas } from 'src/service/etiquetas'
 import { notificarErro } from 'src/utils/helpersNotifications'
-import { onMounted, reactive, ref } from 'vue'
 import * as XLSX from 'xlsx'
+import { useRelatorios } from 'src/composables/useRelatorios'
+
+const relatorioStore = useRelatorioStore()
+const etiquetaStore = useEtiquetaStore()
+const { etiquetas } = storeToRefs(etiquetaStore)
+
+const {
+  obterRelatorioContatos,
+  loading
+} = useRelatorios()
 
 const props = defineProps({
   moduloAtendimento: {
@@ -187,7 +194,6 @@ const props = defineProps({
 
 const userProfile = ref('user')
 const contatos = ref([])
-const etiquetas = ref([])
 const imprimir = ref(false)
 
 const replaceEmojis = str => {

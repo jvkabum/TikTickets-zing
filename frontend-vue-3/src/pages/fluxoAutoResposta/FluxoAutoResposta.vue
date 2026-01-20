@@ -18,7 +18,7 @@
             class="my-sticky-dynamic q-ma-lg"
             title="Auto Resposta"
             hide-bottom
-            :data="autoRespostas"
+            :rows="autoRespostas"
             :columns="columns"
             :loading="loading"
             row-key="id"
@@ -96,7 +96,7 @@
                     flat
                     bordered
                     hide-bottom
-                    :data="props.row.stepsReply"
+                    :rows="props.row.stepsReply"
                     :columns="columnsEtapas"
                     :loading="loading"
                     row-key="id"
@@ -174,7 +174,7 @@
                             bordered
                             class="my-sticky-dynamic"
                             title="Ações"
-                            :data="etapas.row.stepsReplyAction"
+                            :rows="etapas.row.stepsReplyAction"
                             :columns="columnsAcoes"
                             :loading="loading"
                             row-key="id"
@@ -271,27 +271,9 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { ListarUsuarios } from 'src/service/user'
-import { useAutoRespostaStore } from 'src/stores/useAutoRespostaStore'
-import { useFilaStore } from 'src/stores/useFilaStore'
-import { onMounted, ref } from 'vue'
+const usuarioStore = useUsuarioStore()
+const { usuarios } = storeToRefs(usuarioStore)
 
-import ModalAcaoEtapa from './ModalAcaoEtapa.vue'
-import ModalAutoResposta from './ModalAutoResposta.vue'
-import ModalEtapaAutoResposta from './ModalEtapaAutoResposta.vue'
-
-const $q = useQuasar()
-const autoRespostaStore = useAutoRespostaStore()
-const { autoRespostas, loading } = storeToRefs(autoRespostaStore)
-const { listarAutoRespostas, deletarAutoResposta, deletarEtapa, deletarAcao } = autoRespostaStore
-
-const filaStore = useFilaStore()
-const { filas } = storeToRefs(filaStore)
-const { listarFilas } = filaStore
-
-const usuarios = ref([])
 const params = ref({
   pageNumber: 1,
   searchParam: null,
@@ -420,12 +402,7 @@ const handleAddAutoResposta = () => {
 }
 
 const listarUsuarios = async () => {
-  try {
-    const { data } = await ListarUsuarios(params.value)
-    usuarios.value = data.users
-  } catch (error) {
-    console.error(error)
-  }
+  await usuarioStore.listarUsuarios(params.value)
 }
 
 const editarAutoResposta = row => {

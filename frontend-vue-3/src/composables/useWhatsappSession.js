@@ -1,11 +1,9 @@
-import { useQuasar } from 'quasar'
 import {
     DeletarWhatsapp,
     DesconectarWhatsapp,
     IniciarSessaoWhatsapp,
     ListarWhatsapps
 } from 'src/service/sessoesWhatsapp'
-import { computed, ref } from 'vue'
 
 /**
  * Composable para gerenciar sessões do WhatsApp

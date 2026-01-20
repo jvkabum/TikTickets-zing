@@ -1,11 +1,9 @@
-import { useQuasar } from 'quasar'
 import {
     CriarEmpresa,
     DeletarEmpresa,
     EditarEmpresa,
     ListarEmpresas
 } from 'src/service/empresas'
-import { ref } from 'vue'
 
 /**
  * Composable para gerenciar empresas/tenants

@@ -24,7 +24,7 @@
       class="my-sticky-dynamic q-ma-sm"
       title="Contatos"
       id="tabela-contatos-campanha"
-      :data="contatosCampanha"
+      :rows="contatosCampanha"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -293,7 +293,7 @@
             style="height: 50vh"
             title="Contatos"
             id="tabela-contatos-campanha"
-            :data="contatosAdd"
+            :rows="contatosAdd"
             :columns="columnsAdd"
             :loading="loading"
             row-key="number"
@@ -355,15 +355,8 @@
 
 <script setup>
 import { format, parseISO, sub } from 'date-fns'
-import { useQuasar } from 'quasar'
-import { RelatorioContatos } from 'src/service/estatisticas'
-import { ListarEtiquetas } from 'src/service/etiquetas'
-import { ListarUsuarios } from 'src/service/user'
-import { useCampanhaStore } from 'src/stores/useCampanhaStore'
 import { estadoPorDdd, estadosBR } from 'src/utils/constants'
 import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
-import { onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
@@ -375,6 +368,10 @@ const {
   deletarContatoCampanha: deletarContatoCampanhaStore,
   deletarTodosContatosCampanha: deletarTodosContatosCampanhaStore
 } = campanhaStore
+
+const relatorioStore = useRelatorioStore()
+const etiquetaStore = useEtiquetaStore()
+const usuarioStore = useUsuarioStore()
 
 const userProfile = ref('user')
 const modalAddContatosCampanha = ref(false)
@@ -510,7 +507,7 @@ const formatDate = (date, dateMask = 'dd/MM/yyyy') => {
 const listarAddContatos = async () => {
   try {
     loading.value = true
-    const { data } = await RelatorioContatos(pesquisa)
+    const data = await relatorioStore.obterRelatorioContatos(pesquisa)
     if (pesquisa.tags.length > 0) {
       contatosAdd.value = data.contacts.filter(contact =>
         pesquisa.tags.every(tag => contact.tags.map(contactTag => contactTag.id).includes(tag))
@@ -527,7 +524,7 @@ const listarAddContatos = async () => {
 
 const listarEtiquetas = async () => {
   try {
-    const { data } = await ListarEtiquetas(true)
+    const data = await etiquetaStore.listarEtiquetas(true)
     etiquetas.value = data
   } catch (error) {
     console.error(error)
@@ -571,7 +568,7 @@ const addContatosCampanha = async () => {
 
 const listarUsuarios = async () => {
   try {
-    const { data } = await ListarUsuarios()
+    const data = await usuarioStore.listarUsuarios()
     usuarios.value = data.users
   } catch (error) {
     console.error(error)

@@ -4,8 +4,6 @@
   </div>
 </template>
 <script setup>
-import { useQuasar } from 'quasar'
-import { onBeforeMount } from 'vue'
 
 const $q = useQuasar()
 

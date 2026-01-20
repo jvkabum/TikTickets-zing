@@ -1,11 +1,9 @@
-import { useQuasar } from 'quasar'
 import {
     CriarAutoResposta,
     DeletarAutoResposta,
     EditarAutoResposta,
     ListarAutoRespostas
 } from 'src/service/autoResposta'
-import { ref } from 'vue'
 
 /**
  * Composable para gerenciar fluxos de auto resposta
@@ -17,7 +15,7 @@ export function useAutoResposta() {
     const loading = ref(false)
     const autoRespostaAtual = ref(null)
     const etapas = ref([])
-
+	
     /**
      * Lista todas as auto respostas
      */

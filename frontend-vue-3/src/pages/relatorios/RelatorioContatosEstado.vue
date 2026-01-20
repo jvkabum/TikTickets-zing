@@ -166,10 +166,7 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { RelatorioContatos } from 'src/service/estatisticas'
 import { estadoPorDdd, estadosBR } from 'src/utils/constants'
-import { onMounted, reactive, ref } from 'vue'
 import * as XLSX from 'xlsx'
 
 const props = defineProps({
@@ -180,6 +177,11 @@ const props = defineProps({
 })
 
 const $q = useQuasar()
+const {
+  obterRelatorioContatos,
+  loading
+} = useRelatorios()
+
 const userProfile = ref('user')
 const contatos = ref([])
 const imprimir = ref(false)

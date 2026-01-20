@@ -88,7 +88,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
 import { useEtiquetaStore } from 'src/stores/useEtiquetaStore'
 import { notificarErro } from 'src/utils/helpersNotifications'
 import { reactive, ref } from 'vue'

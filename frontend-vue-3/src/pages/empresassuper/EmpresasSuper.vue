@@ -79,9 +79,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { useTenantStore } from 'src/stores/useTenantStore'
-import { onMounted, reactive, ref } from 'vue'
 import ModalTenant from './ModalTenant.vue'
 
 const $q = useQuasar()

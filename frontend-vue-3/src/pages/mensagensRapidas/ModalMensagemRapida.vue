@@ -295,10 +295,6 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
-import { useQuasar } from 'quasar'
-import { useMensagemRapidaStore } from 'src/stores/useMensagemRapidaStore'
-import { useForm } from 'vee-validate'
-import { nextTick, reactive, ref, watch } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 import { z } from 'zod'

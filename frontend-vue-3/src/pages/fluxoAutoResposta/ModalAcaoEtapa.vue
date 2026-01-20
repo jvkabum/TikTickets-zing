@@ -165,7 +165,6 @@ import { useAutoRespostaStore } from 'src/stores/useAutoRespostaStore'
 import { useForm } from 'vee-validate'
 import { reactive, watch } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
 import { z } from 'zod'
 
 const props = defineProps({

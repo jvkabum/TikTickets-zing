@@ -184,9 +184,7 @@
 <script setup>
 import { format, sub } from 'date-fns'
 import { groupBy } from 'lodash'
-import { useQuasar } from 'quasar'
 import { notificarErro } from 'src/utils/helpersNotifications'
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { ConsultarTicketsQueuesService } from '../../service/estatisticas.js'
 import { ListarFilas } from '../../service/filas'
 import { socketIO } from '../../utils/socket'

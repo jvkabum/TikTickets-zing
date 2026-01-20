@@ -98,8 +98,6 @@
 <script setup>
 import { format, parseISO } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR'
-import { storeToRefs } from 'pinia'
-import { useTicketStore } from 'src/stores/useTicketStore'
 import { formatarMensagemWhatsapp } from 'src/utils/formatMessage'
 
 const props = defineProps({

@@ -1,5 +1,4 @@
 import { format, subDays } from 'date-fns'
-import { useQuasar } from 'quasar'
 import {
     EstatisticasAtendimentos,
     EstatisticasTicketsPorCanal,

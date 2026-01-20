@@ -1,4 +1,3 @@
-import { defineStore } from 'pinia'
 import {
   CriarContato,
   DeletarContato,
@@ -15,36 +14,69 @@ export const useContatoStore = defineStore('contato', () => {
   const loading = ref(false)
   const totalContatos = ref(0)
   const hasMore = ref(false)
+  const contatoAtual = ref(null)
 
-  async function listarContatos (params) {
+  const filtros = ref({
+    searchParam: '',
+    pageNumber: 1,
+    tags: [],
+    wallets: []
+  })
+
+  async function listarContatos(resetar = false) {
+    if (resetar) {
+      filtros.value.pageNumber = 1
+      contatos.value = []
+      hasMore.value = true
+    }
+
     loading.value = true
     try {
-      const { data } = await ListarContatos(params)
-      if (params.pageNumber === 1) {
-        contatos.value = data.contacts
+      const { data } = await ListarContatos(filtros.value)
+      if (filtros.value.pageNumber === 1) {
+        contatos.value = data.contacts || data
       } else {
-        contatos.value = [...contatos.value, ...data.contacts]
+        contatos.value = [...contatos.value, ...(data.contacts || data)]
       }
-      totalContatos.value = data.count
-      hasMore.value = data.hasMore
+      totalContatos.value = data.count || contatos.value.length
+      hasMore.value = data.hasMore !== false
       return data
     } finally {
       loading.value = false
     }
   }
 
-  async function obterContato (id) {
+  async function obterContato(id) {
     const { data } = await ObterContato(id)
+    contatoAtual.value = data
     return data
   }
 
-  async function criarContato (payload) {
+  // Utilitário de formatação centralizado
+  function formatarNumero(numero) {
+    if (!numero) return ''
+    const limpo = numero.replace(/@.*$/, '')
+    if (limpo.length === 13 && limpo.startsWith('55')) {
+      return `+${limpo.slice(0, 2)} (${limpo.slice(2, 4)}) ${limpo.slice(4, 9)}-${limpo.slice(9)}`
+    }
+    return limpo
+  }
+
+  function selecionarContato(contato) {
+    contatoAtual.value = { ...contato }
+  }
+
+  function limparSelecao() {
+    contatoAtual.value = null
+  }
+
+  async function criarContato(payload) {
     const { data } = await CriarContato(payload)
     contatos.value.unshift(data)
     return data
   }
 
-  async function editarContato (id, payload) {
+  async function editarContato(id, payload) {
     const { data } = await EditarContato(id, payload)
     const index = contatos.value.findIndex(c => c.id === id)
     if (index !== -1) {
@@ -53,7 +85,7 @@ export const useContatoStore = defineStore('contato', () => {
     return data
   }
 
-  async function deletarContato (id) {
+  async function deletarContato(id) {
     await DeletarContato(id)
     const index = contatos.value.findIndex(c => c.id === id)
     if (index !== -1) {
@@ -61,21 +93,21 @@ export const useContatoStore = defineStore('contato', () => {
     }
   }
 
-  async function importarContatos (formData) {
+  async function importarContatos(formData) {
     const { data } = await ImportarArquivoContato(formData)
     return data
   }
 
-  async function exportarContatos () {
+  async function exportarContatos() {
     const { data } = await ExportarArquivoContato()
     return data
   }
 
-  function setContatos (data) {
+  function setContatos(data) {
     contatos.value = data
   }
 
-  function updateContato (contact) {
+  function updateContato(contact) {
     const index = contatos.value.findIndex(c => c.id === contact.id)
     if (index !== -1) {
       contatos.value[index] = contact
@@ -84,13 +116,27 @@ export const useContatoStore = defineStore('contato', () => {
     }
   }
 
+  async function obterContato(contactId) {
+    try {
+      const { data } = await ObterContato(contactId)
+      return data
+    } catch (error) {
+      notificarErro('Erro ao obter contato', error)
+      throw error
+    }
+  }
+
   return {
     contatos,
     loading,
     totalContatos,
     hasMore,
+    filtros,
+    contatoAtual,
     listarContatos,
-    obterContato,
+    formatarNumero,
+    selecionarContato,
+    limparSelecao,
     criarContato,
     editarContato,
     deletarContato,

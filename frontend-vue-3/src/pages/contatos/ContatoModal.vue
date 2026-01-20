@@ -181,12 +181,10 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
-import { useQuasar } from 'quasar'
 import { useContatoStore } from 'src/stores/useContatoStore'
 import { useUsuarioStore } from 'src/stores/useUsuarioStore'
 import { notificarErro } from 'src/utils/helpersNotifications'
 import { useField, useForm } from 'vee-validate'
-import { ref } from 'vue'
 import * as zod from 'zod'
 
 const props = defineProps({

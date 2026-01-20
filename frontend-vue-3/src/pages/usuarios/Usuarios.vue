@@ -83,11 +83,7 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { useFilaStore } from 'src/stores/useFilaStore'
-import { useUsuarioStore } from 'src/stores/useUsuarioStore'
 import { notificarErro } from 'src/utils/helpersNotifications'
-import { onMounted, reactive, ref } from 'vue'
 
 import ModalFilaUsuario from './ModalFilaUsuario.vue'
 import ModalUsuario from './ModalUsuario.vue'

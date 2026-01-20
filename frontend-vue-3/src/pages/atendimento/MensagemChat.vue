@@ -325,17 +325,14 @@
 <script setup>
 import { format, parseISO } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR'
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { ListarProtocolos } from 'src/service/protocols'
-import { DeletarMensagem, EditarMensagem } from 'src/service/tickets'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import bus from 'src/utils/eventBus'
 import { formatarMensagemWhatsapp } from 'src/utils/formatMessage'
-import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 import ContatoCard from './ContatoCard.vue'
 import ContatoModalReduzido from './ContatoModalReduzido.vue'
 import MensagemRespondida from './MensagemRespondida.vue'
+
+const ticketStore = useTicketStore()
+const { ticketFocado, protocolos } = storeToRefs(ticketStore)
+const $q = useQuasar()
 
 const props = defineProps({
   mensagens: { type: Array, default: () => [] },
@@ -352,12 +349,7 @@ const emit = defineEmits([
   'update:mensagensParaEncaminhar'
 ])
 
-const $q = useQuasar()
-const ticketStore = useTicketStore()
-const { ticketFocado } = storeToRefs(ticketStore)
-
 const identificarMensagem = ref(null)
-const protocolos = ref([])
 const modalEdit = reactive({ show: false, body: '', id: null, loading: false, messageId: null })
 const modalContato = reactive({ show: false, data: {} })
 
@@ -374,12 +366,7 @@ const dataInWords = data => (data ? format(parseISO(data), 'HH:mm', { locale: pt
 
 const carregarProtocolos = async () => {
   if (!ticketFocado.value.id) return
-  try {
-    const { data } = await ListarProtocolos(ticketFocado.value.id)
-    protocolos.value = data || []
-  } catch (e) {
-    console.error('Erro ao carregar protocolos', e)
-  }
+  await ticketStore.listarProtocolos(ticketFocado.value.id)
 }
 
 const getProtocoloMensagem = msgDate => {
@@ -446,8 +433,11 @@ const abrirEdicao = m => {
 const confirmarEdicao = async () => {
   modalEdit.loading = true
   try {
-    const data = await EditarMensagem({ id: modalEdit.id, messageId: modalEdit.messageId, body: modalEdit.body })
-    ticketStore.updateMensagem(data)
+    await ticketStore.editarMensagem({
+      id: modalEdit.id,
+      messageId: modalEdit.messageId,
+      body: modalEdit.body
+    })
     modalEdit.show = false
   } catch (e) {
     console.error(e)
@@ -464,7 +454,7 @@ const confirmarDelecao = m => {
     persistent: true
   }).onOk(async () => {
     try {
-      await DeletarMensagem(m)
+      await ticketStore.deletarMensagem(m)
       m.isDeleted = true // Local update for reactivity if store hasn't updated yet
     } catch (e) {
       console.error(e)

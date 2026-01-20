@@ -7,7 +7,7 @@
       hide-bottom
       class="my-sticky-dynamic q-ma-lg"
       title="Etiquetas"
-      :data="etiquetas"
+      :rows="etiquetas"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -76,10 +76,6 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { useEtiquetaStore } from 'src/stores/useEtiquetaStore'
-import { onMounted, ref } from 'vue'
 
 const $q = useQuasar()
 const store = useEtiquetaStore()

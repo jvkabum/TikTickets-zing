@@ -73,10 +73,6 @@
 </template>
 
 <script setup>
-import { format, isValid, parseISO } from 'date-fns'
-import { computed } from 'vue'
-import StatusBadge from './StatusBadge.vue'
-import TicketAvatar from './TicketAvatar.vue'
 
 const props = defineProps({
   contact: {

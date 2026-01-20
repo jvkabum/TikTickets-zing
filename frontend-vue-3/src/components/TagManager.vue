@@ -20,31 +20,21 @@
 </template>
 
 <script setup>
-import { AlterarEtiqueta, CriarEtiqueta, DeletarEtiqueta, ListarEtiquetas } from 'src/service/etiquetas'
-import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
-import { onMounted, ref } from 'vue'
-
-const tags = ref([])
+const etiquetaStore = useEtiquetaStore()
+const { etiquetas: tags } = storeToRefs(etiquetaStore)
 const newTag = ref('')
 
 const fetchTags = async () => {
-  try {
-    const { data } = await ListarEtiquetas()
-    tags.value = data
-  } catch (error) {
-    notificarErro('Erro ao buscar etiquetas', error)
-  }
+  await etiquetaStore.listarEtiquetas()
 }
 
 const addTag = async () => {
   if (newTag.value) {
     try {
-      await CriarEtiqueta({ name: newTag.value, color: '#000000' })
+      await etiquetaStore.criarEtiqueta({ name: newTag.value, color: '#000000' })
       newTag.value = ''
-      notificarSucesso('Etiqueta adicionada')
-      fetchTags()
     } catch (error) {
-      notificarErro('Erro ao adicionar etiqueta', error)
+      // Erro já é notificado na store
     }
   }
 }
@@ -53,22 +43,18 @@ const editTag = async tag => {
   const updatedName = prompt('Editar etiqueta:', tag.name)
   if (updatedName) {
     try {
-      await AlterarEtiqueta({ ...tag, name: updatedName })
-      notificarSucesso('Etiqueta atualizada')
-      fetchTags()
+      await etiquetaStore.alterarEtiqueta({ ...tag, name: updatedName })
     } catch (error) {
-      notificarErro('Erro ao atualizar etiqueta', error)
+      // Erro já é notificado na store
     }
   }
 }
 
 const deleteTag = async tagId => {
   try {
-    await DeletarEtiqueta(tagId)
-    notificarSucesso('Etiqueta excluída')
-    fetchTags()
+    await etiquetaStore.deletarEtiqueta({ id: tagId })
   } catch (error) {
-    notificarErro('Erro ao excluir etiqueta', error)
+    // Erro já é notificado na store
   }
 }
 

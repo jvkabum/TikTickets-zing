@@ -233,15 +233,16 @@
       <q-page-container class="bg-grey-3">
         <q-page
           class="flex flex-center"
+          :class="{
+            'bg-grey-3': !ticketFocado.id,
+          }"
+          style="background-image: url('/assets/wa-background.png'); background-repeat: repeat; background-size: contain;"
           v-if="!ticketFocado.id"
         >
-          <div class="text-center">
-            <q-icon
-              name="mdi-forum-outline"
-              size="100px"
-              color="grey-5"
-            />
-            <div class="text-h6 text-grey-6 q-mt-md">Selecione um atendimento para visualizar</div>
+          <div class="column items-center">
+            <q-img src="~assets/logo-wchats.png" width="150px" class="q-mb-lg" />
+            <div class="text-h6 text-grey-8 q-mt-md">Selecione um ticket!</div>
+            <div class="text-body2 text-grey-6 q-mt-sm">Escolha um contato para iniciar o atendimento.</div>
           </div>
         </q-page>
         <q-page
@@ -385,22 +386,8 @@
 </template>
 
 <script setup>
-import { debounce } from 'lodash'
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { EditarContato } from 'src/service/contatos'
-import { useAuthStore } from 'src/stores/useAuthStore'
-import { useEtiquetaStore } from 'src/stores/useEtiquetaStore'
-import { useFilaStore } from 'src/stores/useFilaStore'
-import { useTicketSockets } from 'src/stores/useTicketSockets'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import ContatoModal from '../contatos/ContatoModal.vue'
-import ModalUsuario from '../usuarios/ModalUsuario.vue'
-import Chat from './Chat.vue'
-import ModalNovoTicket from './ModalNovoTicket.vue'
-import TicketList from './TicketList.vue'
+// Nota: Imports de Vue, Router, Pinia, Quasar, Stores e Composables
+// agora são automáticos via unplugin-auto-import e unplugin-vue-components configurados no quasar.config.js
 
 const router = useRouter()
 const route = useRoute()
@@ -428,53 +415,37 @@ const modalNovoTicket = ref(false)
 const modalContato = ref(false)
 const selectedContactId = ref(null)
 
-const pesquisaTickets = reactive({
-  searchParam: '',
-  pageNumber: 1,
-  status: ['open', 'pending', 'closed'],
-  showAll: false,
-  queuesIds: [],
-  tagsIds: [],
-  withUnreadMessages: false,
-  isNotAssignedUser: false,
-  includeNotQueueDefined: true
-})
+const {
+  filtros: pesquisaTickets,
+  hasFiltrosAtivos: cFiltroSelecionado,
+  carregarFiltros,
+  salvarFiltros,
+  limparFiltros: limparFiltro
+} = useTicketFilters()
 
-const style = computed(() => ({ height: $q.screen.height + 'px' }))
-const cRouteContatos = computed(() => route.name === 'chat-contatos')
-const cFiltroSelecionado = computed(() => {
-  return (
-    pesquisaTickets.queuesIds.length > 0 ||
-    pesquisaTickets.tagsIds.length > 0 ||
-    pesquisaTickets.showAll ||
-    pesquisaTickets.withUnreadMessages ||
-    pesquisaTickets.isNotAssignedUser
-  )
-})
+const { editarContato } = useContatos()
+
+// O estado pesquisaTickets agora vem do useTicketFilters()
+// O cFiltroSelecionado também vem do useTicketFilters()
+
+// Computed Style para altura dinámica
+const style = computed(() => ({
+  height: $q.screen.height + 'px'
+}))
 
 const cIsExtraInfo = computed(() => ticketFocado.value?.contact?.extraInfo?.length > 0)
 
 const filtrarTickets = () => {
   pesquisaTickets.pageNumber = 1
-  // Aqui o subcomponente TicketList irá reagir pois recebe pesquisaTickets como prop
+  salvarFiltros()
 }
 
-const debouncedFiltrarTickets = debounce(filtrarTickets, 500)
-
-const limparFiltro = () => {
-  pesquisaTickets.queuesIds = []
-  pesquisaTickets.tagsIds = []
-  pesquisaTickets.showAll = false
-  pesquisaTickets.withUnreadMessages = false
-  pesquisaTickets.isNotAssignedUser = false
-  pesquisaTickets.searchParam = ''
-  filtrarTickets()
-}
+const debouncedFiltrarTickets = useDebounceFn(filtrarTickets, 500)
 
 const atualizarEtiquetasContato = async tagsIds => {
   try {
     const contact = { ...ticketFocado.value.contact, tags: tagsIds }
-    await EditarContato(contact.id, contact)
+    await editarContato(contact.id, contact)
     ticketStore.updateTicketContact(contact)
   } catch (error) {
     console.error('Erro ao atualizar etiquetas do contato', error)
@@ -494,6 +465,7 @@ onMounted(() => {
   setupSockets()
   etiquetaStore.listarEtiquetas(true)
   filaStore.listarFilas()
+  carregarFiltros() // Carrega filtros salvos ao montar
 
   if ($q.screen.lt.md) {
     drawerTickets.value = false
@@ -507,9 +479,22 @@ onUnmounted(() => {
 
 <style lang="sass">
 .WAL
+  background-image: url('assets/wa-background.png')
+  background-repeat: repeat
+  background-size: contain
   width: 100%
   height: 100%
+  padding-top: 20px
+  padding-bottom: 20px
+
   &:before
+    content: ''
+    height: 127px
+    position: fixed
+    top: 0
+    width: 100%
+    z-index: 0
+    background-color: #009688
     content: ''
     height: 127px
     position: fixed

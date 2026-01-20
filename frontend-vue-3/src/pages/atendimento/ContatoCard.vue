@@ -38,7 +38,6 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 
 const props = defineProps({
   mensagem: { type: Object, required: true }

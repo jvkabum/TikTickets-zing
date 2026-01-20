@@ -161,8 +161,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { ref } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 

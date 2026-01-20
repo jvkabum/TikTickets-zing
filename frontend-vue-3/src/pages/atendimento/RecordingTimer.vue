@@ -3,7 +3,6 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, reactive } from 'vue'
 
 const timer = reactive({
   minutes: 0,

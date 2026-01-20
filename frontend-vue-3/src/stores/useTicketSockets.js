@@ -1,5 +1,4 @@
 import { format } from 'date-fns'
-import { useQuasar } from 'quasar'
 import { ConsultarTickets } from 'src/service/tickets'
 import checkTicketFilter from 'src/utils/checkTicketFilter'
 import { socketIO } from 'src/utils/socket'
@@ -35,6 +34,7 @@ export function useTicketSockets() {
 
     socket.on('connect', () => {
       socket.emit(`${usuario.tenantId}:joinNotification`)
+      socket.emit(`${usuario.tenantId}:setUserActive`)
 
       socket.on(`${usuario.tenantId}:ticketList`, async data => {
         if (data.type === 'chat:create') {

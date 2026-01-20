@@ -264,9 +264,7 @@
 
 <script setup>
 import { cloneDeep } from 'lodash'
-import { storeToRefs } from 'pinia'
-import { uid as getUUID, useQuasar } from 'quasar'
-import { nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { uid as getUUID } from 'quasar'
 import { UpdateChatFlow } from '../../service/chatFlow'
 import { useChatFlowStore } from '../../stores/useChatFlowStore'
 import { ForceDirected } from './force-directed'

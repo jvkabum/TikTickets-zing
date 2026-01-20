@@ -79,13 +79,10 @@
 </template>
 
 <script setup>
-import { ListarContatos } from 'src/service/contatos'
-import { CriarTicket } from 'src/service/tickets'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
-import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import ContatoModal from '../contatos/ContatoModal.vue'
+
+const contatoStore = useContatoStore()
+const ticketStore = useTicketStore()
 
 const props = defineProps({
   modalNovoTicket: { type: Boolean, default: false }
@@ -94,7 +91,6 @@ const props = defineProps({
 const emit = defineEmits(['update:modalNovoTicket'])
 
 const router = useRouter()
-const ticketStore = useTicketStore()
 
 const contatoSelecionado = ref(null)
 const contatosOptions = ref([])
@@ -114,7 +110,7 @@ const localizarContato = async (val, update, abort) => {
   }
   loading.value = true
   try {
-    const { data } = await ListarContatos({ searchParam: val })
+    const data = await contatoStore.listarContatos({ searchParam: val })
     update(() => {
       contatosOptions.value = data.contacts
     })
@@ -135,7 +131,7 @@ const criarTicket = async () => {
   loading.value = true
   try {
     const userId = localStorage.getItem('userId')
-    const { data: ticket } = await CriarTicket({
+    const ticket = await ticketStore.criarTicket({
       contactId: contatoSelecionado.value.id,
       isActiveDemand: true,
       userId,

@@ -94,7 +94,6 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
-import { useQuasar } from 'quasar'
 import { useAutoRespostaStore } from 'src/stores/useAutoRespostaStore'
 import { useForm } from 'vee-validate'
 import { reactive } from 'vue'
@@ -120,6 +119,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modalEtapaAutoResposta', 'update:etapaAutoRespostaEdicao'])
 
 const $q = useQuasar()
+
 const autoRespostaStore = useAutoRespostaStore()
 const { criarEtapa, editarEtapa } = autoRespostaStore
 

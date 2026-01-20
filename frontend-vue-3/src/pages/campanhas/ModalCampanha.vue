@@ -403,13 +403,7 @@
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
 import { parseISO, startOfDay } from 'date-fns'
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { useCampanhaStore } from 'src/stores/useCampanhaStore'
-import { useWhatsappStore } from 'src/stores/useWhatsappStore'
 import { notificarErro } from 'src/utils/helpersNotifications'
-import { useForm } from 'vee-validate'
-import { computed, nextTick, reactive, ref } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 import { z } from 'zod'

@@ -43,11 +43,6 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { ConsultarTickets } from 'src/service/tickets'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import { notificarErro } from 'src/utils/helpersNotifications'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import ItemTicket from './ItemTicket.vue'
 
 const props = defineProps({
@@ -96,28 +91,13 @@ const consultarTickets = async (isLoadMore = false) => {
     props.searchParams.pageNumber = 1
   }
 
-  loading.value = true
-  try {
-    const params = {
-      ...props.searchParams,
-      status: props.status === 'groups' ? ['open', 'pending'] : [props.status],
-      isGroup: props.status === 'groups'
-    }
-
-    const { data } = await ConsultarTickets(params)
-
-    if (isLoadMore) {
-      ticketStore.addTickets(data.tickets)
-    } else {
-      ticketStore.setTickets(data.tickets)
-    }
-
-    ticketStore.setHasMore(data.hasMore)
-  } catch (err) {
-    notificarErro('Erro ao carregar tickets', err)
-  } finally {
-    loading.value = false
+  const params = {
+    ...props.searchParams,
+    status: props.status === 'groups' ? ['open', 'pending'] : [props.status],
+    isGroup: props.status === 'groups'
   }
+
+  await ticketStore.consultarTickets(params, isLoadMore)
 }
 
 const onScroll = info => {

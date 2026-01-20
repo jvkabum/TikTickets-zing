@@ -106,13 +106,7 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
-import { useQuasar } from 'quasar'
-import { useAuthStore } from 'src/stores/useAuthStore'
-import { useField, useForm } from 'vee-validate'
-import { ref } from 'vue'
 import * as zod from 'zod'
-
-import { useRouter } from 'vue-router'
 
 const $q = useQuasar()
 const authStore = useAuthStore()

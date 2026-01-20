@@ -262,10 +262,6 @@
 
 <script setup>
 import { format } from 'date-fns'
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 import alertSound from 'src/assets/sound.mp3'
 import { ListarConfiguracoes } from 'src/service/configuracoes'
@@ -275,16 +271,6 @@ import { ConsultarTickets } from 'src/service/tickets'
 import bus from 'src/utils/eventBus'
 import { socketIO } from 'src/utils/socket'
 
-import { useSocketInitial } from 'src/composables/useSocketInitial'
-import { useAuthStore } from 'src/stores/useAuthStore'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import { useUsuarioStore } from 'src/stores/useUsuarioStore'
-import { useWhatsappStore } from 'src/stores/useWhatsappStore'
-
-import cStatusUsuario from 'src/components/cStatusUsuario.vue'
-import cSystemVersion from 'src/components/cSystemVersion.vue'
-import EssentialLink from 'src/components/EssentialLink.vue'
-import ModalUsuario from 'src/pages/usuarios/ModalUsuario.vue'
 
 const $q = useQuasar()
 const router = useRouter()

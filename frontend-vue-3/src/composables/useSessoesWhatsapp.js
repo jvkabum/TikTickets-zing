@@ -1,4 +1,3 @@
-import { useQuasar } from 'quasar'
 import {
     CriarWhatsapp,
     DeletarWhatsapp,
@@ -8,9 +7,7 @@ import {
     StartWhatsappSession,
     UpdateWhatsapp
 } from 'src/service/sessoesWhatsapp'
-import { useWhatsappStore } from 'src/stores/useWhatsappStore'
 import { notificarErro } from 'src/utils/helpersNotifications'
-import { computed, ref } from 'vue'
 
 export function useSessoesWhatsapp() {
     const $q = useQuasar()

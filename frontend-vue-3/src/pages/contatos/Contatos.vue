@@ -274,14 +274,8 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { CriarTicket } from 'src/service/tickets'
-import { useContatoStore } from 'src/stores/useContatoStore'
-import { useEtiquetaStore } from 'src/stores/useEtiquetaStore'
-import { useTicketStore } from 'src/stores/useTicketStore'
 import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
-import { onMounted, reactive, ref } from 'vue'
+
 import ContatoModal from './ContatoModal.vue'
 
 const props = defineProps({
@@ -411,7 +405,7 @@ const handleExportContacts = async () => {
 const handleSaveTicket = async (contact, channel) => {
   if (!contact.number && channel === 'whatsapp') return
   try {
-    const { data } = await CriarTicket({
+    const data = await ticketStore.criarTicket({
       contactId: contact.id,
       status: 'open',
       userId: localStorage.getItem('userId'),

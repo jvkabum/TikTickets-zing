@@ -143,9 +143,12 @@
 
 <script setup>
 import { format, sub } from 'date-fns'
-import { RelatorioContatos } from 'src/service/estatisticas'
-import { onMounted, reactive, ref } from 'vue'
 import * as XLSX from 'xlsx'
+
+const {
+  obterRelatorioContatos,
+  loading
+} = useRelatorios()
 
 const props = defineProps({
   moduloAtendimento: {

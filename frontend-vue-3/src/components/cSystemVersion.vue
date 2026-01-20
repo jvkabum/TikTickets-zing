@@ -16,7 +16,6 @@
 </template>
 <script setup>
 import packageEnv from 'src/../package.json'
-import { computed } from 'vue'
 
 const cVersion = computed(() => packageEnv.version)
 const github = computed(() => packageEnv.github)

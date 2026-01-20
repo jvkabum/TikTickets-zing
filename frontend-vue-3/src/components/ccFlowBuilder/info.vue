@@ -25,7 +25,6 @@
 
 <script setup>
 import { json } from '@codemirror/lang-json'
-import { ref, shallowRef } from 'vue'
 import { Codemirror } from 'vue-codemirror'
 
 const props = defineProps({

@@ -82,9 +82,6 @@
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
 import { getDefaultFlow } from 'src/components/ccFlowBuilder/defaultFlow'
-import { useChatFlowStore } from 'src/stores/useChatFlowStore'
-import { useForm } from 'vee-validate'
-import { reactive } from 'vue'
 import { z } from 'zod'
 
 const props = defineProps({

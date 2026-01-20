@@ -1,13 +1,6 @@
-import { useQuasar } from 'quasar'
 import { ConsultarTickets } from 'src/service/tickets'
-import { useAuthStore } from 'src/stores/useAuthStore'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import { useUsuarioStore } from 'src/stores/useUsuarioStore'
-import { useWhatsappStore } from 'src/stores/useWhatsappStore'
 import bus from 'src/utils/eventBus'
 import { socketIO } from 'src/utils/socket'
-import { onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 
 const socket = socketIO()
 

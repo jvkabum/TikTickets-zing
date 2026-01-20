@@ -143,10 +143,14 @@
 
 <script setup>
 import { format, sub } from 'date-fns'
-import { RelatorioResumoAtendimentosUsuarios } from 'src/service/estatisticas'
 import { formatarValorMoeda } from 'src/utils/formatValue'
-import { onMounted, reactive, ref } from 'vue'
 import * as XLSX from 'xlsx'
+
+const {
+  dadosResumo,
+  loading,
+  obterRelatorioResumoAtendimentosUsuarios
+} = useRelatorios()
 
 const props = defineProps({
   moduloAtendimento: {
@@ -156,7 +160,6 @@ const props = defineProps({
 })
 
 const userProfile = ref('user')
-const dadosResumo = ref([])
 const imprimir = ref(false)
 
 const columns = [

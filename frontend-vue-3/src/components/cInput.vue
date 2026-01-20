@@ -41,7 +41,6 @@
 </template>
 
 <script setup>
-import { computed, useAttrs } from 'vue'
 
 defineOptions({
   inheritAttrs: false

@@ -63,10 +63,6 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { useFilaStore } from 'src/stores/useFilaStore'
-import { onMounted, ref } from 'vue'
 import ModalFila from './ModalFila.vue'
 
 const $q = useQuasar()

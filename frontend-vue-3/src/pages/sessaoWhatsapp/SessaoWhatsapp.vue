@@ -177,16 +177,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { useSessoesWhatsapp } from 'src/composables/useSessoesWhatsapp'
-import { ListarChatFlow } from 'src/service/chatFlow'
-import { onMounted, ref } from 'vue'
-
-// Componentes
-import ItemStatusChannel from './ItemStatusChannel.vue'
-import ModalQrCode from './ModalQrCode.vue'
-import ModalWhatsapp from './ModalWhatsapp.vue'
-
 const $q = useQuasar()
 
 const {
@@ -206,21 +196,18 @@ const {
   saveWhatsapp
 } = useSessoesWhatsapp()
 
+const chatFlowStore = useChatFlowStore()
+const { chatFlows: listaChatFlow } = storeToRefs(chatFlowStore)
+
 const userProfile = ref('user')
 const isAdmin = ref(false)
-const listaChatFlow = ref([])
 
 const handleSaveWhatsApp = async (whatsapp) => {
   await saveWhatsapp(whatsapp)
 }
 
 const listarChatFlow = async () => {
-  try {
-    const { data } = await ListarChatFlow()
-    listaChatFlow.value = data.chatFlow
-  } catch (error) {
-    console.error(error)
-  }
+  await chatFlowStore.listarChatFlows()
 }
 
 onMounted(() => {

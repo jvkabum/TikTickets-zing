@@ -205,30 +205,14 @@
 <script setup>
 import { formatDistance, isValid as isValidDate, parseISO } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR'
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import defaultAvatar from 'src/assets/avatar.png'
-import { ObterContato } from 'src/service/contatos'
-import { SincronizarMensagensTicket } from 'src/service/tickets'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useTicketActions } from './useTicketActions'
-
 const props = defineProps({
-  ticket: {
-    type: Object,
-    required: true
-  },
-  filas: {
-    type: Array,
-    default: () => []
-  }
+  ticket: { type: Object, default: () => ({}) },
+  filas: { type: Array, default: () => [] }
 })
 
 const $q = useQuasar()
 const router = useRouter()
+const contatoStore = useContatoStore()
 const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)
 const { iniciarAtendimento, espiarAtendimento } = useTicketActions()
@@ -263,7 +247,7 @@ const dataInWords = timestamp => {
 const loadContactInfo = async () => {
   if (!props.ticket.contactId) return
   try {
-    const { data } = await ObterContato(props.ticket.contactId)
+    const data = await contatoStore.obterContato(props.ticket.contactId)
     tagsDoTicket.value = data.tags || []
     walletsDoTicket.value = data.wallets ? data.wallets.map(w => ({ wallet: w.name })) : []
   } catch (e) {
@@ -280,7 +264,7 @@ const abrirChatContato = ticket => {
 const sincronizarMensagens = async () => {
   sincronizando.value = true
   try {
-    await SincronizarMensagensTicket(props.ticket.id)
+    await ticketStore.sincronizarMensagens(props.ticket.id)
     notificarSucesso('Mensagens sincronizadas!')
   } catch (e) {
     notificarErro('Erro ao sincronizar', e)

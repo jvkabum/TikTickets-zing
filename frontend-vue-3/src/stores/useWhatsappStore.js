@@ -1,5 +1,3 @@
-import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
 
 export const useWhatsappStore = defineStore('whatsapp', () => {
   const whatsapps = ref([])

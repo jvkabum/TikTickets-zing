@@ -10,7 +10,9 @@
 import 'dotenv/config'
 import path from 'path'
 import { configure } from 'quasar/wrappers'
+import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
+import { QuasarResolver } from 'unplugin-vue-components/resolvers'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -82,6 +84,64 @@ export default configure(function (ctx) {
 
       // https://quasar.dev/quasar-cli/handling-vite
       extendViteConf(viteConf) {
+        // Auto-import de APIs (ref, computed, useRouter, storeToRefs, etc.)
+        viteConf.plugins.push(
+          AutoImport({
+            imports: [
+              // Vue APIs
+              'vue',
+              // Vue Router
+              'vue-router',
+              // Pinia
+              'pinia',
+              // VueUse (useDebounceFn, useDark, useLocalStorage, etc.)
+              '@vueuse/core',
+              // Quasar
+              {
+                quasar: [
+                  'useQuasar',
+                  'Notify',
+                  'Dialog',
+                  'LocalStorage',
+                  'SessionStorage',
+                  'Loading',
+                  'QSpinnerGears'
+                ]
+              },
+              {
+                'vee-validate': [
+                  'useForm',
+                  'useField',
+                  'defineRule'
+                ]
+              },
+              {
+                'yup': [
+                  'object',
+                  'string',
+                  'number',
+                  'boolean',
+                  'array'
+                ]
+              }
+            ],
+            dirs: [
+              // Seus stores customizados
+              'src/stores',
+              // Seus composables
+              'src/composables'
+            ],
+            vueTemplate: true,
+            dts: 'src/auto-imports.d.ts',
+            eslintrc: {
+              enabled: true,
+              filepath: './.eslintrc-auto-import.json',
+              globalsPropValue: true
+            }
+          })
+        )
+
+        // Auto-import de Componentes Vue
         viteConf.plugins.push(
           Components({
             dirs: [
@@ -108,7 +168,13 @@ export default configure(function (ctx) {
             ],
             extensions: ['vue'],
             deep: true,
-            dts: false
+            dts: 'src/components.d.ts',
+            resolvers: [
+              QuasarResolver({
+                importStyle: 'scss',
+                autoImportIcons: true
+              })
+            ]
           })
         )
         viteConf.resolve = viteConf.resolve || {}

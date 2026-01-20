@@ -90,10 +90,6 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
-import { useQuasar } from 'quasar'
-import { useUsuarioStore } from 'src/stores/useUsuarioStore'
-import { useField, useForm } from 'vee-validate'
-import { ref } from 'vue'
 import * as zod from 'zod'
 
 const props = defineProps({

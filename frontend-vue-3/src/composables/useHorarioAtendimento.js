@@ -1,5 +1,3 @@
-import { useQuasar } from 'quasar'
-import { computed, ref } from 'vue'
 
 /**
  * Composable para gerenciar horários de atendimento

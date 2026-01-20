@@ -41,7 +41,6 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
 import draggable from 'vuedraggable'
 
 const emit = defineEmits(['addNode'])

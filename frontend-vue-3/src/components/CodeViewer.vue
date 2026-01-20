@@ -78,8 +78,6 @@
 import axios from 'axios'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/atom-one-dark.css'
-import { useQuasar } from 'quasar'
-import { computed, ref, watch } from 'vue'
 import { formatarCodigo, formatarCodigoSql, getHighlightLanguage, isSqlFileType } from '../utils/codeFormat.js'
 
 const props = defineProps({

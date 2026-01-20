@@ -198,9 +198,6 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useWhatsappStore } from 'src/stores/useWhatsappStore'
-import { computed, onMounted, ref, watch } from 'vue'
 import ItemStatusWhatsapp from './ItemStatusWhatsapp.vue'
 
 const props = defineProps({

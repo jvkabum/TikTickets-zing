@@ -50,7 +50,6 @@
 
 <script setup>
 import defaultAvatar from 'src/assets/avatar.png'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import WaveSurfer from 'wavesurfer.js'
 
 const props = defineProps({

@@ -1,10 +1,6 @@
-import { useQuasar } from 'quasar'
-import { AtualizarStatusTicket } from 'src/service/tickets'
-import { useTicketStore } from 'src/stores/useTicketStore'
 import { notificarErro } from 'src/utils/helpersNotifications'
-import { useRouter } from 'vue-router'
 
-export function useTicketActions () {
+export function useTicketActions() {
   const $q = useQuasar()
   const router = useRouter()
   const ticketStore = useTicketStore()
@@ -12,7 +8,7 @@ export function useTicketActions () {
 
   const iniciarAtendimento = async ticket => {
     try {
-      await AtualizarStatusTicket(ticket.id, 'open', userId)
+      await ticketStore.atualizarStatusTicket(ticket.id, 'open', userId)
       $q.notify({
         message: `Atendimento Iniciado || ${ticket.name || ticket.contact.name} - Ticket: ${ticket.id}`,
         type: 'positive',
@@ -31,7 +27,7 @@ export function useTicketActions () {
     try {
       // Para espiar, apenas focamos o ticket sem mudar status ou mudando para pending para garantir carregamento
       // No legado ele mudava para pending se já não fosse
-      await AtualizarStatusTicket(ticket.id, 'pending')
+      await ticketStore.atualizarStatusTicket(ticket.id, 'pending')
       $q.notify({
         message: `Espiando || ${ticket.name || ticket.contact.name} - Ticket: ${ticket.id}`,
         type: 'positive',
@@ -66,7 +62,7 @@ export function useTicketActions () {
       persistent: true
     }).onOk(async () => {
       try {
-        await AtualizarStatusTicket(ticketId, status, userId)
+        await ticketStore.atualizarStatusTicket(ticketId, status, userId)
         $q.notify({
           message: `${toast[status]} || ${contatoName} (Ticket ${ticketId})`,
           type: 'positive',

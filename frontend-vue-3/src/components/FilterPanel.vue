@@ -94,7 +94,6 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
 
 const props = defineProps({
   filtros: {

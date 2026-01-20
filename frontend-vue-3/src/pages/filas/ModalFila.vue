@@ -52,7 +52,6 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
-import { useQuasar } from 'quasar'
 import { useFilaStore } from 'src/stores/useFilaStore'
 import { notificarErro } from 'src/utils/helpersNotifications'
 import { useForm } from 'vee-validate'

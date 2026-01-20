@@ -58,9 +58,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { useUsuarioStore } from 'src/stores/useUsuarioStore'
-import { ref } from 'vue'
 
 const props = defineProps({
   modalFilaUsuario: {

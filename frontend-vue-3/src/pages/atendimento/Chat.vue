@@ -226,28 +226,9 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
+const contatoStore = useContatoStore()
 import whatsBackground from 'src/assets/wa-background.png'
-import { ListarContatos } from 'src/service/contatos'
-import { EncaminharMensagem } from 'src/service/tickets'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import bus from 'src/utils/eventBus'
-import { formatarMensagemWhatsapp } from 'src/utils/formatMessage'
-import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
-import InfiniteLoading from 'v3-infinite-loading'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import InforCabecalhoChat from './InforCabecalhoChat.vue'
-import InputMensagem from './InputMensagem.vue'
-import MensagemChat from './MensagemChat.vue'
-
-const props = defineProps({
-  mensagensRapidas: {
-    type: Array,
-    default: () => []
-  }
-})
-
+import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
 const ticketStore = useTicketStore()
 const { mensagens, ticketFocado, hasMore, loading } = storeToRefs(ticketStore)
 
@@ -342,7 +323,7 @@ const localizarContato = async (val, update, abort) => {
     return
   }
   try {
-    const { data } = await ListarContatos({ searchParam: val })
+    const data = await contatoStore.listarContatos({ searchParam: val })
     update(() => {
       contatosOptions.value = data.contacts
     })
@@ -354,7 +335,7 @@ const localizarContato = async (val, update, abort) => {
 const confirmarEncaminhamentoSimples = async () => {
   if (!contatoSelecionado.value) return
   try {
-    await EncaminharMensagem([mensagemSimplesEncaminhar.value], contatoSelecionado.value)
+    await ticketStore.encaminharMensagem([mensagemSimplesEncaminhar.value], contatoSelecionado.value)
     notificarSucesso('Mensagem encaminhada!')
     modalEncaminhamentoMensagem.value = false
     contatoSelecionado.value = null
@@ -366,7 +347,7 @@ const confirmarEncaminhamentoSimples = async () => {
 const confirmarEncaminhamentoMulti = async () => {
   if (!contatoSelecionado.value || !mensagensParaEncaminhar.value.length) return
   try {
-    await EncaminharMensagem(mensagensParaEncaminhar.value, contatoSelecionado.value)
+    await ticketStore.encaminharMensagem(mensagensParaEncaminhar.value, contatoSelecionado.value)
     notificarSucesso(`${mensagensParaEncaminhar.value.length} mensagens encaminhadas!`)
     cancelarMultiEncaminhamento()
     contatoSelecionado.value = null

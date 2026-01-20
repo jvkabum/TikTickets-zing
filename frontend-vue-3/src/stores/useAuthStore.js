@@ -1,6 +1,4 @@
-import { defineStore } from 'pinia'
 import request from 'src/service/request'
-import { computed, ref } from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('usuario')) || null)
@@ -32,6 +30,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function handleLogin({ email, password }) {
+    const { router } = this || {} // O router estará disponível na instância se injetado via plugin
     try {
       const { data } = await request({
         url: '/auth/login',
@@ -48,6 +47,34 @@ export const useAuthStore = defineStore('auth', () => {
         queues: data.queues
       }
       login(userData, data.token)
+
+      // Persistir filtros e tema
+      const pesquisaTicketsFiltroPadrao = {
+        searchParam: '',
+        pageNumber: 1,
+        status: ['open', 'pending', 'closed'],
+        showAll: false,
+        count: null,
+        queuesIds: [],
+        withUnreadMessages: false,
+        isNotAssignedUser: false,
+        includeNotQueueDefined: true
+      }
+
+      localStorage.setItem('filtrosAtendimento', JSON.stringify(data?.configs?.filtrosAtendimento || pesquisaTicketsFiltroPadrao))
+
+      if (data?.configs?.isDark) {
+        Dark.set(data.configs.isDark)
+      }
+
+      // Redirecionamento baseado no perfil
+      if (data.profile === 'admin') {
+        this.router.push({ name: 'home-dashboard' })
+      } else if (data.profile === 'super') {
+        this.router.push({ name: 'empresassuper' })
+      } else {
+        this.router.push({ name: 'atendimento' })
+      }
     } catch (error) {
       throw error
     }

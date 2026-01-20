@@ -37,7 +37,6 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
 import relatorios from './relatorios.json'
 
 const userProfile = ref('user')

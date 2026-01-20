@@ -156,11 +156,8 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
 import { copyToClipboard } from 'quasar'
-import { useApiStore } from 'src/stores/useApiStore'
 import { notificarSucesso } from 'src/utils/helpersNotifications'
-import { computed, onMounted, ref } from 'vue'
 import ModalApi from './ModalApi.vue'
 
 const apiStore = useApiStore()

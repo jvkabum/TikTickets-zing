@@ -178,8 +178,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { computed, ref } from 'vue'
 import VueEasyLightbox from 'vue-easy-lightbox'
 
 const props = defineProps({

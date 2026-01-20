@@ -108,14 +108,10 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
-import { useQuasar } from 'quasar'
-import { CriarUsuarioTenant } from 'src/service/user'
-import { useTenantStore } from 'src/stores/useTenantStore'
-import { useField, useForm } from 'vee-validate'
-import { computed, ref } from 'vue'
 import * as zod from 'zod'
 
 const props = defineProps({
+// ... rest of file
   modalUsuario: {
     type: Boolean,
     default: false
@@ -139,6 +135,7 @@ const emit = defineEmits([
 
 const $q = useQuasar()
 const tenantStore = useTenantStore()
+const usuarioStore = useUsuarioStore()
 
 const isPwd = ref(true)
 const optionsProfile = [
@@ -226,8 +223,8 @@ const onSubmit = handleSubmit(async values => {
         position: 'top'
       })
     } else {
-      const { data } = await CriarUsuarioTenant(values)
-      emit('modalUsuario:usuario-criado', data)
+      const res = await usuarioStore.criarUsuarioTenant(values)
+      emit('modalUsuario:usuario-criado', res)
       $q.notify({
         type: 'positive',
         message: 'Usuário criado!',

@@ -203,9 +203,6 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useHorarioAtendimentoStore } from 'src/stores/useHorarioAtendimentoStore'
-import { nextTick, onMounted, ref } from 'vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 

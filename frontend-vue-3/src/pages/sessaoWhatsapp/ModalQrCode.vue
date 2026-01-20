@@ -67,9 +67,6 @@
 
 <script setup>
 import QrcodeVue from 'qrcode.vue'
-import { useQuasar } from 'quasar'
-import { useSessoesWhatsapp } from 'src/composables/useSessoesWhatsapp'
-import { computed, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   abrirModalQR: {

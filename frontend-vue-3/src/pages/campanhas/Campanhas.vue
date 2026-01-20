@@ -6,7 +6,7 @@
       hide-bottom
       class="my-sticky-dynamic q-ma-lg"
       title="Campanhas"
-      :data="campanhas"
+      :rows="campanhas"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -113,27 +113,24 @@
 
 <script setup>
 import { format, parseISO, startOfDay } from 'date-fns'
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { useCampanhaStore } from 'src/stores/useCampanhaStore'
 import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
 import { socketIO } from 'src/utils/socket'
-import { onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import ModalCampanha from './ModalCampanha.vue'
 
 const router = useRouter()
 const $q = useQuasar()
 const socket = socketIO()
-const store = useCampanhaStore()
-const { campanhas, loading } = storeToRefs(store)
 const {
+  campanhas,
+  loading,
   listarCampanhas,
   deletarCampanha: deletarCampanhaStore,
   cancelarCampanha: cancelarCampanhaStore,
   iniciarCampanha: iniciarCampanhaStore,
-  atualizarCampanha
-} = store
+  atualizarCampanha,
+  getStatusLabel,
+  getStatusColor
+} = useCampanhas()
 
 const usuario = JSON.parse(localStorage.getItem('usuario'))
 const userProfile = ref('user')
@@ -146,14 +143,7 @@ const pagination = ref({
   lastIndex: 0
 })
 
-const statusOptions = {
-  pending: 'Pendente',
-  scheduled: 'Programada',
-  processing: 'Processando',
-  canceled: 'Cancelada',
-  finished: 'Finalizada',
-  failed: 'Falhou'
-}
+// O statusOptions local foi removido em favor do getStatusLabel da Store
 
 const columns = [
   { name: 'id', label: '#', field: 'id', align: 'left' },
@@ -170,7 +160,7 @@ const columns = [
     label: 'Status',
     field: 'status',
     align: 'center',
-    format: v => (v ? statusOptions[v] : '')
+    format: v => getStatusLabel(v)
   },
   {
     name: 'contactsCount',

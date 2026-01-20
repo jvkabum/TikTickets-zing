@@ -249,24 +249,10 @@
 <script setup>
 import { format, formatDuration, subDays } from 'date-fns'
 import groupBy from 'lodash/groupBy'
-import { useQuasar } from 'quasar'
 import DatePick from 'src/components/cDatePick.vue'
-import {
-  GetDashTicketsAndTimes,
-  GetDashTicketsChannels,
-  GetDashTicketsEvolutionByPeriod,
-  GetDashTicketsEvolutionChannels,
-  GetDashTicketsPerUsersDetail,
-  GetDashTicketsQueue
-} from 'src/service/estatisticas'
-import { ListarFilas } from 'src/service/filas'
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 
 const $q = useQuasar()
 const router = useRouter()
-
-const filas = ref([])
 
 const params = reactive({
   startDate: format(subDays(new Date(), 6), 'yyyy-MM-dd'),
@@ -274,21 +260,6 @@ const params = reactive({
   queuesIds: [],
   isGroup: false
 })
-
-const ticketsAndTimes = ref({
-  qtd_total_atendimentos: 0,
-  qtd_demanda_ativa: 0,
-  qtd_demanda_receptiva: 0,
-  new_contacts: 0,
-  tma: {},
-  tme: {}
-})
-
-const ticketsQueue = ref([])
-const ticketsChannels = ref([])
-const ticketsEvolutionChannels = ref([])
-const ticketsEvolutionByPeriod = ref([])
-const ticketsPerUsersDetail = ref([])
 
 const ChartTicketsQueue = ref(null)
 const ChartTicketsChannels = ref(null)
@@ -367,97 +338,68 @@ const TicketsPerUsersDetailColumn = [
 const cTmaFormat = computed(() => formatDuration(ticketsAndTimes.value.tma || {}) || '')
 const cTmeFormat = computed(() => formatDuration(ticketsAndTimes.value.tme || {}) || '')
 
-const getDashTicketsAndTimes = async () => {
-  try {
-    const res = await GetDashTicketsAndTimes(params)
-    ticketsAndTimes.value = res.data[0] || {}
-  } catch (err) {
-    console.error(err)
-  }
+const filaStore = useFilaStore()
+const { filas } = storeToRefs(filaStore)
+
+const {
+  ticketsAndTimes,
+  ticketsQueue,
+  ticketsChannels,
+  ticketsEvolutionChannels,
+  ticketsEvolutionByPeriod,
+  ticketsPerUsersDetail,
+  obterDashTicketsAndTimes,
+  obterDashTicketsQueue,
+  obterDashTicketsChannels,
+  obterDashTicketsEvolutionChannels,
+  obterDashTicketsEvolutionByPeriod,
+  obterDashTicketsPerUsersDetail
+} = useRelatorios()
+
+const getDashData = () => {
+  obterDashTicketsAndTimes(params)
+  obterDashTicketsChannels(params)
+  obterDashTicketsEvolutionChannels(params)
+  obterDashTicketsQueue(params)
+  obterDashTicketsEvolutionByPeriod(params)
+  obterDashTicketsPerUsersDetail(params)
 }
 
-const getDashTicketsQueue = async () => {
-  try {
-    const res = await GetDashTicketsQueue(params)
-    ticketsQueue.value = res.data
-    const series = res.data.map(e => +e.qtd)
-    const labels = res.data.map(e => e.label)
-    ticketsQueueOptions.value.series = series
-    ticketsQueueOptions.value.labels = labels
-  } catch (err) {
-    console.error(err)
-  }
-}
+watch(ticketsQueue, (data) => {
+    ticketsQueueOptions.value.series = data.map(e => +e.qtd)
+    ticketsQueueOptions.value.labels = data.map(e => e.label)
+})
 
-const getDashTicketsChannels = async () => {
-  try {
-    const res = await GetDashTicketsChannels(params)
-    ticketsChannels.value = res.data
-    const series = res.data.map(e => +e.qtd)
-    const labels = res.data.map(e => e.label)
-    ticketsChannelsOptions.value.series = series
-    ticketsChannelsOptions.value.labels = labels
-  } catch (err) {
-    console.error(err)
-  }
-}
+watch(ticketsChannels, (data) => {
+    ticketsChannelsOptions.value.series = data.map(e => +e.qtd)
+    ticketsChannelsOptions.value.labels = data.map(e => e.label)
+})
 
-const getDashTicketsEvolutionChannels = async () => {
-  try {
-    const res = await GetDashTicketsEvolutionChannels(params)
-    ticketsEvolutionChannels.value = res.data
-    const dataLabel = groupBy({ ...res.data }, 'dt_referencia')
+watch(ticketsEvolutionChannels, (data) => {
+    const dataLabel = groupBy({ ...data }, 'dt_referencia')
     const labels = Object.keys(dataLabel)
     ticketsEvolutionChannelsOptions.value.labels = labels
     ticketsEvolutionChannelsOptions.value.xaxis.categories = labels
     const series = []
-    const dados = groupBy({ ...res.data }, 'label')
+    const dados = groupBy({ ...data }, 'label')
     for (const item in dados) {
       series.push({ name: item, data: dados[item].map(d => d.qtd) })
     }
     ticketsEvolutionChannelsOptions.value.series = series
-  } catch (error) {
-    console.error(error)
-  }
-}
+})
 
-const getDashTicketsEvolutionByPeriod = async () => {
-  try {
-    const res = await GetDashTicketsEvolutionByPeriod(params)
-    ticketsEvolutionByPeriod.value = res.data
+watch(ticketsEvolutionByPeriod, (data) => {
     const series = [
-      { name: 'Atendimentos', type: 'column', data: res.data.map(e => +e.qtd) },
-      { name: 'Tendência', type: 'line', data: res.data.map(e => +e.qtd) }
+      { name: 'Atendimentos', type: 'column', data: data.map(e => +e.qtd) },
+      { name: 'Tendência', type: 'line', data: data.map(e => +e.qtd) }
     ]
-    const labels = res.data.map(e => e.label)
+    const labels = data.map(e => e.label)
     ticketsEvolutionByPeriodOptions.value.labels = labels
     ticketsEvolutionByPeriodOptions.value.series = series
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-const getDashTicketsPerUsersDetail = async () => {
-  try {
-    const res = await GetDashTicketsPerUsersDetail(params)
-    ticketsPerUsersDetail.value = res.data
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-const getDashData = () => {
-  getDashTicketsAndTimes()
-  getDashTicketsChannels()
-  getDashTicketsEvolutionChannels()
-  getDashTicketsQueue()
-  getDashTicketsEvolutionByPeriod()
-  getDashTicketsPerUsersDetail()
-}
+})
 
 const listarFilas = async () => {
-  const { data } = await ListarFilas()
-  filas.value = data
+  await filaStore.listarFilas()
 }
 
 watch(

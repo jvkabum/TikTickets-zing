@@ -7,7 +7,7 @@
       hide-bottom
       class="my-sticky-dynamic q-ma-lg"
       title="Mensagens Rápidas"
-      :data="mensagensRapidas"
+      :rows="mensagensRapidas"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -126,13 +126,8 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { useQuasar } from 'quasar'
-import { useMensagemRapidaStore } from 'src/stores/useMensagemRapidaStore'
-import { onMounted, ref } from 'vue'
 import ModalMensagemRapida from './ModalMensagemRapida.vue'
 
-const $q = useQuasar()
 const mensagemRapidaStore = useMensagemRapidaStore()
 const { mensagensRapidas, loading } = storeToRefs(mensagemRapidaStore)
 const { listarMensagensRapidas, deletarMensagemRapida } = mensagemRapidaStore

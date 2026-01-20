@@ -234,30 +234,14 @@
 </template>
 
 <script setup>
-import { storeToRefs } from 'pinia'
-import { LocalStorage, uid, useQuasar } from 'quasar'
-import { EnviarMensagemTexto } from 'src/service/tickets'
-import { useTicketStore } from 'src/stores/useTicketStore'
-import bus from 'src/utils/eventBus'
-import { notificarErro } from 'src/utils/helpersNotifications'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
-import RecordingTimer from './RecordingTimer.vue'
-import { useTicketActions } from './useTicketActions'
-
-// Lazy-loaded recorder (evita erro com lamejs no Vite)
-let Mp3Recorder = null
-
 const props = defineProps({
   replyingMessage: { type: Object, default: null },
-  isScheduleDate: { type: Boolean, default: false },
-  mensagensRapidas: { type: Array, default: () => [] }
+  mensagensRapidas: { type: Array, default: () => [] },
+  isScheduleDate: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:replyingMessage'])
 
-const $q = useQuasar()
 const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)
 const { iniciarAtendimento } = useTicketActions()
@@ -335,7 +319,7 @@ const handleStopRecordingAudio = async () => {
     formData.append('fromMe', 'true')
     if (scheduleDate.value) formData.append('scheduleDate', scheduleDate.value)
 
-    await EnviarMensagemTexto(ticketFocado.value.id, formData)
+    await ticketStore.enviarMensagem(ticketFocado.value.id, formData)
     isRecordingAudio.value = false
   } catch (e) {
     notificarErro('Erro ao enviar áudio', e)
@@ -368,7 +352,7 @@ const enviarMensagem = async () => {
 
     if (scheduleDate.value) formData.append('scheduleDate', scheduleDate.value)
 
-    await EnviarMensagemTexto(ticketFocado.value.id, formData)
+    await ticketStore.enviarMensagem(ticketFocado.value.id, formData)
     textChat.value = ''
     arquivos.value = []
     emit('update:replyingMessage', null)

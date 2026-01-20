@@ -100,8 +100,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
-import { computed, nextTick, ref } from 'vue'
 
 const props = defineProps({
   node: Object,

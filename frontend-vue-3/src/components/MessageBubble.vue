@@ -57,7 +57,6 @@
 <script setup>
 import { format, isValid, parseISO } from 'date-fns'
 import { useMessages } from 'src/composables/useMessages'
-import { computed } from 'vue'
 
 const props = defineProps({
   body: {
