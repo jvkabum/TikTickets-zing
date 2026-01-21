@@ -14,14 +14,14 @@ import { logger } from "../../utils/logger";
  */
 const inicializarSessaoComEspera = async (whatsapp: Whatsapp, index: number): Promise<void> => {
   try {
-    // Espera proporcional ao índice para evitar inicialização simultânea
-    const delay = index * 5000; // 5 segundos de diferença entre cada sessão
-    
+    // Espera proporcional ao índice para evitar saturação de CPU
+    const delay = index * 2000; // Reduzido de 5s para 2s por sessão
+
     logger.info(`Agendando inicialização da sessão ${whatsapp.name} (ID: ${whatsapp.id}) em ${delay}ms`);
-    
+
     // Espera antes de iniciar
     await new Promise(resolve => setTimeout(resolve, delay));
-    
+
     // Inicia a sessão
     await StartWhatsAppSession(whatsapp);
   } catch (err) {
@@ -48,15 +48,14 @@ export const StartAllWhatsAppsSessions = async (): Promise<void> => {
             type: "whatsapp"
           },
           status: {
-            [Op.notIn]: ["DISCONNECTED", "qrcode"]
-            // "DISCONNECTED"
+            [Op.notIn]: ["DISCONNECTED"]
           }
         }
       ],
       isActive: true
     }
   });
-  
+
   const whatsappSessions = whatsapps.filter(w => w.type === "whatsapp");
   const telegramSessions = whatsapps.filter(
     w => w.type === "telegram" && !!w.tokenTelegram
@@ -68,10 +67,10 @@ export const StartAllWhatsAppsSessions = async (): Promise<void> => {
   // Inicializa sessões do WhatsApp sequencialmente
   if (whatsappSessions.length > 0) {
     logger.info(`Iniciando ${whatsappSessions.length} sessões WhatsApp sequencialmente`);
-    
+
     // Inicializa cada sessão com um atraso proporcional
     await Promise.all(
-      whatsappSessions.map((whatsapp, index) => 
+      whatsappSessions.map((whatsapp, index) =>
         inicializarSessaoComEspera(whatsapp, index)
       )
     );

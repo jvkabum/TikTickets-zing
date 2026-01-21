@@ -21,7 +21,15 @@
           v-if="item.status == 'CONNECTED'"
         />
         <q-icon
-          v-if="['PAIRING', 'TIMEOUT'].includes(item.status)"
+          v-if="item.status == 'PAIRING'"
+          color="positive"
+          size="2.5em"
+          name="mdi-check-circle-outline"
+        >
+          <q-tooltip> QR Code lido! </q-tooltip>
+        </q-icon>
+        <q-icon
+          v-if="['TIMEOUT'].includes(item.status)"
           color="negative"
           size="2.5em"
           name="mdi-wifi-strength-1-alert"
@@ -64,12 +72,16 @@
         <q-item-label v-if="item.status == 'CONNECTED'">
           <span class="text-weight-medium"> Conexão estabelecida! </span>
         </q-item-label>
-        <q-item-label v-if="['PAIRING', 'TIMEOUT'].includes(item.status)">
+        <q-item-label v-if="['TIMEOUT'].includes(item.status)">
           <span class="text-weight-medium"> A conexão com o celular foi perdida </span>
           <span class="row col">
             Certifique-se de que seu celular esteja conectado à internet e o WhatsApp esteja aberto, ou clique no botão
             'Desconectar' para obter um novo QR Code
           </span>
+        </q-item-label>
+        <q-item-label v-if="item.status == 'PAIRING'">
+          <span class="text-weight-medium text-primary text-bold"> QR Code lido com sucesso! </span>
+          <span class="row col"> Estabilizando conexão, aguarde um momento... </span>
         </q-item-label>
         <q-item-label v-if="item.status == 'OPENING'">
           <span class="text-weight-medium"> Estabelecendo conexão. </span>

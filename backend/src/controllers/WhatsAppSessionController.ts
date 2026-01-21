@@ -1,16 +1,16 @@
-import { Request, Response } from "express"; 
+import { Request, Response } from "express";
 // import path from "path"; // Importa o módulo path (comentado, não utilizado)
 // import { rmdir } from "fs/promises"; // Importa a função rmdir do módulo fs/promises (comentado, não utilizado)
-import { getWbot, removeWbot } from "../libs/wbot"; 
-import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService"; 
-import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession"; 
-import UpdateWhatsAppService from "../services/WhatsappService/UpdateWhatsAppService"; 
-import { setValue } from "../libs/redisClient"; 
-import { logger } from "../utils/logger"; 
-import { getTbot, removeTbot } from "../libs/tbot"; 
-import { getInstaBot, removeInstaBot } from "../libs/InstaBot"; 
-import AppError from "../errors/AppError"; 
-import { getIO } from "../libs/socket"; 
+import { getWbot, removeWbot } from "../libs/wbot";
+import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
+import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
+import UpdateWhatsAppService from "../services/WhatsappService/UpdateWhatsAppService";
+import { getValue, setValue } from "../libs/redisClient";
+import { logger } from "../utils/logger";
+import { getTbot, removeTbot } from "../libs/tbot";
+import { getInstaBot, removeInstaBot } from "../libs/InstaBot";
+import AppError from "../errors/AppError";
+import { getIO } from "../libs/socket";
 import { cleanupSessionFiles, forceCleanupBeforeQrCode } from "../services/WbotServices/SessionCleanupService";
 import Whatsapp from "../models/Whatsapp";
 
@@ -42,6 +42,15 @@ const update = async (req: Request, res: Response): Promise<Response> => {
   const { isQrcode } = req.body; // Extrai a informação se deve apagar a pasta da sessão
   const { tenantId } = req.user; // Extrai o ID do inquilino do usuário autenticado
 
+  // Trava de concorrência simples para evitar cliques múltiplos (3 segundos)
+  const lockKey = `lock:qrcode:${whatsappId}`;
+  const lastRequest = await getValue(lockKey);
+  if (lastRequest) {
+    logger.warn(`Ignorando solicitação duplicada de QR Code para WhatsApp ${whatsappId} (clique duplo detectado)`);
+    return res.status(429).json({ message: "Request in progress. Please wait." });
+  }
+  await setValue(lockKey, "1", "EX", 3);
+
   if (isQrcode) {
     logger.info(`Solicitada geração de novo QR code para WhatsApp ID: ${whatsappId}`);
     try {
@@ -50,7 +59,7 @@ const update = async (req: Request, res: Response): Promise<Response> => {
     } catch (error) {
       logger.error(`Erro durante preparação para QR code: ${error}`);
       // Se falhar, tenta o método antigo como fallback
-      await cleanupSessionFiles(whatsappId, true);
+      await cleanupSessionFiles(whatsappId, "qrcode");
     }
   }
 
@@ -82,10 +91,10 @@ const remove = async (req: Request, res: Response): Promise<Response> => {
     if (channel.type === "whatsapp") {
       const wbot = getWbot(channel.id); // Obtém a instância do bot do WhatsApp
       await setValue(`${channel.id}-retryQrCode`, 0); // Reseta o contador de tentativas de QR Code
-      
+
       // Define um valor no Redis para indicar que a desconexão foi manual
       await setValue(`${channel.id}-manualDisconnect`, "true");
-      
+
       await wbot
         .logout()
         .catch(error => logger.error("Erro ao fazer logout da conexão", error)); // Fecha a conexão e conserva a sessão para reconexão
@@ -142,7 +151,7 @@ const destroy = async (req: Request, res: Response): Promise<Response> => {
     if (!whatsapp) {
       throw new AppError("ERR_NO_WAPP_FOUND", 404);
     }
-    
+
     // Se a sessão estiver conectada, desconectar primeiro
     if (whatsapp.status === "CONNECTED") {
       logger.info(`Sessão ${whatsappId} está ativa. Desconectando antes de destruir.`);
@@ -151,7 +160,7 @@ const destroy = async (req: Request, res: Response): Promise<Response> => {
         qrcode: "",
         retries: 0
       });
-      
+
       // Emite evento de atualização da sessão
       const io = getIO();
       io.emit(`${tenantId}:whatsappSession`, {
@@ -159,10 +168,10 @@ const destroy = async (req: Request, res: Response): Promise<Response> => {
         session: whatsapp
       });
     }
-    
+
     // Remove da memória e limpa arquivos usando as funções melhoradas
     await removeWbot(+whatsappId);
-    
+
     // Remove a confirmação de leitura
     await setValue(`wbotStatus-${whatsappId}`, false);
 

@@ -46,7 +46,8 @@ export const StartWhatsAppSession = async (
       }
     }
   } catch (err) {
-    logger.error(`StartWhatsAppSession | Error: ${err}`);
+    logger.error(`StartWhatsAppSession | Error: ${JSON.stringify(err, null, 2)}`);
+    console.error(err);
     throw new AppError("ERR_START_SESSION", 404);
   }
 };

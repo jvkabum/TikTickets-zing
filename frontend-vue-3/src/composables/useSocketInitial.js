@@ -77,12 +77,16 @@ export function useSocketInitial() {
     })
 
     const handleWhatsappSession = data => {
+      console.log(`useSocketInitial: Evento whatsappSession recebido (${data.action})`, data)
+
       if (data.action === 'update') {
         whatsappStore.updateSession(data.session)
         bus.emit('UPDATE_SESSION', data.session)
       }
 
       if (data.action === 'readySession') {
+        whatsappStore.updateSession(data.session)
+        bus.emit('UPDATE_SESSION', data.session) // Garante que o modal feche
         $q.notify({
           position: 'top',
           icon: 'mdi-wifi-arrow-up-down',
@@ -97,6 +101,8 @@ export function useSocketInitial() {
         })
       }
     }
+
+
 
     socket.on(`${usuario.tenantId}:whatsappSession`, handleWhatsappSession)
     socket.on('whatsappSession', handleWhatsappSession) // Fallback global logado

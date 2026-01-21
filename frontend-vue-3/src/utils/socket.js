@@ -8,11 +8,10 @@ export const socketIO = () => {
   socketInstance = io(process.env.VUE_URL_API, {
     reconnection: true,
     autoConnect: true,
-    transports: ['websocket', 'polling'],
+    transports: ['websocket'], // Forcing websocket to match legacy behavior
     auth: cb => {
       const tokenItem = localStorage.getItem('token')
       const token = tokenItem ? JSON.parse(tokenItem) : null
-      // eslint-disable-next-line n/no-callback-literal
       cb({ token })
     }
   })

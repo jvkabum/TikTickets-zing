@@ -114,6 +114,10 @@
 import alertSound from 'src/assets/sound.mp3'
 import bus from 'src/utils/eventBus'
 import { socketIO } from 'src/utils/socket'
+import { ListarWhatsapps } from 'src/service/sessoesWhatsapp'
+import { ListarConfiguracoes } from 'src/service/configuracoes'
+import { RealizarLogout } from 'src/service/login'
+import { ConsultarTickets } from 'src/service/tickets'
 
 const $q = useQuasar()
 const router = useRouter()

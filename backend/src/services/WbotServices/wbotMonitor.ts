@@ -17,17 +17,17 @@ interface Session extends Client {
 const checkRealConnection = async (wbot: Session): Promise<boolean> => {
   try {
     if (!wbot) return false;
-    
+
     // Verifica se consegue obter o estado
     const state = await wbot.getState();
     if (state !== "CONNECTED") return false;
-    
+
     // Faz uma requisição real ao WhatsApp
     // Substituindo getStatus por uma verificação de informações do perfil
     try {
       if (wbot.info && wbot.info.wid) {
         await wbot.getProfilePicUrl(wbot.info.wid._serialized);
-        
+
         // Atualiza o timestamp do último ping bem-sucedido
         wbot.lastPing = Date.now();
         return true;
@@ -54,24 +54,24 @@ const wbotMonitor = async (
   try {
     // Inicializa a propriedade lastPing
     wbot.lastPing = Date.now();
-    
+
     // Configura um intervalo para verificar a conexão real
     const pingInterval = 3 * 60 * 1000; // 3 minutos
     wbot.monitorInterval = setInterval(async () => {
       try {
         // Verifica se a conexão está realmente ativa
         const isConnected = await checkRealConnection(wbot);
-        
+
         // Se não estiver conectado, mas o status reporta como conectado (falsa conexão)
         if (!isConnected && whatsapp.status === "CONNECTED") {
           logger.warn(
             `Falsa conexão detectada para ${sessionName}. Estado reportado como CONNECTED, mas verificação falhou. Forçando reconexão...`
           );
-          
+
           // Limpa intervalos para evitar chamadas duplicadas
           if (wbot.monitorInterval) clearInterval(wbot.monitorInterval);
           if (wbot.checkMessages) clearInterval(wbot.checkMessages);
-          
+
           try {
             // Tenta reconectar de forma forçada
             await whatsapp.update({
@@ -80,16 +80,16 @@ const wbotMonitor = async (
               qrcode: "",
               session: ""
             });
-            
+
             io.emit(`${whatsapp.tenantId}:whatsappSession`, {
               action: "update",
               session: whatsapp,
               message: "Reconectando após detecção de falsa conexão"
             });
-            
+
             // Remove arquivos de sessão anterior
-            await cleanupSessionFiles(whatsapp.id, true);
-            
+            await cleanupSessionFiles(whatsapp.id, "disconnect");
+
             // Espera um pouco antes de reinicar a sessão
             setTimeout(() => StartWhatsAppSession(whatsapp), 3000);
           } catch (reconnectError) {
@@ -108,7 +108,7 @@ const wbotMonitor = async (
       logger.info(`Monitor session: ${sessionName} - NewState: ${newState}`);
       try {
         await whatsapp.update({ status: newState });
-        
+
         // Se o estado mudar para CONNECTED, atualiza o lastPing
         if (newState === "CONNECTED") {
           wbot.lastPing = Date.now();
@@ -155,21 +155,21 @@ const wbotMonitor = async (
     // Monitora desconexões
     wbot.on("disconnected", async reason => {
       logger.info(`Disconnected session: ${sessionName} | Reason: ${reason}`);
-      
+
       // Limpa os intervalos de monitoramento
       if (wbot.monitorInterval) clearInterval(wbot.monitorInterval);
       if (wbot.checkMessages) clearInterval(wbot.checkMessages);
-      
+
       try {
         await whatsapp.update({
           status: "OPENING",
           session: "",
           qrcode: null
         });
-        
+
         // Apaga dados da sessão anterior
         await cleanupSessionFiles(whatsapp.id);
-        
+
         // Tenta reconectar após um breve atraso
         setTimeout(() => StartWhatsAppSession(whatsapp), 2000);
       } catch (err) {
@@ -182,12 +182,12 @@ const wbotMonitor = async (
         message: "Sessão desconectada. Tentando reconectar..."
       });
     });
-    
+
     // Adiciona manipulador para eventos de reconexão automática do cliente
     wbot.on("ready", async () => {
       logger.info(`Sessão ${sessionName} pronta/reconectada`);
       wbot.lastPing = Date.now();
-      
+
       try {
         await whatsapp.update({
           status: "CONNECTED",
@@ -197,7 +197,7 @@ const wbotMonitor = async (
       } catch (err) {
         logger.error(`Erro ao atualizar estado após reconexão: ${err}`);
       }
-      
+
       io.emit(`${whatsapp.tenantId}:whatsappSession`, {
         action: "update",
         session: whatsapp,
@@ -207,7 +207,7 @@ const wbotMonitor = async (
   } catch (err) {
     logger.error(`Erro geral no wbotMonitor: ${err}`);
   }
-  
+
   // Executa uma verificação inicial da conexão
   setTimeout(async () => {
     try {

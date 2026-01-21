@@ -22,15 +22,36 @@
         :style="$q.dark.isActive ? 'background: white !important' : ''"
       >
         <QrcodeVue
-          v-if="cQrcode"
+          v-if="cQrcode && props.channel.status !== 'PAIRING'"
           :value="cQrcode"
           :size="300"
           level="H"
         />
-        <span v-else> Aguardando o Qr Code </span>
+        <div
+          v-if="props.channel.status === 'PAIRING'"
+          class="column items-center justify-center q-pa-xl"
+        >
+          <q-icon
+            name="mdi-check-circle"
+            color="positive"
+            size="5rem"
+          />
+          <div class="text-h6 text-bold text-primary q-mt-md">
+            QR Code lido com sucesso!
+          </div>
+          <div class="text-subtitle1 text-grey-8">
+            Estabilizando sua conexão...
+          </div>
+          <q-spinner-dots
+            color="primary"
+            size="3rem"
+            class="q-mt-md"
+          />
+        </div>
+        <span v-else-if="!cQrcode && props.channel.status !== 'PAIRING'"> Aguardando o Qr Code </span>
         <!-- Temporizador para expiração do QR code -->
         <div
-          v-if="cQrcode"
+          v-if="cQrcode && props.channel.status !== 'PAIRING'"
           class="qr-timer q-mt-sm"
         >
           <q-linear-progress
@@ -93,7 +114,7 @@ const qrTimer = ref(null)
 const qrExpirationTime = ref(60)
 const timeElapsed = ref(0)
 
-const cQrcode = computed(() => props.channel.qrcode)
+
 
 const timeProgressValue = computed(() => {
   return 1 - timeElapsed.value / qrExpirationTime.value
@@ -125,9 +146,9 @@ const stopQrTimer = () => {
 }
 
 const solicitarQrCode = () => {
-  if (props.channel.status === 'OPENING') {
+  if (['OPENING', 'PAIRING', 'CONNECTED'].includes(props.channel.status)) {
     $q.notify({
-      message: 'Conexão em andamento. Aguarde a conclusão.',
+      message: 'Conexão em andamento ou já estabelecida. Aguarde.',
       type: 'warning'
     })
     return
@@ -139,6 +160,12 @@ const startQrTimer = () => {
   stopQrTimer()
   timeElapsed.value = 0
   qrTimer.value = setInterval(() => {
+    // Se o status mudar para PAIRING ou CONNECTED, para o timer imediatamente
+    if (['PAIRING', 'CONNECTED'].includes(props.channel.status)) {
+      stopQrTimer()
+      return
+    }
+
     timeElapsed.value++
     if (timeElapsed.value >= qrExpirationTime.value && props.channel.status !== 'OPENING') {
       solicitarQrCode()
@@ -156,38 +183,76 @@ watch(
   () => props.abrirModalQR,
   newVal => {
     if (newVal) {
-      startQrTimer()
+      if (props.channel.qrcode) {
+        timeElapsed.value = 0
+        startQrTimer()
+      }
     } else {
       stopQrTimer()
     }
   }
 )
 
+import bus from 'src/utils/eventBus'
+
+// ... (existing code)
+
+// Adicionar um estado local para garantir atualização caso a prop falhe
+const localQrcode = ref('')
+
+// Computed que dá preferência ao local se existir, senão usa a prop
+const cQrcode = computed(() => localQrcode.value || props.channel.qrcode)
+
+// ... (existing code)
+
 watch(
   () => props.channel,
-  v => {
-    if (v.status === 'CONNECTED') {
-      fecharModalQrModal()
+  (v) => {
+    // Se a prop mudar, limpamos o local para usar a prop (fonte da verdade)
+    if (v.qrcode) {
+        localQrcode.value = ''
     }
-    if (v.qrcode && props.abrirModalQR) {
-      timeElapsed.value = 0
+    
+    if (['CONNECTED', 'PAIRING'].includes(v.status)) {
+      stopQrTimer()
+      if (v.status === 'CONNECTED') {
+        fecharModalQrModal()
+      }
+    }
+    // Sempre reiniciar timer se houver QR Code e modal aberto
+    if ((v.qrcode || localQrcode.value) && props.abrirModalQR) {
+      timeElapsed.value = 0 // Força reset visual
       startQrTimer()
     }
   },
   { deep: true }
 )
 
-watch(cQrcode, newVal => {
-  if (newVal) {
-    timeElapsed.value = 0
-    startQrTimer()
-  } else {
-    stopQrTimer()
-  }
+onMounted(() => {
+    bus.on('UPDATE_SESSION', (session) => {
+        if (session.id === props.channel.id && session.qrcode) {
+            console.log('ModalQrCode: Recebido UPDATE_SESSION via bus (QR code)', session)
+            localQrcode.value = session.qrcode
+            timeElapsed.value = 0
+            startQrTimer()
+        }
+        
+        // Se receber PAIRING ou CONNECTED via bus, para o timer IMEDIATAMENTE
+        // Isso previne a race condition de o timer expirar enquanto o Vue atualiza as props
+        if (session.id === props.channel.id && ['CONNECTED', 'PAIRING'].includes(session.status)) {
+             console.log(`[DEBUG] ModalQrCode: Recebido status ${session.status} via bus para sessão ${session.id}`)
+             stopQrTimer()
+             if (session.status === 'CONNECTED') {
+                console.log('[DEBUG] ModalQrCode: Status é CONNECTED, fechando modal...')
+                fecharModalQrModal()
+             }
+        }
+    })
 })
 
 onUnmounted(() => {
   stopQrTimer()
+  bus.off('UPDATE_SESSION')
 })
 </script>
 
