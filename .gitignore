@@ -27,3 +27,6 @@ newrelic_agent.log
 backend/env
 frontend/package-lock.json
 /backend/.wwebjs_cache
+
+# AI Context - Estado temporário de workflow (não commitar)
+.context/workflow/
