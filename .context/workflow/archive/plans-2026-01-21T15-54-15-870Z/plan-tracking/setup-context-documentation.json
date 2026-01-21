@@ -1,0 +1,12 @@
+{
+  "decisions": [
+    {
+      "title": "Adoção do Fluxo PREVC como Padrão de Engenharia de Contexto",
+      "description": "Decidido adotar o fluxo PREVC estruturado para todas as futuras tarefas de desenvolvimento no projeto TikTickets-zing, começando pela configuração do próprio contexto.",
+      "phase": "P",
+      "status": "accepted",
+      "id": "dec-1768966652721",
+      "decidedAt": "2026-01-21T03:37:32.721Z"
+    }
+  ]
+}
