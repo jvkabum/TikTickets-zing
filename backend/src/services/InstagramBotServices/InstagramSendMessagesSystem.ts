@@ -51,7 +51,7 @@ const InstagramSendMessagesSystem = async (
         const newAudioPath = join(customPath, `${splitName[0]}.mp4`);
         await new Promise((resolve, reject) => {
           ffmpeg(mediaPath)
-            .setFfmpegPath(ffmpegStatic) // Forçando path na instância
+            .setFfmpegPath(ffmpegStatic || "ffmpeg") // Forçando path na instância
             .toFormat("mp4")
             .on("error", error => reject(error))
             .on("end", () => resolve(true))

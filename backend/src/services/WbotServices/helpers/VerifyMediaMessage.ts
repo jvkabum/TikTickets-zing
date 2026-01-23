@@ -68,7 +68,7 @@ const VerifyMediaMessage = async (
 
         return new Promise<void>((resolve, reject) => {
           ffmpeg(inputFile)
-            .setFfmpegPath(ffmpegStatic) // Configuração forçada na instância
+            .setFfmpegPath(ffmpegStatic || "ffmpeg") // Configuração forçada na instância
             .toFormat("mp3")
             .save(outputFile)
             .on("end", () => {
