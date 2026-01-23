@@ -1,24 +1,40 @@
-# Habilidade: Detalhamento de Funcionalidades (Feature Breakdown)
+---
+type: skill
+name: Decomposição de Funcionalidades (Feature Breakdown)
+description: Divisão de funcionalidades complexas em tarefas implementáveis no TikTickets-zing
+skillSlug: feature-breakdown
+phases: [P]
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-Processo para transformar requisitos de alto nível em tarefas técnicas implementáveis no TikTickets-zing.
+# 📑 Decomposição de Funcionalidades (Feature Breakdown)
 
-## Fluxo de Trabalho
-1. **Identificação de Impacto**: Determinar se a feature afeta o Backend, Frontend Vue 3 (ou ambos) e se exige mudanças no Banco de Dados.
-2. **Camadas de Desenvolvimento**:
-   - **Banco de Dados**: Criar migration e atualizar os modelos Sequelize.
-   - **Backend Core**: Implementar o Service, Controller e definir as Rotas.
-   - **Mensageria**: Se envolver WhatsApp, atualizar o `libs/wbot.ts` ou criar novos services em `WbotServices`.
-   - **Frontend Vue 3**: Criar o componente Quasar, store Pinia e hooks do Tanstack Query.
-3. **Escala de Complexidade**: Usar as sugestões de escala do PREVC (QUICK, SMALL, MEDIUM, LARGE).
+Esta skill guia o processo de planejamento e quebra de requisitos em tarefas técnicas granulares, facilitando a execução e o acompanhamento.
 
-## Checklist de Quebra (Breakdown)
-- [ ] Existe migration de banco necessária?
-- [ ] O novo endpoint segue o padrão de `Design de API`?
-- [ ] O componente Vue 3 respeita a regra "Wowed Aesthetics"?
-- [ ] Como o Multi-Tenancy (isolamento de dados) será garantido?
+## 🧮 Processo de Decomposição
 
-## Exemplo de Tarefa
-- **Feature**: "Adicionar botão de transcrição de áudio no chat".
-- **Backend**: Service para integrar com API de transcrição + Rota para o frontend.
-- **Frontend**: Botão no `ChatMessage.vue` + Loading State + Exibição do texto.
-- **Segurança**: Validar que apenas o dono do ticket pode transcrever o áudio.
+### 1. Análise de Impacto
+- **Backend**: Identificar novos modelos, rotas, services e jobs (BullMQ).
+- **Frontend**: Identificar novas views, componentes Quasar e chaves de estado (Pinia).
+- **Database**: Definir se haverá necessidade de novas migrations.
+- **WhatsApp**: Avaliar se a funcionalidade exige novas interações com a biblioteca `wwebjs`.
+
+### 2. Definição da "Tarefa Atômica"
+Uma tarefa deve ser pequena o suficiente para ser concluída em poucas horas e deve ter um resultado verificável.
+- ✅ Exemplo: "Adicionar coluna `is_priority` ao modelo `Ticket` via migration".
+- ❌ Exemplo: "Implementar sistema de tickets".
+
+### 3. Checklist de Decomposição
+- [ ] **Data Model**: As mudanças de esquema foram planejadas?
+- [ ] **API Contracts**: Os endpoints foram desenhados?
+- [ ] **UI/UX**: Os componentes necessários já existem no Quasar ou precisam ser criados?
+- [ ] **Multi-tenancy**: A nova funcionalidade respeita o isolamento de `tenantId`?
+
+## 📋 Modelo de Tarefa
+Toda tarefa gerada deve conter:
+- **Título**: Ação clara + Alvo.
+- **Contexto**: O porquê da mudança.
+- **Critérios de Aceitação**: Como saber que está pronto.
+- **Relação com PREVC**: Em qual fase do workflow se encaixa.

@@ -1,21 +1,48 @@
-# Habilidade: Design de API (API Design)
+---
+type: skill
+name: Design de API (API Design)
+description: Criação de endpoints RESTful eficientes e seguros para o TikTickets-zing
+skillSlug: api-design
+phases: [P, R]
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-Padrões de criação e manutenção de endpoints REST para o TikTickets-zing.
+# 📡 Design de API (API Design)
 
-## Princípios de Design
-- **RESTful**: Usar métodos HTTP (`GET`, `POST`, `PUT`, `DELETE`) de forma semântica.
-- **Versioning**: Embora não seja explícito, manter compatibilidade com o frontend atual.
-- **JSON**: Padronizar respostas sempre em formato JSON.
+Esta skill define o padrão para interfaces de comunicação backend/frontend, garantindo consistência e previsibilidade.
 
-## Estrutura de Resposta
-- **Sucesso**: Status 200/201 com os dados no corpo.
-- **Erro**: Status 4xx/5xx com objeto `{ error: "Mensagem amigável" }`.
+## 📐 Padrões de Design
 
-## Segurança
-- **Middleware de Autenticação**: Todos os endpoints protegidos devem usar o middleware `isAuth`.
-- **Tenant Scope**: O `tenantId` deve ser extraído do token JWT e nunca passado via query string pelo frontend (segurança).
+### 1. Endpoints Semânticos
+- Usar substantivos no plural para recursos: `/tickets`, `/contacts`, `/users`.
+- Seguir os verbos HTTP corretamente:
+    - `GET`: Recuperar dados.
+    - `POST`: Criar novos recursos ou executar ações complexas.
+    - `PUT/PATCH`: Atualizar dados existentes.
+    - `DELETE`: Remover recursos.
 
-## Exemplos de Endpoints
-- `POST /whatsapp`: Inicializa uma nova sessão.
-- `GET /tickets`: Lista tickets do tenant logado.
-- `PUT /tickets/:id`: Atualiza status de um ticket.
+### 2. Contrato de Resposta
+Toda resposta de erro deve seguir um padrão claro:
+```json
+{
+  "error": "NOME_DO_ERRO",
+  "message": "Descrição detalhada para humanos",
+  "details": {}
+}
+```
+
+### 3. Filtros e Paginação
+- Sempre implementar paginação em listagens longas usando `page` e `limit`.
+- Filtragem deve ser feita via Query Parameters (ex: `?status=pending&tenantId=1`).
+
+## 🛡️ Segurança e Multi-tenancy
+- [ ] **Middlewares de Autenticação**: Todas as rotas (exceto login/public) devem passar pelo `isAuth`.
+- [ ] **Validação de Payload**: Usar bibliotecas de validação no backend antes de processar qualquer dado.
+- [ ] **Isolamento**: O `tenantId` deve ser injetado na requisição e usado em todas as queries.
+
+## 📝 Checklist de Revisão de API
+- [ ] O endpoint é necessário ou um já existente pode ser estendido?
+- [ ] O nome do recurso é intuitivo?
+- [ ] Os status codes HTTP estão corretos (200, 201, 400, 401, 404, 500)?

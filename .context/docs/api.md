@@ -1,169 +1,74 @@
+---
+type: doc
+name: api
+description: Guia de endpoints, autenticação JWT e integração via API Externa V1
+category: reference
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
+
 # Documentação Completa da API (REST)
 
-O backend do TikTickets-zing expõe uma API RESTful robusta para gestão de multi-atendimento WhatsApp, automação e administração multi-tenant.
+O TikTickets-zing v4 expõe uma API RESTful robusta para gestão de multi-atendimento, automação e administração multi-tenant.
 
 ## Padrões Globais
-- **Base URL**: `http://localhost:8080`
-- **Autenticação**: A maioria das rotas requer Header `Authorization: Bearer <TOKEN>`.
-- **Isolamento**: O `tenantId` é injetado automaticamente via middleware `isAuth`.
 
----
+- **Base URL**: `http://localhost:8080` (Desenvolvimento)
+- **Content-Type**: `application/json`
+- **Autenticação**: Header `Authorization: Bearer <TOKEN>`.
+- **Tenant Scope**: O `tenantId` é injetado automaticamente pelo middleware `isAuth` (Localizado em `backend/src/middleware/isAuth.ts`).
 
-## 1. Autenticação (`/auth`)
-Gerencia o acesso ao sistema.
+## 🔐 Autenticação e Segurança
 
+### Middleware `isAuth`
+O sistema utiliza **JWT (JSON Web Tokens)**. Ao validar o token, o backend extrai:
+*   `id` (do usuário)
+*   `tenantId` (da empresa)
+*   `profile` (admin/user)
+
+Esses dados são anexados ao `req.user`, permitindo que todos os services subsequentes filtrem os dados corretamente.
+
+## 📡 Principais Endpoints
+
+### 1. Tickets (`/tickets`)
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| POST | `/auth/signup` | Registro de novo usuário |
-| POST | `/auth/login` | Login e obtenção de token |
-| POST | `/auth/logout` | Encerramento de sessão |
-| POST | `/auth/refresh_token` | Renovação do token JWT |
+| GET | `/tickets` | Lista tickets (pendentes, abertos, fechados). Suporta query params. |
+| POST | `/tickets` | Abre um novo ticket manualmente. |
+| PUT | `/tickets/:id` | Atualiza status ou troca o atendente/fila. |
+| POST | `/tickets/:id/close` | Encerra o atendimento. |
 
----
-
-## 2. Usuários (`/users`)
-Gestão de agentes e administradores por tenant.
-
+### 2. Mensagens (`/messages`)
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| GET | `/users` | Lista usuários do tenant |
-| POST | `/users` | Cria novo usuário |
-| GET | `/users/:userId` | Detalhes de um usuário |
-| PUT | `/users/:userId` | Atualiza usuário |
-| DELETE| `/users/:userId` | Remove usuário |
-| PUT | `/users/:userId/configs`| Atualiza configurações do usuário |
+| GET | `/messages/:ticketId` | Busca histórico de mensagens de um ticket. |
+| POST | `/messages/:ticketId` | Envia mensagem (Texto ou Mídia). Inicia o Job `SendMessages`. |
 
----
-
-## 3. WhatsApp & Sessões (`/whatsapp`)
-Controle das instâncias e conexões.
-
+### 3. Conexões WhatsApp (`/whatsapp`)
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| GET | `/whatsapp` | Lista conexões do tenant |
-| POST | `/whatsapp` | Cria nova conexão |
-| GET | `/whatsapp/:id` | Detalhes da conexão |
-| PUT | `/whatsapp/:id` | Atualiza conexão |
-| DELETE| `/whatsapp/:id` | Remove conexão (Soft delete) |
-| POST | `/whatsappsession/:id` | Inicia/Gera QR Code da sessão |
-| PUT | `/whatsappsession/:id` | Atualiza/Reinicia sessão |
-| DELETE| `/whatsappsession/:id` | Desconecta/Logout do WhatsApp |
+| GET | `/whatsapp` | Lista instâncias de WhatsApp do tenant. |
+| POST | `/whatsappsession/:id` | Inicia o processo de conexão (Gera QR Code). |
+| DELETE| `/whatsappsession/:id` | Encerra a sessão e desconecta o bot. |
 
----
+## 🚀 API Externa (V1)
+Para integrações externas (ERPs, CRMs), o sistema disponibiliza a rota:
+- **Endpoint**: `/v1/api/external/:apiId`
+- **Autenticação**: Token de API configurado no dashboard do Tenant.
+- **Função**: Permite o envio de mensagens programáticas sem passar pelo fluxo de atendente.
 
-## 4. Tickets (`/tickets`)
-Coração do sistema de atendimento.
+## 📋 Padrão de Resposta de Erro
+Todas as APIs retornam o seguinte objeto em caso de falha (4xx ou 5xx):
+```json
+{
+  "error": "ERR_MSG_NOT_SENT",
+  "message": "Nao foi possivel enviar a mensagem, verifique a conexao.",
+  "details": { "retry": true }
+}
+```
 
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/tickets` | Lista tickets ativos/pendentes |
-| POST | `/tickets` | Cria novo ticket manualmente |
-| GET | `/tickets/:id` | Detalhes do ticket |
-| PUT | `/tickets/:id` | Atualiza status/fila do ticket |
-| DELETE| `/tickets/:id` | Remove ticket |
-| GET | `/tickets/:id/logs` | Histórico de eventos do ticket |
-| POST | `/tickets/:id/sync` | Sincroniza mensagens do ticket |
-
----
-
-## 5. Contatos (`/contacts`)
-Gestão da base de clientes.
-
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/contacts` | Lista contatos |
-| POST | `/contacts` | Cria novo contato |
-| GET | `/contacts/:id` | Detalhes do contato |
-| PUT | `/contacts/:id` | Atualiza contato |
-| DELETE| `/contacts/:id` | Remove contato |
-| POST | `/contacts/import` | Importa contatos do telefone |
-| POST | `/contacts/upload` | Upload massivo via arquivo |
-| POST | `/contacts/export` | Exporta base de contatos |
-| PUT | `/contact-tags/:id` | Atualiza tags do contato |
-| PUT | `/contact-wallet/:id` | Atualiza carteira (consultor) do contato |
-
----
-
-## 6. Mensageria (`/messages`)
-Troca de informações em tempo real.
-
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/messages/:ticketId` | Busca mensagens de um ticket |
-| POST | `/messages/:ticketId` | Envia mensagem (Texto/Mídia) |
-| POST | `/forward-messages` | Encaminha mensagens |
-| DELETE| `/messages/:id` | Apaga mensagem (Unsend) |
-| POST | `/messages/edit/:id` | Edita mensagem enviada |
-
----
-
-## 7. Automação & Fluxos
-Respostas rápidas, Auto-reply e Chatbots.
-
-### Respostas Rápidas (`/fastreply`)
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/fastreply` | Lista respostas rápidas |
-| POST | `/fastreply` | Cria nova resposta rápida |
-| PUT | `/fastreply/:id` | Atualiza resposta rápida |
-| DELETE| `/fastreply/:id` | Remove resposta rápida |
-
-### Auto-Reply (Chatbot de Passos)
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/auto-reply` | Lista chatbots |
-| POST | `/auto-reply` | Cria novo chatbot |
-| POST | `/auto-reply/:id/steps` | Adiciona passo ao fluxo |
-| POST | `/auto-reply-action` | Cria ação (ex: transferir) no passo |
-
-### ChatFlow (Visual)
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/chat-flow` | Lista fluxos visuais |
-| POST | `/chat-flow` | Cria novo fluxo |
-
----
-
-## 8. Campanhas (`/campaigns`)
-Disparos em massa.
-
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/campaigns` | Lista campanhas |
-| POST | `/campaigns` | Cria nova campanha (com mídias) |
-| POST | `/campaigns/start/:id` | Inicia disparo da campanha |
-| POST | `/campaigns/cancel/:id`| Cancela disparo |
-| GET | `/campaigns/contacts/:id`| Lista contatos da campanha |
-
----
-
-## 9. Administração (`/admin`)
-Exclusivo para o `isAuthAdmin`.
-
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/admin/users` | Lista todos os usuários do sistema |
-| GET | `/admin/tenants` | Lista todas as empresas (tenants) |
-| POST | `/admin/tenants` | Cria nova empresa |
-| DELETE| `/admin/tenants/:id` | Remove empresa |
-| GET | `/admin/channels` | Lista todos os canais do sistema |
-
----
-
-## 10. API Externa (`/v1/api/external`)
-Integração via Token de API.
-
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| POST | `/v1/api/external/:apiId` | Envia mensagem externa |
-| POST | `/v1/api/external/:apiId/start-session` | Inicia sessão remotamente |
-
----
-
-## 11. Estatísticas & Dashboards
-| Método | Endpoint | Descrição |
-| :--- | :--- | :--- |
-| GET | `/dash-tickets-queues` | Dados de tickets por fila |
-| GET | `/statistics-per-users` | Performance por agente |
-| GET | `/statistics-tickets-times`| Tempos médios de resposta/espera |
-| GET | `/contacts-report` | Relatório detalhado de contatos |
+## Recursos Relacionados
+- [architecture.md](./architecture.md)
+- [security.md](./security.md)
+- [data-flow.md](./data-flow.md)

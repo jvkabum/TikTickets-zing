@@ -1,26 +1,39 @@
-# Habilidade: Revisão de Código (Code Review)
+---
+type: skill
+name: Revisão de Código (Code Review)
+description: Padrões de revisão técnica e qualidade de código para o TikTickets-zing
+skillSlug: code-review
+phases: [R, V]
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-Diretrizes para garantir que o código do TikTickets-zing permaneça limpo, seguro e performático.
+# 🔍 Revisão de Código (Code Review)
 
-## Checklist de Revisão
+Esta skill é a guardiã da qualidade técnica do projeto, focando em padrões sêniores de implementação e manutenção.
 
-### 1. Backend (TypeScript/Node.js)
-- **Multi-Tenancy**: Toda busca no banco (`findAll`, `findOne`, etc) DEVE incluir o `tenantId`.
-- **Tipagem**: Evitar o uso de `any`. Usar interfaces e tipos do Sequelize-typescript.
-- **Async/Await**: Garantir o uso correto de `try-catch` em operações de I/O.
-- **Wbot**: Novas implementações de WhatsApp devem usar o singleton de conexão em `libs/wbot.ts`.
+## 🕵️ Foco da Revisão
 
-### 2. Frontend (Vue 3.5 / Quasar)
-- **Composition API**: Usar obrigatoriamente `<script setup>`.
-- **Tanstack Query**: Substituir hooks de lifecycle (`onMounted`) por `useQuery` para buscar dados.
-- **Reatividade**: Usar `ref` e `computed` de forma eficiente.
-- **Estética**: Validar se o componente segue o padrão visual "premium" (gradientes, bordas arredondadas, micro-animações).
+### 1. Robustez em TypeScript
+- [ ] Garantir que não existam tipos `any` injustificados.
+- [ ] Verificar se as interfaces estão bem definidas e centralizadas em arquivos de tipos.
+- [ ] Validar se o optional chaining foi usado corretamente onde há risco de nulidade (ex: `wbot.info`).
 
-### 3. Padrões de Projeto
-- **Commits**: Seguir a habilidade `commit-message`.
-- **Logs**: Incluir `console.log` de performance em caminhos críticos de mensagens.
+### 2. Padrões Arquiteturais
+- [ ] O código respeita a separação de responsabilidades (Controller -> Service -> Lib)?
+- [ ] Há redundância de código que poderia ser centralizada em um Helper?
+- [ ] As variáveis seguem o padrão camelCase e são semânticas?
 
-## O que Rejeitar
-- Código no frontend legado (`/frontend`) que poderia ser implementado no moderno.
-- Hardcoded URLs ou segredos (devem estar no `.env`).
-- Queries SQL puras sem uma justificativa técnica forte (preferir Sequelize).
+### 3. Gerenciamento de Recursos
+- [ ] Loops de eventos e intervalos são limpos adequadamente (`clearInterval`)?
+- [ ] Promessas são tratadas com `try/catch` de forma granular?
+- [ ] Conexões de banco e WhatsApp são gerenciadas eficientemente para evitar vazamentos?
+
+## 📝 Procedimento de Revisão
+- **Análise Estática**: Verificar erros de lint e formatação.
+- **Análise Lógica**: Entender o fluxo do dado e identificar possíveis "edge cases".
+- **Feedback**: Fornecer sugestões de melhoria com exemplos de código quando aplicável.
+
+## 💡 Mantra do Revisor
+"Não revisamos apenas para encontrar erros, revisamos para ensinar e aprender. O código é do time, não do autor."

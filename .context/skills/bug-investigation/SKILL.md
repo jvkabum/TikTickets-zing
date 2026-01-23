@@ -1,32 +1,41 @@
-# Habilidade: Investigação de Bugs (Bug Investigation)
+---
+type: skill
+name: Investigação de Erros (Bug Investigation)
+description: Metodologia sistemática para identificação e resolução de bugs no TikTickets-zing
+skillSlug: bug-investigation
+phases: [E, V]
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-Este guia define o fluxo sistemático para identificar, isolar e resolver falhas técnicas no ecossistema TikTickets.
+# 🐛 Investigação de Erros (Bug Investigation)
 
-## Fluxo de Depuração (Debugging Workflow)
-1. **Triagem de Logs**:
-   - Backend: Monitorar o terminal do `ts-node-dev` para erros de stack trace.
-   - Frontend: Verificar o console do navegador e a aba 'Network' para erros de API (4xx, 5xx).
-2. **Isolamento de Componente**:
-   - O erro ocorre no `wbot.ts`? (Problema de integração WhatsApp/Puppeteer).
-   - O erro ocorre em um `Service`? (Problema de lógica de negócio ou banco de dados).
-   - O erro é visual? (Problema nos componentes Vue/Quasar).
-3. **Instrumentação Temporária**:
-   - Use `performance.now()` para medir tempos de execução em métodos de conexão.
-   - Use `console.log(JSON.stringify(data, null, 2))` para inspecionar objetos complexos do WhatsApp.
+Esta skill define o processo científico para debugar falhas, especialmente problemas complexos de sincronização e conexão.
 
-## Padrões Comuns e Soluções
-| Problema | Causa Provável | Solução Recomendada |
-| :--- | :--- | :--- |
-| **EBUSY / Permissão** | Chromium ainda segurando arquivos | Adicionar delay de 500ms + lógica de retentativa no `SessionCleanupService`. |
-| **QR Code não gera** | Processos órfãos do Chromium | Executar `killSessionChromiumProcesses` antes de iniciar nova sessão. |
-| **Socket Timeout** | Sobrecarga de eventos | Revisar o número de listeners e usar `polling` em vez de hooks pesados. |
-| **wid undefined** | Acesso precoce ao objeto `info` | Adicionar verificações de nulidade (`info?.wid`) antes de operações de conexão. |
+## 🧬 Metodologia de Investigação
 
-## Convenções de Tratamento de Erro
-- Sempre use blocos `try/catch` em operações assíncronas que envolvem I/O (Filesystem, API, Puppeteer).
-- Capture o erro e registre logs detalhados antes de lançar para a camada superior.
-- No frontend, forneça feedback visual claro ao usuário via `Notify` do Quasar.
+### 1. Reprodução e Isolamento
+- [ ] Conseguimos reproduzir o erro em ambiente de desenvolvimento?
+- [ ] O erro é intermitente ou constante?
+- [ ] Ocorre apenas em um tenant específico ou em todos?
 
-## Passos de Verificação
-- Após a correção, reinicie o backend e valide se a sessão do WhatsApp estabiliza em menos de 10 segundos.
-- Certifique-se de que a pasta `.wwebjs_auth` não foi deletada indevidamente no boot (Persistência).
+### 2. Análise de Logs e Estado
+- **Backend**: Verificar `logs/error.log` ou stdout para stack traces.
+- **WhatsApp**: Analisar eventos do Puppeteer (`authenticated`, `ready`, `auth_failure`).
+- **Redis**: Verificar chaves de controle (ex: `manualDisconnect`) via `redis-cli`.
+- **Database**: Consultar o estado real das tabelas afetadas.
+
+### 3. Hipótese e Teste
+- Formular uma explicação para o erro e testar a solução mais simples primeiro.
+- Adicionar logs temporários de depuração (`console.log` com prefixo `[DEBUG-TEMP]`) para rastrear variáveis em tempo real.
+
+## 📝 Checklists de Correção
+- [ ] A causa raiz foi identificada (Root Cause)?
+- [ ] A correção resolve o sintoma mas também previne a causa original?
+- [ ] Foram adicionados testes de regressão para garantir que o bug não volte?
+
+## 🛠️ Ferramentas
+- Chrome DevTools (para o Frontend).
+- VS Code Debugger (anexar ao processo Node).
+- Redis Insights / DBeaver (monitoramento de dados).

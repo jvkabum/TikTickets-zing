@@ -1,0 +1,2087 @@
+{
+  "version": "1.0.0",
+  "generated": "2026-01-23T06:08:12.286Z",
+  "stack": {
+    "primaryLanguage": "typescript",
+    "languages": [
+      "javascript",
+      "python",
+      "typescript"
+    ],
+    "frameworks": [],
+    "buildTools": [],
+    "testFrameworks": [],
+    "packageManager": null,
+    "isMonorepo": false,
+    "hasDocker": false,
+    "hasCI": true
+  },
+  "structure": {
+    "totalFiles": 2546,
+    "topDirectories": [
+      {
+        "name": "AGENTS.md",
+        "fileCount": 1
+      },
+      {
+        "name": "backend",
+        "fileCount": 1702
+      },
+      {
+        "name": "CHANGELOG.md",
+        "fileCount": 1
+      },
+      {
+        "name": "docs",
+        "fileCount": 2
+      },
+      {
+        "name": "donate.jpeg",
+        "fileCount": 1
+      },
+      {
+        "name": "frontend",
+        "fileCount": 345
+      },
+      {
+        "name": "frontend-vue-3",
+        "fileCount": 487
+      },
+      {
+        "name": "LICENSE",
+        "fileCount": 1
+      },
+      {
+        "name": "Makefile",
+        "fileCount": 1
+      },
+      {
+        "name": "README.md",
+        "fileCount": 1
+      },
+      {
+        "name": "screenshots",
+        "fileCount": 3
+      },
+      {
+        "name": "update-flowdeskpro",
+        "fileCount": 1
+      }
+    ],
+    "languageDistribution": [
+      {
+        "extension": ".js",
+        "count": 859
+      },
+      {
+        "extension": ".map",
+        "count": 555
+      },
+      {
+        "extension": ".ts",
+        "count": 511
+      },
+      {
+        "extension": ".vue",
+        "count": 201
+      },
+      {
+        "extension": ".png",
+        "count": 159
+      },
+      {
+        "extension": ".md",
+        "count": 48
+      },
+      {
+        "extension": ".css",
+        "count": 45
+      },
+      {
+        "extension": ".jpeg",
+        "count": 32
+      },
+      {
+        "extension": ".json",
+        "count": 24
+      },
+      {
+        "extension": ".webp",
+        "count": 16
+      }
+    ]
+  },
+  "architecture": {
+    "layers": [
+      {
+        "name": "Components",
+        "description": "UI components and views",
+        "directories": [
+          "frontend-vue-3\\src",
+          "frontend-vue-3\\src\\boot",
+          "frontend\\src\\boot",
+          "frontend-vue-3\\src\\pages\\atendimento",
+          "frontend-vue-3\\src\\components\\__tests__",
+          "frontend\\src\\pages\\relatorios",
+          "frontend\\src\\pages\\atendimento",
+          "frontend\\src\\components\\MediaViewer"
+        ],
+        "symbolCount": 2,
+        "dependsOn": []
+      },
+      {
+        "name": "Utils",
+        "description": "Shared utilities and helpers",
+        "directories": [
+          "backend\\src\\utils",
+          "backend\\src\\libs",
+          "backend\\src\\helpers",
+          "backend\\src\\libs\\socketChat",
+          "frontend-vue-3\\src\\utils",
+          "frontend\\src\\utils",
+          "frontend-vue-3\\src\\components\\ccFlowBuilder",
+          "frontend\\src\\pages\\atendimento",
+          "frontend\\src\\components\\ccFlowBuilder",
+          "frontend-vue-3\\src\\components\\utils\\MediaViewer"
+        ],
+        "symbolCount": 46,
+        "dependsOn": [
+          "Config",
+          "Services"
+        ]
+      },
+      {
+        "name": "Controllers",
+        "description": "Request handling and routing",
+        "directories": [
+          "backend\\src\\routes",
+          "backend\\src\\models",
+          "backend\\src\\middleware",
+          "backend\\src\\jobs",
+          "backend\\src\\controllers",
+          "backend\\src\\database\\migrations",
+          "backend\\src\\controllers\\Statistics",
+          "frontend-vue-3\\src\\stores",
+          "frontend-vue-3\\src\\router",
+          "frontend\\src\\router"
+        ],
+        "symbolCount": 35,
+        "dependsOn": [
+          "Config",
+          "Services"
+        ]
+      },
+      {
+        "name": "Models",
+        "description": "Data structures and domain objects",
+        "directories": [
+          "backend\\src\\models"
+        ],
+        "symbolCount": 28,
+        "dependsOn": [
+          "Config"
+        ]
+      },
+      {
+        "name": "Repositories",
+        "description": "Data access and persistence",
+        "directories": [
+          "backend\\src\\database",
+          "backend\\src\\app",
+          "backend\\src\\config",
+          "backend\\src\\__tests__\\utils",
+          "backend\\src\\database\\seeds",
+          "backend\\src\\database\\migrations",
+          "backend\\src\\database\\migrations\\backend\\src\\database\\migrations"
+        ],
+        "symbolCount": 3,
+        "dependsOn": [
+          "Config"
+        ]
+      },
+      {
+        "name": "Config",
+        "description": "Configuration and constants",
+        "directories": [
+          "backend\\src\\app",
+          "backend\\src\\config",
+          "frontend-vue-3",
+          "frontend",
+          "backend",
+          "frontend-vue-3\\src\\stores",
+          "frontend-vue-3\\src\\composables"
+        ],
+        "symbolCount": 1,
+        "dependsOn": []
+      },
+      {
+        "name": "Services",
+        "description": "Business logic and orchestration",
+        "directories": [
+          "backend\\src\\services\\WhatsappService",
+          "backend\\src\\services\\TicketServices",
+          "backend\\src\\services\\WbotServices",
+          "backend\\src\\services\\WABA360",
+          "backend\\src\\services\\UserServices",
+          "backend\\src\\services\\TenantServices",
+          "backend\\src\\services\\TbotServices",
+          "backend\\src\\services\\TagServices",
+          "backend\\src\\services\\Statistics",
+          "backend\\src\\services\\SettingServices",
+          "backend\\src\\services\\QueueServices",
+          "backend\\src\\services\\MessengerChannelServices",
+          "backend\\src\\services\\MessageServices",
+          "backend\\src\\services\\InstagramBotServices",
+          "backend\\src\\services\\FastReplyServices",
+          "backend\\src\\services\\FacebookServices",
+          "backend\\src\\services\\ContactServices",
+          "backend\\src\\services\\CampaignServices",
+          "backend\\src\\services\\ChatFlowServices",
+          "backend\\src\\services\\CampaignContactsServices",
+          "backend\\src\\services\\AutoReplyServices",
+          "backend\\src\\services\\AuthServices",
+          "backend\\src\\services\\ApiMessageService",
+          "backend\\src\\services\\ApiConfigServices",
+          "backend\\src\\services\\AdminServices",
+          "backend\\src\\__tests__\\unit\\User",
+          "backend\\src\\services\\WbotServices\\helpers",
+          "backend\\src\\services\\AutoReplyServices\\StepsReplyActionServices",
+          "backend\\src\\services\\AutoReplyServices\\StepsReplyServices",
+          "frontend-vue-3\\src-pwa",
+          "frontend\\src-pwa",
+          "frontend-vue-3\\src\\service",
+          "frontend\\src\\service"
+        ],
+        "symbolCount": 469,
+        "dependsOn": [
+          "Config"
+        ]
+      },
+      {
+        "name": "Generators",
+        "description": "Content and object generation",
+        "directories": [
+          "frontend-vue-3\\src\\components\\ccFlowBuilder",
+          "frontend\\src\\components\\ccFlowBuilder"
+        ],
+        "symbolCount": 2,
+        "dependsOn": []
+      }
+    ],
+    "patterns": [
+      {
+        "name": "Service Layer",
+        "confidence": 0.85,
+        "description": "Encapsulates business logic in service classes",
+        "occurrences": 4
+      },
+      {
+        "name": "Observer",
+        "confidence": 0.75,
+        "description": "Defines a subscription mechanism to notify multiple objects",
+        "occurrences": 1
+      }
+    ],
+    "entryPoints": [
+      "backend\\src\\routes\\index.ts",
+      "backend\\src\\database\\index.ts",
+      "backend\\src\\app\\index.ts",
+      "frontend-vue-3\\server.js",
+      "frontend\\server.js",
+      "frontend-vue-3\\src\\stores\\index.js",
+      "frontend-vue-3\\src\\router\\index.js",
+      "frontend\\src\\store\\index.js",
+      "frontend\\src\\router\\index.js",
+      "frontend\\src\\components\\MediaViewer\\index.js",
+      "frontend-vue-3\\src\\components\\utils\\MediaViewer\\index.js"
+    ]
+  },
+  "symbols": {
+    "classes": [
+      {
+        "name": "ClosePendingTicketsService",
+        "kind": "class",
+        "file": "backend\\src\\services\\SettingServices\\ClosePendingTicketsService.ts",
+        "line": 6,
+        "exported": true
+      },
+      {
+        "name": "MissingValueError",
+        "kind": "class",
+        "file": "backend\\src\\utils\\pupa.ts",
+        "line": 59,
+        "exported": true
+      },
+      {
+        "name": "MissingValueError",
+        "kind": "class",
+        "file": "backend\\src\\@types\\pupa.d.ts",
+        "line": 2,
+        "exported": true
+      },
+      {
+        "name": "QueueListener",
+        "kind": "class",
+        "file": "backend\\src\\libs\\QueueListeners.ts",
+        "line": 44,
+        "exported": true
+      },
+      {
+        "name": "RabbitmqServer",
+        "kind": "class",
+        "file": "backend\\src\\libs\\rabbitmq-server.ts",
+        "line": 9,
+        "exported": true
+      },
+      {
+        "name": "ApiConfig",
+        "kind": "class",
+        "file": "backend\\src\\models\\ApiConfig.ts",
+        "line": 19,
+        "exported": false
+      },
+      {
+        "name": "ApiMessage",
+        "kind": "class",
+        "file": "backend\\src\\models\\ApiMessage.ts",
+        "line": 22,
+        "exported": false
+      },
+      {
+        "name": "AppError",
+        "kind": "class",
+        "file": "backend\\src\\errors\\AppError.ts",
+        "line": 3,
+        "exported": false
+      },
+      {
+        "name": "AutoReply",
+        "kind": "class",
+        "file": "backend\\src\\models\\AutoReply.ts",
+        "line": 21,
+        "exported": false
+      },
+      {
+        "name": "AutoReplyLogs",
+        "kind": "class",
+        "file": "backend\\src\\models\\AutoReplyLogs.ts",
+        "line": 18,
+        "exported": false
+      },
+      {
+        "name": "Campaign",
+        "kind": "class",
+        "file": "backend\\src\\models\\Campaign.ts",
+        "line": 23,
+        "exported": false
+      },
+      {
+        "name": "CampaignContacts",
+        "kind": "class",
+        "file": "backend\\src\\models\\CampaignContacts.ts",
+        "line": 21,
+        "exported": false
+      },
+      {
+        "name": "ChatFlow",
+        "kind": "class",
+        "file": "backend\\src\\models\\ChatFlow.ts",
+        "line": 21,
+        "exported": false
+      },
+      {
+        "name": "CloseTicketService",
+        "kind": "class",
+        "file": "backend\\src\\services\\TicketServices\\CloseTicketService.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "Contact",
+        "kind": "class",
+        "file": "backend\\src\\models\\Contact.ts",
+        "line": 29,
+        "exported": false
+      },
+      {
+        "name": "ContactCustomField",
+        "kind": "class",
+        "file": "backend\\src\\models\\ContactCustomField.ts",
+        "line": 16,
+        "exported": false
+      },
+      {
+        "name": "ContactTag",
+        "kind": "class",
+        "file": "backend\\src\\models\\ContactTag.ts",
+        "line": 19,
+        "exported": false
+      },
+      {
+        "name": "ContactWallet",
+        "kind": "class",
+        "file": "backend\\src\\models\\ContactWallet.ts",
+        "line": 18,
+        "exported": false
+      },
+      {
+        "name": "FastReply",
+        "kind": "class",
+        "file": "backend\\src\\models\\FastReply.ts",
+        "line": 19,
+        "exported": false
+      },
+      {
+        "name": "HandleMessageReceivedService",
+        "kind": "class",
+        "file": "backend\\src\\services\\MessageServices\\HandleMessageReceivedService.ts",
+        "line": 12,
+        "exported": false
+      },
+      {
+        "name": "LogTicket",
+        "kind": "class",
+        "file": "backend\\src\\models\\LogTicket.ts",
+        "line": 21,
+        "exported": false
+      },
+      {
+        "name": "ManageTicketStatusService",
+        "kind": "class",
+        "file": "backend\\src\\services\\TicketServices\\ManageTicketStatusService.ts",
+        "line": 9,
+        "exported": false
+      },
+      {
+        "name": "Message",
+        "kind": "class",
+        "file": "backend\\src\\models\\Message.ts",
+        "line": 22,
+        "exported": false
+      },
+      {
+        "name": "MessagesOffLine",
+        "kind": "class",
+        "file": "backend\\src\\models\\MessageOffLine.ts",
+        "line": 21,
+        "exported": false
+      },
+      {
+        "name": "OperationCache",
+        "kind": "class",
+        "file": "backend\\src\\services\\WbotServices\\SessionCleanupService.ts",
+        "line": 48,
+        "exported": false
+      },
+      {
+        "name": "Protocol",
+        "kind": "class",
+        "file": "backend\\src\\models\\Protocol.ts",
+        "line": 18,
+        "exported": false
+      },
+      {
+        "name": "Queue",
+        "kind": "class",
+        "file": "backend\\src\\models\\Queue.ts",
+        "line": 18,
+        "exported": false
+      },
+      {
+        "name": "Setting",
+        "kind": "class",
+        "file": "backend\\src\\models\\Setting.ts",
+        "line": 16,
+        "exported": false
+      },
+      {
+        "name": "StepsReply",
+        "kind": "class",
+        "file": "backend\\src\\models\\StepsReply.ts",
+        "line": 21,
+        "exported": false
+      },
+      {
+        "name": "StepsReplyActions",
+        "kind": "class",
+        "file": "backend\\src\\models\\StepsReplyAction.ts",
+        "line": 20,
+        "exported": false
+      },
+      {
+        "name": "Tags",
+        "kind": "class",
+        "file": "backend\\src\\models\\Tag.ts",
+        "line": 18,
+        "exported": false
+      },
+      {
+        "name": "Tenant",
+        "kind": "class",
+        "file": "backend\\src\\models\\Tenant.ts",
+        "line": 17,
+        "exported": false
+      },
+      {
+        "name": "Ticket",
+        "kind": "class",
+        "file": "backend\\src\\models\\Ticket.ts",
+        "line": 33,
+        "exported": false
+      },
+      {
+        "name": "TicketLog",
+        "kind": "class",
+        "file": "backend\\src\\models\\TicketLog.ts",
+        "line": 5,
+        "exported": false
+      },
+      {
+        "name": "User",
+        "kind": "class",
+        "file": "backend\\src\\models\\User.ts",
+        "line": 28,
+        "exported": false
+      },
+      {
+        "name": "UserMessagesLog",
+        "kind": "class",
+        "file": "backend\\src\\models\\UserMessagesLog.ts",
+        "line": 19,
+        "exported": false
+      },
+      {
+        "name": "UsersQueues",
+        "kind": "class",
+        "file": "backend\\src\\models\\UsersQueues.ts",
+        "line": 17,
+        "exported": false
+      },
+      {
+        "name": "Whatsapp",
+        "kind": "class",
+        "file": "backend\\src\\models\\Whatsapp.ts",
+        "line": 31,
+        "exported": false
+      }
+    ],
+    "interfaces": [
+      {
+        "name": "Application",
+        "kind": "interface",
+        "file": "backend\\src\\@types\\express.d.ts",
+        "line": 21,
+        "exported": true
+      },
+      {
+        "name": "ExtendedWbotMessage",
+        "kind": "interface",
+        "file": "backend\\src\\services\\WbotServices\\WbotMessagePoll.ts",
+        "line": 17,
+        "exported": true
+      },
+      {
+        "name": "GlobalComponents",
+        "kind": "interface",
+        "file": "frontend-vue-3\\src\\components.d.ts",
+        "line": 13,
+        "exported": true
+      },
+      {
+        "name": "PollMessageData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\WbotServices\\WbotMessagePoll.ts",
+        "line": 55,
+        "exported": true
+      },
+      {
+        "name": "PollOption",
+        "kind": "interface",
+        "file": "backend\\src\\services\\WbotServices\\WbotMessagePoll.ts",
+        "line": 49,
+        "exported": true
+      },
+      {
+        "name": "Request",
+        "kind": "interface",
+        "file": "backend\\src\\@types\\express.d.ts",
+        "line": 5,
+        "exported": true
+      },
+      {
+        "name": "Session",
+        "kind": "interface",
+        "file": "backend\\src\\types\\WhatsAppSession.ts",
+        "line": 3,
+        "exported": true
+      },
+      {
+        "name": "Socket",
+        "kind": "interface",
+        "file": "backend\\src\\@types\\socket.d.ts",
+        "line": 6,
+        "exported": true
+      },
+      {
+        "name": "ApiData",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\APIConfigController.ts",
+        "line": 12,
+        "exported": false
+      },
+      {
+        "name": "ApiData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\ApiConfigServices\\UpdateApiConfigService.ts",
+        "line": 6,
+        "exported": false
+      },
+      {
+        "name": "AutoReplyData",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\AutoReplyController.ts",
+        "line": 15,
+        "exported": false,
+        "description": "Interface que define a estrutura de uma resposta automática\rRespostas automáticas são mensagens pred..."
+      },
+      {
+        "name": "AutoReplyData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\AutoReplyServices\\UpdateAutoReplyService.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "BusinessProfile",
+        "kind": "interface",
+        "file": "backend\\src\\services\\WABA360\\SetBusinessProfile.ts",
+        "line": 5,
+        "exported": false
+      },
+      {
+        "name": "CacheEntry",
+        "kind": "interface",
+        "file": "backend\\src\\services\\WbotServices\\SessionCleanupService.ts",
+        "line": 43,
+        "exported": false
+      },
+      {
+        "name": "CampaignContact",
+        "kind": "interface",
+        "file": "backend\\src\\services\\CampaignContactsServices\\CreateCampaignContactsService.ts",
+        "line": 11,
+        "exported": false
+      },
+      {
+        "name": "CampaignContactData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\CampaignContactsServices\\CreateCampaignContactsService.ts",
+        "line": 23,
+        "exported": false
+      },
+      {
+        "name": "CampaignData",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\CampaignController.ts",
+        "line": 18,
+        "exported": false,
+        "description": "Interface que define a estrutura de dados de uma campanha.\rUma campanha é uma sequência programada d..."
+      },
+      {
+        "name": "CampaignData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\CampaignServices\\UpdateCampaignService.ts",
+        "line": 16,
+        "exported": false
+      },
+      {
+        "name": "CampaignRequest",
+        "kind": "interface",
+        "file": "backend\\src\\services\\CampaignServices\\CreateCampaignService.ts",
+        "line": 9,
+        "exported": false
+      },
+      {
+        "name": "ChannelData",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\AdminController.ts",
+        "line": 35,
+        "exported": false
+      },
+      {
+        "name": "ChatFlowData",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\ChatFlowController.ts",
+        "line": 78,
+        "exported": false,
+        "description": "Interface que define os dados necessários para um fluxo de chat\rCombina o fluxo com metadados import..."
+      },
+      {
+        "name": "ChatFlowData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\ChatFlowServices\\UpdateChatFlowService.ts",
+        "line": 10,
+        "exported": false
+      },
+      {
+        "name": "Configuration",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\ChatFlowController.ts",
+        "line": 24,
+        "exported": false,
+        "description": "Interface que define configurações avançadas do fluxo\rControla comportamentos específicos do chatbot"
+      },
+      {
+        "name": "Contact",
+        "kind": "interface",
+        "file": "backend\\src\\services\\WABA360\\CheckContact.ts",
+        "line": 5,
+        "exported": false
+      },
+      {
+        "name": "ContactData",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\ContactController.ts",
+        "line": 38,
+        "exported": false
+      },
+      {
+        "name": "ContactData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\ContactServices\\UpdateContactService.ts",
+        "line": 19,
+        "exported": false
+      },
+      {
+        "name": "CustomSequelize",
+        "kind": "interface",
+        "file": "backend\\src\\database\\index.ts",
+        "line": 37,
+        "exported": false
+      },
+      {
+        "name": "Data",
+        "kind": "interface",
+        "file": "backend\\src\\libs\\decodeTokenSocket.ts",
+        "line": 18,
+        "exported": false
+      },
+      {
+        "name": "Data",
+        "kind": "interface",
+        "file": "backend\\src\\jobs\\WebHooksAPI.ts",
+        "line": 10,
+        "exported": false
+      },
+      {
+        "name": "Data",
+        "kind": "interface",
+        "file": "backend\\src\\services\\WhatsappService\\ShowWhatsAppService.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "Data",
+        "kind": "interface",
+        "file": "backend\\src\\services\\TicketServices\\FindOrCreateTicketService.ts",
+        "line": 14,
+        "exported": false
+      },
+      {
+        "name": "Data",
+        "kind": "interface",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerShowChannel.ts",
+        "line": 6,
+        "exported": false
+      },
+      {
+        "name": "Day",
+        "kind": "interface",
+        "file": "backend\\src\\services\\TenantServices\\UpdateBusinessHoursService.ts",
+        "line": 6,
+        "exported": false
+      },
+      {
+        "name": "DeleteFastReplyImageRequest",
+        "kind": "interface",
+        "file": "backend\\src\\services\\FastReplyServices\\DeleteFastReplyService.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "DeleteFastReplyImageRequest",
+        "kind": "interface",
+        "file": "backend\\src\\services\\FastReplyServices\\DeleteFastReplyImageService.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "ExtraInfo",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\ContactController.ts",
+        "line": 32,
+        "exported": false
+      },
+      {
+        "name": "ExtraInfo",
+        "kind": "interface",
+        "file": "backend\\src\\services\\ContactServices\\UpdateContactService.ts",
+        "line": 7,
+        "exported": false
+      },
+      {
+        "name": "ExtraInfo",
+        "kind": "interface",
+        "file": "backend\\src\\services\\ContactServices\\CreateOrUpdateContactService.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "ExtraInfo",
+        "kind": "interface",
+        "file": "backend\\src\\services\\ContactServices\\CreateContactService.ts",
+        "line": 6,
+        "exported": false
+      },
+      {
+        "name": "FastReplyData",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\FastReplyController.ts",
+        "line": 52,
+        "exported": false,
+        "description": "Interface que define a estrutura de uma resposta rápida\rRespostas rápidas são mensagens predefinidas..."
+      },
+      {
+        "name": "FastReplyData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\FastReplyServices\\UpdateFastReplyService.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "Flow",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\ChatFlowController.ts",
+        "line": 68,
+        "exported": false,
+        "description": "Interface que define a estrutura completa do fluxo\rRepresenta todo o fluxo de conversação do chatbot"
+      },
+      {
+        "name": "Global",
+        "kind": "interface",
+        "file": "backend\\src\\@types\\global.d.ts",
+        "line": 6,
+        "exported": false
+      },
+      {
+        "name": "HandleMessageReceivedData",
+        "kind": "interface",
+        "file": "backend\\src\\services\\MessageServices\\HandleMessageReceivedService.ts",
+        "line": 6,
+        "exported": false
+      },
+      {
+        "name": "HandlerPayload",
+        "kind": "interface",
+        "file": "backend\\src\\jobs\\WebHooksAPI.ts",
+        "line": 17,
+        "exported": false
+      },
+      {
+        "name": "IMessage",
+        "kind": "interface",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerVerifyMediaMessage.ts",
+        "line": 16,
+        "exported": false
+      },
+      {
+        "name": "IParams",
+        "kind": "interface",
+        "file": "backend\\src\\utils\\sleepRandomTime.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "Line",
+        "kind": "interface",
+        "file": "backend\\src\\controllers\\ChatFlowController.ts",
+        "line": 13,
+        "exported": false,
+        "description": "Interface que define a estrutura de uma linha de conexão no fluxo\rRepresenta as conexões entre difer..."
+      },
+      {
+        "name": "mediaId",
+        "kind": "interface",
+        "file": "backend\\src\\services\\WABA360\\UploadMedia.ts",
+        "line": 10,
+        "exported": false
+      },
+      {
+        "name": "Message",
+        "kind": "interface",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerVerifyMessage.ts",
+        "line": 9,
+        "exported": false
+      }
+    ],
+    "functions": [
+      {
+        "name": "addMensagem",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+        "line": 74,
+        "exported": true
+      },
+      {
+        "name": "addTickets",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+        "line": 32,
+        "exported": true
+      },
+      {
+        "name": "addWhatsapp",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\stores\\useWhatsappStore.js",
+        "line": 13,
+        "exported": true
+      },
+      {
+        "name": "AdicionarContatosCampanha",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\campanhas.js",
+        "line": 53,
+        "exported": true
+      },
+      {
+        "name": "AdicionarContatosCampanha",
+        "kind": "function",
+        "file": "frontend\\src\\service\\campanhas.js",
+        "line": 53,
+        "exported": true
+      },
+      {
+        "name": "AdminListarChannels",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\channels.js",
+        "line": 3,
+        "exported": true
+      },
+      {
+        "name": "AdminListarChannels",
+        "kind": "function",
+        "file": "frontend\\src\\service\\channels.js",
+        "line": 3,
+        "exported": true
+      },
+      {
+        "name": "AdminListarEmpresas",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\empresas.js",
+        "line": 26,
+        "exported": true
+      },
+      {
+        "name": "AdminListarEmpresas",
+        "kind": "function",
+        "file": "frontend\\src\\service\\empresas.js",
+        "line": 26,
+        "exported": true
+      },
+      {
+        "name": "AdminListarUsuarios",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\user.js",
+        "line": 49,
+        "exported": true
+      },
+      {
+        "name": "AdminListarUsuarios",
+        "kind": "function",
+        "file": "frontend\\src\\service\\user.js",
+        "line": 49,
+        "exported": true
+      },
+      {
+        "name": "AdminUpdateUsuarios",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\user.js",
+        "line": 57,
+        "exported": true
+      },
+      {
+        "name": "AdminUpdateUsuarios",
+        "kind": "function",
+        "file": "frontend\\src\\service\\user.js",
+        "line": 57,
+        "exported": true
+      },
+      {
+        "name": "AlterarCampanha",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\campanhas.js",
+        "line": 38,
+        "exported": true
+      },
+      {
+        "name": "AlterarCampanha",
+        "kind": "function",
+        "file": "frontend\\src\\service\\campanhas.js",
+        "line": 38,
+        "exported": true
+      },
+      {
+        "name": "AlterarConfiguracao",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\configuracoes.js",
+        "line": 11,
+        "exported": true
+      },
+      {
+        "name": "AlterarConfiguracao",
+        "kind": "function",
+        "file": "frontend\\src\\service\\configuracoes.js",
+        "line": 11,
+        "exported": true
+      },
+      {
+        "name": "AlterarEtiqueta",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\etiquetas.js",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "AlterarEtiqueta",
+        "kind": "function",
+        "file": "frontend\\src\\service\\etiquetas.js",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "AlterarFila",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\filas.js",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "AlterarFila",
+        "kind": "function",
+        "file": "frontend\\src\\service\\filas.js",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "AlterarMensagemRapida",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\mensagensRapidas.js",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "AlterarMensagemRapida",
+        "kind": "function",
+        "file": "frontend\\src\\service\\mensagensRapidas.js",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "AlterarTenant",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\empresas.js",
+        "line": 41,
+        "exported": true
+      },
+      {
+        "name": "AlterarTenant",
+        "kind": "function",
+        "file": "frontend\\src\\service\\empresas.js",
+        "line": 41,
+        "exported": true
+      },
+      {
+        "name": "ApagarAPI",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\apiConfig.js",
+        "line": 34,
+        "exported": true
+      },
+      {
+        "name": "ApagarAPI",
+        "kind": "function",
+        "file": "frontend\\src\\service\\api.js",
+        "line": 34,
+        "exported": true
+      },
+      {
+        "name": "application",
+        "kind": "function",
+        "file": "backend\\src\\app\\index.ts",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "applyStyle",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\utils\\formatMessage.js",
+        "line": 9,
+        "exported": true
+      },
+      {
+        "name": "AtualizarHorariosAtendiemento",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\empresas.js",
+        "line": 10,
+        "exported": true
+      },
+      {
+        "name": "AtualizarHorariosAtendiemento",
+        "kind": "function",
+        "file": "frontend\\src\\service\\empresas.js",
+        "line": 10,
+        "exported": true
+      },
+      {
+        "name": "AtualizarMensagemHorariosAtendiemento",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\empresas.js",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "AtualizarMensagemHorariosAtendiemento",
+        "kind": "function",
+        "file": "frontend\\src\\service\\empresas.js",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "atualizarStatusTicket",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+        "line": 182,
+        "exported": true
+      },
+      {
+        "name": "AtualizarTicket",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\tickets.js",
+        "line": 106,
+        "exported": true
+      },
+      {
+        "name": "AtualizarTicket",
+        "kind": "function",
+        "file": "frontend\\src\\service\\tickets.js",
+        "line": 106,
+        "exported": true
+      },
+      {
+        "name": "bootstrap",
+        "kind": "function",
+        "file": "backend\\src\\app\\boot.ts",
+        "line": 11,
+        "exported": true
+      },
+      {
+        "name": "bullMQ",
+        "kind": "function",
+        "file": "backend\\src\\app\\bull.ts",
+        "line": 6,
+        "exported": true
+      },
+      {
+        "name": "CancelarCampanha",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\campanhas.js",
+        "line": 21,
+        "exported": true
+      },
+      {
+        "name": "CancelarCampanha",
+        "kind": "function",
+        "file": "frontend\\src\\service\\campanhas.js",
+        "line": 21,
+        "exported": true
+      },
+      {
+        "name": "check_files",
+        "kind": "function",
+        "file": "frontend-vue-3\\check_vue.py",
+        "line": 4,
+        "exported": true
+      },
+      {
+        "name": "close",
+        "kind": "function",
+        "file": "backend\\src\\app\\index.ts",
+        "line": 49,
+        "exported": true
+      },
+      {
+        "name": "ConsultarDadosTicket",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\tickets.js",
+        "line": 65,
+        "exported": true
+      },
+      {
+        "name": "ConsultarDadosTicket",
+        "kind": "function",
+        "file": "frontend\\src\\service\\tickets.js",
+        "line": 65,
+        "exported": true
+      },
+      {
+        "name": "ConsultarLogsTicket",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\tickets.js",
+        "line": 98,
+        "exported": true
+      },
+      {
+        "name": "ConsultarLogsTicket",
+        "kind": "function",
+        "file": "frontend\\src\\service\\tickets.js",
+        "line": 98,
+        "exported": true
+      },
+      {
+        "name": "consultarMensagens",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+        "line": 114,
+        "exported": true
+      },
+      {
+        "name": "consultarTickets",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+        "line": 135,
+        "exported": true
+      },
+      {
+        "name": "ConsultarTicketsQueuesService",
+        "kind": "function",
+        "file": "frontend-vue-3\\src\\service\\estatisticas.js",
+        "line": 3,
+        "exported": true
+      },
+      {
+        "name": "ConsultarTicketsQueuesService",
+        "kind": "function",
+        "file": "frontend\\src\\service\\estatisticas.js",
+        "line": 3,
+        "exported": true
+      }
+    ],
+    "types": [
+      {
+        "name": "CustomMessageTypes",
+        "kind": "type",
+        "file": "backend\\src\\services\\WbotServices\\WbotMessagePoll.ts",
+        "line": 15,
+        "exported": true
+      },
+      {
+        "name": "EventAccountLinking",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 234,
+        "exported": true
+      },
+      {
+        "name": "EventAppRoles",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 202,
+        "exported": true
+      },
+      {
+        "name": "EventBrandedCamera",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 227,
+        "exported": true
+      },
+      {
+        "name": "EventCheckoutUpdate",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 158,
+        "exported": true
+      },
+      {
+        "name": "EventDelivery",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 91,
+        "exported": true
+      },
+      {
+        "name": "EventGamePlay",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 121,
+        "exported": true
+      },
+      {
+        "name": "EventMessage",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 76,
+        "exported": true
+      },
+      {
+        "name": "EventMessageAttachment",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 51,
+        "exported": true
+      },
+      {
+        "name": "EventMessageQuickReply",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 21,
+        "exported": true
+      },
+      {
+        "name": "EventOptin",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 132,
+        "exported": true
+      },
+      {
+        "name": "EventPassThreadControl",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 206,
+        "exported": true
+      },
+      {
+        "name": "EventPayment",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 145,
+        "exported": true
+      },
+      {
+        "name": "EventPolicyEnforcement",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 195,
+        "exported": true
+      },
+      {
+        "name": "EventPostback",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 113,
+        "exported": true
+      },
+      {
+        "name": "EventPreCheckout",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 173,
+        "exported": true
+      },
+      {
+        "name": "EventReaction",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 240,
+        "exported": true
+      },
+      {
+        "name": "EventRead",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 98,
+        "exported": true
+      },
+      {
+        "name": "EventRecipient",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 15,
+        "exported": true
+      },
+      {
+        "name": "EventReferral",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 104,
+        "exported": true
+      },
+      {
+        "name": "EventRequestThreadControl",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 220,
+        "exported": true
+      },
+      {
+        "name": "EventSender",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 9,
+        "exported": true
+      },
+      {
+        "name": "EventTakeThreadControl",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 213,
+        "exported": true
+      },
+      {
+        "name": "ExecutionOption",
+        "kind": "type",
+        "file": "backend\\src\\libs\\QueueListeners.ts",
+        "line": 18,
+        "exported": true
+      },
+      {
+        "name": "FallbackAttachment",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 42,
+        "exported": true
+      },
+      {
+        "name": "JobConfig",
+        "kind": "type",
+        "file": "backend\\src\\libs\\QueueListeners.ts",
+        "line": 26,
+        "exported": true
+      },
+      {
+        "name": "LocationAttachmentPayload",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 33,
+        "exported": true
+      },
+      {
+        "name": "MediaAttachmentPayload",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 27,
+        "exported": true
+      },
+      {
+        "name": "MessagingEntry",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 374,
+        "exported": true
+      },
+      {
+        "name": "MessengerEventOptions",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 367,
+        "exported": true
+      },
+      {
+        "name": "MessengerRawEvent",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 257,
+        "exported": true
+      },
+      {
+        "name": "MessengerRequestBody",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 414,
+        "exported": true
+      },
+      {
+        "name": "Options",
+        "kind": "type",
+        "file": "backend\\src\\@types\\pupa.d.ts",
+        "line": 13,
+        "exported": true
+      },
+      {
+        "name": "RabbitMQJob",
+        "kind": "type",
+        "file": "backend\\src\\libs\\QueueListeners.ts",
+        "line": 36,
+        "exported": true
+      },
+      {
+        "name": "RetryOptions",
+        "kind": "type",
+        "file": "backend\\src\\libs\\QueueListeners.ts",
+        "line": 31,
+        "exported": true
+      },
+      {
+        "name": "CleanupContext",
+        "kind": "type",
+        "file": "backend\\src\\services\\WbotServices\\SessionCleanupService.ts",
+        "line": 20,
+        "exported": false,
+        "description": "Serviço centralizado para limpeza de sessões do WhatsApp (VERSÃO HÍBRIDA ENTERPRISE v4)\rO ápice da e..."
+      },
+      {
+        "name": "EventMessageReplyTo",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 70,
+        "exported": false
+      },
+      {
+        "name": "EventMessageTag",
+        "kind": "type",
+        "file": "backend\\src\\services\\MessengerChannelServices\\MessengerTypes.ts",
+        "line": 64,
+        "exported": false
+      },
+      {
+        "name": "Events",
+        "kind": "type",
+        "file": "backend\\src\\helpers\\socketEmit.ts",
+        "line": 4,
+        "exported": false
+      },
+      {
+        "name": "IndexQuery",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\UserController.ts",
+        "line": 18,
+        "exported": false,
+        "description": "Interface para parâmetros de busca na listagem de usuários"
+      },
+      {
+        "name": "IndexQuery",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\TicketController.ts",
+        "line": 23,
+        "exported": false,
+        "description": "Interface para parâmetros de busca e filtro de tickets"
+      },
+      {
+        "name": "IndexQuery",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\StatisticsController.ts",
+        "line": 11,
+        "exported": false
+      },
+      {
+        "name": "IndexQuery",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\MessageController.ts",
+        "line": 29,
+        "exported": false,
+        "description": "Interface para parâmetros de paginação na listagem de mensagens"
+      },
+      {
+        "name": "IndexQuery",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\ContactController.ts",
+        "line": 26,
+        "exported": false
+      },
+      {
+        "name": "IndexQuery",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\AdminController.ts",
+        "line": 24,
+        "exported": false
+      },
+      {
+        "name": "IndexQuery",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\Statistics\\StatisticsPerUsersController.ts",
+        "line": 6,
+        "exported": false
+      },
+      {
+        "name": "IndexQuery",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\Statistics\\DashController.ts",
+        "line": 9,
+        "exported": false
+      },
+      {
+        "name": "IndexQuerySettings",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\AdminController.ts",
+        "line": 29,
+        "exported": false
+      },
+      {
+        "name": "logType",
+        "kind": "type",
+        "file": "backend\\src\\services\\TicketServices\\CreateLogTicketService.ts",
+        "line": 6,
+        "exported": false
+      },
+      {
+        "name": "MessageData",
+        "kind": "type",
+        "file": "backend\\src\\controllers\\MessageController.ts",
+        "line": 36,
+        "exported": false,
+        "description": "Interface que define a estrutura de uma mensagem"
+      }
+    ],
+    "enums": [
+      {
+        "name": "ExecutionType",
+        "kind": "enum",
+        "file": "backend\\src\\libs\\QueueListeners.ts",
+        "line": 13,
+        "exported": true
+      }
+    ]
+  },
+  "publicAPI": [
+    {
+      "name": "addMensagem",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+      "line": 74,
+      "exported": true
+    },
+    {
+      "name": "addTickets",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+      "line": 32,
+      "exported": true
+    },
+    {
+      "name": "addWhatsapp",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\stores\\useWhatsappStore.js",
+      "line": 13,
+      "exported": true
+    },
+    {
+      "name": "AdicionarContatosCampanha",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\campanhas.js",
+      "line": 53,
+      "exported": true
+    },
+    {
+      "name": "AdicionarContatosCampanha",
+      "kind": "function",
+      "file": "frontend\\src\\service\\campanhas.js",
+      "line": 53,
+      "exported": true
+    },
+    {
+      "name": "AdminListarChannels",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\channels.js",
+      "line": 3,
+      "exported": true
+    },
+    {
+      "name": "AdminListarChannels",
+      "kind": "function",
+      "file": "frontend\\src\\service\\channels.js",
+      "line": 3,
+      "exported": true
+    },
+    {
+      "name": "AdminListarEmpresas",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\empresas.js",
+      "line": 26,
+      "exported": true
+    },
+    {
+      "name": "AdminListarEmpresas",
+      "kind": "function",
+      "file": "frontend\\src\\service\\empresas.js",
+      "line": 26,
+      "exported": true
+    },
+    {
+      "name": "AdminListarUsuarios",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\user.js",
+      "line": 49,
+      "exported": true
+    },
+    {
+      "name": "AdminListarUsuarios",
+      "kind": "function",
+      "file": "frontend\\src\\service\\user.js",
+      "line": 49,
+      "exported": true
+    },
+    {
+      "name": "AdminUpdateUsuarios",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\user.js",
+      "line": 57,
+      "exported": true
+    },
+    {
+      "name": "AdminUpdateUsuarios",
+      "kind": "function",
+      "file": "frontend\\src\\service\\user.js",
+      "line": 57,
+      "exported": true
+    },
+    {
+      "name": "AlterarCampanha",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\campanhas.js",
+      "line": 38,
+      "exported": true
+    },
+    {
+      "name": "AlterarCampanha",
+      "kind": "function",
+      "file": "frontend\\src\\service\\campanhas.js",
+      "line": 38,
+      "exported": true
+    },
+    {
+      "name": "AlterarConfiguracao",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\configuracoes.js",
+      "line": 11,
+      "exported": true
+    },
+    {
+      "name": "AlterarConfiguracao",
+      "kind": "function",
+      "file": "frontend\\src\\service\\configuracoes.js",
+      "line": 11,
+      "exported": true
+    },
+    {
+      "name": "AlterarEtiqueta",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\etiquetas.js",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "AlterarEtiqueta",
+      "kind": "function",
+      "file": "frontend\\src\\service\\etiquetas.js",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "AlterarFila",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\filas.js",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "AlterarFila",
+      "kind": "function",
+      "file": "frontend\\src\\service\\filas.js",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "AlterarMensagemRapida",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\mensagensRapidas.js",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "AlterarMensagemRapida",
+      "kind": "function",
+      "file": "frontend\\src\\service\\mensagensRapidas.js",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "AlterarTenant",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\empresas.js",
+      "line": 41,
+      "exported": true
+    },
+    {
+      "name": "AlterarTenant",
+      "kind": "function",
+      "file": "frontend\\src\\service\\empresas.js",
+      "line": 41,
+      "exported": true
+    },
+    {
+      "name": "ApagarAPI",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\apiConfig.js",
+      "line": 34,
+      "exported": true
+    },
+    {
+      "name": "ApagarAPI",
+      "kind": "function",
+      "file": "frontend\\src\\service\\api.js",
+      "line": 34,
+      "exported": true
+    },
+    {
+      "name": "application",
+      "kind": "function",
+      "file": "backend\\src\\app\\index.ts",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "Application",
+      "kind": "interface",
+      "file": "backend\\src\\@types\\express.d.ts",
+      "line": 21,
+      "exported": true
+    },
+    {
+      "name": "applyStyle",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\utils\\formatMessage.js",
+      "line": 9,
+      "exported": true
+    },
+    {
+      "name": "AtualizarHorariosAtendiemento",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\empresas.js",
+      "line": 10,
+      "exported": true
+    },
+    {
+      "name": "AtualizarHorariosAtendiemento",
+      "kind": "function",
+      "file": "frontend\\src\\service\\empresas.js",
+      "line": 10,
+      "exported": true
+    },
+    {
+      "name": "AtualizarMensagemHorariosAtendiemento",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\empresas.js",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "AtualizarMensagemHorariosAtendiemento",
+      "kind": "function",
+      "file": "frontend\\src\\service\\empresas.js",
+      "line": 18,
+      "exported": true
+    },
+    {
+      "name": "atualizarStatusTicket",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+      "line": 182,
+      "exported": true
+    },
+    {
+      "name": "AtualizarTicket",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\tickets.js",
+      "line": 106,
+      "exported": true
+    },
+    {
+      "name": "AtualizarTicket",
+      "kind": "function",
+      "file": "frontend\\src\\service\\tickets.js",
+      "line": 106,
+      "exported": true
+    },
+    {
+      "name": "bootstrap",
+      "kind": "function",
+      "file": "backend\\src\\app\\boot.ts",
+      "line": 11,
+      "exported": true
+    },
+    {
+      "name": "bullMQ",
+      "kind": "function",
+      "file": "backend\\src\\app\\bull.ts",
+      "line": 6,
+      "exported": true
+    },
+    {
+      "name": "CancelarCampanha",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\campanhas.js",
+      "line": 21,
+      "exported": true
+    },
+    {
+      "name": "CancelarCampanha",
+      "kind": "function",
+      "file": "frontend\\src\\service\\campanhas.js",
+      "line": 21,
+      "exported": true
+    },
+    {
+      "name": "check_files",
+      "kind": "function",
+      "file": "frontend-vue-3\\check_vue.py",
+      "line": 4,
+      "exported": true
+    },
+    {
+      "name": "close",
+      "kind": "function",
+      "file": "backend\\src\\app\\index.ts",
+      "line": 49,
+      "exported": true
+    },
+    {
+      "name": "ClosePendingTicketsService",
+      "kind": "class",
+      "file": "backend\\src\\services\\SettingServices\\ClosePendingTicketsService.ts",
+      "line": 6,
+      "exported": true
+    },
+    {
+      "name": "ConsultarDadosTicket",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\tickets.js",
+      "line": 65,
+      "exported": true
+    },
+    {
+      "name": "ConsultarDadosTicket",
+      "kind": "function",
+      "file": "frontend\\src\\service\\tickets.js",
+      "line": 65,
+      "exported": true
+    },
+    {
+      "name": "ConsultarLogsTicket",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\service\\tickets.js",
+      "line": 98,
+      "exported": true
+    },
+    {
+      "name": "ConsultarLogsTicket",
+      "kind": "function",
+      "file": "frontend\\src\\service\\tickets.js",
+      "line": 98,
+      "exported": true
+    },
+    {
+      "name": "consultarMensagens",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+      "line": 114,
+      "exported": true
+    },
+    {
+      "name": "consultarTickets",
+      "kind": "function",
+      "file": "frontend-vue-3\\src\\stores\\useTicketStore.js",
+      "line": 135,
+      "exported": true
+    }
+  ],
+  "dependencies": {
+    "mostImported": [
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\errors\\AppError.ts",
+        "importedBy": 130
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\utils\\logger.ts",
+        "importedBy": 77
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\Ticket.ts",
+        "importedBy": 73
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\Contact.ts",
+        "importedBy": 55
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\User.ts",
+        "importedBy": 49
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\Message.ts",
+        "importedBy": 46
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\Whatsapp.ts",
+        "importedBy": 40
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\Tenant.ts",
+        "importedBy": 31
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\libs\\socket.ts",
+        "importedBy": 31
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\helpers\\socketEmit.ts",
+        "importedBy": 24
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\Queue.ts",
+        "importedBy": 20
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\middleware\\isAuth.ts",
+        "importedBy": 19
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\libs\\wbot.ts",
+        "importedBy": 19
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\config\\auth.ts",
+        "importedBy": 14
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\libs\\Queue.ts",
+        "importedBy": 13
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\database/index.ts",
+        "importedBy": 13
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\CampaignContacts.ts",
+        "importedBy": 13
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\Campaign.ts",
+        "importedBy": 12
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\models\\StepsReply.ts",
+        "importedBy": 11
+      },
+      {
+        "file": "C:\\GitHub\\TikTickets-zing\\backend\\src\\services\\MessageServices\\CreateMessageService.ts",
+        "importedBy": 11
+      }
+    ]
+  },
+  "stats": {
+    "totalSymbols": 682,
+    "exportedSymbols": 382,
+    "analysisTimeMs": 3618
+  }
+}

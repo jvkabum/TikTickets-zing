@@ -1,31 +1,59 @@
-# Habilidade: Mensagens de Commit (Commit Message)
+---
+type: skill
+name: Mensagens de Commit (Commit Message)
+description: Padrão sênior para mensagens de commit detalhadas e rastreáveis
+skillSlug: commit-message
+phases: [C]
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-Esta habilidade orienta a IA e os desenvolvedores na geração de mensagens de commit padronizadas, garantindo um histórico de projeto limpo e legível.
+# ✍️ Mensagens de Commit (Commit Message)
 
-## Padrão: Conventional Commits
-As mensagens devem seguir o formato: `<tipo>(escopo): <descrição curta>`
+Esta skill garante que o histórico do Git seja uma ferramenta de documentação valiosa para o projeto. Proibimos mensagens genéricas e exigimos contexto técnico detalhado.
 
-- `feat`: Adição de nova funcionalidade (ex: novo canal de atendimento).
-- `fix`: Correção de um bug (ex: erro de conexão no WhatsApp).
-- `docs`: Alterações apenas na documentação.
-- `style`: Alterações que não afetam o sentido do código (espaços em branco, formatação, etc).
-- `refactor`: Mudança no código que não corrige um bug nem adiciona uma funcionalidade.
-- `perf`: Mudança de código que melhora o desempenho (ex: otimização de polling).
-- `test`: Adição de testes ausentes ou correção de testes existentes.
-- `chore`: Alterações no processo de build ou ferramentas auxiliares e bibliotecas.
+## 🚫 PROIBIÇÕES (Anti-Patterns)
+- **NUNCA** use mensagens automáticas de plano/fase: `chore(plan): complete phase`, `feat: update files`.
+- **NUNCA** use descrições vagas: `fix: bugs`, `refactor: code`, `update: wbot`.
+- **NUNCA** commite sem explicar o **PORQUÊ** da mudança se ela for lógica.
 
-## Convenções de Branch
-- `feature/nome-da-feature`: Para novos desenvolvimentos.
-- `hotfix/nome-do-erro`: Para correções críticas em produção.
-- `refactor/nome-da-melhoria`: Para refatorações estruturais.
+## 📏 Padrão Conventional Commits Estendido
 
-## Exemplos de Mensagens no TikTickets
-- `perf(whatsapp): reduzido polling para 2s para acelerar estabilização do QR`
-- `fix(backend): adicionada retentativa no SessionCleanupService para evitar EBUSY`
-- `feat(frontend-vue-3): implementada visualização dinâmica de mensagens de mídia`
-- `chore(context): inicializada estrutura PREVC para gestão de IA no projeto`
+Estrutura exigida: `<tipo>(<escopo>): <descrição técnica concisa>`
 
-## Diretrizes Adicionais
-1. **Idioma**: Sempre em Português do Brasil.
-2. **Imperativo**: Use o tempo verbal imperativo ou presente (ex: "adiciona" ou "adicionado").
-3. **Escopo**: Sempre identifique o módulo afetado entre parênteses.
+### 1. Tipos Permitidos:
+- `feat`: Nova funcionalidade.
+- `fix`: Correção de bug.
+- `refactor`: Mudança de código que não altera funcionalidade nem corrige bug.
+- `docs`: Mudanças na documentação.
+- `perf`: Melhoria de performance.
+- `chore`: Manutenção, configs, build.
+- `test`: Adição ou correção de testes.
+
+### 2. Escopo:
+Onde a mudança ocorreu? (ex: `wbot`, `frontend`, `api`, `socket`, `context`).
+
+### 3. Body Detalhado (Obrigatório para Lógica/Fix/Feat)
+O corpo da mensagem é obrigatório se a alteração for técnica ou arquitetural. 
+- Use bullet points (`-`).
+- Explique **O QUE** mudou, **POR QUE** mudou e o **IMPACTO** (riscos ou quebras).
+
+## 📑 Exemplos de Excelência (Sênior) ✅
+
+```markdown
+fix(wbot): implementa watchdog híbrido para destravar sessões zumbis
+
+- Adiciona timer de 15s no 'initWbot' para detectar falha no evento 'ready'.
+- Integra validação via 'verifyRealConnection' (foto de perfil/status).
+- Substitui lógica de 'forceReconnect' por estratégia progressiva (leve->média->pesada).
+- Corrige bug em enquetes (vote.getMessage) mantendo ID seguro msg.id.id.
+
+Por que: O Puppeteer disparava eventos de autenticação antes de popular o objeto info,
+causando quedas intermitentes no processo de inicialização de novas sessões.
+```
+
+## 🌍 Diretrizes de Idioma
+1. **Idioma**: Sempre em **Português do Brasil**.
+2. **Modo Imperativo**: "Adiciona", "Corrige", "Remove" em vez de "Adicionado".
+3. **Clareza**: Use termos técnicos em inglês se for padrão (Socket, Polling), mas a explicação em PT-BR.

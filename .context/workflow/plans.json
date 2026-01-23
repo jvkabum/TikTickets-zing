@@ -1,13 +1,13 @@
 {
   "active": [
     {
-      "slug": "commit-context-documentation-v4-enterprise",
-      "path": "plans/commit-context-documentation-v4-enterprise.md",
-      "title": "Plano: Commit de Infraestrutura de Contexto Sênior",
-      "linkedAt": "2026-01-21T15:56:11.442Z",
+      "slug": "setup-context-documentation",
+      "path": "plans/setup-context-documentation.md",
+      "title": "Plano: Inicialização de Contexto Inteligente (TikTickets-zing)",
+      "linkedAt": "2026-01-23T16:05:36.993Z",
       "status": "active"
     }
   ],
   "completed": [],
-  "primary": "commit-context-documentation-v4-enterprise"
+  "primary": "setup-context-documentation"
 }

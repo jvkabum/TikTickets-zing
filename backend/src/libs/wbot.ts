@@ -34,6 +34,7 @@ interface Session extends Client {
   monitorInterval?: any; // Intervalo para monitoramento da sessão
   clientId?: number; // ID do cliente
   close?: () => void; // Função para fechar a sessão
+  info?: any; // Informações da sessão do WhatsApp
 }
 
 // Armazena as sessões ativas do WhatsApp
@@ -108,12 +109,15 @@ const verifyRealConnection = async (wbot: Session): Promise<boolean> => {
 
     // Tentativa 1: Obter foto de perfil
     try {
-      await wbot.getProfilePicUrl(wbot.info.wid._serialized);
-      connectionVerified = true;
-      logger.info(`✅ Conexão verificada via foto de perfil para sessão ${wbot.id} | Status: CONECTADO | Nome: ${wbot.info.pushname || 'Não disponível'}`);
-
-      // Registra que esta sessão tem conexão verificada
-      verifiedConnections.set(wbot.id, true);
+      const wid = wbot?.info?.wid?._serialized;
+      if (wid) {
+        await wbot.getProfilePicUrl(wid);
+        connectionVerified = true;
+        logger.info(`✅ Conexão verificada via foto de perfil para sessão ${wbot.id} | Status: CONECTADO | Nome: ${wbot?.info?.pushname || 'Não disponível'}`);
+        verifiedConnections.set(wbot.id, true);
+      } else {
+        logger.warn(`⚠️ wid não disponível para getProfilePicUrl na sessão ${wbot.id}`);
+      }
     } catch (profileError) {
       logger.warn(`❌ Falha na verificação de conexão via foto de perfil para sessão ${wbot.id}: ${profileError}. Tentando outro método...`);
     }
@@ -122,7 +126,7 @@ const verifyRealConnection = async (wbot: Session): Promise<boolean> => {
     if (!connectionVerified) {
       try {
         const phoneStatus = await wbot.getState();
-        if (phoneStatus === "CONNECTED") {
+        if (phoneStatus === "CONNECTED" && wbot?.info?.wid?.user) {
           connectionVerified = true;
           logger.info(`✅ Conexão verificada via estado do telefone para sessão ${wbot.id} | Status: ${phoneStatus} | Número: ${wbot.info.wid.user}`);
           verifiedConnections.set(wbot.id, true);
@@ -135,10 +139,10 @@ const verifyRealConnection = async (wbot: Session): Promise<boolean> => {
     // Tentativa 3: Verificar WhatsApp Business is_connected
     if (!connectionVerified) {
       try {
-        const isWhatsAppConnected = wbot.info && wbot.info.phone && wbot.info.phone.wa_version;
+        const isWhatsAppConnected = wbot?.info?.phone?.wa_version;
         if (isWhatsAppConnected) {
           connectionVerified = true;
-          logger.info(`✅ Conexão verificada via info.phone para sessão ${wbot.id} | Versão WA: ${wbot.info.phone.wa_version} | Plataforma: ${wbot.info.platform || 'Não disponível'}`);
+          logger.info(`✅ Conexão verificada via info.phone para sessão ${wbot.id} | Versão WA: ${wbot.info.phone.wa_version} | Plataforma: ${wbot?.info?.platform || 'Não disponível'}`);
           verifiedConnections.set(wbot.id, true);
         }
       } catch (waError) {
@@ -649,17 +653,19 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
 
         let profilePicUrl: string | null = null;
         try {
-          const profilePic = await wbot.getProfilePicUrl(wbot.info.wid._serialized);
-          profilePicUrl = profilePic;
+          const wid = wbot?.info?.wid?._serialized;
+          if (wid) {
+            profilePicUrl = await wbot.getProfilePicUrl(wid);
+          }
         } catch (error) {
-          logger.error(`Error getting profile picture: ${error}`);
+          logger.error(`Error getting profile picture for ${whatsapp.id}: ${error}`);
         }
 
         await whatsapp.update({
           status: "CONNECTED",
           qrcode: "",
           retries: 0,
-          number: wbot?.info?.wid?.user,
+          number: wbot?.info?.wid?.user || whatsapp.number,
           profilePicUrl,
           phone: {
             ...(info || {}),

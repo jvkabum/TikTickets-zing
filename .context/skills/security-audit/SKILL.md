@@ -1,25 +1,34 @@
-# Habilidade: Auditoria de Segurança (Security Audit)
+---
+type: skill
+name: Auditoria de Segurança (Security Audit)
+description: Checklist de revisão de segurança para código e infraestrutura do TikTickets-zing
+skillSlug: security-audit
+phases: [R, V]
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-Checklist de segurança para proteger o sistema TikTickets-zing contra vazamento de dados e vulnerabilidades.
+# 🛡️ Auditoria de Segurança (Security Audit)
 
-## Áreas de Vigilância
-1. **Isolamento de Dados (Multi-Tenancy)**:
-   - Toda query SQL/Sequelize deve conter cláusula `where: { tenantId }`.
-   - APIs não devem expor segredos ou IDs sensíveis de outros tenants.
-2. **Autenticação e Autorização**:
-   - Validar expiração de JWT.
-   - Verificar se usuários "normais" não acessam rotas de Admin.
-3. **Segurança do Puppeteer**:
-   - Manter sandbox ativo sempre que possível.
-   - Limpar dados sensíveis de pastas de sessão expiradas.
-4. **Vulnerabilidades de Dependência**:
-   - Evitar o uso de pacotes obsoletos.
-   - Monitorar alertas do `npm audit`.
+Esta skill guia o processo de revisão para garantir a integridade dos dados e prevenir vulnerabilidades em um ambiente multi-tenant.
 
-## Processo de Auditoria
-- Revisar middlewares de autenticação (`isAuth.ts`).
-- Verificar se existem hardcoded passwords ou tokens no código (usar sempre `.env`).
-- Testar CSRF e excesso de exposição de erros do banco para o cliente final.
+## 🔍 Pontos Críticos de Auditoria
 
-## Axioma de Segurança
-"Em um sistema Multi-Tenant, a segurança de um é a segurança de todos. O isolamento de dados é o nosso pilar mais forte."
+### 1. Isolamento de Tenant (CRÍTICO)
+- [ ] **Queries Filtradas**: Toda query ao banco deve obrigatoriamente incluir o filtro por `tenantId`.
+- [ ] **Tokens JWT**: Validar se o `tenantId` está presente e criptografado no payload do token.
+- [ ] **Cross-Tenant Access**: Tentar acessar um recurso de um tenant usando o token de outro durante a revisão.
+
+### 2. Comunicação WhatsApp
+- [ ] **Limpeza de Sessão**: Garantir que as credenciais do WhatsApp (.wwebjs_auth) sejam removidas completamente após o desvínculo da conta.
+- [ ] **Sanitização de Input**: Validar e limpar qualquer mensagem recebida antes de processar ou exibir no frontend.
+
+### 3. Infraestrutura & APIs
+- [ ] **CORS**: Verificar se as origens permitidas estão estritamente configuradas.
+- [ ] **Rate Limiting**: Confirmar se as rotas de envio de mensagens e login possuem limites para evitar ataques de força bruta ou spam.
+- [ ] **Secrets**: Garantir que nenhuma chave de API ou credencial esteja "hardcoded" (usar sempre `.env`).
+
+## 🛠️ Ferramentas Recomendadas
+- `npm audit`: Executar periodicamente para detectar dependências vulneráveis.
+- `Snyk` ou `CodeQL`: Para análise estática de segurança.

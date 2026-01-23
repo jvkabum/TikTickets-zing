@@ -1,25 +1,45 @@
-# Habilidade: Geração de Testes (Test Generation)
+---
+type: skill
+name: Geração de Testes (Test Generation)
+description: Diretrizes para criação de suítes de testes robustas no TikTickets-zing
+skillSlug: test-generation
+phases: [E, V]
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-Diretrizes para criação de testes automatizados no backend e frontend.
+# 🧪 Geração de Testes (Test Generation)
 
-## Stack de Testes
-- **Backend**: Jest + Supertest (para rotas de API).
-- **Frontend**: Vitest + Vue Test Utils.
+Esta skill define o padrão de qualidade para testes automatizados no projeto, garantindo que novas funcionalidades não quebrem o core do sistema (WhatsApp e Multi-tenancy).
 
-## O que Testar
-1. **Lógica de Negócio**: Services de criação de ticket, transferência e encerramento.
-2. **Multi-Tenancy**: Garantir que um tenant não consiga ver dados de outro através de testes de integração.
-3. **Componentes (Vue 3)**: Validar renderização e emissão de eventos em componentes críticos de chat.
+## 🎯 Escopo dos Testes
 
-## Convenções
-- Arquivos de teste devem terminar em `.spec.ts` ou `.test.ts`.
-- Mockar o `whatsapp-web.js` usando a biblioteca de mock do Jest para evitar disparos reais durante os testes.
+### 1. Backend (Jest/Supertest)
+- **Testes de Integração**: Focar nos controllers e rotas protegidas (Auth Middleware).
+- **Service Layer**: Validar lógica de negócio complexa isolada de I/O sempre que possível.
+- **WhatsApp**: Simular eventos do `wwebjs` usando mocks para garantir que o sistema reage corretamente a mensagens, status e erros.
 
-## Exemplo de Mock (Backend)
-```typescript
-jest.mock('./libs/wbot', () => ({
-  getWbot: jest.fn().mockReturnValue({
-    sendMessage: jest.fn().mockResolvedValue({ id: '123' })
-  })
-}));
+### 2. Frontend (Vitest/Cypress)
+- **Componentes Quasar**: Testar interações de usuário (clicks, inputs) e renderização condicional por permissão.
+- **Pinia Stores**: Validar o estado global e persistência de dados.
+
+## 📝 Checklists de Implementação
+
+### Requisitos Obrigatórios
+- [ ] **Mocks Isolados**: Nunca usar conexões reais de WhatsApp ou bancos de produção durante os testes.
+- [ ] **Limpeza de Estado**: Usar `beforeEach` e `afterEach` para resetar mocks e banco de dados (SQLite in-memory ou Postgres Cleanups).
+- [ ] **Cobertura de Erros**: Testar não apenas o "caminho feliz", mas também timeouts, falhas de conexão e acessos não autorizados.
+
+### Padrão de Nomenclatura
+- Arquivos: `nomeArquivo.test.ts` ou `nomeArquivo.spec.ts`.
+- Descrições: "Should [COMPORTAMENTO ESPERADO] when [CONDIÇÃO]".
+
+## 🚀 Como Executar
+```bash
+# Backend
+npm run test:backend
+
+# Frontend
+npm run test:frontend
 ```

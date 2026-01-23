@@ -1,3 +1,13 @@
+---
+type: doc
+name: AI Skills README
+description: Guia de competências e procedimentos técnicos (Skills) para agentes de IA no TikTickets-zing
+category: navigation
+status: filled
+generated: 2026-01-23
+scaffoldVersion: "2.0.0"
+---
+
 # Skills
 
 On-demand expertise for AI agents. Skills are task-specific procedures that get activated when relevant.
@@ -16,16 +26,16 @@ On-demand expertise for AI agents. Skills are task-specific procedures that get 
 
 | Skill | Description | Phases |
 |-------|-------------|--------|
-| [Commit Message](./commit-message/SKILL.md) | Generate commit messages following conventional commits with scope detection | E, C |
-| [Pr Review](./pr-review/SKILL.md) | Review pull requests against team standards and best practices | R, V |
-| [Code Review](./code-review/SKILL.md) | Review code quality, patterns, and best practices | R, V |
-| [Test Generation](./test-generation/SKILL.md) | Generate comprehensive test cases for code | E, V |
-| [Documentation](./documentation/SKILL.md) | Generate and update technical documentation | P, C |
-| [Refactoring](./refactoring/SKILL.md) | Safe code refactoring with step-by-step approach | E |
-| [Bug Investigation](./bug-investigation/SKILL.md) | Systematic bug investigation and root cause analysis | E, V |
-| [Feature Breakdown](./feature-breakdown/SKILL.md) | Break down features into implementable tasks | P |
-| [Api Design](./api-design/SKILL.md) | Design RESTful APIs following best practices | P, R |
-| [Security Audit](./security-audit/SKILL.md) | Security review checklist for code and infrastructure | R, V |
+| [Mensagens de Commit (Commit Message)](./commit-message/SKILL.md) | Padrão sênior para mensagens de commit detalhadas e rastreáveis | C |
+| [Revisão de PR (PR Review)](./pr-review/SKILL.md) | Padrão de revisão de Pull Requests contra padrões do TikTickets-zing | R, V |
+| [Revisão de Código (Code Review)](./code-review/SKILL.md) | Padrões de revisão técnica e qualidade de código para o TikTickets-zing | R, V |
+| [Geração de Testes (Test Generation)](./test-generation/SKILL.md) | Diretrizes para criação de suítes de testes robustas no TikTickets-zing | E, V |
+| [Documentação Técnica (Documentation)](./documentation/SKILL.md) | Diretrizes para geração e atualização de documentação no TikTickets-zing | P, C |
+| [Refatoração (Refactoring)](./refactoring/SKILL.md) | Abordagem segura para refatoração de código legado no TikTickets-zing | E |
+| [Investigação de Erros (Bug Investigation)](./bug-investigation/SKILL.md) | Metodologia sistemática para identificação e resolução de bugs no TikTickets-zing | E, V |
+| [Decomposição de Funcionalidades (Feature Breakdown)](./feature-breakdown/SKILL.md) | Divisão de funcionalidades complexas em tarefas implementáveis no TikTickets-zing | P |
+| [Design de API (API Design)](./api-design/SKILL.md) | Criação de endpoints RESTful eficientes e seguros para o TikTickets-zing | P, R |
+| [Auditoria de Segurança (Security Audit)](./security-audit/SKILL.md) | Checklist de revisão de segurança para código e infraestrutura do TikTickets-zing | R, V |
 
 ## Creating Custom Skills
 

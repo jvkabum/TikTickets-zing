@@ -1,23 +1,42 @@
-# Habilidade: Documentação Técnica (Documentation)
+---
+type: skill
+name: Documentação Técnica (Documentation)
+description: Diretrizes para geração e atualização de documentação no TikTickets-zing
+skillSlug: documentation
+phases: [P, C]
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-Diretrizes para manter o ecossistema de conhecimento do TikTickets-zing (diretório `.context`) sempre preciso e útil.
+# 📖 Documentação Técnica (Documentation)
 
-## Princípios de Documentação
-- **Atualização Contínua**: Sempre que uma mudança arquitetural ou de ferramenta ocorrer, os documentos em `.context/docs` devem ser atualizados.
-- **PT-BR Nativo**: Toda documentação deve ser escrita em Português do Brasil, mantendo termos técnicos universais (ex: API, Deploy, Backend).
-- **Sem Placeholders**: Documentos não devem conter seções vazias ou exemplos genéricos.
-- **Estrutura Hierárquica**: Use cabeçalhos Markdown adequadamente para facilitar a leitura.
+Esta skill garante que o conhecimento do projeto seja preservado e acessível, mantendo a documentação em sincronia com o código.
 
-## O Que Documentar
-1. **Mudanças de API**: Novos endpoints, mudanças em parâmetros ou respostas.
-2. **Novos Componentes Core**: Adição de novos playbooks de agentes ou habilidades.
-3. **Padrões de Código**: Descobertas de melhores práticas no Vue 3 ou Node/Sequelize.
-4. **Resolução de Bugs Críticos**: Registrar soluções para erros sistêmicos (como o ciclo de vida do WhatsApp).
+## 🏗️ Estrutura de Documentação
 
-## Como Atualizar o Contexto
-- Use a ferramenta `write_to_file` para criar ou sobrescrever documentos.
-- Ao final de uma tarefa grande, faça uma "limpeza" nos documentos afetados.
-- Vincule documentos novos ao `README.md` das respectivas pastas.
+### 1. Documentação de Fluxo (Data Flow)
+Sempre que uma nova integração for adicionada, atualizar o `data-flow.md` detalhando:
+- Origem do dado.
+- Transformações.
+- Destino final (Banco ou UI).
 
-## Axioma
-"A documentação é a memória da inteligência do projeto. Se não está escrito no .context, o agente não sabe que existe."
+### 2. Documentação de API (README/Swagger)
+Documentar novos endpoints no README do backend ou em arquivos `.context/docs/api-reference.md`:
+- Método (GET/POST/etc).
+- Body esperado e parâmetros de query.
+- Possíveis retornos de erro (4xx, 5xx).
+
+### 3. Comentários no Código (JSDoc)
+- Usar JSDoc para documentar funções complexas, detalhando parâmetros e tipos de retorno.
+- Evitar comentários que apenas repetem o que o código faz; focar no **PORQUÊ** de decisões complexas.
+
+## 📝 Checklists de Atualização
+- [ ] **Sync**: A documentação no `.context/docs/` reflete o estado atual da `main`?
+- [ ] **Acessibilidade**: Os diagramas (se houver) e textos são claros para novos desenvolvedores?
+- [ ] **Playbooks**: As instruções dos agentes especialistas foram atualizadas com novas ferramentas ou padrões introduzidos?
+
+## 🚀 Padrão de Escrita
+- Linguagem: Português do Brasil.
+- Tom: Técnico, objetivo e colaborativo.
+- Formato: Markdown GFM.

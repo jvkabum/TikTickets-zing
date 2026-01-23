@@ -1,41 +1,41 @@
 project:
-  name: "Commit de Infraestrutura de Contexto"
-  scale: SMALL
-  started: "2026-01-21T15:54:15.876Z"
-  current_phase: V
+  name: "setup-context-documentation"
+  scale: MEDIUM
+  started: "2026-01-23T16:05:25.467Z"
+  current_phase: E
 
 phases:
   P:
     status: filled
-    started_at: "2026-01-21T15:54:15.876Z"
-    completed_at: "2026-01-21T15:56:42.492Z"
+    started_at: "2026-01-23T16:05:25.467Z"
+    completed_at: "2026-01-23T16:05:59.068Z"
   R:
-    status: skipped
-    reason: "Not required for scale SMALL"
-  E:
     status: filled
-    started_at: "2026-01-21T15:56:42.495Z"
-    completed_at: "2026-01-21T16:08:14.472Z"
+    started_at: "2026-01-23T16:05:59.070Z"
+    completed_at: "2026-01-23T16:06:39.813Z"
+  E:
+    status: in_progress
+    started_at: "2026-01-23T16:06:39.815Z"
   V:
-    status: completed
-    started_at: "2026-01-21T16:08:14.475Z"
-    completed_at: "2026-01-21T16:09:08.608Z"
-    outputs:
-      - path: "Completado o commit de 48 arquivos de contexto."
-        status: filled
+    status: pending
   C:
     status: skipped
-    reason: "Not required for scale SMALL"
+    reason: "Not required for scale MEDIUM"
 
 execution:
   history:
-    - timestamp: "2026-01-21T16:09:08.608Z"
-      phase: V
-      action: completed
-  last_activity: "2026-01-21T16:09:08.608Z"
-  resume_context: "Fase V (Validação) concluída"
+    - timestamp: "2026-01-23T16:07:49.687Z"
+      phase: E
+      action: plan_phase_updated
+      plan: "setup-context-documentation"
+      description: "Plan phase phase-2 updated to in_progress"
+  last_activity: "2026-01-23T16:07:49.687Z"
+  resume_context: "Fase do plano atualizada"
 
 approval:
   plan_created: true
-  plan_approved: false
+  plan_approved: true
+  approved_by: "architect"
+  approved_at: "2026-01-23T16:06:24.973Z"
+  approval_notes: "Documentação aprovada. Reflete fielmente o estado do projeto e segue os padrões de metadados v2.0.0."
 

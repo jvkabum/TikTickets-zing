@@ -1,20 +1,48 @@
-# Visão Geral do Projeto: TikTickets-zing
+---
+type: doc
+name: project-overview
+description: Visão geral da plataforma TikTickets-zing v4 Enterprise (Multi-atendimento)
+category: overview
+generated: 2026-01-23
+status: filled
+scaffoldVersion: "2.0.0"
+---
 
-O **TikTickets-zing** é uma plataforma robusta de atendimento e gestão de canais de comunicação (Omnichannel), focada na integração com o WhatsApp através do `whatsapp-web.js`.
+# TikTickets-zing v4 Enterprise
 
-## Objetivos Principais
-- Prover uma interface unificada para múltiplos atendentes.
-- Suportar diversos canais de comunicação (WhatsApp, Telegram, Messenger).
-- Gestão de tickets, contatos e automações (Chatbots).
-- Suporte a Multi-Tenancy (múltiplas empresas em uma única instância).
+Bem-vindo ao ecossistema de documentação do **TikTickets-zing**, a plataforma definitiva para automação de atendimento e gestão multi-tenant de canais de mensageria.
 
-## Pilares Tecnológicos
-- **Backend**: Node.js >= 20, Express, Sequelize (PostgreSQL), Redis (Bull/Queue).
-- **Frontends**: 
-  - `frontend-vue-3`: **Interface principal de foco**. Desenvolvida com **Vue 3.5+**, Quasar 2.17, Pinia e Tanstack Vue Query.
-  - `frontend`: Versão legada em **Vue 2.7**, mantida apenas para compatibilidade retroativa.
-- **Canais**: Integração com `whatsapp-web.js`, Telegram e FB Messenger.
+## O que é o Projeto?
+O TikTickets-zing é um sistema de atendimento centralizado que permite a empresas gerenciarem múltiplas contas de **WhatsApp, Telegram, Messenger e Instagram** em uma única interface moderna e rápida.
 
-## Organização do Código
-- O projeto é um monorepo implícito com pastas separadas para `backend`, `frontend` e `frontend-vue-3`.
-- O foco de desenvolvimento de novas features deve ser sempre no `frontend-vue-3`.
+### Diferenciais Competitivos
+- **Multi-Tenancy Nativo**: Uma única instalação pode atender centenas de empresas diferentes com isolamento total de dados.
+- **Motor de Conversão Vue 3**: Interface rica, animada e responsiva construída em Quasar.
+- **Estabilidade Wbot**: Implementação customizada do `whatsapp-web.js` com watchdog de conexão e mecanismos de auto-recuperação.
+- **Processamento Assíncrono**: Uso intensivo de BullMQ para evitar gargalos em disparos de massa e integrações externas.
+
+## Visão Geral da Stack
+
+| Tecnologia | Função |
+| :--- | :--- |
+| **Node.js + TS** | Motor do Backend e lógica de canais. |
+| **Vue 3.5 + Quasar** | Frontend SPA de alto desempenho. |
+| **PostgreSQL** | Persistência de dados altamente estruturada. |
+| **Redis** | Gestão de filas (BullMQ) e cache de sessões Socket. |
+| **Puppeteer** | Emulação de clientes WhatsApp Web (Wbot). |
+
+## Níveis de Acesso
+1.  **Admin do Sistema (SaaS Admin)**: Gerencia os Tenants, cria novas empresas e monitora a saúde das conexões.
+2.  **Admin da Empresa (Manager)**: Configura filas, usuários, respostas rápidas e canais da sua organização.
+3.  **Agente (Atendente)**: Focado na operação de chat, gestão de tickets e acompanhamento de clientes.
+
+## Estrutura de Documentação
+Para navegar no projeto, utilize os guias abaixo:
+- 🏗️ **[Arquitetura](./architecture.md)** — Entenda o coração do backend e das filas.
+- 📡 **[API Reference](./api.md)** — Documentação de endpoints e integrações externas.
+- 🔄 **[Fluxo de Dados](./data-flow.md)** — O ciclo de vida de uma mensagem.
+- 🛡️ **[Segurança](./security.md)** — Como protegemos os dados dos Tenants.
+- 🛠️ **[Tooling](./tooling.md)** — Dicas de produtividade e setup de ambiente.
+
+## Próximos Passos
+Se você é um desenvolvedor novo, recomendamos começar pelo **[Guia de Início Rápido (Getting Started)](./getting-started.md)**.

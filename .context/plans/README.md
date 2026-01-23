@@ -1,3 +1,13 @@
+---
+type: doc
+name: Collaboration Plans README
+description: Índice de planos de colaboração e guias para criação de planos no TikTickets-zing
+category: navigation
+status: filled
+generated: 2026-01-23
+scaffoldVersion: "2.0.0"
+---
+
 # Collaboration Plans
 
 This directory contains plans for coordinating work across documentation and playbooks.

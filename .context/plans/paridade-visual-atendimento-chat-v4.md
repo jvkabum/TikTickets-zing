@@ -1,3 +1,13 @@
+---
+type: plan
+name: Paridade Visual do Atendimento Chat
+description: Garantir que a tela de atendimento do Vue 3 seja idêntica ou superior à versão legada
+planSlug: paridade-visual-atendimento-chat-v4
+phase: P
+status: pending
+generated: 2026-01-23
+---
+
 # Plano: Paridade Visual do Atendimento Chat
 
 Este plano visa analisar as discrepâncias visuais e funcionais entre o frontend legado (Vue 2) e o novo (Vue 3/Quasar) na tela de Atendimento, garantindo que o novo sistema mantenha todas as funcionalidades originais com uma estética superior.
