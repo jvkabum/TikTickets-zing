@@ -1,0 +1,13 @@
+{
+  "active": [
+    {
+      "slug": "setup-context-documentation",
+      "path": "plans/setup-context-documentation.md",
+      "title": "Plano: Inicialização de Contexto Inteligente (TikTickets-zing)",
+      "linkedAt": "2026-01-21T03:37:32.409Z",
+      "status": "active"
+    }
+  ],
+  "completed": [],
+  "primary": "setup-context-documentation"
+}
