@@ -1,7 +1,7 @@
 import Redis from "ioredis";
-import { Request, Response } from "express"; 
-import { getIO } from "../libs/socket"; 
-import AppError from "../errors/AppError"; 
+import { Request, Response } from "express";
+import { getIO } from "../libs/socket";
+import AppError from "../errors/AppError";
 
 // Cria uma nova instância do cliente Redis
 const redisClient = new Redis({
@@ -32,7 +32,7 @@ export const getValue = (key: string) => {
 };
 
 // Função para definir um valor no Redis
-export const setValue = (key: string, value: any) => {
+export const setValue = (key: string, value: any, mode?: string, duration?: number) => {
   return new Promise((resolve, reject) => {
     let stringfy: any; // Variável para armazenar o valor como string
     if (typeof value === "object") {
@@ -40,10 +40,18 @@ export const setValue = (key: string, value: any) => {
     } else {
       stringfy = String(value); // Converte o valor para string
     }
-    redisClient.set(key, stringfy, err => { // Define o valor associado à chave
-      if (err) return reject(err); // Lança erro se ocorrer um problema
-      return resolve(stringfy); // Retorna o valor como string
-    });
+
+    if (mode && duration) {
+      redisClient.set(key, stringfy, mode as any, duration, err => {
+        if (err) return reject(err);
+        return resolve(stringfy);
+      });
+    } else {
+      redisClient.set(key, stringfy, err => { // Define o valor associado à chave
+        if (err) return reject(err); // Lança erro se ocorrer um problema
+        return resolve(stringfy); // Retorna o valor como string
+      });
+    }
   });
 };
 

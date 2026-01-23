@@ -20,6 +20,7 @@ import SyncContactsWhatsappInstanceService from "../services/WbotServices/SyncCo
 import Whatsapp from "../models/Whatsapp";
 import { ImportFileContactsService } from "../services/WbotServices/ImportFileContactsService";
 import Contact from "../models/Contact";
+import { logger } from "../utils/logger";
 
 // Interface para parâmetros de busca na listagem de contatos
 type IndexQuery = {
@@ -69,7 +70,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req.user;
   const newContact: ContactData = req.body;
-  newContact.number = newContact.number.replace("-", "").replace(" ", "");
+  // Remove todos os caracteres não numéricos (incluindo +, -, espaços)
+  newContact.number = newContact.number.replace(/\D/g, "");
 
   const schema = Yup.object().shape({
     name: Yup.string().required(),
@@ -84,9 +86,19 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     throw new AppError(err.message);
   }
 
-  const waNumber = await CheckIsValidContact(newContact.number, tenantId);
+  let waNumber = { user: newContact.number };
+  try {
+    waNumber = await CheckIsValidContact(newContact.number, tenantId);
+  } catch (err) {
+    logger.warn(`ContactController.store | WhatsApp validation failed for ${newContact.number}: ${err.message}`);
+    // Se for erro de número inválido, repassamos o erro
+    if (err.message === "ERR_WAPP_INVALID_CONTACT") {
+      throw err;
+    }
+    // Caso contrário (erro de sessão/conexão), permitimos salvar com o número original
+  }
 
-  const profilePicUrl = await GetProfilePicUrl(newContact.number, tenantId);
+  const profilePicUrl = await GetProfilePicUrl(waNumber.user, tenantId);
 
   const contact = await CreateContactService({
     ...newContact,
@@ -128,7 +140,18 @@ export const update = async (
     throw new AppError(err.message);
   }
 
-  const waNumber = await CheckIsValidContact(contactData.number, tenantId);
+  // Remove todos os caracteres não numéricos
+  contactData.number = contactData.number.replace(/\D/g, "");
+
+  let waNumber = { user: contactData.number };
+  try {
+    waNumber = await CheckIsValidContact(contactData.number, tenantId);
+  } catch (err) {
+    logger.warn(`ContactController.update | WhatsApp validation failed for ${contactData.number}: ${err.message}`);
+    if (err.message === "ERR_WAPP_INVALID_CONTACT") {
+      throw err;
+    }
+  }
 
   contactData.number = waNumber.user;
 

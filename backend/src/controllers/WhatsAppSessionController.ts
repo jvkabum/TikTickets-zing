@@ -5,7 +5,7 @@ import { getWbot, removeWbot } from "../libs/wbot";
 import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import UpdateWhatsAppService from "../services/WhatsappService/UpdateWhatsAppService";
-import { getValue, setValue } from "../libs/redisClient";
+import { setValue } from "../libs/redisClient";
 import { logger } from "../utils/logger";
 import { getTbot, removeTbot } from "../libs/tbot";
 import { getInstaBot, removeInstaBot } from "../libs/InstaBot";
@@ -20,7 +20,7 @@ const qrCodeTimestamps = new Map<number, number>();
 // ====================
 // Função para armazenar uma nova sessão do WhatsApp
 // ====================
-const store = async (req: Request, res: Response): Promise<Response> => {
+export const store = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params; // Extrai o ID do WhatsApp dos parâmetros da requisição
   const { tenantId } = req.user; // Extrai o ID do inquilino do usuário autenticado
   const whatsapp = await ShowWhatsAppService({
@@ -37,19 +37,10 @@ const store = async (req: Request, res: Response): Promise<Response> => {
 // ====================
 // Função para atualizar uma sessão do WhatsApp
 // ====================
-const update = async (req: Request, res: Response): Promise<Response> => {
+export const update = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params; // Extrai o ID do WhatsApp dos parâmetros da requisição
   const { isQrcode } = req.body; // Extrai a informação se deve apagar a pasta da sessão
   const { tenantId } = req.user; // Extrai o ID do inquilino do usuário autenticado
-
-  // Trava de concorrência simples para evitar cliques múltiplos (3 segundos)
-  const lockKey = `lock:qrcode:${whatsappId}`;
-  const lastRequest = await getValue(lockKey);
-  if (lastRequest) {
-    logger.warn(`Ignorando solicitação duplicada de QR Code para WhatsApp ${whatsappId} (clique duplo detectado)`);
-    return res.status(429).json({ message: "Request in progress. Please wait." });
-  }
-  await setValue(lockKey, "1", "EX", 3);
 
   if (isQrcode) {
     logger.info(`Solicitada geração de novo QR code para WhatsApp ID: ${whatsappId}`);
@@ -80,7 +71,7 @@ const update = async (req: Request, res: Response): Promise<Response> => {
 // ====================
 // Função para remover uma sessão do WhatsApp
 // ====================
-const remove = async (req: Request, res: Response): Promise<Response> => {
+export const remove = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params; // Extrai o ID do WhatsApp dos parâmetros da requisição
   const { tenantId } = req.user; // Extrai o ID do inquilino do usuário autenticado
   const channel = await ShowWhatsAppService({ id: whatsappId, tenantId }); // Obtém informações do canal do WhatsApp
@@ -141,7 +132,7 @@ const remove = async (req: Request, res: Response): Promise<Response> => {
 };
 
 // Procura pela função destroy e encontra onde está sendo chamada a função apagarPastaSessao
-const destroy = async (req: Request, res: Response): Promise<Response> => {
+export const destroy = async (req: Request, res: Response): Promise<Response> => {
   const { whatsappId } = req.params;
   const { tenantId } = req.user;
 
@@ -182,4 +173,4 @@ const destroy = async (req: Request, res: Response): Promise<Response> => {
   }
 };
 
-export default { store, remove, update, destroy }; // Exporta as funções para uso em outras partes da aplicação
+export default { store, remove, update, destroy };

@@ -172,15 +172,23 @@ export const cleanupWbotSession = async (
 
 const removeSessionFromMemory = async (whatsappId: number): Promise<void> => {
   try {
-    const wbot = getWbot(whatsappId);
-    if (wbot) {
-      if (wbot.monitorInterval) clearInterval(wbot.monitorInterval);
-      if (wbot.checkMessages) clearInterval(wbot.checkMessages);
-      try { await wbot.destroy(); } catch { }
+    // Tenta obter a sessão apenas para limpeza, mas não falha se não existir
+    try {
+      const wbot = getWbot(whatsappId);
+      if (wbot) {
+        if (wbot.monitorInterval) clearInterval(wbot.monitorInterval);
+        if (wbot.checkMessages) clearInterval(wbot.checkMessages);
+        try { await wbot.destroy(); } catch { }
+      }
+    } catch {
+      // Ignora erro se sessão não existir (comum durante limpeza)
     }
+
     await removeWbot(whatsappId);
   } catch (err) {
-    logger.error(`Erro removeSessionFromMemory ${whatsappId}: ${err}`);
+    // Log melhorado para evitar [object Object]
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error(`Erro removeSessionFromMemory ${whatsappId}: ${errorMessage}`);
   }
 };
 

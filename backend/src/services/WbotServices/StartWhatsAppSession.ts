@@ -24,6 +24,7 @@ export const StartWhatsAppSession = async (
   try {
     if (whatsapp.type === "whatsapp") {
       const wbot = await initWbot(whatsapp);
+      logger.info(`[StartWhatsAppSession] Sessão iniciada para o número: ${wbot.info?.wid?.user || 'Desconhecido'} | Nome: ${wbot.info?.pushname || 'N/A'}`);
       wbotMessageListener(wbot);
       wbotMonitor(wbot, whatsapp);
     }

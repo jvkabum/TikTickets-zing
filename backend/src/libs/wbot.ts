@@ -65,20 +65,12 @@ export const removeWbot = async (whatsappId: number): Promise<void> => {
         clearInterval(session.monitorInterval);
       }
 
-      // Tenta destruir a sessão de forma segura e silenciosa se houver erro de protocolo
+      // Tenta destruir a sessão de forma segura
       try {
         // @ts-ignore - Usando destroy que está disponível mas não tipado
-        if (session && typeof session.destroy === "function") {
-          await session.destroy().catch(e => {
-            if (e.message.indexOf("Session closed") !== -1 || e.message.indexOf("Target closed") !== -1) {
-              logger.debug(`[STABILITY] Sessão ${whatsappId} já estava fechada. Ignorando erro de protocolo.`);
-            } else {
-              logger.warn(`[STABILITY] Erro menor ao destruir sessão ${whatsappId}: ${e.message}`);
-            }
-          });
-        }
+        if (session.destroy) await session.destroy();
       } catch (err) {
-        logger.debug(`[STABILITY] Exceção ignorada ao tentar destruir wbot ${whatsappId}: ${err}`);
+        logger.error(`Erro ao destruir sessão: ${err}`);
       }
 
       // Remove da lista de sessões
@@ -116,46 +108,41 @@ const verifyRealConnection = async (wbot: Session): Promise<boolean> => {
 
     // Tentativa 1: Obter foto de perfil
     try {
-      if (wbot.info?.wid?._serialized) {
-        await wbot.getProfilePicUrl(wbot.info.wid._serialized);
-        connectionVerified = true;
-        logger.info(`✅ Conexão verificada via foto de perfil para sessão ${wbot.id} | Status: CONECTADO | Nome: ${wbot.info.pushname || 'Não disponível'}`);
-        verifiedConnections.set(wbot.id, true);
-      } else {
-        logger.debug(`[STABILITY] Info.wid ainda não disponível para sessão ${wbot.id} na tentativa 1.`);
-      }
+      await wbot.getProfilePicUrl(wbot.info.wid._serialized);
+      connectionVerified = true;
+      logger.info(`✅ Conexão verificada via foto de perfil para sessão ${wbot.id} | Status: CONECTADO | Nome: ${wbot.info.pushname || 'Não disponível'}`);
+
+      // Registra que esta sessão tem conexão verificada
+      verifiedConnections.set(wbot.id, true);
     } catch (profileError) {
-      if (!profileError.message?.includes("wid")) {
-        logger.debug(`[STABILITY] Falha na foto de perfil (carregamento): ${profileError.message}`);
-      }
+      logger.warn(`❌ Falha na verificação de conexão via foto de perfil para sessão ${wbot.id}: ${profileError}. Tentando outro método...`);
     }
 
     // Tentativa 2: Verificar status do telefone
     if (!connectionVerified) {
       try {
         const phoneStatus = await wbot.getState();
-        if (phoneStatus === "CONNECTED" && wbot.info?.wid?.user) {
+        if (phoneStatus === "CONNECTED") {
           connectionVerified = true;
           logger.info(`✅ Conexão verificada via estado do telefone para sessão ${wbot.id} | Status: ${phoneStatus} | Número: ${wbot.info.wid.user}`);
           verifiedConnections.set(wbot.id, true);
         }
       } catch (statusError) {
-        logger.debug(`[STABILITY] Falha no status do telefone (carregamento): ${statusError.message}`);
+        logger.warn(`❌ Falha na verificação de conexão via estado do telefone para sessão ${wbot.id}: ${statusError}. Tentando outro método...`);
       }
     }
 
-    // Tentativa 3: Verificar WhatsApp Business info.phone
+    // Tentativa 3: Verificar WhatsApp Business is_connected
     if (!connectionVerified) {
       try {
-        const infoPhone = (wbot.info as any)?.phone;
-        const isWhatsAppConnected = wbot.info && infoPhone && infoPhone.wa_version;
+        const isWhatsAppConnected = wbot.info && wbot.info.phone && wbot.info.phone.wa_version;
         if (isWhatsAppConnected) {
           connectionVerified = true;
-          logger.info(`✅ Conexão verificada via info.phone para sessão ${wbot.id} | Versão WA: ${infoPhone.wa_version} | Plataforma: ${wbot.info.platform || 'Não disponível'}`);
+          logger.info(`✅ Conexão verificada via info.phone para sessão ${wbot.id} | Versão WA: ${wbot.info.phone.wa_version} | Plataforma: ${wbot.info.platform || 'Não disponível'}`);
           verifiedConnections.set(wbot.id, true);
         }
       } catch (waError) {
-        logger.debug(`[STABILITY] Falha na verificação via info.phone: ${waError}`);
+        logger.warn(`❌ Falha na verificação de conexão via info.phone para sessão ${wbot.id}: ${waError}`);
       }
     }
 
@@ -609,57 +596,164 @@ const args: string[] = [
   '--disable-gpu',
   '--no-first-run',
   '--no-zygote',
+  '--single-process',
   '--disable-web-security',
-  '--disable-features=site-per-process',
-  '--no-default-browser-check'
+  '--disable-features=site-per-process'
 ];
 
 // Função para inicializar o bot do WhatsApp
 export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
   return new Promise((resolve, reject) => {
-    const startTime = performance.now();
-    logger.info(`>>> [PERF] Iniciando lançamento do Chromium para sessão ${whatsapp.id}...`);
     try {
-      const io = getIO(); // Obtém a instância do socket
-      const sessionName = whatsapp.name; // Extrai o nome da conexão
-      const { tenantId } = whatsapp; // Extrai o ID do inquilino da conexão
-      let sessionCfg; // Variável para armazenar a configuração da sessão
+      const io = getIO();
+      const sessionName = whatsapp.name;
+      const { tenantId } = whatsapp;
+      let sessionCfg;
       if (whatsapp?.session) {
-        sessionCfg = JSON.parse(whatsapp.session); // Carrega a configuração da sessão se existir
+        sessionCfg = JSON.parse(whatsapp.session);
       }
 
-      const wbot = new Client({ // Cria uma nova instância do cliente do WhatsApp
+      const wbot = new Client({
         authStrategy: new LocalAuth({
           clientId: `wbot-${whatsapp.id}`,
-          dataPath: process.env.WWEBJS_AUTH_PATH || path.resolve(__dirname, "..", "..", ".wwebjs_auth")
+          dataPath: path.resolve(__dirname, "..", "..", ".wwebjs_auth")
         }),
         takeoverOnConflict: true,
         puppeteer: {
-          // headless: false, // (Comentado, não utilizado)
-          executablePath: process.env.CHROME_BIN || undefined, // Caminho do executável do Chrome
-          args: args, // Argumentos para o Chrome
+          executablePath: process.env.CHROME_BIN || undefined,
+          args: args,
           defaultViewport: null,
-          timeout: 120000, // 2 minutos para operações do puppeteer
-          handleSIGINT: true // Lidar com SIGINT para encerrar adequadamente
+          timeout: 120000,
+          handleSIGINT: true
         },
-        webVersion: process.env.WEB_VERSION || "2.2412.54v2", // Versão da web do WhatsApp
-        webVersionCache: {
-          type: "local",
-          path: path.resolve(__dirname, "..", "..", ".wwebjs_cache")
-        }, // Cache da versão da web em local fixo
-        qrMaxRetries: 10
+        webVersion: process.env.WEB_VERSION || "2.2412.54v2",
+        webVersionCache: { type: "local" },
+        qrMaxRetries: 20
       }) as Session;
 
-      wbot.id = whatsapp.id; // Atribui o ID da conexão à sessão
-      wbot.lastConnectionVerification = 0; // Inicializa o timestamp da última verificação
-      wbot.reconnectionAttempts = 0; // Inicializa o contador de tentativas de reconexão
+      // Variáveis de controle do Watchdog
+      let readyFired = false;
+      let watchdogTimer: NodeJS.Timeout | null = null;
 
-      // wbot.initialize(); // Removido daqui para baixo para evitar race condition
+      // Função unificada para tratar a inicialização (seja via evento 'ready' ou 'watchdog')
+      const handleReady = async (source: string) => {
+        if (readyFired) return;
+        readyFired = true;
+        if (watchdogTimer) clearTimeout(watchdogTimer);
+
+        logger.info(`[${source}] Processando inicialização da sessão ${whatsapp.id}...`);
+
+        const info: any = wbot?.info;
+        const wbotVersion = await wbot.getWWebVersion();
+        const wbotBrowser = await wbot.pupBrowser?.version();
+
+        let profilePicUrl: string | null = null;
+        try {
+          const profilePic = await wbot.getProfilePicUrl(wbot.info.wid._serialized);
+          profilePicUrl = profilePic;
+        } catch (error) {
+          logger.error(`Error getting profile picture: ${error}`);
+        }
+
+        await whatsapp.update({
+          status: "CONNECTED",
+          qrcode: "",
+          retries: 0,
+          number: wbot?.info?.wid?.user,
+          profilePicUrl,
+          phone: {
+            ...(info || {}),
+            wbotVersion,
+            wbotBrowser
+          }
+        });
+
+        io.emit(`${tenantId}:whatsappSession`, {
+          action: "update",
+          session: whatsapp
+        });
+
+        io.emit(`${tenantId}:whatsappSession`, {
+          action: "readySession",
+          session: whatsapp
+        });
+
+        const sessionIndex = sessions.findIndex(s => s.id === whatsapp.id);
+        if (sessionIndex === -1) {
+          wbot.id = whatsapp.id;
+          sessions.push(wbot);
+        }
+
+        // Verificação adicional para garantir estabilidade
+        if (source === "WATCHDOG") {
+          // Se foi iniciado pelo watchdog, a conexão já foi verificada, mas registramos log
+          logger.info(`[WATCHDOG] Sessão ${whatsapp.id} inicializada via mecanismo de recuperação.`);
+        } else {
+          // Se foi via evento normal, fazemos uma verificação extra
+          await verifyRealConnection(wbot);
+        }
+
+        wbot.sendPresenceAvailable();
+        SyncUnreadMessagesWbot(wbot, tenantId);
+
+        const checkInterval = +(process.env.CHECK_INTERVAL || 30000);
+        wbot.checkMessages = setInterval(
+          checkMessages,
+          checkInterval,
+          wbot,
+          tenantId
+        );
+
+        resolve(wbot);
+      };
+
+      // Define a função do Watchdog
+      const startWatchdog = () => {
+        if (watchdogTimer) return;
+
+        watchdogTimer = setTimeout(async () => {
+          if (!readyFired) {
+            logger.warn(`[WATCHDOG] Alerta: Evento 'ready' não disparou em 15s para sessão ${whatsapp.id}. Verificando conexão real...`);
+
+            // Tenta verificar se está realmente conectado
+            const isConnected = await verifyRealConnection(wbot);
+
+            if (isConnected) {
+              logger.info(`[WATCHDOG] Conexão válida detectada! Forçando inicialização...`);
+              await handleReady("WATCHDOG");
+            } else {
+              logger.warn(`[WATCHDOG] Conexão não confirmada. Mantendo aguardo.`);
+            }
+          }
+        }, 15000); // 15 segundos
+      };
+
+      process.on('SIGTERM', async () => {
+        logger.info(`Processo recebeu SIGTERM, destruindo sessão ${whatsapp.id}`);
+        try {
+          await wbot.destroy();
+        } catch (e) {
+          logger.error(`Erro ao destruir sessão ${whatsapp.id} em SIGTERM: ${e}`);
+        }
+      });
+
+      process.on('SIGINT', async () => {
+        logger.info(`Processo recebeu SIGINT, destruindo sessão ${whatsapp.id}`);
+        try {
+          await wbot.destroy();
+        } catch (e) {
+          logger.error(`Erro ao destruir sessão ${whatsapp.id} em SIGINT: ${e}`);
+        }
+      });
+
+      wbot.id = whatsapp.id;
+      wbot.lastConnectionVerification = 0;
+      wbot.reconnectionAttempts = 0;
+
+      wbot.initialize();
 
       wbot.on("qr", async qr => {
         if (whatsapp.status === "CONNECTED") return;
-        const qrTime = ((performance.now() - startTime) / 1000).toFixed(2);
-        logger.info(`>>> [PERF] QR Code gerado para sessão ${whatsapp.id} em ${qrTime}s`);
 
         await whatsapp.update({
           qrcode: qr,
@@ -679,63 +773,21 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
       });
 
       wbot.on("authenticated", async () => {
-        logger.info(`Sessão ${sessionName} autenticada com sucesso. Avisando UI...`);
+        logger.info(`Sessão ${sessionName} autenticada com sucesso`);
+        // Inicia o watchdog imediatamente após autenticação
+        startWatchdog();
+      });
 
-        // Atualização para o status intermediário PAIRING (melhor UX)
-        await whatsapp.update({
-          status: "PAIRING",
-          qrcode: "",
-          retries: 0
-        });
-
-        io.emit(`${tenantId}:whatsappSession`, {
-          action: "update",
-          session: whatsapp
-        });
-
-        // Fallback: Se o evento 'ready' não disparar em 15 segundos, forçamos o CONNECTED
-        // Algumas versões do WhatsApp Web demoram ou não disparam o 'ready' corretamente
-        // Polling Ativo de 2 segundos para estabilização ultrarrápida
-        let connectionAttempts = 0;
-        const maxAttempts = 15; // Total de 30 segundos de monitoramento
-        const pollingInterval = setInterval(async () => {
-          connectionAttempts++;
-          try {
-            const state = await wbot.getState();
-            const checkWhatsapp = await Whatsapp.findByPk(whatsapp.id);
-
-            if (!checkWhatsapp || checkWhatsapp.status === "CONNECTED" || connectionAttempts > maxAttempts) {
-              clearInterval(pollingInterval);
-              return;
-            }
-
-            if (state === "CONNECTED") {
-              const stableTime = ((performance.now() - startTime) / 1000).toFixed(2);
-              logger.info(`>>> [OPTIMIZATION] Polling detectou status CONNECTED para ${sessionName} na tentativa ${connectionAttempts} (Total: ${stableTime}s).`);
-              clearInterval(pollingInterval);
-
-              await whatsapp.update({
-                status: "CONNECTED",
-                qrcode: "",
-                retries: 0,
-                number: wbot?.info?.wid?.user,
-              });
-
-              io.emit(`${tenantId}:whatsappSession`, { action: "update", session: whatsapp });
-              io.emit(`${tenantId}:whatsappSession`, { action: "readySession", session: whatsapp });
-            } else if (connectionAttempts === maxAttempts) {
-              logger.info(`>>> [OPTIMIZATION] Polling esgotado para ${sessionName}. Forçando status final.`);
-              await whatsapp.update({ status: "CONNECTED" });
-              io.emit(`${tenantId}:whatsappSession`, { action: "readySession", session: whatsapp });
-            }
-          } catch (err) {
-            logger.error(`Erro no polling de conexão: ${err}`);
-          }
-        }, 2000);
+      wbot.on('loading_screen', (percent, message) => {
+        logger.info(`[${sessionName}] LOADING SCREEN: ${percent}% - ${message}`);
+        // Se passar de 95% na loading screen, podemos considerar um sinal forte de que vai conectar
+        // mas deixamos o watchdog validar via verifyRealConnection por segurança
       });
 
       wbot.on("auth_failure", async msg => {
         logger.error(`Session: ${sessionName}-AUTHENTICATION FAILURE :: ${msg}`);
+        if (watchdogTimer) clearTimeout(watchdogTimer);
+
         if (whatsapp.retries > 1) {
           await whatsapp.update({
             retries: 0,
@@ -757,93 +809,8 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
       });
 
       wbot.on("ready", async () => {
-        logger.info(`Sessão ${sessionName} (ID: ${whatsapp.id}) está PRONTA.`);
-
-        try {
-          // Se o fallback já resolveu, ou se ainda está em PAIRING, atualizamos
-          const checkWhatsapp = await Whatsapp.findByPk(whatsapp.id);
-          if (checkWhatsapp && checkWhatsapp.status !== "CONNECTED") {
-            await whatsapp.update({
-              status: "CONNECTED",
-              qrcode: "",
-              retries: 0,
-              number: wbot?.info?.wid?.user,
-            });
-
-            io.emit(`${tenantId}:whatsappSession`, {
-              action: "update",
-              session: whatsapp
-            });
-
-            io.emit(`${tenantId}:whatsappSession`, {
-              action: "readySession",
-              session: whatsapp
-            });
-          }
-
-          logger.info(`✅ Status CONNECTED confirmado para sessão ${whatsapp.id}`);
-
-          // 2. Tarefas secundárias em background
-          (async () => {
-            try {
-              const info: any = wbot?.info;
-              const wbotVersion = await wbot.getWWebVersion();
-              const wbotBrowser = await wbot.pupBrowser?.version();
-              let profilePicUrl: string | null = null;
-
-              try {
-                profilePicUrl = await wbot.getProfilePicUrl(wbot.info.wid._serialized);
-              } catch (e) {
-                logger.warn(`Não foi possível obter foto de perfil para ${whatsapp.id}`);
-              }
-
-              await whatsapp.update({
-                profilePicUrl,
-                phone: {
-                  ...(info || {}),
-                  wbotVersion,
-                  wbotBrowser
-                }
-              });
-
-              logger.info(`Metadados atualizados para sessão ${whatsapp.id}`);
-            } catch (err) {
-              logger.error(`Erro ao buscar metadados (background): ${err}`);
-            }
-          })();
-        } catch (err) {
-          logger.error(`Erro crítico no handler READY da sessão ${whatsapp.id}: ${err}`);
-        }
-
-        const sessionIndex = sessions.findIndex(s => s.id === whatsapp.id);
-        if (sessionIndex === -1) {
-          wbot.id = whatsapp.id;
-          sessions.push(wbot);
-        }
-
-        // Realiza uma verificação real da conexão logo após a inicialização
-        await verifyRealConnection(wbot);
-
-        wbot.sendPresenceAvailable();
-        SyncUnreadMessagesWbot(wbot, tenantId);
-
-        // Configura verificação mais frequente
-        const checkInterval = +(process.env.CHECK_INTERVAL || 30000); // Usa 30 segundos como padrão
-        wbot.checkMessages = setInterval(
-          checkMessages,
-          checkInterval,
-          wbot,
-          tenantId
-        );
-
-        resolve(wbot);
+        await handleReady("EVENTO READY");
       });
-      // Inicializa o bot SOMENTE após todos os listeners estarem configurados
-      wbot.initialize().catch(err => {
-        logger.error(`Erro ao rodar wbot.initialize() para ${whatsapp.id}: ${err}`);
-        reject(err);
-      });
-
     } catch (error) {
       reject(error);
     }

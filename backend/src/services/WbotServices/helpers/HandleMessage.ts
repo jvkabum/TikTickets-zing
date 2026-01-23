@@ -35,7 +35,34 @@ const HandleMessage = async (
       const whatsapp = await ShowWhatsAppService({ id: wbot.id });
 
       const { tenantId } = whatsapp;
-      const chat = await msg.getChat();
+      let chat;
+      try {
+        // Tenta obter o chat com retentativa simples para caso de inicialização
+        chat = await msg.getChat();
+      } catch (chatError) {
+        // Se falhar (ex: getChat undefined), espera um pouco e tenta novamente
+        if (msg.type !== "e2e_notification" && msg.type !== "notification_template") {
+          await new Promise(r => setTimeout(r, 1000));
+          try { chat = await msg.getChat(); } catch { }
+        }
+      }
+
+      // Se ainda falhar ou for nulo, tenta obter info básica sem o objeto chat completo
+      if (!chat) {
+        // Fallback básico para não crashar
+        if (!msg.to) return; // Se não tem 'to', impossível processar
+
+        chat = {
+          isGroup: msg.to.includes("@g.us"),
+          unreadCount: 0,
+          id: { _serialized: msg.to }
+        } as any;
+      }
+
+      // Reutilizando variáveis já declaradas acima
+      // const whatsapp = await ShowWhatsAppService({ id: wbot.id });
+      // const { tenantId } = whatsapp;
+
       // IGNORAR MENSAGENS DE GRUPO
       const Settingdb = await Setting.findOne({
         where: { key: "ignoreGroupMsg", tenantId }

@@ -1,19 +1,26 @@
-import { Client } from "whatsapp-web.js";
-
+/* eslint-disable camelcase */
+import { Client, LocalAuth, DefaultOptions } from "whatsapp-web.js";
+import path from "path";
+import { rm } from "fs/promises";
+import fs from "fs";
 import { getIO } from "../../libs/socket";
 import Whatsapp from "../../models/Whatsapp";
 import { logger } from "../../utils/logger";
 import { StartWhatsAppSession } from "./StartWhatsAppSession";
+import Queue from "../../libs/Queue";
 import { cleanupSessionFiles } from "./SessionCleanupService";
+import { getValue } from "../../libs/redisClient";
 
 interface Session extends Client {
-  id?: number;
+  id: number;
   lastPing?: number;
+  lastConnectionVerification?: number; // Última verificação de conexão
+  reconnectionAttempts?: number; // Contador de tentativas de reconexão
   monitorInterval?: any;
-  checkMessages?: any;
+  checkMessages?: any; // Função para verificar mensagens
 }
 
-// Verifica se a conexão está realmente ativa, além do estado reportado
+// Função auxiliar para verificar conexão real
 const checkRealConnection = async (wbot: Session): Promise<boolean> => {
   try {
     if (!wbot) return false;
@@ -32,14 +39,13 @@ const checkRealConnection = async (wbot: Session): Promise<boolean> => {
         wbot.lastPing = Date.now();
         return true;
       }
-      logger.error("wbot.info ou wbot.info.wid indefinido");
       return false;
-    } catch (profileError) {
-      logger.error(`Erro ao verificar foto de perfil: ${profileError}`);
+    } catch (e) {
+      logger.warn(`Erro ao verificar conexão real (getProfilePicUrl): ${e}`);
       return false;
     }
-  } catch (error) {
-    logger.error(`Erro ao verificar conexão real: ${error}`);
+  } catch (err) {
+    logger.error(`CheckRealConnection | Error: ${err}`);
     return false;
   }
 };
@@ -75,8 +81,7 @@ const wbotMonitor = async (
           try {
             // Tenta reconectar de forma forçada
             await whatsapp.update({
-              status: "OPENING",
-              retries: 0,
+              status: "DISCONNECTED",
               qrcode: "",
               session: ""
             });
@@ -93,17 +98,14 @@ const wbotMonitor = async (
             // Espera um pouco antes de reinicar a sessão
             setTimeout(() => StartWhatsAppSession(whatsapp), 3000);
           } catch (reconnectError) {
-            logger.error(`Erro ao forçar reconexão: ${reconnectError}`);
+            logger.error(`Erro ao tentar reconexão automática: ${reconnectError}`);
           }
         }
-      } catch (pingError) {
-        logger.error(
-          `Erro no intervalo de monitoramento para ${sessionName}: ${pingError}`
-        );
+      } catch (err) {
+        logger.error(`Error in monitorInterval for ${sessionName}: ${err}`);
       }
     }, pingInterval);
 
-    // Monitora mudanças de estado
     wbot.on("change_state", async newState => {
       logger.info(`Monitor session: ${sessionName} - NewState: ${newState}`);
       try {
@@ -114,7 +116,7 @@ const wbotMonitor = async (
           wbot.lastPing = Date.now();
         }
       } catch (err) {
-        logger.error(`Erro ao atualizar estado: ${err}`);
+        logger.error(`Erro ao atualizar change_state: ${err}`);
       }
 
       io.emit(`${whatsapp.tenantId}:whatsappSession`, {
@@ -123,27 +125,15 @@ const wbotMonitor = async (
       });
     });
 
-    // Monitora mudanças na bateria
     wbot.on("change_battery", async batteryInfo => {
       const { battery, plugged } = batteryInfo;
-      logger.info(
-        `Battery session: ${sessionName} ${battery}% - Charging? ${plugged}`
-      );
-
-      if (battery <= 20 && !plugged) {
-        io.emit(`${whatsapp.tenantId}:change_battery`, {
-          action: "update",
-          batteryInfo: {
-            ...batteryInfo,
-            sessionName
-          }
-        });
-      }
-
       try {
-        await whatsapp.update({ battery, plugged });
+        await whatsapp.update({
+          battery,
+          plugged
+        });
       } catch (err) {
-        logger.error(`Erro ao atualizar info de bateria: ${err}`);
+        logger.error(`Erro ao atualizar battery: ${err}`);
       }
 
       io.emit(`${whatsapp.tenantId}:whatsappSession`, {
@@ -152,7 +142,6 @@ const wbotMonitor = async (
       });
     });
 
-    // Monitora desconexões
     wbot.on("disconnected", async reason => {
       logger.info(`Disconnected session: ${sessionName} | Reason: ${reason}`);
 
@@ -173,7 +162,7 @@ const wbotMonitor = async (
         // Tenta reconectar após um breve atraso
         setTimeout(() => StartWhatsAppSession(whatsapp), 2000);
       } catch (err) {
-        logger.error(`Erro ao processar desconexão: ${err}`);
+        logger.error(`Erro ao tratar desconexão: ${err}`);
       }
 
       io.emit(`${whatsapp.tenantId}:whatsappSession`, {
@@ -191,8 +180,7 @@ const wbotMonitor = async (
       try {
         await whatsapp.update({
           status: "CONNECTED",
-          qrcode: "",
-          retries: 0
+          qrcode: ""
         });
       } catch (err) {
         logger.error(`Erro ao atualizar estado após reconexão: ${err}`);
@@ -201,9 +189,10 @@ const wbotMonitor = async (
       io.emit(`${whatsapp.tenantId}:whatsappSession`, {
         action: "update",
         session: whatsapp,
-        message: "Sessão reconectada com sucesso"
+        message: "Sessão reconectada automaticamente"
       });
     });
+
   } catch (err) {
     logger.error(`Erro geral no wbotMonitor: ${err}`);
   }
@@ -211,13 +200,14 @@ const wbotMonitor = async (
   // Executa uma verificação inicial da conexão
   setTimeout(async () => {
     try {
-      await checkRealConnection(wbot);
-    } catch (initialCheckError) {
-      logger.error(
-        `Erro na verificação inicial da conexão: ${initialCheckError}`
-      );
+      const isConnected = await checkRealConnection(wbot);
+      if (isConnected && whatsapp.status !== "CONNECTED") {
+        await whatsapp.update({ status: "CONNECTED" });
+      }
+    } catch (e) {
+      logger.error(`Erro verificação inicial: ${e}`);
     }
-  }, 10000);
+  }, 5000);
 };
 
 export default wbotMonitor;

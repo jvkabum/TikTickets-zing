@@ -1,14 +1,15 @@
-import { Client, MessageTypes, Poll } from "whatsapp-web.js"; // Import Poll
+import { Client, MessageTypes, Poll } from "whatsapp-web.js";
 import HandleMessage from "./helpers/HandleMessage";
 import HandleMsgAck from "./helpers/HandleMsgAck";
 import VerifyCall from "./VerifyCall";
 import handleMsgEdit from "./helpers/handleMsgEdit";
-import { handlePollCreation, handlePollVote, ExtendedWbotMessage, CustomMessageTypes } from "./WbotMessagePoll";
+import { handlePollCreation, handlePollVote, ExtendedWbotMessage } from "./WbotMessagePoll";
 import Contact from "../../models/Contact";
 import Ticket from "../../models/Ticket";
 import { Op } from "sequelize";
 import Whatsapp from "../../models/Whatsapp";
-import emitEvent from "../../helpers/socketEmit"; // Renomeado para emitEvent
+import emitEvent from "../../helpers/socketEmit";
+import { logger } from "../../utils/logger";
 
 interface Session extends Client {
   id: number;
@@ -32,28 +33,30 @@ interface PollVote {
 async function sendPoll(client: Client, chatId: string, pollName: string, options: string[]) {
   const poll = new Poll(pollName, options);
   await client.sendMessage(chatId, poll);
-  await client.interface.openChatWindow(chatId); // Abre a janela do chat (opcional)
-  // Removido: console.log(`Enquete enviada: ${pollName} para ${chatId}`);
+  if (client.interface && client.interface.openChatWindow) {
+    await client.interface.openChatWindow(chatId);
+  }
 }
 
 const wbotMessageListener = (wbot: Session): void => {
   // Listener para mensagens de criação e voto
   wbot.on("message_create", async (msg: ExtendedWbotMessage) => {
-    // Removido: console.log("Evento message_create recebido:", JSON.stringify({...}, null, 2));
-
-    if (msg.isStatus) {
-      // Removido: console.log("Ignorando mensagem de status broadcast");
-      return;
-    }
-
-    // Removido: console.log("Tipo da mensagem:", msg.type);
+    if (msg.isStatus) return;
 
     if (msg.type === "poll_creation" || msg.type === "poll_vote") {
       try {
-        // Removido: console.log("Iniciando processamento de enquete ou voto...");
-        const chat = await msg.getChat();
-        const wbotContact = await msg.getContact();
+        let chat;
+        try { chat = await msg.getChat(); } catch (e) {
+          // Fallback se getChat falhar
+          if (msg.to) {
+            chat = { isGroup: msg.to.includes("@g.us"), id: { _serialized: msg.to } } as any;
+          } else {
+            return; // Impossível processar sem chat
+          }
+        }
 
+
+        const wbotContact = await msg.getContact();
         const tenantId = await getTenantIdByWbotId(wbot.id);
 
         let contact: Contact;
@@ -65,10 +68,9 @@ const wbotMessageListener = (wbot: Session): void => {
           });
 
           if (!recipientContact) {
-            // Removido: console.log("Criando novo contato para o destinatário...");
             contact = await Contact.create({
               number: recipientNumber,
-              name: `Contato ${recipientNumber}`, // Nome padrão, pode ser ajustado
+              name: `Contato ${recipientNumber}`,
               tenantId
             });
           } else {
@@ -82,7 +84,6 @@ const wbotMessageListener = (wbot: Session): void => {
           });
 
           if (!senderContact) {
-            // Removido: console.log("Criando novo contato para o remetente...");
             contact = await Contact.create({
               number: phoneNumber,
               name: wbotContact.name || wbotContact.pushname || phoneNumber,
@@ -93,8 +94,6 @@ const wbotMessageListener = (wbot: Session): void => {
           }
         }
 
-        // Removido: console.log("Contato processado:", {...});
-
         let ticket = await Ticket.findOne({
           where: {
             contactId: contact.id,
@@ -104,7 +103,6 @@ const wbotMessageListener = (wbot: Session): void => {
         });
 
         if (!ticket) {
-          // Removido: console.log("Criando novo ticket...");
           ticket = await Ticket.create({
             contactId: contact.id,
             status: "open",
@@ -114,22 +112,15 @@ const wbotMessageListener = (wbot: Session): void => {
           });
         }
 
-        // Removido: console.log("Ticket processado:", {...});
-
         if (msg.type === "poll_creation") {
           await handlePollCreation(msg, ticket, contact);
         } else if (msg.type === "poll_vote") {
-          // Removido: console.log("Processando poll_vote via message_create:", JSON.stringify(msg, null, 2));
           await handlePollVote(msg, ticket, contact);
         }
 
         return;
       } catch (error) {
-        console.error("Erro ao processar mensagem de enquete ou voto:", {
-          message: error.message,
-          stack: error.stack,
-          msgDetails: JSON.stringify(msg, null, 2)
-        });
+        logger.error(`Erro ao processar mensagem de enquete ou voto: ${error.message}`);
         return;
       }
     }
@@ -157,18 +148,13 @@ const wbotMessageListener = (wbot: Session): void => {
     VerifyCall(call, wbot);
   });
 
-  // Listener para atualizações de voto (vote_update) com processamento completo e depuração
   wbot.on("vote_update", async (vote: PollVote) => {
-    // Removido: console.log("Evento vote_update recebido:", JSON.stringify(vote, null, 2));
-    
     try {
       const msg = await vote.getMessage();
       if (!msg) {
-        console.error("Mensagem de enquete não encontrada para o voto");
+        logger.error("Mensagem de enquete não encontrada para o voto");
         return;
       }
-
-      // Removido: console.log("Mensagem obtida via getMessage:", JSON.stringify(msg, null, 2));
 
       const wbotContact = await msg.getContact();
       const tenantId = await getTenantIdByWbotId(wbot.id);
@@ -176,10 +162,9 @@ const wbotMessageListener = (wbot: Session): void => {
 
       let contact = await Contact.findOne({
         where: { number: phoneNumber, tenantId }
-      })!; // Usar ! para garantir que não é null (ou lidar com null adequadamente)
+      });
 
       if (!contact) {
-        // Removido: console.log("Criando novo contato para voto...");
         contact = await Contact.create({
           number: phoneNumber,
           name: wbotContact.name || wbotContact.pushname || phoneNumber,
@@ -193,10 +178,9 @@ const wbotMessageListener = (wbot: Session): void => {
           tenantId,
           status: { [Op.or]: ["open", "pending"] }
         }
-      })!; // Usar ! para garantir que não é null (ou lidar com null adequadamente)
+      });
 
       if (!ticket) {
-        // Removido: console.log("Criando novo ticket para voto...");
         ticket = await Ticket.create({
           contactId: contact.id,
           status: "open",
@@ -207,42 +191,24 @@ const wbotMessageListener = (wbot: Session): void => {
       }
 
       await handlePollVote(msg, ticket, contact);
-      // Removido: console.log("Voto processado com sucesso via vote_update:", { messageId: msg.id.id });
 
       // Emitir evento para o frontend via WebSocket
+      // USO SEGURO: msg.id.id (obtido via getMessage()) em vez de vote.pollCreationMessageKey.id
       emitEvent({
         tenantId,
         type: "pollVoteUpdate",
         payload: {
-          pollMessageId: vote.pollCreationMessageKey.id,
+          pollMessageId: msg.id.id,
           selectedOptions: vote.selectedOptions,
           voter: vote.voter,
           timestamp: vote.senderTimestampMs
         }
       });
     } catch (error) {
-      console.error("Erro ao processar vote_update:", {
-        message: error.message,
-        stack: error.stack,
-        voteDetails: JSON.stringify(vote, null, 2)
-      });
+      logger.error(`Erro ao processar vote_update: ${error}`);
     }
   });
 
-  // Adicionar o listener simples
-  wbot.on('vote_update', (vote) => {
-    console.log(vote);
-  });
-
-  // Listener genérico para depuração
-  wbot.on('message', (msg) => {
-    // Removido: console.log("Evento genérico de mensagem recebido:", JSON.stringify(msg, null, 2));
-  });
-
-  // Listener adicional para capturar todos os eventos para depuração
-  wbot.on('any_event', (eventName, eventData) => {
-    // Removido: console.log("Evento genérico capturado:", { eventName, eventData: JSON.stringify(eventData, null, 2) });
-  });
 };
 
 // Função auxiliar para obter o tenantId baseado no wbotId
