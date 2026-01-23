@@ -1,12 +1,14 @@
 <template>
   <div
-    class="WAL position-relative bg-grey-3"
+    class="WAL position-relative"
+    style="background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);"
     :style="style"
   >
     <q-layout
-      class="WAL__layout shadow-3"
+      class="WAL__layout no-shadow"
       container
       view="lHr LpR lFr"
+      style="border-radius: 20px; overflow: hidden; margin: 10px; height: calc(100% - 20px) !important; width: calc(100% - 20px) !important"
     >
       <q-drawer
         v-model="drawerTickets"
@@ -20,8 +22,8 @@
         content-class="hide-scrollbar full-width"
       >
         <q-toolbar
-          class="q-gutter-xs full-width"
-          style="height: 64px"
+          class="q-gutter-xs full-width no-border-radius glass"
+          style="height: 60px; min-height: 60px; border-bottom: 1px solid rgba(0,0,0,0.05)"
         >
           <q-btn-dropdown
             no-caps
@@ -34,7 +36,7 @@
                 :style="{ maxWidth: $q.screen.lt.sm ? '120px' : '' }"
                 class="ellipsis"
               >
-                {{ username }}
+                {{ username || 'Usuário' }}
               </div>
             </template>
             <q-list style="min-width: 100px">
@@ -67,7 +69,7 @@
         </q-toolbar>
         <q-toolbar
           v-show="toolbarSearch"
-          class="row q-gutter-sm q-py-sm items-center"
+          class="row q-gutter-sm q-py-sm items-center glass"
         >
           <q-separator class="absolute-top" />
           <q-btn
@@ -185,29 +187,70 @@
         <q-tabs
           v-model="selectedTab"
           dense
-          class="text-grey"
+          class="text-grey-7 bg-grey-2 rounded-borders q-ma-sm"
           active-color="primary"
           indicator-color="primary"
           align="justify"
           narrow-indicator
         >
-          <q-tab
-            name="open"
-            label="Abertos"
-          />
-          <q-tab
-            name="pending"
-            label="Pendentes"
-          />
-          <q-tab
-            name="closed"
-            label="Fechados"
-          />
-          <q-tab
-            name="groups"
-            label="Grupos"
-          />
+          <q-tab name="open" class="q-py-sm">
+            <div class="column items-center">
+              <span class="text-uppercase text-weight-bold" style="font-size: 10px">Abertos</span>
+              <q-badge 
+                v-if="ticketCounts?.open > 0" 
+                :label="ticketCounts.open" 
+                color="red" 
+                text-color="white" 
+                class="q-mt-xs text-bold shadow-1" 
+                style="border-radius: 4px; min-width: 20px"
+              />
+              <q-badge v-else label="0" color="transparent" text-color="grey-4" class="q-mt-xs" style="min-width: 20px" />
+            </div>
+          </q-tab>
+          <q-tab name="pending" class="q-py-sm">
+            <div class="column items-center">
+              <span class="text-uppercase text-weight-bold" style="font-size: 10px">Pendentes</span>
+              <q-badge 
+                v-if="ticketCounts?.pending > 0" 
+                :label="ticketCounts.pending" 
+                color="red" 
+                text-color="white" 
+                class="q-mt-xs text-bold shadow-1" 
+                style="border-radius: 4px; min-width: 20px"
+              />
+              <q-badge v-else label="0" color="transparent" text-color="grey-4" class="q-mt-xs" style="min-width: 20px" />
+            </div>
+          </q-tab>
+          <q-tab name="closed" class="q-py-sm">
+            <div class="column items-center">
+              <span class="text-uppercase text-weight-bold" style="font-size: 10px">Fechados</span>
+              <q-badge 
+                v-if="ticketCounts?.closed > 0" 
+                :label="ticketCounts.closed" 
+                color="red" 
+                text-color="white" 
+                class="q-mt-xs text-bold shadow-1" 
+                style="border-radius: 4px; min-width: 20px"
+              />
+              <q-badge v-else label="0" color="transparent" text-color="grey-4" class="q-mt-xs" style="min-width: 20px" />
+            </div>
+          </q-tab>
+          <q-tab name="groups" class="q-py-sm">
+            <div class="column items-center">
+              <span class="text-uppercase text-weight-bold" style="font-size: 10px">Grupos</span>
+              <q-badge 
+                v-if="ticketCounts?.groups > 0" 
+                :label="ticketCounts.groups" 
+                color="red" 
+                text-color="white" 
+                class="q-mt-xs text-bold shadow-1" 
+                style="border-radius: 4px; min-width: 20px"
+              />
+              <q-badge v-else label="0" color="transparent" text-color="grey-4" class="q-mt-xs" style="min-width: 20px" />
+            </div>
+          </q-tab>
         </q-tabs>
+
         <q-separator />
 
         <q-tab-panels
@@ -228,7 +271,49 @@
             />
           </q-tab-panel>
         </q-tab-panels>
+
+        <!-- Barra inferior: Dark Mode + Status Canais -->
+        <div
+          class="absolute-bottom row justify-between items-center q-px-sm"
+          style="height: 50px; background: rgba(255,255,255,0.9)"
+        >
+          <q-toggle
+            size="lg"
+            keep-color
+            dense
+            :model-value="$q.dark.isActive"
+            :color="$q.dark.isActive ? 'grey-3' : 'black'"
+            checked-icon="mdi-white-balance-sunny"
+            unchecked-icon="mdi-weather-sunny"
+            @update:model-value="$q.dark.toggle()"
+          >
+            <q-tooltip>{{ $q.dark.isActive ? 'Desativar' : 'Ativar' }} Modo Escuro</q-tooltip>
+          </q-toggle>
+          <div class="row items-center">
+            <template v-for="item in whatsapps" :key="item.id">
+              <q-btn
+                rounded
+                flat
+                dense
+                size="18px"
+                class="q-mx-xs q-pa-none"
+                :style="`opacity: ${item.status === 'CONNECTED' ? 1 : 0.3}`"
+              >
+                <q-avatar size="24px">
+                  <img :src="`/${item.type || 'whatsapp'}-logo.png`" />
+                </q-avatar>
+                <q-tooltip max-height="200px" content-class="bg-grey-1 text-grey-9">
+                  <div class="text-bold">{{ item.name }}</div>
+                  <div :class="item.status === 'CONNECTED' ? 'text-positive' : 'text-negative'">
+                    {{ item.status }}
+                  </div>
+                </q-tooltip>
+              </q-btn>
+            </template>
+          </div>
+        </div>
       </q-drawer>
+
 
       <q-page-container class="bg-grey-3">
         <q-page
@@ -239,10 +324,13 @@
           style="background-image: url('/assets/wa-background.png'); background-repeat: repeat; background-size: contain;"
           v-if="!ticketFocado.id"
         >
-          <div class="column items-center">
-            <q-img src="~assets/logo-wchats.png" width="150px" class="q-mb-lg" />
-            <div class="text-h6 text-grey-8 q-mt-md">Selecione um ticket!</div>
-            <div class="text-body2 text-grey-6 q-mt-sm">Escolha um contato para iniciar o atendimento.</div>
+          <div class="text-center">
+            <q-icon
+              size="6em"
+              color="grey-6"
+              name="mdi-emoticon-wink-outline"
+            />
+            <h1 class="text-h4 text-grey-6">Selecione um ticket!</h1>
           </div>
         </q-page>
         <q-page
@@ -283,7 +371,7 @@
               bordered
               flat
             >
-              <q-card-section class="text-center">
+              <q-card-section class="text-center" v-if="ticketFocado.contact">
                 <q-avatar
                   size="100px"
                   class="bg-grey-3"
@@ -321,6 +409,7 @@
               class="q-mt-sm bg-white btn-rounded"
               bordered
               flat
+              v-if="ticketFocado.contact"
             >
               <q-card-section class="text-bold">
                 Etiquetas
@@ -367,7 +456,64 @@
                 </q-list>
               </q-card-section>
             </q-card>
+
+            <!-- Carteira -->
+            <q-card
+              class="q-mt-sm bg-white btn-rounded"
+              bordered
+              flat
+              v-if="ticketFocado.contact?.wallets?.length"
+            >
+              <q-card-section class="text-bold">
+                Carteira
+                <q-separator />
+              </q-card-section>
+              <q-card-section class="q-pa-sm">
+                <q-chip
+                  v-for="wallet in ticketFocado.contact.wallets"
+                  :key="wallet.id"
+                  dense
+                  square
+                  color="primary"
+                  text-color="white"
+                  class="q-ma-xs"
+                >
+                  {{ wallet.name }}
+                </q-chip>
+              </q-card-section>
+            </q-card>
+
+            <!-- Mensagens Agendadas -->
+            <q-card
+              class="q-mt-sm bg-white btn-rounded"
+              bordered
+              flat
+              v-if="ticketFocado.scheduledMessages?.length"
+            >
+              <q-card-section class="text-bold">
+                Mensagens Agendadas
+                <q-separator />
+              </q-card-section>
+              <q-card-section class="q-pa-none">
+                <q-list separator>
+                  <q-item
+                    v-for="(msg, idx) in ticketFocado.scheduledMessages.filter(m => !m.isDeleted)"
+                    :key="idx"
+                  >
+                    <q-item-section>
+                      <q-item-label caption>
+                        <b>Agendado:</b> {{ formatarData(msg.scheduleDate, 'dd/MM/yyyy HH:mm') }}
+                      </q-item-label>
+                      <q-item-label lines="2">
+                        {{ msg.mediaName || msg.body }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-card-section>
+            </q-card>
           </div>
+
         </q-scroll-area>
       </q-drawer>
     </q-layout>
@@ -398,13 +544,24 @@ const { setupSockets, disconnectSockets } = useTicketSockets()
 const { ticketFocado } = storeToRefs(ticketStore)
 
 const authStore = useAuthStore()
-const username = computed(() => localStorage.getItem('username'))
+const { user } = storeToRefs(authStore)
+const username = computed(() => user.value?.name || localStorage.getItem('username'))
 
 const etiquetaStore = useEtiquetaStore()
 const { etiquetas } = storeToRefs(etiquetaStore)
 
 const filaStore = useFilaStore()
 const { filas } = storeToRefs(filaStore)
+
+const whatsappStore = useWhatsappStore()
+const { whatsapps } = storeToRefs(whatsappStore)
+const { listarWhatsapps } = useSessoesWhatsapp()
+
+const cRouteContatos = computed(() => {
+  return route.name === 'contatos'
+})
+
+
 
 const drawerTickets = ref(true)
 const drawerContact = ref(false)
@@ -434,6 +591,19 @@ const style = computed(() => ({
 }))
 
 const cIsExtraInfo = computed(() => ticketFocado.value?.contact?.extraInfo?.length > 0)
+
+// Contagem de tickets por status para os badges
+const { tickets } = storeToRefs(ticketStore)
+const ticketCounts = computed(() => {
+  const list = Array.isArray(tickets.value) ? tickets.value : []
+  return {
+    open: list.filter(t => t.status === 'open' && !t.isGroup).length,
+    pending: list.filter(t => t.status === 'pending' && !t.isGroup).length,
+    closed: list.filter(t => t.status === 'closed' && !t.isGroup).length,
+    groups: list.filter(t => t.isGroup).length
+  }
+})
+
 
 const filtrarTickets = () => {
   pesquisaTickets.pageNumber = 1
@@ -465,12 +635,15 @@ onMounted(() => {
   setupSockets()
   etiquetaStore.listarEtiquetas(true)
   filaStore.listarFilas()
+  listarWhatsapps() // Carregar status dos canais
   carregarFiltros() // Carrega filtros salvos ao montar
+
 
   if ($q.screen.lt.md) {
     drawerTickets.value = false
   }
 })
+
 
 onUnmounted(() => {
   disconnectSockets()
@@ -484,29 +657,16 @@ onUnmounted(() => {
   background-size: contain
   width: 100%
   height: 100%
-  padding-top: 20px
-  padding-bottom: 20px
 
-  &:before
-    content: ''
-    height: 127px
-    position: fixed
-    top: 0
-    width: 100%
-    z-index: 0
-    background-color: #009688
-    content: ''
-    height: 127px
-    position: fixed
-    top: 0
-    width: 100%
   &__layout
     margin: 0 auto
     z-index: 1000
     height: 100%
     width: 100%
+
   &__field.q-field--outlined .q-field__control:before
     border: none
+
   .q-drawer--standard
     .WAL__drawer-close
       display: none

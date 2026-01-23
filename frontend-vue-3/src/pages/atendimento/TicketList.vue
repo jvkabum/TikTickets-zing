@@ -43,6 +43,7 @@
 </template>
 
 <script setup>
+import ItemTicket from './ItemTicket.vue'
 
 const props = defineProps({
   filas: {
@@ -86,9 +87,8 @@ const cFiltroSelecionado = computed(() => {
 const consultarTickets = async (isLoadMore = false) => {
   if (loading.value) return
 
-  if (!isLoadMore) {
-    props.searchParams.pageNumber = 1
-  }
+  // No TicketList, não resetamos o pageNumber do objeto global de filtros
+  // para evitar loops infinitos. O reset deve acontecer no componente pai.
 
   const params = {
     ...props.searchParams,

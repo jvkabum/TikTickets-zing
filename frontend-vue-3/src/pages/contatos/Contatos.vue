@@ -148,39 +148,48 @@
 
       <template v-slot:body-cell-acoes="props">
         <q-td class="text-center">
-          <q-btn
-            flat
-            round
-            icon="img:whatsapp-logo.png"
-            @click="handleSaveTicket(props.row, 'whatsapp')"
-            v-if="props.row.number"
-          />
-          <q-btn
-            flat
-            round
-            icon="img:instagram-logo.png"
-            @click="handleSaveTicket(props.row, 'instagram')"
-            v-if="props.row.instagramPK"
-          />
-          <q-btn
-            flat
-            round
-            icon="img:telegram-logo.png"
-            @click="handleSaveTicket(props.row, 'telegram')"
-            v-if="props.row.telegramId"
-          />
-          <q-btn
-            flat
-            round
-            icon="edit"
-            @click="editContact(props.row.id)"
-          />
-          <q-btn
-            flat
-            round
-            icon="mdi-delete"
-            @click="deleteContact(props.row.id)"
-          />
+          <div class="row items-center justify-center no-wrap q-gutter-xs">
+            <q-btn
+              flat
+              round
+              dense
+              icon="img:whatsapp-logo.png"
+              @click="handleSaveTicket(props.row, 'whatsapp')"
+              v-if="props.row.number"
+            />
+            <q-btn
+              flat
+              round
+              dense
+              icon="img:instagram-logo.png"
+              @click="handleSaveTicket(props.row, 'instagram')"
+              v-if="props.row.instagramPK"
+            />
+            <q-btn
+              flat
+              round
+              dense
+              icon="img:telegram-logo.png"
+              @click="handleSaveTicket(props.row, 'telegram')"
+              v-if="props.row.telegramId"
+            />
+            <q-btn
+              color="primary"
+              flat
+              round
+              dense
+              icon="edit"
+              @click="editContact(props.row.id)"
+            />
+            <q-btn
+              color="negative"
+              flat
+              round
+              dense
+              icon="mdi-delete"
+              @click="deleteContact(props.row.id)"
+            />
+          </div>
         </q-td>
       </template>
       <template v-slot:pagination> {{ contatos.length }}/{{ totalContatos }} </template>

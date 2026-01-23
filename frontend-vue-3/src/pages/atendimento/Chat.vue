@@ -12,25 +12,19 @@
       @scroll="scrollArea"
     >
       <div class="column q-py-md">
-        <transition
-          appear
-          enter-active-class="animated fadeIn"
-          leave-active-class="animated fadeOut"
-        >
-          <infinite-loading
+          <InfiniteLoading
             v-if="mensagens.length"
             @infinite="onLoadMore"
-            direction="top"
+            top
             :identifier="ticketFocado.id"
           >
-            <template #no-results>
-              <div class="text-center q-pa-sm text-grey-6">Início da conversa</div>
+            <template #complete>
+              <div class="text-center q-pa-sm text-grey-6 text-caption">Início da conversa</div>
             </template>
-            <template #no-more>
-              <div class="text-center q-pa-sm text-grey-6">Não há mais mensagens</div>
+            <template #error>
+              <div class="text-center q-pa-sm text-grey-6 text-caption">Erro ao carregar mais mensagens</div>
             </template>
-          </infinite-loading>
-        </transition>
+          </InfiniteLoading>
 
         <MensagemChat
           v-model:replyingMessage="replyingMessage"
@@ -226,11 +220,16 @@
 </template>
 
 <script setup>
-const contatoStore = useContatoStore()
+import InfiniteLoading from 'v3-infinite-loading'
+import 'v3-infinite-loading/lib/style.css'
 import whatsBackground from 'src/assets/wa-background.png'
 import whatsBackgroundDark from 'src/assets/wa-background-dark.jpg'
-const ticketStore = useTicketStore()
 import bus from 'src/utils/eventBus'
+
+const contatoStore = useContatoStore()
+const ticketStore = useTicketStore()
+const mensagemRapidaStore = useMensagemRapidaStore()
+const { mensagensRapidas } = storeToRefs(mensagemRapidaStore)
 const { mensagens, ticketFocado, hasMore, loading } = storeToRefs(ticketStore)
 
 const scrollContainer = ref(null)
@@ -369,6 +368,7 @@ watch(
 
 onMounted(() => {
   bus.on('scrollToBottomMessageChat', scrollToBottom)
+  mensagemRapidaStore.listarMensagensRapidas()
   carregarMensagens()
 })
 

@@ -38,18 +38,22 @@
       </template>
       <template v-slot:body-cell-acoes="props">
         <q-td class="text-center">
-          <q-btn
-            flat
-            round
-            icon="edit"
-            @click="editarFila(props.row)"
-          />
-          <q-btn
-            flat
-            round
-            icon="mdi-delete"
-            @click="deletarFila(props.row)"
-          />
+          <div class="row items-center justify-center no-wrap q-gutter-xs">
+            <q-btn
+              color="primary"
+              flat
+              round
+              icon="edit"
+              @click="editarFila(props.row)"
+            />
+            <q-btn
+              color="negative"
+              flat
+              round
+              icon="mdi-delete"
+              @click="deletarFila(props.row)"
+            />
+          </div>
         </q-td>
       </template>
     </q-table>

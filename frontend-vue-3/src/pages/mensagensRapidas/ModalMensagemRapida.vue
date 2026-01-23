@@ -54,14 +54,14 @@
                 self="bottom middle"
                 :offset="[5, 40]"
               >
-                <EmojiPicker
+                <!-- <EmojiPicker
                   style="width: 40vw"
                   :showSearch="false"
                   :emojisByRow="20"
                   labelSearch="Localizar..."
                   lang="pt-BR"
                   @select="onInsertSelectEmoji"
-                />
+                /> -->
               </q-menu>
             </q-btn>
 
@@ -163,8 +163,6 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
 import MediaPreviewList from 'src/components/mensagensRapidas/MediaPreviewList.vue'
 import { z } from 'zod'
 

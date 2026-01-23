@@ -3,9 +3,9 @@
     clickable
     v-ripple
     :active="routeName === cRouterName"
-    active-class="bg-blue-1 text-grey-8 text-bold menu-link-active-item-top"
+    active-class="text-primary text-bold active-main-menu-item"
     @click="navigateTo"
-    class="houverList"
+    class="q-mx-sm q-my-xs rounded-all sidebar-menu-item"
     :class="{ 'text-negative text-bolder': color === 'negative' }"
   >
     <q-item-section
@@ -60,12 +60,27 @@ const navigateTo = () => {
 </script>
 
 <style lang="sass">
-.menu-link-active-item-top
-  border-left: 3px solid rgb(21, 120, 173)
-  border-right: 3px solid rgb(21, 120, 173)
-  // border-radius: 20px
-  border-top-right-radius: 20px
-  border-bottom-right-radius: 20px
-  position: relative
-  height: 100%
+.sidebar-menu-item
+  transition: all 0.2s ease
+  border-radius: 12px !important
+
+  &:hover
+    background: rgba(0, 0, 0, 0.03)
+
+.active-main-menu-item
+  background: rgba(var(--q-primary), 0.1) !important
+  color: $primary !important
+  
+  &::before
+    content: ''
+    position: absolute
+    left: 0
+    top: 20%
+    bottom: 20%
+    width: 4px
+    background: $primary
+    border-radius: 0 4px 4px 0
+
+body.body--dark .active-main-menu-item
+  background: rgba(255, 255, 255, 0.05) !important
 </style>

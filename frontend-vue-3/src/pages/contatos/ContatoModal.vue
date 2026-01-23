@@ -74,7 +74,7 @@
             <template v-slot:option="{ itemProps, itemEvents, opt, selected, toggleOption }">
               <q-item
                 v-bind="itemProps"
-                v-on="itemEvents"
+                v-on="itemEvents || {}"
               >
                 <q-item-section>
                   <q-item-label><span v-html="opt.name"></span></q-item-label>

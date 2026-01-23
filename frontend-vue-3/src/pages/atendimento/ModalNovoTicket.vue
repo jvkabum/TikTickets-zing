@@ -80,6 +80,9 @@
 
 <script setup>
 import ContatoModal from '../contatos/ContatoModal.vue'
+import { notificarErro, notificarSucesso } from 'src/utils/helpersNotifications'
+
+import { useAuthStore } from 'src/stores/useAuthStore'
 
 const contatoStore = useContatoStore()
 const ticketStore = useTicketStore()
@@ -130,11 +133,12 @@ const criarTicket = async () => {
   if (!contatoSelecionado.value?.id) return
   loading.value = true
   try {
-    const userId = localStorage.getItem('userId')
+    const authStore = useAuthStore()
     const ticket = await ticketStore.criarTicket({
       contactId: contatoSelecionado.value.id,
       isActiveDemand: true,
-      userId,
+      userId: authStore.user.id,
+      channel: 'whatsapp',
       status: 'open'
     })
 

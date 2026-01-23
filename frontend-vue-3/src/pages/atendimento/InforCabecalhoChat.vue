@@ -1,8 +1,8 @@
 <template>
   <div>
     <q-header
-      class="bg-white text-grey-10 no-border-radius"
-      bordered
+      class="glass text-grey-10 no-border-radius"
+      style="z-index: 100"
     >
       <q-toolbar
         style="min-height: 60px; height: 60px"
@@ -28,25 +28,23 @@
         >
           <q-item-section
             avatar
-            class="q-pl-sm"
+            class="q-pl-md"
           >
-            <q-avatar class="bg-grey-3">
+            <q-avatar size="44px" class="bg-grey-2 no-shadow">
               <q-img
                 v-if="ticketFocado.contact?.profilePicUrl"
                 :src="ticketFocado.contact.profilePicUrl"
               />
-              <q-icon
+              <q-img
                 v-else
-                name="mdi-account"
-                color="grey-6"
-                size="30px"
+                src="/default-avatar.png"
               />
             </q-avatar>
           </q-item-section>
 
           <q-item-section>
             <q-item-label
-              class="text-bold"
+              class="text-bold text-subtitle2"
               lines="1"
             >
               {{ ticketFocado.contact?.name || 'Carregando...' }}
@@ -54,15 +52,10 @@
             <q-item-label
               caption
               lines="1"
+              class="text-weight-medium"
             >
-              <span v-if="ticketFocado.user?.name">Atribuído a: {{ ticketFocado.user.name }}</span>
-              <span v-else>Aguardando atribuição</span>
-            </q-item-label>
-            <q-item-label
-              caption
-              style="font-size: 10px"
-            >
-              Ticket: {{ ticketFocado.id }}
+              <span v-if="ticketFocado.user?.name" class="text-primary">Atendimento: {{ ticketFocado.user.name }}</span>
+              <span v-else class="text-grey-7">Aguardando atribuição</span>
             </q-item-label>
           </q-item-section>
         </q-item>
@@ -123,7 +116,7 @@
 
             <q-btn
               @click="atualizarStatusTicket(ticketFocado, 'closed')"
-              color="positive"
+              color="green"
               flat
               class="btn-rounded"
               icon="mdi-comment-check"
@@ -210,7 +203,7 @@
             map-options
             option-value="id"
             option-label="queue"
-            label="Escolha a Fila"
+            label="Fila de destino"
             dense
           />
 
@@ -222,7 +215,7 @@
             map-options
             option-value="id"
             option-label="name"
-            label="Escolha o Usuário"
+            label="Usuário destino"
             dense
             clearable
           />
@@ -249,8 +242,10 @@
 </template>
 
 <script setup>
-const ticketStore = useTicketStore()
+import { useTicketActions } from './useTicketActions.js'
 import bus from 'src/utils/eventBus'
+
+const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)
 const { atualizarStatusTicket } = useTicketActions()
 

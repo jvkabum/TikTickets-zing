@@ -1,8 +1,8 @@
 <template>
-  <div class="q-pa-sm">
-    <q-card class="q-my-md">
+  <div class="q-pa-md bg-grey-1">
+    <q-card class="q-mb-md glass no-shadow" style="border-radius: 20px">
       <q-card-section class="row justify-between items-center">
-        <div class="col-xs-12 col-md-3 text-h4 text-bold text-center text-md-left">Painel de Controle</div>
+        <div class="col-xs-12 col-md-3 text-h5 text-bold text-center text-md-left">Painel de Controle</div>
         <div class="col-xs-12 col-md-9 justify-end flex q-gutter-sm text-center text-md-right q-my-md rdsPainelDate">
           <div class="q-mb-sm">
             <DatePick
@@ -30,7 +30,7 @@
       </q-card-section>
     </q-card>
 
-    <q-card class="q-my-md q-pa-sm">
+    <q-card class="q-mb-md q-pa-sm glass no-shadow" style="border-radius: 20px">
       <q-card-section class="q-pa-md">
         <div class="row q-gutter-md justify-center">
           <div class="col-xs-12 col-sm-shrink">
@@ -128,7 +128,7 @@
       </div>
     </div>
 
-    <q-card class="q-my-md">
+    <q-card class="q-my-md glass no-shadow" style="border-radius: 20px">
       <q-card-section>
         <apexchart
           ref="ChartTicketsEvolutionChannels"
@@ -141,7 +141,7 @@
       </q-card-section>
     </q-card>
 
-    <q-card class="q-my-md">
+    <q-card class="q-my-md glass no-shadow" style="border-radius: 20px">
       <q-card-section class="q-pa-md">
         <apexchart
           ref="ChartTicketsEvolutionByPeriod"
@@ -153,7 +153,7 @@
       </q-card-section>
     </q-card>
 
-    <q-card class="q-my-md q-pa-sm">
+    <q-card class="q-my-md q-pa-sm glass no-shadow" style="border-radius: 20px">
       <q-card-section class="q-pa-md">
         <q-table
           title="Performance Usuários"

@@ -41,26 +41,31 @@
       </template>
       <template v-slot:body-cell-acoes="props">
         <q-td class="text-center">
-          <q-btn
-            flat
-            round
-            icon="mdi-arrow-decision-outline"
-            @click="gerirFilasUsuario(props.row)"
-          >
-            <q-tooltip> Gestão de Filas do usuário </q-tooltip>
-          </q-btn>
-          <q-btn
-            flat
-            round
-            icon="edit"
-            @click="editarUsuario(props.row)"
-          />
-          <q-btn
-            flat
-            round
-            icon="mdi-delete"
-            @click="deletarUsuario(props.row)"
-          />
+          <div class="row items-center justify-center no-wrap q-gutter-xs">
+            <q-btn
+              color="primary"
+              flat
+              round
+              icon="mdi-arrow-decision-outline"
+              @click="gerirFilasUsuario(props.row)"
+            >
+              <q-tooltip> Gestão de Filas do usuário </q-tooltip>
+            </q-btn>
+            <q-btn
+              color="primary"
+              flat
+              round
+              icon="edit"
+              @click="editarUsuario(props.row)"
+            />
+            <q-btn
+              color="negative"
+              flat
+              round
+              icon="mdi-delete"
+              @click="deletarUsuario(props.row)"
+            />
+          </div>
         </q-td>
       </template>
       <template v-slot:pagination="{ pagination }">

@@ -98,7 +98,7 @@ const handleFilaUsuario = async () => {
       ...props.usuarioSelecionado,
       queues: [...filasUsuario.value]
     }
-    const data = await usuarioStore.atualizarUsuario(payload.id, payload)
+    const data = await usuarioStore.updateUsuarios(payload.id, payload)
     emit('modalFilaUsuario:sucesso', data)
     $q.notify({
       type: 'positive',

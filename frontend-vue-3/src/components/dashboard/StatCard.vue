@@ -79,15 +79,20 @@ const props = defineProps({
   },
   formatType: {
     type: String,
-    default: 'number', // 'number', 'currency', 'percent', 'time'
-    validator: (v) => ['number', 'currency', 'percent', 'time'].includes(v)
+    default: 'number', // 'number', 'currency', 'percent', 'time', 'text'
+    validator: (v) => ['number', 'currency', 'percent', 'time', 'text'].includes(v)
   }
 })
 
 defineEmits(['click'])
 
 const formattedValue = computed(() => {
+  if (props.formatType === 'text') {
+    return props.value
+  }
+
   const val = Number(props.value)
+  if (isNaN(val)) return props.value
   
   switch (props.formatType) {
     case 'currency':
@@ -135,15 +140,21 @@ const trendIcon = computed(() => {
 
 <style lang="scss" scoped>
 .stat-card {
-  border-radius: 12px;
-  transition: all 0.2s;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
 
   &--clickable {
     cursor: pointer;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-4px);
     }
   }
 }

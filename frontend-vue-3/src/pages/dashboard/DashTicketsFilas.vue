@@ -1,7 +1,7 @@
 <template>
   <div v-if="userProfile === 'admin'">
-    <div class="row col q-pa-md justify-between items-center">
-      <h1>Painel Atendimentos</h1>
+    <div class="row col q-pa-sm justify-between items-center glass q-mb-sm" style="border-radius: 12px">
+      <div class="text-h5 text-bold">Painel Atendimentos</div>
       <q-btn
         color="primary"
         icon="mdi-filter"

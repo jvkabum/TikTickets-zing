@@ -18,7 +18,7 @@ export const useConfiguracaoStore = defineStore('configuracao', {
     loading: false
   }),
   actions: {
-    async listarConfiguracoes () {
+    async listarConfiguracoes() {
       this.loading = true
       try {
         const { data } = await ListarConfiguracoes()
@@ -38,15 +38,16 @@ export const useConfiguracaoStore = defineStore('configuracao', {
         this.loading = false
       }
     },
-    async atualizarConfiguracao (key, value) {
+    async atualizarConfiguracao(key, value) {
       this.loading = true
+      const newValue = (value !== undefined && value !== null) ? value : this.settings[key]
       const params = {
         key,
-        value: value !== null ? value : this.settings[key]
+        value: newValue
       }
       try {
         await AlterarConfiguracao(params)
-        this.settings[key] = params.value
+        this.settings[key] = newValue
         notificarSucesso('Configuração alterada com sucesso!')
       } catch (error) {
         console.error('Erro ao alterar configuração:', error)

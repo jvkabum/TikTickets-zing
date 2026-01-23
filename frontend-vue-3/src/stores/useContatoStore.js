@@ -143,6 +143,7 @@ export const useContatoStore = defineStore('contato', () => {
     importarContatos,
     exportarContatos,
     setContatos,
-    updateContato
+    updateContato,
+    obterContato
   }
 })

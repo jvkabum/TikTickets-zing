@@ -45,46 +45,48 @@
           </template>
           <template v-slot:body-cell-acoes="props">
             <q-td class="text-center">
-              <q-btn
-                color="blue-3"
-                icon="edit"
-                flat
-                round
-                class="bg-padrao"
-                @click="editFlow(props.row)"
-              >
-                <q-tooltip> Editar informações </q-tooltip>
-              </q-btn>
-              <q-btn
-                color="blue-3"
-                icon="mdi-content-duplicate"
-                flat
-                round
-                class="bg-padrao q-mx-sm"
-                @click="duplicarFluxo(props.row)"
-              >
-                <q-tooltip> Duplicar Fluxo </q-tooltip>
-              </q-btn>
-              <q-btn
-                color="blue-3"
-                icon="mdi-sitemap"
-                flat
-                round
-                class="bg-padrao"
-                @click="abrirFluxo(props.row)"
-              >
-                <q-tooltip> Abrir Fluxo </q-tooltip>
-              </q-btn>
-              <q-btn
-                color="blue-3"
-                icon="delete"
-                flat
-                round
-                class="bg-padrao"
-                @click="deletarFluxo(props.row)"
-              >
-                <q-tooltip> Excluir </q-tooltip>
-              </q-btn>
+              <div class="row items-center justify-center no-wrap q-gutter-xs">
+                <q-btn
+                  color="primary"
+                  icon="edit"
+                  flat
+                  round
+                  dense
+                  @click="editFlow(props.row)"
+                >
+                  <q-tooltip> Editar informações </q-tooltip>
+                </q-btn>
+                <q-btn
+                  color="primary"
+                  icon="mdi-content-duplicate"
+                  flat
+                  round
+                  dense
+                  @click="duplicarFluxo(props.row)"
+                >
+                  <q-tooltip> Duplicar Fluxo </q-tooltip>
+                </q-btn>
+                <q-btn
+                  color="primary"
+                  icon="mdi-sitemap"
+                  flat
+                  round
+                  dense
+                  @click="abrirFluxo(props.row)"
+                >
+                  <q-tooltip> Abrir Fluxo </q-tooltip>
+                </q-btn>
+                <q-btn
+                  color="negative"
+                  icon="delete"
+                  flat
+                  round
+                  dense
+                  @click="deletarFluxo(props.row)"
+                >
+                  <q-tooltip> Excluir </q-tooltip>
+                </q-btn>
+              </div>
             </q-td>
           </template>
         </q-table>

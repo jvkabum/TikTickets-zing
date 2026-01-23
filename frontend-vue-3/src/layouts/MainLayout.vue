@@ -1,9 +1,8 @@
 <template>
   <q-layout view="hHh Lpr lFf">
     <q-header
-      class="bg-white text-grey-8 q-py-xs"
-      height-hint="58"
-      bordered
+      class="glass text-grey-10 q-py-xs"
+      height-hint="65"
     >
       <q-toolbar>
         <q-btn
@@ -28,7 +27,7 @@
           <q-img
             src="/logo.png"
             spinner-color="primary"
-            style="height: 50px; width: 140px"
+            style="height: 40px; width: 120px"
           />
         </q-btn>
 
@@ -125,6 +124,7 @@ const authStore = useAuthStore()
 const ticketStore = useTicketStore()
 const whatsappStore = useWhatsappStore()
 const usuarioStore = useUsuarioStore()
+const configuracaoStore = useConfiguracaoStore()
 
 const { whatsapps } = storeToRefs(whatsappStore)
 const { user: usuario } = storeToRefs(authStore)
@@ -163,8 +163,7 @@ const efetuarLogout = async () => {
 }
 
 const listarConfiguracoes = async () => {
-  const { data } = await ListarConfiguracoes()
-  localStorage.setItem('configuracoes', JSON.stringify(data))
+  await configuracaoStore.listarConfiguracoes()
 }
 
 const conectarSocket = u => {

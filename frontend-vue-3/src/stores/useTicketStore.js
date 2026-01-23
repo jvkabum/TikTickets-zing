@@ -4,7 +4,8 @@ import {
   EncaminharMensagem,
   EnviarMensagemTexto,
   SincronizarMensagensTicket,
-  AtualizarStatusTicket
+  AtualizarStatusTicket,
+  CriarTicket
 } from 'src/service/tickets'
 
 export const useTicketStore = defineStore('ticket', () => {
@@ -189,6 +190,17 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
+  async function criarTicket(data) {
+    try {
+      const { data: res } = await CriarTicket(data)
+      updateTicket(res)
+      return res
+    } catch (error) {
+      console.error('Erro ao criar ticket', error)
+      throw error
+    }
+  }
+
   return {
     tickets,
     ticketFocado,
@@ -220,6 +232,7 @@ export const useTicketStore = defineStore('ticket', () => {
     encaminharMensagem,
     enviarMensagem,
     sincronizarMensagens,
-    atualizarStatusTicket
+    atualizarStatusTicket,
+    criarTicket
   }
 })

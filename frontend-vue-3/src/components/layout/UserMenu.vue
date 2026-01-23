@@ -17,7 +17,7 @@
     <q-btn
       round
       flat
-      class="bg-padrao text-bold q-mx-sm q-ml-lg"
+      class="text-bold q-mx-sm q-ml-lg"
     >
       <q-avatar size="26px" color="primary" text-color="white">
         {{ iniciais }}

@@ -209,7 +209,7 @@ const onSubmit = handleSubmit(async values => {
       const payload = { ...values }
       if (!payload.password) delete payload.password
 
-      const data = await usuarioStore.atualizarUsuario(usuario.id, payload)
+      const data = await usuarioStore.updateUsuarios(usuario.id, payload)
       emit('modalUsuario:usuario-editado', data)
       $q.notify({
         type: 'info',

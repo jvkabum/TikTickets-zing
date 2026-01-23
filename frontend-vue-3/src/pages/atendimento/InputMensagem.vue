@@ -11,7 +11,6 @@
       :offset="[0, 5]"
       persistent
       max-height="400px"
-      :target="inputRef"
     >
       <q-list
         separator
@@ -58,8 +57,8 @@
 
     <!-- Main Input Bar -->
     <div
-      style="min-height: 80px"
-      class="row q-pb-md q-pt-sm bg-white justify-start items-center text-grey-9 relative-position no-wrap q-px-sm"
+      style="min-height: 80px; border-radius: 16px; border-top: 1px solid rgba(0,0,0,0.05)"
+      class="row q-pb-md q-pt-sm glass justify-start items-center text-grey-9 relative-position no-wrap q-px-md"
     >
       <template v-if="!isRecordingAudio">
         <!-- Attachments & Emojis Buttons (Desktop) -->
@@ -87,10 +86,10 @@
               anchor="top right"
               self="bottom middle"
             >
-              <EmojiPicker
-                :native="true"
-                @select="onInsertSelectEmoji"
-              />
+                <!-- <EmojiPicker
+                  :native="true"
+                  @select="onInsertSelectEmoji"
+                /> -->
             </q-menu>
           </q-btn>
           <q-btn
@@ -234,7 +233,10 @@
 </template>
 
 <script setup>
+import { notificarErro } from 'src/utils/helpersNotifications'
+import { useTicketActions } from './useTicketActions'
 import bus from 'src/utils/eventBus'
+
 const props = defineProps({
   replyingMessage: { type: Object, default: null },
   mensagensRapidas: { type: Array, default: () => [] },

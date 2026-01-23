@@ -2,19 +2,22 @@ import { Notify } from 'quasar'
 import Errors from 'src/utils/errors'
 
 export const notificarErro = (msg, error = null) => {
+  console.error('notificarErro raw error:', error)
   let erro = ''
   if (error) {
     erro =
       error?.data?.error ||
       error?.data?.msg ||
       error?.data?.message ||
-      error?.response?.data.error ||
+      error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      (typeof error === 'string' ? error : null) ||
       'Não identificado'
   }
   const findErro = Errors.find(e => e.error == erro)
   let message = ''
 
-  if (error && findErro.error) {
+  if (error && findErro && findErro.error) {
     message = `
       <p class="text-bold">
       <span class="text-bold">${findErro.description}.</span>
@@ -34,7 +37,7 @@ export const notificarErro = (msg, error = null) => {
     type: 'negative',
     progress: true,
     position: 'top',
-    timeout: 500,
+    timeout: 4000,
     message,
     actions: [
       {
@@ -45,7 +48,6 @@ export const notificarErro = (msg, error = null) => {
     ],
     html: true
   })
-  throw new Error(message)
 }
 
 export const notificarSucesso = msg => {
@@ -55,7 +57,7 @@ export const notificarSucesso = msg => {
     progress: true,
     position: 'top',
     message,
-    timeout: 500,
+    timeout: 2500,
     actions: [
       {
         icon: 'close',

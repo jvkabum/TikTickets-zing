@@ -34,7 +34,7 @@
             :color="settings.NotViewAssignedTickets === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @update:model-value="atualizarConfiguracao('NotViewAssignedTickets')"
+            @update:model-value="v => atualizarConfiguracao('NotViewAssignedTickets', v)"
           />
         </q-item-section>
       </q-item>
@@ -59,7 +59,7 @@
             :color="settings.NotViewTicketsChatBot === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @update:model-value="atualizarConfiguracao('NotViewTicketsChatBot')"
+            @update:model-value="v => atualizarConfiguracao('NotViewTicketsChatBot', v)"
           />
         </q-item-section>
       </q-item>
@@ -85,7 +85,7 @@
             :color="settings.DirectTicketsToWallets === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @update:model-value="atualizarConfiguracao('DirectTicketsToWallets')"
+            @update:model-value="v => atualizarConfiguracao('DirectTicketsToWallets', v)"
           />
         </q-item-section>
       </q-item>
@@ -110,7 +110,7 @@
             emit-value
             option-value="id"
             option-label="name"
-            @update:model-value="atualizarConfiguracao('botTicketActive')"
+            @update:model-value="v => atualizarConfiguracao('botTicketActive', v)"
           />
         </q-item-section>
       </q-item>
@@ -133,7 +133,7 @@
             :color="settings.ignoreGroupMsg === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @update:model-value="atualizarConfiguracao('ignoreGroupMsg')"
+            @update:model-value="v => atualizarConfiguracao('ignoreGroupMsg', v)"
           />
         </q-item-section>
       </q-item>
@@ -158,7 +158,7 @@
             :color="settings.rejectCalls === 'enabled' ? 'green' : 'negative'"
             size="md"
             unchecked-icon="clear"
-            @update:model-value="atualizarConfiguracao('rejectCalls')"
+            @update:model-value="v => atualizarConfiguracao('rejectCalls', v)"
           />
         </q-item-section>
       </q-item>
@@ -178,7 +178,7 @@
             label="Mensagem ao rejeitar ligação:"
             input-style="min-height: 6vh; max-height: 9vh;"
             debounce="700"
-            @update:model-value="atualizarConfiguracao('callRejectMessage')"
+            @update:model-value="v => atualizarConfiguracao('callRejectMessage', v)"
           />
         </div>
       </div>
@@ -202,7 +202,7 @@
             outlined
             dense
             label="Dias para fechar tickets"
-            @update:model-value="atualizarConfiguracao('daysToClose')"
+            @update:model-value="v => atualizarConfiguracao('daysToClose', v)"
           />
         </q-item-section>
       </q-item>
