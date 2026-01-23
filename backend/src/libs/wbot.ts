@@ -23,19 +23,9 @@ import { unlink } from "fs/promises";
 const minimalArgs = require('./minimalArgs');
 
 // ====================
-// Definição da Interface
+// Uso da Interface Centralizada
 // ====================
-
-interface Session extends Client {
-  id: number; // ID da sessão
-  checkMessages: any; // Função para verificar mensagens
-  lastConnectionVerification?: number; // Última verificação de conexão
-  reconnectionAttempts?: number; // Contador de tentativas de reconexão
-  monitorInterval?: any; // Intervalo para monitoramento da sessão
-  clientId?: number; // ID do cliente
-  close?: () => void; // Função para fechar a sessão
-  info?: any; // Informações da sessão do WhatsApp
-}
+// WbotSession já importada de "../types/WhatsAppSession"
 
 // Armazena as sessões ativas do WhatsApp
 const sessions: WbotSession[] = [];
@@ -96,7 +86,7 @@ export const removeWbot = async (whatsappId: number): Promise<void> => {
 };
 
 // Função para verificar a conexão real com o WhatsApp (não apenas o estado)
-const verifyRealConnection = async (wbot: Session): Promise<boolean> => {
+const verifyRealConnection = async (wbot: WbotSession): Promise<boolean> => {
   try {
     if (!wbot) return false;
 
@@ -185,7 +175,7 @@ const verifyRealConnection = async (wbot: Session): Promise<boolean> => {
 
 // Função para forçar a reconexão de um bot
 const forceReconnect = async (
-  wbot: Session,
+  wbot: WbotSession,
   tenantId: number | string
 ): Promise<boolean> => {
   try {
@@ -446,7 +436,7 @@ const forceReconnect = async (
 };
 
 // Função para verificar mensagens
-const checkMessages = async (wbot: Session, tenantId: number | string) => {
+const checkMessages = async (wbot: WbotSession, tenantId: number | string) => {
   if (!wbot) {
     logger.error(`Bot indefinido na verificação. Tenant: ${tenantId}`);
     return;
@@ -550,7 +540,7 @@ const checkMessages = async (wbot: Session, tenantId: number | string) => {
 };
 
 // Função para obter a instância do bot do WhatsApp
-export const getWbot = (whatsappId: number): Session => {
+export const getWbot = (whatsappId: number): WbotSession => {
   const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
   if (sessionIndex === -1) {
     logger.error(`Sessão do WhatsApp não inicializada. ID: ${whatsappId}`);
@@ -560,11 +550,11 @@ export const getWbot = (whatsappId: number): Session => {
     );
   }
 
-  return sessions[sessionIndex] as Session;
+  return sessions[sessionIndex] as WbotSession;
 };
 
 // Função para verificar se a conexão está realmente ativa antes de usar
-export const getActiveWbot = async (whatsappId: number): Promise<Session> => {
+export const getActiveWbot = async (whatsappId: number): Promise<WbotSession> => {
   const wbot = getWbot(whatsappId);
 
   // Se a conexão já foi verificada como ativa, retorna imediatamente
@@ -606,7 +596,7 @@ const args: string[] = [
 ];
 
 // Função para inicializar o bot do WhatsApp
-export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
+export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
   return new Promise((resolve, reject) => {
     try {
       const io = getIO();
@@ -633,7 +623,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
         webVersion: process.env.WEB_VERSION || "2.2412.54v2",
         webVersionCache: { type: "local" },
         qrMaxRetries: 20
-      }) as Session;
+      }) as WbotSession;
 
       // Variáveis de controle do Watchdog
       let readyFired = false;
@@ -791,7 +781,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
       });
 
       wbot.on("auth_failure", async msg => {
-        logger.error(`Session: ${sessionName}-AUTHENTICATION FAILURE :: ${msg}`);
+        logger.error(`WbotSession: ${sessionName}-AUTHENTICATION FAILURE :: ${msg}`);
         if (watchdogTimer) clearTimeout(watchdogTimer);
 
         if (whatsapp.retries > 1) {
