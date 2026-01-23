@@ -1,41 +1,37 @@
 project:
-  name: "setup-context-documentation"
-  scale: MEDIUM
-  started: "2026-01-23T16:05:25.467Z"
-  current_phase: E
+  name: "fix-ffmpeg-final"
+  scale: SMALL
+  started: "2026-01-23T17:08:33.188Z"
+  current_phase: V
 
 phases:
   P:
     status: filled
-    started_at: "2026-01-23T16:05:25.467Z"
-    completed_at: "2026-01-23T16:05:59.068Z"
+    started_at: "2026-01-23T17:08:33.188Z"
+    completed_at: "2026-01-23T17:09:57.399Z"
   R:
-    status: filled
-    started_at: "2026-01-23T16:05:59.070Z"
-    completed_at: "2026-01-23T16:06:39.813Z"
+    status: skipped
+    reason: "Not required for scale SMALL"
   E:
-    status: in_progress
-    started_at: "2026-01-23T16:06:39.815Z"
+    status: filled
+    started_at: "2026-01-23T17:09:57.402Z"
+    completed_at: "2026-01-23T17:28:10.222Z"
   V:
-    status: pending
+    status: in_progress
+    started_at: "2026-01-23T17:28:10.225Z"
   C:
     status: skipped
-    reason: "Not required for scale MEDIUM"
+    reason: "Not required for scale SMALL"
 
 execution:
   history:
-    - timestamp: "2026-01-23T16:07:49.687Z"
-      phase: E
-      action: plan_phase_updated
-      plan: "setup-context-documentation"
-      description: "Plan phase phase-2 updated to in_progress"
-  last_activity: "2026-01-23T16:07:49.687Z"
-  resume_context: "Fase do plano atualizada"
+    - timestamp: "2026-01-23T17:28:10.225Z"
+      phase: V
+      action: started
+  last_activity: "2026-01-23T17:28:10.225Z"
+  resume_context: "Fase V (Validação) em progresso"
 
 approval:
   plan_created: true
-  plan_approved: true
-  approved_by: "architect"
-  approved_at: "2026-01-23T16:06:24.973Z"
-  approval_notes: "Documentação aprovada. Reflete fielmente o estado do projeto e segue os padrões de metadados v2.0.0."
+  plan_approved: false
 

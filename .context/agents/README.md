@@ -19,6 +19,8 @@ Este diretório contém playbooks prontos para personalização para os agentes 
 - **[Especialista em Backend](./backend-specialist.md)** — Projetar e implementar a arquitetura do lado do servidor.
 - **[Especialista em Frontend](./frontend-specialist.md)** — Projetar e implementar interfaces de usuário premium.
 - **[Especialista em Vue 3 & Quasar](./vue3-quasar-specialist.md)** — Arquiteto especializado no ecossistema moderno do frontend.
+- **[Quasar Guru](./quasar-guru.md)** — Especialista sênior sênior focado em Quasar 2, Composition API e Pinia.
+- **[Typed Router Architect](./typed-router-architect.md)** — Especialista em roteamento automático e arquitetura de pastas Vue 3.
 - **[Especialista em WhatsApp](./whatsapp-specialist.md)** — Autoridade técnica em protocolos de mensageria e whatsapp-web.js.
 - **[Especialista em Comparação de Migração](./migration-comparison-specialist.md)** — Auditor de paridade entre o sistema legado e o moderno.
 - **[Desenvolvedor de Funcionalidades](./feature-developer.md)** — Implementar novas funcionalidades ponta a ponta.

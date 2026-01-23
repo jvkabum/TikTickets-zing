@@ -36,6 +36,9 @@ On-demand expertise for AI agents. Skills are task-specific procedures that get 
 | [Decomposição de Funcionalidades (Feature Breakdown)](./feature-breakdown/SKILL.md) | Divisão de funcionalidades complexas em tarefas implementáveis no TikTickets-zing | P |
 | [Design de API (API Design)](./api-design/SKILL.md) | Criação de endpoints RESTful eficientes e seguros para o TikTickets-zing | P, R |
 | [Auditoria de Segurança (Security Audit)](./security-audit/SKILL.md) | Checklist de revisão de segurança para código e infraestrutura do TikTickets-zing | R, V |
+| [Quasar 2 Mastery](./quasar2-composition-pinia/SKILL.md) | Guia definitivo para Quasar 2, Composition API e Pinia | P, E, R |
+| [Auto-Imports](./auto-imports/SKILL.md) | Guia de produtividade e limpeza de código via Auto-Imports | E |
+| [Typed Router](./typed-router/SKILL.md) | Roteamento automático e tipado via unplugin-vue-router | P, E, R |
 
 ## Creating Custom Skills
 
@@ -78,6 +81,6 @@ mode: false        # Optional: mode command?
 |-------|------|--------|
 | P | Planning | feature-breakdown, documentation, api-design |
 | R | Review | pr-review, code-review, api-design, security-audit |
-| E | Execution | commit-message, test-generation, refactoring, bug-investigation |
+| E | Execution | commit-message, test-generation, refactoring, bug-investigation, quasar2-composition-pinia |
 | V | Validation | pr-review, code-review, test-generation, security-audit |
 | C | Confirmation | commit-message, documentation |

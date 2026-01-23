@@ -1,13 +1,13 @@
 {
   "active": [
     {
-      "slug": "setup-context-documentation",
-      "path": "plans/setup-context-documentation.md",
-      "title": "Plano: Inicialização de Contexto Inteligente (TikTickets-zing)",
-      "linkedAt": "2026-01-23T16:05:36.993Z",
+      "slug": "fix-ffmpeg-enoent-final-resolution",
+      "path": "plans/fix-ffmpeg-enoent-final-resolution.md",
+      "title": "🎯 Plano: Resolução Final FFmpeg e Organização de Git",
+      "linkedAt": "2026-01-23T17:09:43.572Z",
       "status": "active"
     }
   ],
   "completed": [],
-  "primary": "setup-context-documentation"
+  "primary": "fix-ffmpeg-enoent-final-resolution"
 }
