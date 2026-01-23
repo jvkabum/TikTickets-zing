@@ -6,17 +6,22 @@ import fs from "fs";
 import { Message as WbotMessage } from "whatsapp-web.js";
 import Contact from "../../../models/Contact";
 import Ticket from "../../../models/Ticket";
+import ffmpeg from "../../../libs/ffmpegConfig";
 import ffmpegStatic from "ffmpeg-static";
-import ffmpeg from "fluent-ffmpeg";
+import { logger } from "../../../utils/logger";
 
+// GARANTIA EXTRA: Configura via variável de ambiente também
 if (ffmpegStatic) {
+  logger.info(`[VerifyMediaMessage] Configurando FFMPEG_PATH: ${ffmpegStatic}`);
+  process.env.FFMPEG_PATH = ffmpegStatic;
   ffmpeg.setFfmpegPath(ffmpegStatic);
+} else {
+  logger.warn("[VerifyMediaMessage] ffmpeg-static não retornou um caminho válido!");
 }
 
 import Message from "../../../models/Message";
 import VerifyQuotedMessage from "./VerifyQuotedMessage";
 import CreateMessageService from "../../MessageServices/CreateMessageService";
-import { logger } from "../../../utils/logger";
 
 
 const writeFileAsync = promisify(writeFile);
@@ -63,6 +68,7 @@ const VerifyMediaMessage = async (
 
         return new Promise<void>((resolve, reject) => {
           ffmpeg(inputFile)
+            .setFfmpegPath(ffmpegStatic) // Configuração forçada na instância
             .toFormat("mp3")
             .save(outputFile)
             .on("end", () => {

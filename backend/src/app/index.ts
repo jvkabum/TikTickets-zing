@@ -13,13 +13,8 @@ import bootstrap from "./boot";
 import { initIO } from "../libs/socket";
 import { StartAllWhatsAppsSessions } from "../services/WbotServices/StartAllWhatsAppsSessions";
 import configureExpress from './express';
-import ffmpeg from "ffmpeg-static";
-import fluentFfmpeg from "fluent-ffmpeg";
-
-// Configura o caminho do FFmpeg para usar o binário estático do npm
-if (ffmpeg) {
-  fluentFfmpeg.setFfmpegPath(ffmpeg);
-}
+// Inicializa o módulo FFmpeg centralizado (garante configuração antes de qualquer uso)
+import "../libs/ffmpegConfig";
 
 // Função principal que inicializa toda a aplicação
 export default async function application() {

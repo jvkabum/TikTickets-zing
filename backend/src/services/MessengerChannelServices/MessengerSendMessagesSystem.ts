@@ -2,7 +2,15 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { readFile } from "fs/promises";
-import ffmpeg from "fluent-ffmpeg";
+// Usa o módulo centralizado que configura o path do FFmpeg automaticamente
+import ffmpeg from "../../libs/ffmpegConfig";
+import ffmpegStatic from "ffmpeg-static";
+
+// GARANTIA EXTRA: Força a configuração do path novamente
+if (ffmpegStatic) {
+  ffmpeg.setFfmpegPath(ffmpegStatic);
+}
+
 import { join } from "path";
 import { Op } from "sequelize";
 import sharp from "sharp";
@@ -97,6 +105,7 @@ const MessengerSendMessagesSystem = async (
           const newAudioPath = join(customPath, `${splitName[0]}.mp4`);
           await new Promise((resolve, reject) => {
             ffmpeg(mediaPath)
+              .setFfmpegPath(ffmpegStatic) // Forçando path na instância
               .toFormat("mp4")
               .on("error", error => reject(error))
               .on("end", () => resolve(true))

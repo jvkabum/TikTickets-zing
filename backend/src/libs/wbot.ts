@@ -90,8 +90,16 @@ const verifyRealConnection = async (wbot: WbotSession): Promise<boolean> => {
   try {
     if (!wbot) return false;
 
-    // Obtém o estado atual
-    const state = await wbot.getState();
+    // Obtém o estado atual com tratamento de erro
+    // O Puppeteer pode perder o contexto se a página recarregar
+    let state: string | null = null;
+    try {
+      state = await wbot.getState();
+    } catch (stateError) {
+      logger.warn(`[verifyRealConnection] Não foi possível obter estado da sessão ${wbot.id}: ${stateError}`);
+      return false;
+    }
+
     if (state !== "CONNECTED") return false;
 
     // Múltiplas verificações para confirmar conexão ativa
@@ -163,7 +171,13 @@ const verifyRealConnection = async (wbot: WbotSession): Promise<boolean> => {
       return true;
     }
 
-    logger.warn(`⚠️ ALERTA: Todas as verificações de conexão falharam para sessão ${wbot.id}. Estado atual: ${await wbot.getState()}`);
+    // Log final com tratamento de erro
+    try {
+      const currentState = await wbot.getState();
+      logger.warn(`⚠️ ALERTA: Todas as verificações de conexão falharam para sessão ${wbot.id}. Estado atual: ${currentState}`);
+    } catch (finalStateError) {
+      logger.warn(`⚠️ ALERTA: Todas as verificações de conexão falharam para sessão ${wbot.id}. Não foi possível obter estado final.`);
+    }
     verifiedConnections.set(wbot.id, false);
     return false;
   } catch (error) {
@@ -590,9 +604,14 @@ const args: string[] = [
   '--disable-gpu',
   '--no-first-run',
   '--no-zygote',
-  '--single-process',
   '--disable-web-security',
-  '--disable-features=site-per-process'
+  '--disable-features=site-per-process',
+  '--disable-extensions',
+  '--disable-client-side-phishing-detection',
+  '--disable-default-apps',
+  '--hide-scrollbars',
+  '--mute-audio',
+  '--disable-gl-drawing-for-tests'
 ];
 
 // Função para inicializar o bot do WhatsApp
@@ -637,18 +656,32 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
 
         logger.info(`[${source}] Processando inicialização da sessão ${whatsapp.id}...`);
 
+        // Captura informações com tratamento de erro
         const info: any = wbot?.info;
-        const wbotVersion = await wbot.getWWebVersion();
-        const wbotBrowser = await wbot.pupBrowser?.version();
 
+        let wbotVersion = "unknown";
+        let wbotBrowser = "unknown";
         let profilePicUrl: string | null = null;
+
+        try {
+          wbotVersion = await wbot.getWWebVersion();
+        } catch (e) {
+          logger.warn(`[${source}] Não foi possível obter versão do WhatsApp Web: ${e}`);
+        }
+
+        try {
+          wbotBrowser = await wbot.pupBrowser?.version() || "unknown";
+        } catch (e) {
+          logger.warn(`[${source}] Não foi possível obter versão do navegador: ${e}`);
+        }
+
         try {
           const wid = wbot?.info?.wid?._serialized;
           if (wid) {
             profilePicUrl = await wbot.getProfilePicUrl(wid);
           }
-        } catch (error) {
-          logger.error(`Error getting profile picture for ${whatsapp.id}: ${error}`);
+        } catch (e) {
+          logger.warn(`[${source}] Erro ao obter foto de perfil: ${e}`);
         }
 
         await whatsapp.update({
@@ -682,15 +715,26 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
 
         // Verificação adicional para garantir estabilidade
         if (source === "WATCHDOG") {
-          // Se foi iniciado pelo watchdog, a conexão já foi verificada, mas registramos log
           logger.info(`[WATCHDOG] Sessão ${whatsapp.id} inicializada via mecanismo de recuperação.`);
         } else {
-          // Se foi via evento normal, fazemos uma verificação extra
-          await verifyRealConnection(wbot);
+          try {
+            await verifyRealConnection(wbot);
+          } catch (e) {
+            logger.warn(`[${source}] Erro na verificação inicial de conexão: ${e}`);
+          }
         }
 
-        wbot.sendPresenceAvailable();
-        SyncUnreadMessagesWbot(wbot, tenantId);
+        try {
+          wbot.sendPresenceAvailable();
+        } catch (e) {
+          logger.warn(`[${source}] Erro ao enviar presença disponível: ${e}`);
+        }
+
+        try {
+          SyncUnreadMessagesWbot(wbot, tenantId);
+        } catch (e) {
+          logger.warn(`[${source}] Erro ao sincronizar mensagens não lidas: ${e}`);
+        }
 
         const checkInterval = +(process.env.CHECK_INTERVAL || 30000);
         wbot.checkMessages = setInterval(
@@ -700,6 +744,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
           tenantId
         );
 
+        logger.info(`[${source}] Sessão ${whatsapp.id} inicializada com sucesso | Número: ${wbot?.info?.wid?.user}`);
         resolve(wbot);
       };
 
@@ -718,12 +763,13 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
               logger.info(`[WATCHDOG] Conexão válida detectada! Forçando inicialização...`);
               await handleReady("WATCHDOG");
             } else {
-              logger.warn(`[WATCHDOG] Conexão não confirmada. Mantendo aguardo.`);
+              logger.warn(`[WATCHDOG] Conexão não confirmada via Watchdog. Mantendo aguardo.`);
             }
           }
         }, 15000); // 15 segundos
       };
 
+      // Adiciona manipuladores de eventos para encerramento adequado
       process.on('SIGTERM', async () => {
         logger.info(`Processo recebeu SIGTERM, destruindo sessão ${whatsapp.id}`);
         try {
@@ -746,7 +792,14 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
       wbot.lastConnectionVerification = 0;
       wbot.reconnectionAttempts = 0;
 
-      wbot.initialize();
+      // Inicializa com tratamento de erro
+      (async () => {
+        try {
+          await wbot.initialize();
+        } catch (initErr) {
+          logger.error(`Erro na inicialização do wbot: ${initErr}`);
+        }
+      })();
 
       wbot.on("qr", async qr => {
         if (whatsapp.status === "CONNECTED") return;
@@ -770,18 +823,16 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
 
       wbot.on("authenticated", async () => {
         logger.info(`Sessão ${sessionName} autenticada com sucesso`);
-        // Inicia o watchdog imediatamente após autenticação
+        // Inicia o watchdog após autenticação
         startWatchdog();
       });
 
       wbot.on('loading_screen', (percent, message) => {
         logger.info(`[${sessionName}] LOADING SCREEN: ${percent}% - ${message}`);
-        // Se passar de 95% na loading screen, podemos considerar um sinal forte de que vai conectar
-        // mas deixamos o watchdog validar via verifyRealConnection por segurança
       });
 
       wbot.on("auth_failure", async msg => {
-        logger.error(`WbotSession: ${sessionName}-AUTHENTICATION FAILURE :: ${msg}`);
+        logger.error(`Session: ${sessionName}-AUTHENTICATION FAILURE :: ${msg}`);
         if (watchdogTimer) clearTimeout(watchdogTimer);
 
         if (whatsapp.retries > 1) {

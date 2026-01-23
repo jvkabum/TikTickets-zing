@@ -8,7 +8,7 @@ dist
 .cache
 logs/
 WWebJS/
-
+/workflow
 
 yarn.lock
 yarn-error.log
