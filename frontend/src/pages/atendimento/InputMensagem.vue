@@ -122,7 +122,7 @@
               class="emoji-menu"
             >
               <VEmojiPicker
-                style="width: 40vw"
+                style="width: 10vw"
                 :showSearch="false"
                 :emojisByRow="20"
                 labelSearch="Localizar..."

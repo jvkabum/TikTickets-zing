@@ -63,8 +63,7 @@
       <template v-if="!isRecordingAudio">
         <!-- Attachments & Emojis Buttons (Desktop) -->
         <div
-          class="row no-wrap q-gutter-xs"
-          v-if="!$q.screen.xs"
+          class="row no-wrap q-gutter-xs items-center"
         >
           <q-btn
             flat
@@ -72,7 +71,7 @@
             icon="mdi-paperclip"
             @click="abrirEnvioArquivo"
             class="btn-rounded"
-            :color="$q.dark.isActive ? 'white' : 'primary'"
+            :color="$q.dark.isActive ? 'white' : 'grey-8'"
           >
             <q-tooltip>Anexar arquivo</q-tooltip>
           </q-btn>
@@ -81,9 +80,24 @@
             dense
             icon="mdi-emoticon-happy-outline"
             class="btn-rounded"
-            :color="$q.dark.isActive ? 'white' : 'primary'"
+            :color="$q.dark.isActive ? 'white' : 'grey-8'"
           >
             <q-tooltip>Emojis</q-tooltip>
+            <q-menu
+              anchor="top right"
+              self="bottom middle"
+              :offset="[380, 100]"
+              class="emoji-menu"
+            >
+              <EmojiPicker
+                :native="true"
+                theme="light"
+                :hide-search="true"
+                :emojis-by-row="20"
+                @select="onInsertSelectEmoji"
+                style="width: 60vw"
+              />
+            </q-menu>
           </q-btn>
           <q-btn
             flat
@@ -91,7 +105,7 @@
             icon="mdi-message-video"
             @click="handlSendLinkVideo"
             class="btn-rounded"
-            :color="$q.dark.isActive ? 'white' : 'primary'"
+            :color="$q.dark.isActive ? 'white' : 'grey-8'"
           >
             <q-tooltip>Videoconferência</q-tooltip>
           </q-btn>
@@ -131,7 +145,7 @@
           v-else
           ref="inputRef"
           v-model="textChat"
-          placeholder="Digite sua mensagem"
+          placeholder="Digita sua mensagem"
           outlined
           dense
           rounded
@@ -240,6 +254,8 @@ import { notificarErro } from 'src/utils/helpersNotifications'
 import MicRecorder from 'mic-recorder-to-mp3'
 import RecordingTimer from './RecordingTimer.vue'
 import bus from 'src/utils/eventBus'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 
 const props = defineProps({
   replyingMessage: { type: Object, default: null },
@@ -294,9 +310,10 @@ const onInsertSelectEmoji = emoji => {
   const input = inputRef.value.$refs.input
   const start = input.selectionStart
   const end = input.selectionEnd
-  textChat.value = textChat.value.substring(0, start) + emoji.i + textChat.value.substring(end)
+  const char = emoji.i || emoji.data || emoji
+  textChat.value = textChat.value.substring(0, start) + char + textChat.value.substring(end)
   nextTick(() => {
-    input.selectionStart = input.selectionEnd = start + emoji.i.length
+    input.selectionStart = input.selectionEnd = start + char.length
     input.focus()
   })
 }
