@@ -271,7 +271,7 @@ import { ForceDirected } from './force-directed'
 import FlowHelp from './help.vue'
 import './index.css'
 import FlowInfo from './info.vue'
-import './jsplumb'
+// import './jsplumb' // Carregado via public/jsplumb.js
 import { jsplumbConnectOptions, jsplumbSetting, jsplumbSourceOptions, jsplumbTargetOptions } from './mixins'
 import flowNode from './node.vue'
 import FlowNodeForm from './node_form.vue'
@@ -282,6 +282,7 @@ const { flow: cDataFlow } = storeToRefs(chatFlowStore)
 
 const isFullScreen = ref(false)
 const isPanelVisible = ref(false)
+// eslint-disable-next-line
 const jsPlumb = ref(null)
 const easyFlowVisible = ref(true)
 const flowInfoVisible = ref(false)
@@ -736,10 +737,11 @@ const dataReload = newData => {
     Object.assign(data, cloned)
     easyFlowVisible.value = true
     nextTick(() => {
-      // eslint-disable-next-line no-undef
-      jsPlumb.value = jsPlumb.value.getInstance()
-      jsPlumbInit()
-      loadEasyFlow()
+      if (window.jsPlumb) {
+        jsPlumb.value = window.jsPlumb.getInstance()
+        jsPlumbInit()
+        loadEasyFlow()
+      }
     })
   })
 }
@@ -832,11 +834,14 @@ watch(
 )
 
 onMounted(() => {
-  // eslint-disable-next-line no-undef
-  jsPlumb.value = jsPlumb.value.getInstance()
-  jsPlumbInit()
-  if (cDataFlow.value?.flow) {
-    dataReload(cDataFlow.value.flow)
+  if (window.jsPlumb) {
+    jsPlumb.value = window.jsPlumb.getInstance()
+    jsPlumbInit()
+    if (cDataFlow.value?.flow) {
+      dataReload(cDataFlow.value.flow)
+    }
+  } else {
+    console.error('jsPlumb não foi carregado corretamente.')
   }
 })
 
