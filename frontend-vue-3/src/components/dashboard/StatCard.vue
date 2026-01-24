@@ -132,14 +132,13 @@ const formattedValue = computed(() => {
       return `${val.toFixed(1)}%`
     
     case 'time':
-      // Formata segundos para hh:mm:ss
+      // Formata segundos para hh:mm
       const hours = Math.floor(val / 3600)
       const minutes = Math.floor((val % 3600) / 60)
-      const seconds = val % 60
       if (hours > 0) {
         return `${hours}h ${minutes}m`
       }
-      return `${minutes}m ${seconds}s`
+      return `${minutes}m`
     
     default:
       if (val >= 1000000) {

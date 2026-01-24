@@ -29,14 +29,22 @@ const setConfigsUsuario = ({ isDark }) => {
   }
   Dark.set(isDark)
   const usuario = JSON.parse(localStorage.getItem('usuario'))
+  const userId = usuario?.id || localStorage.getItem('userId')
+
+  if (!userId || userId === 'undefined') {
+    console.warn('ID do usuário não encontrado para sincronizar configurações')
+    localStorage.setItem('usuario', JSON.stringify({ ...usuario, configs: { isDark: Dark.isActive } }))
+    return
+  }
+
   const filtrosAtendimento = JSON.parse(localStorage.getItem('filtrosAtendimento')) || filtroPadrao
   const data = {
     filtrosAtendimento,
     isDark: Dark.isActive
   }
-  UpdateConfiguracoesUsuarios(usuario.userId, data)
+  UpdateConfiguracoesUsuarios(userId, data)
     .then(r => console.log('Configurações do usuário atualizadas'))
-    .catch(e => console.error)
+    .catch(e => console.error('Erro ao atualizar configurações:', e))
 
   localStorage.setItem('usuario', JSON.stringify({ ...usuario, configs: data }))
 }

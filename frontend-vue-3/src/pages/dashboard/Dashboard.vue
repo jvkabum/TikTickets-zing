@@ -229,9 +229,6 @@ const params = reactive({
   isGroup: false
 })
 
-const evolutionKey = ref(0)
-const evolutionByPeriodKey = ref(0)
-
 const ChartTicketsQueue = ref(null)
 const ChartTicketsChannels = ref(null)
 const ChartTicketsEvolutionChannels = ref(null)
@@ -379,8 +376,29 @@ const ticketsChannelsOptions = computed(() => ({
 
 const ticketsEvolutionByPeriodOptions = computed(() => {
     const rawData = Array.isArray(ticketsEvolutionByPeriod.value) ? ticketsEvolutionByPeriod.value : []
-    const labels = rawData.map(e => e.label)
-    const seriesData = rawData.map(e => +e.qtd)
+    
+    let labels = rawData.map(e => e.label)
+    let finalData = rawData
+    
+    // Padding para 1 dia (Efeito Montanha)
+    if (labels.length === 1) {
+      const [d, m, y] = labels[0].split('/')
+      const current = new Date(y, m - 1, d)
+      const yesterday = new Date(current)
+      yesterday.setDate(yesterday.getDate() - 1)
+      const tomorrow = new Date(current)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      
+      const yesterdayStr = format(yesterday, 'dd/MM/yyyy')
+      const tomorrowStr = format(tomorrow, 'dd/MM/yyyy')
+      
+      labels = [yesterdayStr, labels[0], tomorrowStr]
+      finalData = [
+        { label: yesterdayStr, qtd: 0 },
+        ...rawData,
+        { label: tomorrowStr, qtd: 0 }
+      ]
+    }
     
     return {
       ...baseChartOptions.value,
@@ -416,7 +434,7 @@ const ticketsEvolutionByPeriodOptions = computed(() => {
           formatter: (val) => val + " total"
         }
       },
-      series: [{ name: 'Atendimentos', data: seriesData }]
+      series: [{ name: 'Atendimentos', data: finalData.map(e => +e.qtd) }]
     }
 })
 
@@ -425,16 +443,40 @@ const ticketsEvolutionChannelsOptions = computed(() => {
     const rawData = Array.isArray(data) ? data : Object.values(data)
     const dataLabel = groupBy(rawData, 'dt_referencia')
     
-    const labels = Object.keys(dataLabel).sort((a, b) => {
+    let labels = Object.keys(dataLabel).sort((a, b) => {
       const [da, ma, ya] = a.split('/')
       const [db, mb, yb] = b.split('/')
       return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db)
     })
     
     const canais = [...new Set(rawData.map(d => d.label))]
+    
+    // Padding para garantir visibilidade de 1 dia (Efeito Montanha)
+    const paddingData = []
+    if (labels.length === 1) {
+      const [d, m, y] = labels[0].split('/')
+      const current = new Date(y, m - 1, d)
+      const yesterday = new Date(current)
+      yesterday.setDate(yesterday.getDate() - 1)
+      const tomorrow = new Date(current)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      
+      const yesterdayStr = format(yesterday, 'dd/MM/yyyy')
+      const tomorrowStr = format(tomorrow, 'dd/MM/yyyy')
+      
+      labels = [yesterdayStr, labels[0], tomorrowStr]
+      
+      canais.forEach(canal => {
+        paddingData.push({ label: canal, dt_referencia: yesterdayStr, qtd: 0 })
+        paddingData.push({ label: canal, dt_referencia: tomorrowStr, qtd: 0 })
+      })
+    }
+
+    const combinedData = [...paddingData, ...rawData]
+    
     const series = canais.map(canal => {
       const dataForCanal = labels.map(dataRef => {
-        const item = rawData.find(d => d.label === canal && d.dt_referencia === dataRef)
+        const item = combinedData.find(d => d.label === canal && d.dt_referencia === dataRef)
         return item ? Number(item.qtd) : 0
       })
       return { name: canal, data: dataForCanal }
@@ -444,7 +486,7 @@ const ticketsEvolutionChannelsOptions = computed(() => {
       ...baseChartOptions.value,
       chart: { 
         ...baseChartOptions.value.chart,
-        type: 'area', 
+        type: 'line', 
         height: 350, 
         stacked: true, 
         animations: { enabled: true, easing: 'easeinout', speed: 800 }
@@ -514,11 +556,10 @@ const TicketsPerUsersDetailColumn = [
 ]
 
 const formatTimeCompact = (obj) => {
-  if (!obj || (!obj.hours && !obj.minutes && !obj.seconds)) return '0s'
+  if (!obj || (!obj.hours && !obj.minutes)) return '0m'
   const h = obj.hours ? `${obj.hours}h ` : ''
-  const m = obj.minutes ? `${obj.minutes}m ` : ''
-  const s = obj.seconds ? `${obj.seconds}s` : ''
-  return `${h}${m}${s}`.trim()
+  const m = obj.minutes ? `${obj.minutes}m` : '0m'
+  return `${h}${m}`.trim()
 }
 
 const cTmaFormat = computed(() => formatTimeCompact(ticketsAndTimes.value.tma))
@@ -601,101 +642,9 @@ onMounted(() => {
   getDashData()
 })
 
-// Watches para Reatividade e Padding de Dados (BI Sênior)
-watch(ticketsEvolutionChannels, (data) => {
-    if (!data || data.length === 0) return
-    
-    const rawData = Array.isArray(data) ? data : Object.values(data)
-    const dataLabel = groupBy(rawData, 'dt_referencia')
-    
-    let labels = Object.keys(dataLabel).sort((a, b) => {
-      const [da, ma, ya] = a.split('/')
-      const [db, mb, yb] = b.split('/')
-      return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db)
-    })
-    
-    const canais = [...new Set(rawData.map(d => d.label))]
-    
-    // Padding para garantir visibilidade de 1 dia (Efeito Montanha)
-    const paddingData = []
-    if (labels.length === 1) {
-      const [d, m, y] = labels[0].split('/')
-      const current = new Date(y, m - 1, d)
-      
-      const yesterday = new Date(current)
-      yesterday.setDate(yesterday.getDate() - 1)
-      const tomorrow = new Date(current)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      
-      const yesterdayStr = format(yesterday, 'dd/MM/yyyy')
-      const tomorrowStr = format(tomorrow, 'dd/MM/yyyy')
-      
-      labels = [yesterdayStr, labels[0], tomorrowStr]
-      
-      canais.forEach(canal => {
-        paddingData.push({ label: canal, dt_referencia: yesterdayStr, qtd: 0 })
-        paddingData.push({ label: canal, dt_referencia: tomorrowStr, qtd: 0 })
-      })
-    }
-
-    const combinedData = [...paddingData, ...rawData]
-    
-    const series = canais.map(canal => {
-      const dataForCanal = labels.map(dataRef => {
-        const item = combinedData.find(d => d.label === canal && d.dt_referencia === dataRef)
-        return item ? Number(item.qtd) : 0
-      })
-      return { name: canal, data: dataForCanal }
-    })
-
-    ticketsEvolutionChannelsOptions.value = {
-      ...ticketsEvolutionChannelsOptions.value,
-      xaxis: {
-        ...ticketsEvolutionChannelsOptions.value.xaxis,
-        categories: labels
-      },
-      series: series
-    }
-    evolutionKey.value++
-})
-
-watch(ticketsEvolutionByPeriod, (data) => {
-    if (!data || data.length === 0) return
-    const rawData = Array.isArray(data) ? data : Object.values(data)
-    
-    let labels = rawData.map(e => e.label)
-    let finalData = rawData
-    
-    if (labels.length === 1) {
-      const [d, m, y] = labels[0].split('/')
-      const current = new Date(y, m - 1, d)
-      const yesterday = new Date(current)
-      yesterday.setDate(yesterday.getDate() - 1)
-      const tomorrow = new Date(current)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      
-      const yesterdayStr = format(yesterday, 'dd/MM/yyyy')
-      const tomorrowStr = format(tomorrow, 'dd/MM/yyyy')
-      
-      labels = [yesterdayStr, labels[0], tomorrowStr]
-      finalData = [
-        { label: yesterdayStr, qtd: 0 },
-        ...rawData,
-        { label: tomorrowStr, qtd: 0 }
-      ]
-    }
-    
-    const series = [{ name: 'Atendimentos', data: finalData.map(e => +e.qtd) }]
-    
-    ticketsEvolutionByPeriodOptions.value = {
-      ...ticketsEvolutionByPeriodOptions.value,
-      xaxis: {
-        ...ticketsEvolutionByPeriodOptions.value.xaxis,
-        categories: labels
-      },
-      series: series
-    }
-    evolutionByPeriodKey.value++
+onMounted(() => {
+  listarFilas()
+  getDashData()
 })
 </script>
 
