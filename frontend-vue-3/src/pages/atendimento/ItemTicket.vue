@@ -221,26 +221,38 @@ watch(
 <style lang="sass" scoped>
 .ticket-active-item
   background: rgba(var(--q-primary), 0.08) !important
-  border-right: 4px solid var(--q-primary)
+  border: 1.5px solid var(--q-primary) !important
   body.body--dark &
     background: rgba(var(--q-primary), 0.15) !important
+    border: 1.5px solid var(--q-primary) !important
 
 .ticket-item
-  transition: all 0.2s ease
-  border-radius: 0px !important
+  transition: all 0.22s ease-in-out
+  border-radius: 12px !important
+  margin: 6px 10px !important
   min-height: 85px
-  border: 1px solid rgba(0, 0, 0, 0.05)
+  border: 1px solid rgba(0, 0, 0, 0.08)
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02)
   background: white
+  overflow: hidden
+  
+  .absolute-left
+    border-radius: 12px 0 0 12px
+    z-index: 1
+
   body.body--dark &
-    background: rgba(255, 255, 255, 0.03)
-    border: 1px solid rgba(255, 255, 255, 0.05)
+    background: rgba(30, 41, 59, 0.4)
+    border: 1px solid rgba(255, 255, 255, 0.08)
     color: #f1f5f9
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2)
 
   &:hover
-    background: rgba(0, 0, 0, 0.02)
-    transform: translateY(-1px)
+    background: rgba(0, 0, 0, 0.03)
+    transform: translateY(-2px)
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05)
     body.body--dark &
       background: rgba(255, 255, 255, 0.06)
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3)
 
 .ticket-unread
   animation: pulse-animation 2s infinite !important

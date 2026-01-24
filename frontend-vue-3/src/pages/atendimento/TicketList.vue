@@ -2,7 +2,7 @@
   <div>
     <q-scroll-area
       ref="scrollAreaTickets"
-      style="height: calc(100vh - 300px)"
+      style="height: calc(100vh - 235px)"
       @scroll="onScroll"
     >
       <div

@@ -17,7 +17,7 @@
         persistent
         :breakpoint="769"
         bordered
-        :width="$q.screen.lt.md ? $q.screen.width : 380"
+        :width="$q.screen.lt.md ? $q.screen.width : 350"
         :content-class="$q.dark.isActive ? 'bg-transparent border-glass' : 'bg-transparent border-glass'"
       >
         <q-toolbar
@@ -274,8 +274,8 @@
 
         <!-- Barra inferior: Dark Mode + Status Canais -->
         <div
-          class="absolute-bottom row justify-between items-center q-px-sm glass-premium q-ma-sm rounded-borders"
-          style="height: 50px; border-top: 1px solid rgba(255,255,255,0.2)"
+          class="absolute-bottom row justify-between items-center q-px-sm glass-premium"
+          style="height: 80px; border-top: 1px solid rgba(255,255,255,0.2); border-radius: 0 !important; width: 100% !important"
         >
           <q-toggle
             size="lg"
@@ -295,11 +295,11 @@
                 rounded
                 flat
                 dense
-                size="18px"
+                size="22px"
                 class="q-mx-xs q-pa-none"
                 :style="`opacity: ${item.status === 'CONNECTED' ? 1 : 0.3}`"
               >
-                <q-avatar size="24px">
+                <q-avatar size="36px">
                   <img :src="`/${item.type || 'whatsapp'}-logo.png`" />
                 </q-avatar>
                 <q-tooltip max-height="200px" content-class="bg-grey-1 text-grey-9">
