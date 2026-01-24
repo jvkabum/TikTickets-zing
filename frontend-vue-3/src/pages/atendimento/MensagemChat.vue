@@ -8,30 +8,34 @@
       <div
         v-for="(mensagem, index) in mensagens"
         :key="mensagem.id || index"
+        class="message-container q-mb-sm"
+        :class="mensagem.fromMe ? 'items-end' : 'items-start'"
       >
         <!-- Divisor de protocolo -->
-        <hr
-          v-if="mostrarDivisorProtocolo(mensagem, index)"
-          :key="'hr-protocol-' + index"
-          class="hr-text q-mt-lg q-mb-md"
-          :class="
-            getProtocoloMensagem(new Date(mensagem.createdAt))?.status === 'ABER'
-              ? 'protocolo-aberto'
-              : 'protocolo-fechado'
-          "
-          :data-content="obterTextoProtocolo(getProtocoloMensagem(new Date(mensagem.createdAt)))"
-        />
+        <template v-if="mostrarDivisorProtocolo(mensagem, index)">
+          <div
+            :key="'hr-protocol-' + index"
+            class="hr-text q-mt-lg q-mb-md"
+            :class="getProtocoloMensagem(mensagem.createdAt)?.status === 'ABER' ? 'protocolo-aberto' : 'protocolo-fechado'"
+          >
+            <span>{{ obterTextoProtocolo(getProtocoloMensagem(mensagem.createdAt)) }}</span>
+          </div>
+        </template>
 
         <!-- Divisor de data -->
-        <hr
+        <template
           v-if="
             isLineDate &&
             (index === 0 || formatarData(mensagem.createdAt) !== formatarData(mensagens[index - 1].createdAt))
           "
-          :key="'hr-date-' + index"
-          class="hr-text q-mt-lg q-mb-md"
-          :data-content="formatarData(mensagem.createdAt)"
-        />
+        >
+          <div
+            :key="'hr-date-' + index"
+            class="hr-text hr-date q-mt-lg q-mb-md"
+          >
+            <span>{{ formatarData(mensagem.createdAt) }}</span>
+          </div>
+        </template>
 
         <!-- Anchor for scrolling/identification -->
         <div :id="`chat-message-${mensagem.id}`" />
@@ -181,7 +185,7 @@
 </template>
 
 <script setup>
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, isValid as isValidDate } from 'date-fns'
 import pt from 'date-fns/locale/pt-BR'
 import { formatarMensagemWhatsapp } from 'src/utils/formatMessage'
 import InforCabecalhoChat from './InforCabecalhoChat.vue'
@@ -222,8 +226,20 @@ const ackIcons = {
   4: 'mdi-check-all'
 }
 
-const formatarData = (data, formato = 'dd/MM/yyyy') => (data ? format(parseISO(data), formato, { locale: pt }) : '')
-const dataInWords = data => (data ? format(parseISO(data), 'HH:mm', { locale: pt }) : '')
+const parseData = (valor) => {
+  if (!valor) return null
+  if (valor instanceof Date) return valor
+  if (typeof valor === 'number' || (typeof valor === 'string' && !isNaN(Number(valor)))) {
+    const n = Number(valor)
+    return new Date(n > 10000000000 ? n : n * 1000)
+  }
+  try { return parseISO(valor) } catch (e) { return new Date(valor) }
+}
+
+const formatarData = (data, formato = 'dd/MM/yyyy') => {
+  const d = parseData(data)
+  return d && isValidDate(d) ? format(d, formato, { locale: pt }) : ''
+}
 
 const carregarProtocolos = async () => {
   if (!ticketFocado.value.id) return
@@ -231,26 +247,57 @@ const carregarProtocolos = async () => {
 }
 
 const getProtocoloMensagem = msgDate => {
-  if (!protocolos.value.length) return null
-  const date = new Date(msgDate).getTime()
-  return protocolos.value
-    .filter(p => new Date(p.createdAt).getTime() <= date)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+  if (!protocolos.value?.length) return null
+  const date = parseData(msgDate)?.getTime()
+  if (!date) return protocolos.value[0] // Fallback para o primeiro se data for inválida
+
+  const filtrados = protocolos.value
+    .filter(p => {
+      const pDate = parseData(p.createdAt)?.getTime()
+      return pDate && pDate <= date
+    })
+    .sort((a, b) => {
+      const dateA = parseData(a.createdAt)?.getTime() || 0
+      const dateB = parseData(b.createdAt)?.getTime() || 0
+      return dateB - dateA
+    })
+  
+  // Se não achou nenhum protocolo ANTES da mensagem, mas existem protocolos, 
+  // pega o primeiro de abertura (provavelmente é o protocolo deste atendimento)
+  return filtrados.length ? filtrados[0] : protocolos.value[0]
 }
 
 const mostrarDivisorProtocolo = (mensagem, index) => {
-  if (!protocolos.value.length) return false
-  if (index === 0) return true
+  if (!protocolos.value?.length) return false
   const pAtual = getProtocoloMensagem(mensagem.createdAt)
-  const pAnterior = getProtocoloMensagem(props.mensagens[index - 1].createdAt)
+  if (!pAtual) return false
+  
+  if (index === 0) return true
+  
+  const msgAnterior = props.mensagens[index - 1]
+  if (!msgAnterior) return false
+  
+  const pAnterior = getProtocoloMensagem(msgAnterior.createdAt)
   return pAtual?.id !== pAnterior?.id
 }
 
 const obterTextoProtocolo = p => {
-  if (!p) return ''
-  const icon = p.status === 'ABER' ? '🟢' : '🔴'
-  const status = p.status === 'ABER' ? 'abertura' : 'fechamento'
-  return `${icon} Protocolo ${p.protocolNumber} (${status} ${formatarData(p.createdAt, 'dd/MM/yy HH:mm')} by ${p.userName || 'System'})`
+  if (!p) return 'Protocolo'
+  
+  const statusIcon = p.status === 'ABER' ? '🟢' : '🔴'
+  const tipo = p.status === 'ABER' ? 'abertura' : 'fechamento'
+  
+  // Tentar extrair o número do protocolo de várias chaves possíveis (segurança)
+  const num = p.protocolNumber || p.number || p.id || '---'
+  const numLimpo = num.toString().replace(/[()]/g, '')
+  
+  // Tentar extrair o nome do usuário de várias chaves possíveis
+  const user = p.userName || p.user?.name || 'Sistema'
+  
+  const data = formatarData(p.createdAt, 'dd/MM/yy')
+  const hora = formatarData(p.createdAt, 'HH.mm')
+  
+  return `${statusIcon} (Protocolo ${numLimpo}) - (${tipo} ${data} as ${hora} Por ${user})`
 }
 
 const isGroupLabel = m => ticketFocado.value.isGroup && !m.fromMe && m.contact?.name
@@ -380,5 +427,98 @@ onMounted(carregarProtocolos)
 }
 .poll-container {
   min-width: 250px;
+}
+
+/* Fix para alinhamento das bolhas no container do v-for */
+.message-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 4px !important;
+}
+
+/* Classes para forçar alinhamento correto dos bubbles */
+.justify-end {
+  align-items: flex-end;
+}
+
+.justify-start {
+  align-items: flex-start;
+}
+
+/* Estilo para Divisores de Protocolo e Data */
+.hr-text {
+  line-height: 1.5em;
+  position: relative;
+  outline: 0;
+  border: 0;
+  color: black;
+  text-align: center;
+  height: 1.5em;
+  opacity: 0.9;
+  margin: 15px 0 !important;
+  width: 100%;
+
+  &:before {
+    content: '';
+    background: linear-gradient(to right, transparent, var(--protocolo-cor, #818078), transparent);
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    opacity: 0.8;
+  }
+
+  &.hr-date:before {
+    display: none;
+  }
+
+  span {
+    position: relative;
+    display: inline-block;
+    padding: 4px 15px;
+    line-height: 1.5em;
+    color: var(--protocolo-texto, #444);
+    background: var(--protocolo-fundo, #eee);
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    font-size: 11px;
+    z-index: 10;
+
+    body.body--dark & {
+      background: var(--protocolo-fundo, #1d1d1d);
+      border-color: rgba(255, 255, 255, 0.05);
+      color: var(--protocolo-texto, #fcfcfa);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  &.protocolo-aberto {
+    --protocolo-cor: #2e7d32;
+    --protocolo-texto: #1b5e20;
+    --protocolo-fundo: #e8f5e9;
+    
+    body.body--dark & {
+      --protocolo-cor: #81C784;
+      --protocolo-texto: #C8E6C9;
+      --protocolo-fundo: #1B5E20;
+    }
+  }
+
+  &.protocolo-fechado {
+    --protocolo-cor: #c62828;
+    --protocolo-texto: #b71c1c;
+    --protocolo-fundo: #ffebee;
+    
+    body.body--dark & {
+      --protocolo-cor: #E57373;
+      --protocolo-texto: #FFCDD2;
+      --protocolo-fundo: #B71C1C;
+    }
+  }
 }
 </style>

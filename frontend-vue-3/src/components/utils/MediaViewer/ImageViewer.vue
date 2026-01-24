@@ -106,7 +106,7 @@ const onImageLoad = () => {
 }
 
 .image-container {
-  border-radius: 12px;
+  border-radius: 0px;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   background-color: #f5f5f5;

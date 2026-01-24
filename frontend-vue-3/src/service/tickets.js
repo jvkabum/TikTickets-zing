@@ -62,7 +62,7 @@ export const BuscarTicketPorId = async ticketId => {
   })
 }
 
-export function ConsultarDadosTicket (params) {
+export function ConsultarDadosTicket(params) {
   // Parâmetros permitidos e necessários
   const allowedParams = {
     count: params.count,
@@ -95,7 +95,7 @@ export function ConsultarDadosTicket (params) {
   })
 }
 
-export function ConsultarLogsTicket (params) {
+export function ConsultarLogsTicket(params) {
   return request({
     url: `/tickets/${params.ticketId}/logs`,
     method: 'get',
@@ -103,7 +103,7 @@ export function ConsultarLogsTicket (params) {
   })
 }
 
-export function AtualizarTicket (ticketId, data) {
+export function AtualizarTicket(ticketId, data) {
   return request({
     url: `/tickets/${ticketId}`,
     method: 'put',
@@ -111,7 +111,7 @@ export function AtualizarTicket (ticketId, data) {
   })
 }
 
-export function LocalizarMensagens (params) {
+export function LocalizarMensagens(params) {
   const queryParams = new URLSearchParams()
   if (params.ticketId) queryParams.append('ticketId', params.ticketId)
   if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber)
@@ -128,7 +128,7 @@ export function LocalizarMensagens (params) {
   })
 }
 
-export function EnviarMensagemTexto (ticketId, data) {
+export function EnviarMensagemTexto(ticketId, data) {
   return request({
     url: `/messages/${ticketId}`,
     method: 'post',
@@ -140,7 +140,7 @@ export function EnviarMensagemTexto (ticketId, data) {
   })
 }
 
-export function EncaminharMensagem (messages, contato) {
+export function EncaminharMensagem(messages, contato) {
   const data = {
     messages,
     contact: contato
@@ -152,7 +152,7 @@ export function EncaminharMensagem (messages, contato) {
   })
 }
 
-export function DeletarMensagem (mensagem) {
+export function DeletarMensagem(mensagem) {
   return request({
     url: `/messages/${mensagem.messageId}`,
     method: 'delete',
@@ -160,7 +160,7 @@ export function DeletarMensagem (mensagem) {
   })
 }
 
-export function EditarMensagem (mensagem) {
+export function EditarMensagem(mensagem) {
   return request({
     url: `/messages/edit/${mensagem.messageId}`,
     method: 'post',
@@ -173,5 +173,13 @@ export const SincronizarMensagensTicket = async ticketId => {
   return request({
     url: `/tickets/${ticketId}/sync`,
     method: 'post'
+  })
+}
+
+// Localizar Protocolos do Ticket (Logs)
+export const LocalizarProtocolos = async ticketId => {
+  return request({
+    url: `/protocols/ticket/${ticketId}`,
+    method: 'get'
   })
 }

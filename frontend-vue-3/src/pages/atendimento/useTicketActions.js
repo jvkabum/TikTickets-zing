@@ -1,9 +1,9 @@
-import { notificarErro } from 'src/utils/helpersNotifications'
+import { notificarErro, notificarSucesso, notificarInfo } from 'src/utils/helpersNotifications'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
 import { useTicketStore } from 'src/stores/useTicketStore'
 
-export function useTicketActions () {
+export function useTicketActions() {
   const $q = useQuasar()
   const router = useRouter()
   const ticketStore = useTicketStore()

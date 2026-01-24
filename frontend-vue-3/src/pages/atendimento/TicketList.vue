@@ -107,15 +107,7 @@ const onScroll = info => {
   }
 }
 
-// Observar mudanças nos filtros para recarregar a lista
-watch(
-  () => props.searchParams,
-  () => {
-    consultarTickets()
-  },
-  { deep: true }
-)
-
+// Observar apenas o status local para recarregar se mudar a aba
 watch(
   () => props.status,
   () => {

@@ -13,7 +13,7 @@
     <!-- Audio -->
     <template v-if="mediaType === 'audio'">
       <AudioVisualizer
-        :url="mediaUrl"
+        :url="sanitizedMediaUrl"
         :contact="contact"
         :avatar-src="fromMe ? myAvatar : contactAvatar"
       />
@@ -31,7 +31,7 @@
     <template v-else-if="mediaType === 'image'">
       <MediaViewer
         media-type="image"
-        :media-url="mediaUrl"
+        :media-url="sanitizedMediaUrl"
       />
     </template>
 
@@ -39,7 +39,7 @@
     <template v-else-if="mediaType === 'video'">
       <MediaViewer
         media-type="video"
-        :media-url="mediaUrl"
+        :media-url="sanitizedMediaUrl"
       />
     </template>
 
@@ -117,6 +117,13 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['open-contact-modal'])
+
+const sanitizedMediaUrl = computed(() => {
+  if (!props.mediaUrl) return ''
+  // Corrige URL malformada do tipo http://localhost:8082:443/public/...
+  // Remove a porta :443 duplicada que o backend está enviando
+  return props.mediaUrl.replace(/:(\d+):443\//, ':$1/')
+})
 
 const pollData = computed(() => props.mensagem.pollData)
 

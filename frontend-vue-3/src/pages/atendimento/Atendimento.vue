@@ -7,7 +7,7 @@
       class="WAL__layout no-shadow"
       container
       view="lHr LpR lFr"
-      style="border-radius: 20px; overflow: hidden; margin: 10px; height: calc(100% - 20px) !important; width: calc(100% - 20px) !important"
+      style="height: 100% !important; width: 100% !important"
     >
       <q-drawer
         v-model="drawerTickets"
@@ -264,6 +264,7 @@
             class="q-pa-none"
           >
             <TicketList
+              :key="`${tab}-${JSON.stringify(pesquisaTickets)}`"
               :status="tab"
               :search-params="pesquisaTickets"
               :filas="filas"
@@ -273,7 +274,7 @@
 
         <!-- Barra inferior: Dark Mode + Status Canais -->
         <div
-          class="absolute-bottom row justify-between items-center q-px-sm glass-premium"
+          class="absolute-bottom row justify-between items-center q-px-sm glass-premium q-ma-sm rounded-borders"
           style="height: 50px; border-top: 1px solid rgba(255,255,255,0.2)"
         >
           <q-toggle
@@ -363,7 +364,7 @@
         <q-scroll-area style="height: calc(100vh - 120px)">
           <div class="q-pa-sm">
             <q-card
-              class="glass-premium btn-rounded border-glass"
+              class="glass-premium border-glass"
               flat
             >
               <q-card-section class="text-center" v-if="ticketFocado.contact">
@@ -401,7 +402,7 @@
             </q-card>
 
             <q-card
-              class="q-mt-sm glass-premium btn-rounded border-glass"
+              class="q-mt-sm glass-premium border-glass"
               flat
               v-if="ticketFocado.contact"
             >
@@ -427,7 +428,7 @@
             </q-card>
 
             <q-card
-              class="q-mt-sm glass-premium btn-rounded border-glass"
+              class="q-mt-sm glass-premium border-glass"
               flat
               v-if="cIsExtraInfo"
             >
@@ -452,7 +453,7 @@
 
             <!-- Carteira -->
             <q-card
-              class="q-mt-sm glass-premium btn-rounded border-glass"
+              class="q-mt-sm glass-premium border-glass"
               flat
               v-if="ticketFocado.contact?.wallets?.length"
             >

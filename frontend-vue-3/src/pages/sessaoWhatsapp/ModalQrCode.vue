@@ -4,13 +4,14 @@
     @hide="fecharModalQrModal"
     persistent
   >
-    <q-card style="bg-white">
+    <q-card style="min-width: 400px">
       <q-card-section>
         <div class="text-h6 text-primary">
           Leia o QrCode para iniciar a sessão
           <q-btn
             round
-            class="q-ml-md"
+            flat
+            class="float-right"
             color="negative"
             icon="mdi-close"
             @click="fecharModalQrModal"
@@ -19,14 +20,15 @@
       </q-card-section>
       <q-card-section
         class="text-center"
-        :style="$q.dark.isActive ? 'background: white !important' : ''"
       >
+        <div class="bg-white q-pa-lg inline-block shadow-2" style="border-radius: 8px">
         <QrcodeVue
           v-if="cQrcode && props.channel.status !== 'PAIRING'"
           :value="cQrcode"
           :size="300"
           level="H"
         />
+        </div>
         <div
           v-if="props.channel.status === 'PAIRING'"
           class="column items-center justify-center q-pa-xl"
@@ -68,8 +70,10 @@
           </div>
         </div>
       </q-card-section>
-      <q-card-section>
-        <div class="row">Caso tenha problema com a leitura, solicite um novo Qr Code</div>
+      <q-card-section class="text-center">
+        <div class="row items-center justify-center q-mb-md text-grey-8">
+          Caso tenha problema com a leitura, solicite um novo Qr Code
+        </div>
         <div class="row col-12 justify-center">
           <q-btn
             color="primary"

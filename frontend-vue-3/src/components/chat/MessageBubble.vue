@@ -155,7 +155,7 @@ const headerColor = computed(() => {
   max-width: 65%;
   min-width: 100px;
   padding: 6px 8px 4px;
-  border-radius: 8px;
+  border-radius: 18px;
   position: relative;
   word-wrap: break-word;
 }

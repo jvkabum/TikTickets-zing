@@ -50,7 +50,7 @@
           :loading="sincronizando"
         />
         <div class="bg-grey-3 q-px-xs rounded-borders text-grey-8 text-bold" style="font-size: 10px;">
-          {{ dataInWords(ticket.lastMessageAt || ticket.updatedAt) }}
+          {{ dataInWords(ticket.lastMessageAt, ticket.updatedAt) }}
         </div>
         <div class="text-weight-bold">#{{ ticket.id }}</div>
         <q-icon v-if="walletsDoTicket.length" name="mdi-wallet" size="14px" color="grey-7" />
@@ -109,7 +109,7 @@ const { iniciarAtendimento, espiarAtendimento } = useTicketActions()
 
 const tagsDoTicket = ref([])
 const walletsDoTicket = ref([])
-const profilePicUrl = ref(props.ticket.profilePicUrl || defaultAvatar)
+const profilePicUrl = computed(() => props.ticket.contact?.profilePicUrl || props.ticket.profilePicUrl || defaultAvatar)
 const sincronizando = ref(false)
 const recalcularHoraTrigger = ref(0)
 
@@ -121,15 +121,46 @@ const borderColor = {
 
 const isValid = computed(() => props.ticket && props.ticket.id)
 
-const dataInWords = timestamp => {
-  if (!timestamp) return '...'
-  // eslint-disable-next-line no-unused-expressions
-  recalcularHoraTrigger.value // Trigger re-render
+const dataInWords = (timestamp, updated) => {
   try {
-    const data = typeof timestamp === 'string' ? parseISO(timestamp) : new Date(timestamp)
+    if (!timestamp && !updated) {
+      return 'agora'
+    }
+
+    let data
+    const valor = timestamp || updated
+
+    // Se for string numérica ou número
+    if (!isNaN(Number(valor))) {
+      const timestampNum = Number(valor)
+      // Timestamp em segundos (10 dígitos) x 1000
+      if (timestampNum > 1000000000 && timestampNum < 9999999999) {
+        data = new Date(timestampNum * 1000)
+      } else {
+        // Timestamp milissegundos
+        data = new Date(timestampNum)
+      }
+    } else if (typeof valor === 'string') {
+      try {
+        data = parseISO(valor)
+      } catch (e) {
+        data = new Date(valor)
+      }
+    } else if (valor instanceof Date) {
+      data = valor
+    }
+
     if (!isValidDate(data)) return '...'
-    return formatDistance(data, new Date(), { locale: pt, addSuffix: true })
+
+    // Evitar datas futuras malucas
+    if (data.getTime() > new Date().getTime() + 10000) {
+      return 'agora'
+    }
+
+    const distancia = formatDistance(data, new Date(), { locale: pt, addSuffix: true })
+    return distancia === 'cerca de 0 segundos atrás' ? 'agora' : distancia
   } catch (e) {
+    console.error('Erro ao formatar data:', e)
     return '...'
   }
 }
@@ -196,7 +227,7 @@ watch(
 
 .ticket-item
   transition: all 0.2s ease
-  border-radius: 12px !important
+  border-radius: 0px !important
   min-height: 85px
   border: 1px solid rgba(0, 0, 0, 0.05)
   background: white
@@ -212,8 +243,21 @@ watch(
       background: rgba(255, 255, 255, 0.06)
 
 .ticket-unread
-  background-color: rgba(var(--q-negative), 0.05)
+  animation: pulse-animation 2s infinite !important
+  background-color: rgba(255, 0, 0, 0.1) !important
+  border-left: 4px solid #f44336 !important
   .text-subtitle2
-    color: var(--q-negative)
-    font-weight: 900
+    color: #f44336 !important
+    font-weight: 900 !important
+
+@keyframes pulse-animation
+  0%
+    background-color: rgba(255, 0, 0, 0.1)
+    transform: scale(1)
+  50%
+    background-color: rgba(255, 0, 0, 0.25)
+    transform: scale(1.02)
+  100%
+    background-color: rgba(255, 0, 0, 0.1)
+    transform: scale(1)
 </style>

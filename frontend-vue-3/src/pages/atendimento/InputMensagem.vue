@@ -230,8 +230,14 @@
 </template>
 
 <script setup>
-import { notificarErro } from 'src/utils/helpersNotifications'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { LocalStorage, uid } from 'quasar'
+import { storeToRefs } from 'pinia'
+import { useTicketStore } from 'src/stores/useTicketStore'
 import { useTicketActions } from './useTicketActions'
+import { notificarErro } from 'src/utils/helpersNotifications'
+import MicRecorder from 'mic-recorder-to-mp3'
+import RecordingTimer from './RecordingTimer.vue'
 import bus from 'src/utils/eventBus'
 
 const props = defineProps({
@@ -245,6 +251,14 @@ const emit = defineEmits(['update:replyingMessage'])
 const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)
 const { iniciarAtendimento } = useTicketActions()
+
+// Instância lazy para garantir que o boot/audio.js já tenha rodado
+let Mp3Recorder = null
+const initRecorder = () => {
+  if (!Mp3Recorder) {
+    Mp3Recorder = new MicRecorder({ bitRate: 128 })
+  }
+}
 
 const inputRef = ref(null)
 const filePickerRef = ref(null)
@@ -292,19 +306,13 @@ const mensagemRapidaSelecionada = m => {
 
 const handleSartRecordingAudio = async () => {
   try {
+    initRecorder()
     await navigator.mediaDevices.getUserMedia({ audio: true })
-    
-    // Lazy load MicRecorder para evitar erro com lamejs
-    if (!Mp3Recorder) {
-      const MicRecorder = (await import('mic-recorder-to-mp3')).default
-      Mp3Recorder = new MicRecorder({ bitRate: 128 })
-    }
-    
     await Mp3Recorder.start()
     isRecordingAudio.value = true
   } catch (e) {
     console.error('Erro ao iniciar gravação:', e)
-    notificarErro('Erro ao acessar microfone')
+    notificarErro('Erro ao acessar microfone. Verifique as permissões.')
   }
 }
 
@@ -312,25 +320,41 @@ const handleStopRecordingAudio = async () => {
   loading.value = true
   try {
     const [, blob] = await Mp3Recorder.stop().getMp3()
-    if (blob.size < 1000) return (isRecordingAudio.value = false)
+    if (blob.size < 10000) {
+      loading.value = false
+      isRecordingAudio.value = false
+      return
+    }
 
     const formData = new FormData()
-    formData.append('medias', blob, `${Date.now()}.mp3`)
-    formData.append('fromMe', 'true')
+    const filename = `${new Date().getTime()}.mp3`
+    
+    // Alinhamento exato com o frontend antigo: BLOB direto com nome
+    formData.append('medias', blob, filename)
+    formData.append('body', filename)
+    formData.append('fromMe', true)
+    formData.append('id', uid())
+    
     if (scheduleDate.value) formData.append('scheduleDate', scheduleDate.value)
 
     await ticketStore.enviarMensagem(ticketFocado.value.id, formData)
+    
+    textChat.value = ''
+    arquivos.value = []
     isRecordingAudio.value = false
   } catch (e) {
-    notificarErro('Erro ao enviar áudio', e)
+    console.error('Erro ao processar áudio MP3:', e)
+    notificarErro('Erro ao enviar áudio. Tente novamente.')
   } finally {
     loading.value = false
   }
 }
 
 const handleCancelRecordingAudio = () => {
-  Mp3Recorder.stop()
-  isRecordingAudio.value = false
+  if (Mp3Recorder) {
+    Mp3Recorder.stop()
+    isRecordingAudio.value = false
+  }
 }
 
 const enviarMensagem = async () => {
@@ -339,14 +363,18 @@ const enviarMensagem = async () => {
   loading.value = true
   try {
     const formData = new FormData()
-    formData.append('fromMe', 'true')
 
     if (arquivos.value.length) {
+      // ORDEM CRÍTICA PARA O BACKEND: medias -> body -> fromMe -> id
       arquivos.value.forEach(f => formData.append('medias', f))
+      formData.append('body', arquivos.value[0].name)
+      formData.append('fromMe', true)
+      formData.append('id', uid())
     } else {
       let body = textChat.value.trim()
       if (sign.value) body = `*${LocalStorage.getItem('username')}*\n${body}`
       formData.append('body', body)
+      formData.append('fromMe', true)
       if (props.replyingMessage) formData.append('quotedMsg', JSON.stringify(props.replyingMessage))
     }
 
@@ -376,6 +404,7 @@ const onRejectedFiles = () => notificarErro('Arquivos inválidos ou muito grande
 const handleSign = val => LocalStorage.set('sign', val)
 
 onMounted(() => {
+  initRecorder()
   bus.on('mensagem-chat:focar-input-mensagem', () => inputRef.value?.focus())
 })
 

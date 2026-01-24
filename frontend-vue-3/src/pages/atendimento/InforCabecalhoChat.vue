@@ -32,13 +32,12 @@
           >
             <q-avatar size="44px" class="bg-grey-2 no-shadow">
               <q-img
-                v-if="ticketFocado.contact?.profilePicUrl"
-                :src="ticketFocado.contact.profilePicUrl"
-              />
-              <q-img
-                v-else
-                src="/default-avatar.png"
-              />
+                :src="ticketFocado.contact?.profilePicUrl || ticketFocado.profilePicUrl || '/default-avatar.png'"
+              >
+                <template v-slot:error>
+                  <q-img src="/default-avatar.png" />
+                </template>
+              </q-img>
             </q-avatar>
           </q-item-section>
 
@@ -47,7 +46,7 @@
               class="text-bold text-subtitle2"
               lines="1"
             >
-              {{ ticketFocado.contact?.name || 'Carregando...' }}
+              {{ ticketFocado.contact?.name || ticketFocado.name || 'Sem nome' }}
             </q-item-label>
             <q-item-label
               caption
@@ -244,6 +243,7 @@
 <script setup>
 import { useTicketActions } from './useTicketActions.js'
 import bus from 'src/utils/eventBus'
+import { notificarErro, notificarSucesso, notificarInfo } from 'src/utils/helpersNotifications'
 
 const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)
@@ -254,6 +254,8 @@ const { filas } = storeToRefs(filaStore)
 
 const usuarioStore = useUsuarioStore()
 const { usuarios } = storeToRefs(usuarioStore)
+
+const contatoStore = useContatoStore()
 
 const modalTransferirTicket = ref(false)
 const sincronizando = ref(false)
@@ -328,11 +330,35 @@ const emitirAcaoMenu = () => {
 const emitirInfoContato = () => {
   bus.emit('update-ticket:info-contato')
 }
+
+// Carregar protocolos e informações do contato quando trocar o ticket
+const initChat = async () => {
+  if (ticketFocado.value.id) {
+    // Buscar protocolos
+    ticketStore.listarProtocolos(ticketFocado.value.id)
+    
+    // Se o contato não tem foto ou info completa, buscar
+    if (ticketFocado.value.contactId && (!ticketFocado.value.contact?.name || !ticketFocado.value.contact?.profilePicUrl)) {
+      try {
+        const fullContact = await contatoStore.obterContato(ticketFocado.value.contactId)
+        if (fullContact) {
+          // Atualizar o ticket localmente com o novo contato
+          ticketStore.updateTicketContact(fullContact)
+        }
+      } catch (err) {
+        console.error('Erro ao buscar info contato no cabecalho:', err)
+      }
+    }
+  }
+}
+
+watch(() => ticketFocado.value.id, initChat)
+onMounted(initChat)
 </script>
 
 <style lang="sass" scoped>
 .btn-rounded
-  border-radius: 8px
+  border-radius: 0px
 
 .blur-effect
   transition: filter 0.3s ease

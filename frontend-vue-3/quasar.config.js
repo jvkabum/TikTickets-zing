@@ -35,7 +35,8 @@ export default configure(function (ctx) {
       'vee-validate',
       'vuelidate',
       'ccComponents',
-      'apex'
+      'apex',
+      'audio'
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -195,7 +196,11 @@ export default configure(function (ctx) {
           components: path.resolve(__dirname, './src/components'),
           boot: path.resolve(__dirname, './src/boot'),
           stores: path.resolve(__dirname, './src/stores'),
-          assets: path.resolve(__dirname, './src/assets')
+          assets: path.resolve(__dirname, './src/assets'),
+          'lamejs': path.resolve(__dirname, './src/utils/lamejs-shim.js')
+        }
+        viteConf.optimizeDeps = {
+          include: ['lamejs']
         }
       }
     },

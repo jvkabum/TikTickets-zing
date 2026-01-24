@@ -17,6 +17,12 @@
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
     <link rel="icon" type="image/ico" href="favicon.ico">
+    <script>
+        window.global = window;
+        const lameGlobals = ['Lame', 'Presets', 'GainAnalysis', 'QuantizePVT', 'Quantize', 'Takehiro', 'Reservoir', 'MPEGMode', 'BitStream', 'VbrMode', 'Float', 'Arrays', 'System', 'Util', 'ShortBlock', 'WavHeader'];
+        lameGlobals.forEach(g => { window[g] = null; });
+    </script>
+    <script src="/js/lame.min.js"></script>
     <script src="/jsplumb.js"></script>
 </head>
 

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-white no-scroll hide-scrollbar overflow-hidden"
+    class="bg-white no-scroll hide-scrollbar overflow-hidden full-height full-width"
     :style="style"
   >
     <InforCabecalhoChat @abrir:modalAgendamentoMensagem="modalAgendamentoMensagem = true" />
@@ -245,11 +245,17 @@ const contatosOptions = ref([])
 
 const pageNumber = ref(1)
 
+const $q = useQuasar()
+
 const style = computed(() => ({
-  backgroundImage: document.body.classList.contains('body--dark')
-    ? `url(${whatsBackgroundDark})`
-    : `url(${whatsBackground})`,
-  backgroundPosition: 'center'
+  backgroundImage: $q.dark.isActive 
+    ? `url(${whatsBackgroundDark}) !important` 
+    : `linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0.4)), url(${whatsBackground}) !important`,
+  backgroundPosition: 'center !important',
+  backgroundSize: '450px !important',
+  backgroundRepeat: 'repeat !important',
+  height: '100%',
+  width: '100%'
 }))
 
 const cStyleScroll = computed(() => {

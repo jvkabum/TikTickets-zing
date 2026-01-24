@@ -6,127 +6,13 @@
 // biome-ignore lint: disable
 export {}
 declare global {
-  const AdicionarContatosCampanha: typeof import('./service/campanhas.js').AdicionarContatosCampanha
-  const AdminListarChannels: typeof import('./service/channels.js').AdminListarChannels
-  const AdminListarEmpresas: typeof import('./service/empresas.js').AdminListarEmpresas
-  const AdminListarUsuarios: typeof import('./service/user.js').AdminListarUsuarios
-  const AdminUpdateUsuarios: typeof import('./service/user.js').AdminUpdateUsuarios
-  const AlterarCampanha: typeof import('./service/campanhas.js').AlterarCampanha
-  const AlterarConfiguracao: typeof import('./service/configuracoes.js').AlterarConfiguracao
-  const AlterarEtiqueta: typeof import('./service/etiquetas.js').AlterarEtiqueta
-  const AlterarFila: typeof import('./service/filas.js').AlterarFila
-  const AlterarMensagemRapida: typeof import('./service/mensagensRapidas.js').AlterarMensagemRapida
-  const AlterarTenant: typeof import('./service/empresas.js').AlterarTenant
-  const ApagarAPI: typeof import('./service/api.js').ApagarAPI
-  const AtualizarHorariosAtendiemento: typeof import('./service/empresas.js').AtualizarHorariosAtendiemento
-  const AtualizarMensagemHorariosAtendiemento: typeof import('./service/empresas.js').AtualizarMensagemHorariosAtendiemento
-  const AtualizarStatusTicket: typeof import('./service/tickets.js').AtualizarStatusTicket
-  const AtualizarTicket: typeof import('./service/tickets.js').AtualizarTicket
-  const BuscarTicketPorId: typeof import('./service/tickets.js').BuscarTicketPorId
-  const CancelarCampanha: typeof import('./service/campanhas.js').CancelarCampanha
-  const ConsultarDadosTicket: typeof import('./service/tickets.js').ConsultarDadosTicket
-  const ConsultarLogsTicket: typeof import('./service/tickets.js').ConsultarLogsTicket
-  const ConsultarTickets: typeof import('./service/tickets.js').ConsultarTickets
-  const ConsultarTicketsQueuesService: typeof import('./service/estatisticas.js').ConsultarTicketsQueuesService
-  const CriarAPI: typeof import('./service/api.js').CriarAPI
-  const CriarAcaoEtapa: typeof import('./service/autoResposta.js').CriarAcaoEtapa
-  const CriarAutoResposta: typeof import('./service/autoResposta.js').CriarAutoResposta
-  const CriarCampanha: typeof import('./service/campanhas.js').CriarCampanha
-  const CriarChannel: typeof import('./service/channels.js').CriarChannel
-  const CriarChatFlow: typeof import('./service/chatFlow.js').CriarChatFlow
-  const CriarContato: typeof import('./service/contatos.js').CriarContato
-  const CriarEtapaResposta: typeof import('./service/autoResposta.js').CriarEtapaResposta
-  const CriarEtiqueta: typeof import('./service/etiquetas.js').CriarEtiqueta
-  const CriarFila: typeof import('./service/filas.js').CriarFila
-  const CriarMensagemRapida: typeof import('./service/mensagensRapidas.js').CriarMensagemRapida
-  const CriarProtocolo: typeof import('./service/protocols.js').CriarProtocolo
-  const CriarTenant: typeof import('./service/empresas.js').CriarTenant
-  const CriarTicket: typeof import('./service/tickets.js').CriarTicket
-  const CriarUsuario: typeof import('./service/user.js').CriarUsuario
-  const CriarUsuarioTenant: typeof import('./service/user.js').CriarUsuarioTenant
-  const CriarWhatsapp: typeof import('./service/sessoesWhatsapp.js').CriarWhatsapp
-  const DadosUsuario: typeof import('./service/user.js').DadosUsuario
-  const DeletarAcaoEtapa: typeof import('./service/autoResposta.js').DeletarAcaoEtapa
-  const DeletarAutoResposta: typeof import('./service/autoResposta.js').DeletarAutoResposta
-  const DeletarCampanha: typeof import('./service/campanhas.js').DeletarCampanha
-  const DeletarChatFlow: typeof import('./service/chatFlow.js').DeletarChatFlow
-  const DeletarContato: typeof import('./service/contatos.js').DeletarContato
-  const DeletarContatoCampanha: typeof import('./service/campanhas.js').DeletarContatoCampanha
-  const DeletarEtapaResposta: typeof import('./service/autoResposta.js').DeletarEtapaResposta
-  const DeletarEtiqueta: typeof import('./service/etiquetas.js').DeletarEtiqueta
-  const DeletarFila: typeof import('./service/filas.js').DeletarFila
-  const DeletarImagemMensagemRapida: typeof import('./service/mensagensRapidas.js').DeletarImagemMensagemRapida
-  const DeletarMensagem: typeof import('./service/tickets.js').DeletarMensagem
-  const DeletarMensagemRapida: typeof import('./service/mensagensRapidas.js').DeletarMensagemRapida
-  const DeletarTenant: typeof import('./service/empresas.js').DeletarTenant
-  const DeletarTicket: typeof import('./service/tickets.js').DeletarTicket
-  const DeletarTodosContatosCampanha: typeof import('./service/campanhas.js').DeletarTodosContatosCampanha
-  const DeletarWhatsapp: typeof import('./service/sessoesWhatsapp.js').DeletarWhatsapp
-  const DeleteUsuario: typeof import('./service/user.js').DeleteUsuario
-  const DeleteWhatsappSession: typeof import('./service/sessoesWhatsapp.js').DeleteWhatsappSession
   const Dialog: typeof import('quasar').Dialog
-  const EditarAPI: typeof import('./service/api.js').EditarAPI
-  const EditarAcaoEtapa: typeof import('./service/autoResposta.js').EditarAcaoEtapa
-  const EditarAutoResposta: typeof import('./service/autoResposta.js').EditarAutoResposta
-  const EditarCarteiraContato: typeof import('./service/contatos.js').EditarCarteiraContato
-  const EditarContato: typeof import('./service/contatos.js').EditarContato
-  const EditarEtapaResposta: typeof import('./service/autoResposta.js').EditarEtapaResposta
-  const EditarEtiquetasContato: typeof import('./service/contatos.js').EditarEtiquetasContato
-  const EditarMensagem: typeof import('./service/tickets.js').EditarMensagem
   const EffectScope: typeof import('vue').EffectScope
-  const EncaminharMensagem: typeof import('./service/tickets.js').EncaminharMensagem
-  const EnviarMensagemTexto: typeof import('./service/tickets.js').EnviarMensagemTexto
-  const ExportarArquivoContato: typeof import('./service/contatos.js').ExportarArquivoContato
-  const FecharProtocolo: typeof import('./service/protocols.js').FecharProtocolo
-  const FetchFacebookPages: typeof import('./service/facebook.js').FetchFacebookPages
-  const GetDashTicketsAndTimes: typeof import('./service/estatisticas.js').GetDashTicketsAndTimes
-  const GetDashTicketsChannels: typeof import('./service/estatisticas.js').GetDashTicketsChannels
-  const GetDashTicketsEvolutionByPeriod: typeof import('./service/estatisticas.js').GetDashTicketsEvolutionByPeriod
-  const GetDashTicketsEvolutionChannels: typeof import('./service/estatisticas.js').GetDashTicketsEvolutionChannels
-  const GetDashTicketsPerUsersDetail: typeof import('./service/estatisticas.js').GetDashTicketsPerUsersDetail
-  const GetDashTicketsQueue: typeof import('./service/estatisticas.js').GetDashTicketsQueue
-  const GetWhatSession: typeof import('./service/sessoesWhatsapp.js').GetWhatSession
-  const ImportarArquivoContato: typeof import('./service/contatos.js').ImportarArquivoContato
-  const IniciarCampanha: typeof import('./service/campanhas.js').IniciarCampanha
-  const ListarAPIs: typeof import('./service/api.js').ListarAPIs
-  const ListarAutoResposta: typeof import('./service/autoResposta.js').ListarAutoResposta
-  const ListarCampanhas: typeof import('./service/campanhas.js').ListarCampanhas
-  const ListarChatFlow: typeof import('./service/chatFlow.js').ListarChatFlow
-  const ListarConfiguracoes: typeof import('./service/configuracoes.js').ListarConfiguracoes
-  const ListarContatos: typeof import('./service/contatos.js').ListarContatos
-  const ListarContatosCampanha: typeof import('./service/campanhas.js').ListarContatosCampanha
-  const ListarEtiquetas: typeof import('./service/etiquetas.js').ListarEtiquetas
-  const ListarFilas: typeof import('./service/filas.js').ListarFilas
-  const ListarMensagensRapidas: typeof import('./service/mensagensRapidas.js').ListarMensagensRapidas
-  const ListarProtocolos: typeof import('./service/protocols.js').ListarProtocolos
-  const ListarTenants: typeof import('./service/empresas.js').ListarTenants
-  const ListarUsuarios: typeof import('./service/user.js').ListarUsuarios
-  const ListarWhatsapps: typeof import('./service/sessoesWhatsapp.js').ListarWhatsapps
   const Loading: typeof import('quasar').Loading
   const LocalStorage: typeof import('quasar').LocalStorage
-  const LocalizarMensagens: typeof import('./service/tickets.js').LocalizarMensagens
-  const LogoutFacebookPages: typeof import('./service/facebook.js').LogoutFacebookPages
-  const MostrarHorariosAtendiemento: typeof import('./service/empresas.js').MostrarHorariosAtendiemento
   const Notify: typeof import('quasar').Notify
-  const NovoTokenAPI: typeof import('./service/api.js').NovoTokenAPI
-  const ObterContato: typeof import('./service/contatos.js').ObterContato
   const QSpinnerGears: typeof import('quasar').QSpinnerGears
-  const RealizarLogin: typeof import('./service/login.js').RealizarLogin
-  const RealizarLogout: typeof import('./service/login.js').RealizarLogout
-  const RefreshToken: typeof import('./service/login.js').RefreshToken
-  const RelatorioContatos: typeof import('./service/estatisticas.js').RelatorioContatos
-  const RelatorioResumoAtendimentosUsuarios: typeof import('./service/estatisticas.js').RelatorioResumoAtendimentosUsuarios
-  const RequestNewQrCode: typeof import('./service/sessoesWhatsapp.js').RequestNewQrCode
   const SessionStorage: typeof import('quasar').SessionStorage
-  const SincronizarContatosWhatsapp: typeof import('./service/channels.js').SincronizarContatosWhatsapp
-  const SincronizarMensagensTicket: typeof import('./service/tickets.js').SincronizarMensagensTicket
-  const StartWhatsappSession: typeof import('./service/sessoesWhatsapp.js').StartWhatsappSession
-  const SyncronizarContatos: typeof import('./service/contatos.js').SyncronizarContatos
-  const UpdateChannel: typeof import('./service/channels.js').UpdateChannel
-  const UpdateChatFlow: typeof import('./service/chatFlow.js').UpdateChatFlow
-  const UpdateConfiguracoesUsuarios: typeof import('./service/user.js').UpdateConfiguracoesUsuarios
-  const UpdateUsuarios: typeof import('./service/user.js').UpdateUsuarios
-  const UpdateWhatsapp: typeof import('./service/sessoesWhatsapp.js').UpdateWhatsapp
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
   const array: typeof import('yup').array
   const asyncComputed: typeof import('@vueuse/core').asyncComputed
@@ -159,7 +45,6 @@ declare global {
   const defineStore: typeof import('pinia').defineStore
   const eagerComputed: typeof import('@vueuse/core').eagerComputed
   const effectScope: typeof import('vue').effectScope
-  const erros: typeof import('./service/erros.js').default
   const extendRef: typeof import('@vueuse/core').extendRef
   const getActivePinia: typeof import('pinia').getActivePinia
   const getCurrentInstance: typeof import('vue').getCurrentInstance
@@ -223,7 +108,6 @@ declare global {
   const refManualReset: typeof import('@vueuse/core').refManualReset
   const refThrottled: typeof import('@vueuse/core').refThrottled
   const refWithControl: typeof import('@vueuse/core').refWithControl
-  const request: typeof import('./service/request.js').default
   const resolveComponent: typeof import('vue').resolveComponent
   const resolveRef: typeof import('@vueuse/core').resolveRef
   const setActivePinia: typeof import('pinia').setActivePinia
@@ -457,7 +341,6 @@ declare global {
   const useVirtualList: typeof import('@vueuse/core').useVirtualList
   const useWakeLock: typeof import('@vueuse/core').useWakeLock
   const useWebNotification: typeof import('@vueuse/core').useWebNotification
-  const useWebNotifications: typeof import('./composables/useWebNotifications.js').useWebNotifications
   const useWebSocket: typeof import('@vueuse/core').useWebSocket
   const useWebWorker: typeof import('@vueuse/core').useWebWorker
   const useWebWorkerFn: typeof import('@vueuse/core').useWebWorkerFn
