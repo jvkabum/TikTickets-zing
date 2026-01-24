@@ -588,8 +588,8 @@ const cIsExtraInfo = computed(() => ticketFocado.value?.contact?.extraInfo?.leng
 const { tickets, notifications, notificationsP, ticketsCount } = storeToRefs(ticketStore)
 const ticketCounts = computed(() => {
   return {
-    open: ticketsCount.value.open || notifications.value.length,
-    pending: ticketsCount.value.pending || notificationsP.value.length,
+    open: ticketsCount.value.open !== undefined ? ticketsCount.value.open : notifications.value.length,
+    pending: ticketsCount.value.pending !== undefined ? ticketsCount.value.pending : notificationsP.value.length,
     closed: ticketsCount.value.closed,
     groups: ticketsCount.value.groups
   }

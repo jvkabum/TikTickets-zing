@@ -64,7 +64,29 @@ export const useTicketStore = defineStore('ticket', () => {
   }
 
   function setTicketFocado(ticket) {
-    ticketFocado.value = ticket
+    // Atualização otimista: se o ticket tem mensagens não lidas, zera agora
+    if (ticket.unreadMessages > 0) {
+      const updatedTicket = { ...ticket, unreadMessages: 0 }
+
+      // Ajustar contadores globais preventivamente
+      if (ticket.isGroup) {
+        ticketsCount.value.groups = Math.max(0, ticketsCount.value.groups - 1)
+      } else if (ticket.status === 'open') {
+        ticketsCount.value.open = Math.max(0, ticketsCount.value.open - 1)
+      } else if (ticket.status === 'pending') {
+        ticketsCount.value.pending = Math.max(0, ticketsCount.value.pending - 1)
+      }
+
+      // Limpar das listas de notificações locais para consistência total
+      notifications.value = notifications.value.filter(t => t.id !== ticket.id)
+      notificationsP.value = notificationsP.value.filter(t => t.id !== ticket.id)
+
+      ticketFocado.value = updatedTicket
+      // Atualiza também na lista lateral para remover o badge vermelho imediatamente
+      updateTicket(updatedTicket)
+    } else {
+      ticketFocado.value = ticket
+    }
   }
 
   function setHasMore(value) {
