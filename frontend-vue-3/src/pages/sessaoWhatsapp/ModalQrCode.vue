@@ -21,7 +21,7 @@
       <q-card-section
         class="text-center"
       >
-        <div class="bg-white q-pa-lg inline-block shadow-2" style="border-radius: 8px">
+        <div class="qr-code-container">
         <QrcodeVue
           v-if="cQrcode && props.channel.status !== 'PAIRING'"
           :value="cQrcode"
@@ -261,6 +261,15 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.qr-code-container {
+  background-color: white !important;
+  padding: 24px;
+  border-radius: 12px;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid #e0e0e0;
+}
+
 .qr-timer {
   margin-top: 8px;
 }

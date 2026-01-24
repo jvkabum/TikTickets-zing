@@ -252,15 +252,22 @@ export async function killSessionChromiumProcesses(idRaw: number | string): Prom
   try {
     if (process.platform === "win32") {
       // WMIC via spawn (Array de argumentos evita shell)
+      // Nota: WMIC foi descontinuado no Windows 11 e pode não estar disponível
       const wmicArgs = ["process", "where", `name='chrome.exe' and commandline like '%${sessionPattern}%'`, "call", "terminate"];
       try {
         await spawnPromise("wmic", wmicArgs);
         logger.info(`[v4-PERF] WMIC cirúrgico matou processos ${whatsappId}`);
       } catch (e) {
-        logger.warn(`[v4-PERF] WMIC falhou, usando fallback PowerShell: ${e.message}`);
+        // WMIC não disponível (Windows 11+) ou sem processos - usar PowerShell
+        logger.debug(`[v4-PERF] WMIC não disponível, usando PowerShell como método principal`);
         const psCmd = `Get-Process chrome -ErrorAction SilentlyContinue | Where-Object {$_.CommandLine -like '*${sessionPattern}*'} | Stop-Process -Force`;
-        await spawnPromise("powershell", ["-Command", psCmd]);
-        logger.info(`[v4-PERF] Fallback PowerShell executado com sucesso.`);
+        try {
+          await spawnPromise("powershell", ["-Command", psCmd]);
+          logger.info(`[v4-PERF] PowerShell executado com sucesso para sessão ${whatsappId}`);
+        } catch (psError) {
+          // Sem processos para matar - isso é normal
+          logger.debug(`[v4-PERF] Nenhum processo Chrome encontrado para sessão ${whatsappId}`);
+        }
       }
     } else {
       try {

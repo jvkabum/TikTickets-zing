@@ -4,7 +4,7 @@
     v-ripple
     :active="routeName === cRouterName"
     active-class="text-primary text-bold active-main-menu-item"
-    @click="navigateTo"
+    :to="{ name: routeName }"
     class="q-mx-sm q-my-xs rounded-all sidebar-menu-item"
     :class="{ 'text-negative text-bolder': color === 'negative' }"
   >
@@ -48,15 +48,8 @@ const props = defineProps({
 })
 
 const route = useRoute()
-const router = useRouter()
 
 const cRouterName = computed(() => route.name)
-
-const navigateTo = () => {
-  if (props.routeName !== cRouterName.value) {
-    router.push({ name: props.routeName })
-  }
-}
 </script>
 
 <style lang="sass">
