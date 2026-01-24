@@ -84,9 +84,9 @@
           >
             <q-tooltip>Emojis</q-tooltip>
             <q-menu
-              anchor="top right"
-              self="bottom middle"
-              :offset="[380, 100]"
+              anchor="top left"
+              self="bottom left"
+              :offset="[0, 15]"
               class="emoji-menu"
             >
               <EmojiPicker
@@ -95,7 +95,7 @@
                 :hide-search="true"
                 :emojis-by-row="20"
                 @select="onInsertSelectEmoji"
-                style="width: 60vw"
+                style="width: 600px; height: 450px"
               />
             </q-menu>
           </q-btn>
@@ -443,4 +443,21 @@ watch(
 <style lang="sass" scoped>
 .btn-rounded
   border-radius: 8px
+</style>
+
+<!-- CSS GLOBAL para forçar tamanho dos emojis - SEM SCOPED -->
+<style lang="scss">
+.v3-emoji-picker {
+  .v3-emojis button {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 2px !important;
+    margin-bottom: 8px !important;  // Espaço vertical entre linhas
+    
+    span {
+      font-size: 30px !important;
+      line-height: 24px !important;
+    }
+  }
+}
 </style>
