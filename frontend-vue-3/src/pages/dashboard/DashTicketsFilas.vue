@@ -1,14 +1,29 @@
 <template>
   <div v-if="userProfile === 'admin'">
-    <div class="row col q-pa-sm justify-between items-center glass q-mb-sm" style="border-radius: 12px">
-      <div class="text-h5 text-bold">Painel Atendimentos</div>
-      <q-btn
-        color="primary"
-        icon="mdi-filter"
-        label="Filtros"
-        @click="visualizarFiltros = true"
-      />
-      <q-separator />
+    <div class="row col q-pa-md justify-between items-center glass-premium border-glass q-mb-md" style="border-radius: 16px">
+      <div class="text-h5 text-bold" :class="$q.dark.isActive ? 'text-white' : 'text-grey-9'">
+        <q-icon name="mdi-view-dashboard-variant" color="primary" class="q-mr-sm" />
+        Painel Atendimentos
+      </div>
+      
+      <div class="row q-gutter-sm">
+        <q-option-group
+          class="q-mr-md"
+          :options="optionsVisao"
+          inline
+          v-model="visao"
+          :color="$q.dark.isActive ? 'white' : 'primary'"
+        />
+        <q-btn
+          color="primary"
+          icon="mdi-filter-variant"
+          label="Filtros"
+          push
+          glossy
+          rounded
+          @click="visualizarFiltros = true"
+        />
+      </div>
     </div>
 
     <q-dialog
@@ -105,16 +120,14 @@
             :key="index"
           >
             <q-card
-              bordered
-              square
               flat
+              class="glass-premium border-glass"
+              style="border-radius: 16px; overflow: hidden; height: 100%"
             >
               <q-item
                 v-if="visao === 'U' || visao === 'US'"
-                class="text-bold"
-                :class="{
-                  'bg-negative text-white': definirNomeUsuario(item[0]) === 'Pendente'
-                }"
+                class="q-pa-md"
+                style="background: rgba(255, 255, 255, 0.05)"
               >
                 <!-- <q-item-section avatar>
                   <q-avatar>
@@ -122,55 +135,56 @@
                   </q-avatar>
                 </q-item-section> -->
                 <q-item-section>
-                  <q-item-label class="text-bold text-h6">{{ definirNomeUsuario(item[0]) }}</q-item-label>
+                  <q-item-label class="text-bold text-h6" :class="$q.dark.isActive ? 'text-grey-1' : 'text-grey-9'">{{ definirNomeUsuario(item[0]) }}</q-item-label>
                   <q-item-label
                     caption
-                    :class="{
-                      'text-white': definirNomeUsuario(item[0]) === 'Pendente'
-                    }"
+                    :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-7'"
                   >
-                    Atendimentos: {{ item.length }}
+                    Atendimentos: <span class="text-bold" :class="$q.dark.isActive ? 'text-primary' : 'text-primary'">{{ item.length }}</span>
                   </q-item-label>
+                </q-item-section>
+                <q-item-section side v-if="definirNomeUsuario(item[0]) === 'Pendente'">
+                  <q-badge color="orange" label="Aguardando" class="q-pa-xs" />
                 </q-item-section>
               </q-item>
 
               <q-item
                 v-if="visao === 'F' || visao === 'FS'"
-                class="text-bold"
-                :class="{
-                  'bg-negative text-white': definirNomeFila(item[0]) === 'Sem Fila'
-                }"
+                class="q-pa-md"
+                style="background: rgba(255, 255, 255, 0.05)"
               >
                 <q-item-section avatar>
-                  <q-avatar>
-                    <img src="https://cdn.quasar.dev/img/boy-avatar.png" />
-                  </q-avatar>
+                  <q-avatar color="primary" text-color="white" icon="mdi-account-group" size="md" font-size="20px" />
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label>{{ definirNomeFila(item[0]) }}</q-item-label>
-                  <q-item-label
-                    caption
-                    :class="{
-                      'text-white': definirNomeFila(item[0]) === 'Sem Fila'
-                    }"
-                  >
-                    Abertos: {{ counterStatus(item).open }} | Pendentes: {{ counterStatus(item).pending }} | Total:
-                    {{ item.length }}
-                  </q-item-label>
+                  <q-item-label class="text-bold text-h6" :class="$q.dark.isActive ? 'text-grey-1' : 'text-grey-9'">{{ definirNomeFila(item[0]) }}</q-item-label>
+                  <div class="row q-gutter-sm q-mt-xs">
+                    <q-badge :color="$q.dark.isActive ? 'positive' : 'green-7'" outline label="Abertos: " >
+                      <span class="q-ml-xs text-bold">{{ counterStatus(item).open }}</span>
+                    </q-badge>
+                    <q-badge :color="$q.dark.isActive ? 'orange' : 'orange-8'" outline label="Pendentes: " >
+                      <span class="q-ml-xs text-bold">{{ counterStatus(item).pending }}</span>
+                    </q-badge>
+                  </div>
                 </q-item-section>
               </q-item>
-              <q-separator />
+              
+              <q-separator class="bg-white-5" />
+              
               <q-card-section
-                :style="{ height: '320px' }"
-                class="scroll"
+                :style="{ height: 'calc(100% - 80px)' }"
+                class="scroll q-pa-none"
                 v-if="visao === 'U' || visao === 'F'"
               >
-                <ItemTicket
-                  v-for="(ticket, i) in item"
-                  :key="i"
-                  :ticket="ticket"
-                  :filas="filas"
-                />
+                <div class="q-pa-sm">
+                  <ItemTicket
+                    v-for="(ticket, i) in item"
+                    :key="i"
+                    :ticket="ticket"
+                    :filas="filas"
+                    class="q-mb-sm glass-light"
+                  />
+                </div>
               </q-card-section>
             </q-card>
           </div>
