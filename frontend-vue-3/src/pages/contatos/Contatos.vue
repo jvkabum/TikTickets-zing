@@ -262,7 +262,10 @@ const columns = [
 
 const listarContatos = async () => {
   try {
-    const data = await contatoStore.listarContatos(params)
+    contatoStore.filtros.searchParam = params.searchParam
+    contatoStore.filtros.pageNumber = params.pageNumber
+    contatoStore.filtros.tags = params.tagsIds
+    const data = await contatoStore.listarContatos()
     pagination.value.lastIndex = contatos.value.length - 1
     pagination.value.rowsNumber = data.count
   } catch (error) {
