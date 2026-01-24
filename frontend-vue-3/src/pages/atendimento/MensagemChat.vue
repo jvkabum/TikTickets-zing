@@ -5,20 +5,17 @@
       enter-active-class="animated fadeIn"
       leave-active-class="animated fadeOut"
     >
-      <div
+      <template
         v-for="(mensagem, index) in mensagens"
         :key="mensagem.id || index"
-        class="message-container q-mb-sm"
-        :class="mensagem.fromMe ? 'items-end' : 'items-start'"
       >
-        <!-- Divisor de protocolo -->
-        <template v-if="mostrarDivisorProtocolo(mensagem, index)">
+        <!-- Divisores de protocolo (Gaps entre mensagens) -->
+        <template v-for="p in obterProtocolosExibir(mensagem, index)" :key="'prot-' + p.id">
           <div
-            :key="'hr-protocol-' + index"
             class="hr-text q-mt-lg q-mb-md"
-            :class="getProtocoloMensagem(mensagem.createdAt)?.status === 'ABER' ? 'protocolo-aberto' : 'protocolo-fechado'"
+            :class="p.status === 'ABER' ? 'protocolo-aberto' : 'protocolo-fechado'"
           >
-            <span>{{ obterTextoProtocolo(getProtocoloMensagem(mensagem.createdAt)) }}</span>
+            <span>{{ obterTextoProtocolo(p) }}</span>
           </div>
         </template>
 
@@ -37,8 +34,8 @@
           </div>
         </template>
 
-        <!-- Anchor for scrolling/identification -->
-        <div :id="`chat-message-${mensagem.id}`" />
+        <div class="message-container q-mb-sm" :class="mensagem.fromMe ? 'items-end' : 'items-start'">
+          <div :id="`chat-message-${mensagem.id}`" />
 
         <MessageBubble
           :key="mensagem.id"
@@ -128,7 +125,18 @@
               </template>
             </MessageMediaDisplay>          </template>
         </MessageBubble>
-      </div>
+        </div>
+      </template>
+
+      <!-- Divisores de protocolo FINAIS (Protocolos sem mensagens posteriores) -->
+      <template v-for="p in obterProtocolosFinais()" :key="'prot-final-' + p.id">
+        <div
+          class="hr-text q-mt-lg q-mb-md"
+          :class="p.status === 'ABER' ? 'protocolo-aberto' : 'protocolo-fechado'"
+        >
+          <span>{{ obterTextoProtocolo(p) }}</span>
+        </div>
+      </template>
     </transition-group>
 
     <!-- Scroll Bottom Fab -->
@@ -267,18 +275,30 @@ const getProtocoloMensagem = msgDate => {
   return filtrados.length ? filtrados[0] : protocolos.value[0]
 }
 
-const mostrarDivisorProtocolo = (mensagem, index) => {
-  if (!protocolos.value?.length) return false
-  const pAtual = getProtocoloMensagem(mensagem.createdAt)
-  if (!pAtual) return false
+const obterProtocolosExibir = (mensagem, index) => {
+  if (!protocolos.value?.length) return []
+  const dateMsg = parseData(mensagem.createdAt)?.getTime()
+  if (!dateMsg) return []
+
+  const dateMsgAnterior = index > 0 
+    ? parseData(props.mensagens[index - 1].createdAt)?.getTime() 
+    : 0
+
+  return protocolos.value.filter(p => {
+    const pDate = parseData(p.createdAt)?.getTime()
+    // Protocolos que aconteceram entre a msg anterior e a atual
+    return pDate && pDate > dateMsgAnterior && pDate <= dateMsg
+  }).sort((a, b) => parseData(a.createdAt).getTime() - parseData(b.createdAt).getTime())
+}
+
+const obterProtocolosFinais = () => {
+  if (!protocolos.value?.length || !props.mensagens.length) return []
+  const ultimaMsgDate = parseData(props.mensagens[props.mensagens.length - 1].createdAt)?.getTime()
   
-  if (index === 0) return true
-  
-  const msgAnterior = props.mensagens[index - 1]
-  if (!msgAnterior) return false
-  
-  const pAnterior = getProtocoloMensagem(msgAnterior.createdAt)
-  return pAtual?.id !== pAnterior?.id
+  return protocolos.value.filter(p => {
+    const pDate = parseData(p.createdAt)?.getTime()
+    return pDate && pDate > ultimaMsgDate
+  }).sort((a, b) => parseData(a.createdAt).getTime() - parseData(b.createdAt).getTime())
 }
 
 const obterTextoProtocolo = p => {
@@ -395,6 +415,21 @@ watch(
   () => ticketFocado.value.id,
   newId => {
     if (newId) carregarProtocolos()
+  }
+)
+
+// NOVO: Monitorar mudança de status para recarregar protocolos (para quando fechar o atendimento)
+watch(
+  () => ticketFocado.value.status,
+  (newStatus, oldStatus) => {
+    if (newStatus === 'closed' && oldStatus !== 'closed') {
+      console.log('[Protocolo] Status mudou para fechado, recarregando protocolos...')
+      carregarProtocolos()
+    }
+    // Opcional: recarregar se reabrir também
+    if (newStatus === 'open' && oldStatus === 'closed') {
+      carregarProtocolos()
+    }
   }
 )
 
