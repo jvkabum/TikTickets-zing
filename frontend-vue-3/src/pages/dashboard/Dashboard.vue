@@ -10,9 +10,9 @@
           <div class="col-xs-12 col-md-4">
             <div class="text-h4 text-weight-bolder text-primary tracking-tight">
               Dashboard
-              <q-badge align="top" color="primary" class="q-ml-sm" outline>BETA</q-badge>
+              <q-badge align="top" color="primary" class="q-ml-sm" :outline="!$q.dark.isActive">BETA</q-badge>
             </div>
-            <div class="text-caption text-grey-8">Visão geral e performance operacional</div>
+            <div class="text-caption text-grey-8" :class="{ 'text-grey-5': $q.dark.isActive }">Visão geral e performance operacional</div>
           </div>
           
           <div class="col-xs-12 col-md-8 justify-end flex q-gutter-md q-pt-md q-md-pt-none">
@@ -20,14 +20,16 @@
               style="width: 180px"
               v-model="params.startDate"
               dense
+              :dark="$q.dark.isActive"
             />
             <DatePick
               style="width: 180px"
               v-model="params.endDate"
               dense
+              :dark="$q.dark.isActive"
             />
             <q-btn
-              class="grad-primary"
+              class="grad-primary shadow-neon"
               unelevated
               padding="12px 24px"
               icon="refresh"
@@ -61,8 +63,9 @@
       <div class="col-xs-12 col-md-6">
         <q-card class="glass-premium no-shadow hover-premium" style="border-radius: 20px">
           <q-card-section class="q-pa-lg">
-            <div class="text-subtitle1 text-weight-bold q-mb-md">Atendimentos por Canal</div>
+            <div class="text-subtitle1 text-weight-bold q-mb-md text-dark-theme">Atendimentos por Canal</div>
             <apexchart
+              :key="`channels-${$q.dark.isActive}`"
               ref="ChartTicketsChannels"
               type="donut"
               height="320"
@@ -76,8 +79,9 @@
       <div class="col-xs-12 col-md-6">
         <q-card class="glass-premium no-shadow hover-premium" style="border-radius: 20px">
           <q-card-section class="q-pa-lg">
-            <div class="text-subtitle1 text-weight-bold q-mb-md">Atendimentos por Fila</div>
+            <div class="text-subtitle1 text-weight-bold q-mb-md text-dark-theme">Atendimentos por Fila</div>
             <apexchart
+              :key="`queue-${$q.dark.isActive}`"
               ref="ChartTicketsQueue"
               type="donut"
               height="320"
@@ -95,10 +99,10 @@
       <q-card-section class="q-pa-lg">
         <div class="row items-center q-mb-lg">
           <q-icon name="mdi-chart-timeline-variant" color="primary" size="24px" class="q-mr-sm" />
-          <div class="text-h6 text-weight-bold">Evolução dos Canais</div>
+          <div class="text-h6 text-weight-bold text-dark-theme">Evolução dos Canais</div>
         </div>
         <apexchart
-          :key="evolutionKey"
+          :key="`evolution-${$q.dark.isActive}`"
           ref="ChartTicketsEvolutionChannels"
           type="line"
           height="350"
@@ -114,10 +118,10 @@
       <q-card-section class="q-pa-lg">
         <div class="row items-center q-mb-lg">
           <q-icon name="mdi-trending-up" color="secondary" size="24px" class="q-mr-sm" />
-          <div class="text-h6 text-weight-bold">Atendimentos por Período</div>
+          <div class="text-h6 text-weight-bold text-dark-theme">Atendimentos por Período</div>
         </div>
         <apexchart
-          :key="evolutionByPeriodKey"
+          :key="`period-${$q.dark.isActive}`"
           ref="ChartTicketsEvolutionByPeriod"
           type="line"
           height="350"
@@ -135,8 +139,8 @@
             <q-icon name="mdi-account-star" color="white" size="24px" />
           </div>
           <div>
-            <div class="text-h6 text-weight-bold">Performance do Time</div>
-            <div class="text-caption text-grey-7">Métricas individuais por consultor</div>
+            <div class="text-h6 text-weight-bold text-dark-theme">Performance do Time</div>
+            <div class="text-caption text-grey-7" :class="{ 'text-grey-5': $q.dark.isActive }">Métricas individuais por consultor</div>
           </div>
         </div>
 
@@ -149,6 +153,7 @@
           flat
           class="bg-transparent"
           hide-bottom
+          :dark="$q.dark.isActive"
         >
           <template v-slot:header="props">
             <q-tr :props="props" class="bg-primary text-white rounded-all overflow-hidden" style="border-radius: 12px">
@@ -182,10 +187,10 @@
             <q-td :props="props">
               <div class="column" style="min-width: 140px">
                 <div class="row items-center justify-between q-mb-xs">
-                  <q-badge color="blue-1" text-color="blue-10" class="q-pa-xs text-weight-bold" style="border-radius: 6px">
+                  <q-badge :color="$q.dark.isActive ? 'blue-9' : 'blue-1'" :text-color="$q.dark.isActive ? 'white' : 'blue-10'" class="q-pa-xs text-weight-bold" style="border-radius: 6px">
                     {{ props.value }}
                   </q-badge>
-                  <div class="text-caption text-grey-6 text-weight-bold">{{ Math.min(Math.round((props.value / 100) * 100), 100) }}%</div>
+                  <div class="text-caption text-weight-bold" :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-6'">{{ Math.min(Math.round((props.value / 100) * 100), 100) }}%</div>
                 </div>
                 <q-linear-progress 
                   :value="Math.min(props.value / 100, 1)" 
@@ -204,8 +209,15 @@
 </template>
 
 <script setup>
+import { computed, reactive, ref, onMounted, watch } from 'vue'
+import { useQuasar } from 'quasar'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { format, formatDuration, subDays } from 'date-fns'
 import groupBy from 'lodash/groupBy'
+import { useRelatorioStore } from 'src/stores/useRelatorioStore'
+import { useFilaStore } from 'src/stores/useFilaStore'
+import { useRelatorios } from 'src/composables/useRelatorios'
 
 const $q = useQuasar()
 const router = useRouter()
@@ -220,20 +232,61 @@ const params = reactive({
 const ChartTicketsQueue = ref(null)
 const ChartTicketsChannels = ref(null)
 const ChartTicketsEvolutionChannels = ref(null)
-const evolutionKey = ref(0)
-const evolutionByPeriodKey = ref(0)
 const ChartTicketsEvolutionByPeriod = ref(null)
 
-const ticketsQueueOptions = ref({
+const baseChartOptions = computed(() => ({
+    chart: { 
+        background: 'transparent',
+        toolbar: { show: false },
+        fontFamily: 'Nunito, sans-serif',
+        foreColor: $q.dark.isActive ? '#94a3b8' : '#64748b'
+    },
+    theme: {
+        mode: $q.dark.isActive ? 'dark' : 'light',
+        palette: 'palette1'
+    },
+    grid: { 
+      borderColor: $q.dark.isActive ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+      strokeDashArray: 4
+    },
+    tooltip: {
+      theme: $q.dark.isActive ? 'dark' : 'light'
+    }
+}))
+
+const {
+  ticketsAndTimes,
+  ticketsQueue,
+  ticketsChannels,
+  ticketsEvolutionChannels,
+  ticketsEvolutionByPeriod,
+  ticketsPerUsersDetail,
+  obterDashTicketsAndTimes,
+  obterDashTicketsQueue,
+  obterDashTicketsChannels,
+  obterDashTicketsEvolutionChannels,
+  obterDashTicketsEvolutionByPeriod,
+  obterDashTicketsPerUsersDetail
+} = useRelatorios()
+
+const ticketsQueueOptions = computed(() => ({
+  ...baseChartOptions.value,
   chart: { 
+    ...baseChartOptions.value.chart,
     type: 'donut', 
     height: 320, 
-    toolbar: { show: false },
     animations: { enabled: true, easing: 'easeinout', speed: 800 }
   },
-  labels: [],
-  series: [],
-  legend: { position: 'bottom', horizontalAlign: 'center', fontFamily: 'Nunito' },
+  labels: ticketsQueue.value.map(e => e.label),
+  series: ticketsQueue.value.map(e => +e.qtd),
+  legend: { 
+    position: 'bottom', 
+    horizontalAlign: 'center', 
+    fontFamily: 'Nunito',
+    labels: {
+      colors: $q.dark.isActive ? '#94a3b8' : '#64748b'
+    }
+  },
   stroke: { show: false },
   colors: ['#6366f1', '#10b981', '#f59e0b', '#0ea5e9', '#f43f5e'],
   dataLabels: { enabled: false },
@@ -244,12 +297,12 @@ const ticketsQueueOptions = ref({
         background: 'transparent',
         labels: {
           show: true,
-          name: { show: true, fontSize: '14px', fontFamily: 'Nunito', color: '#64748b' },
-          value: { show: true, fontSize: '24px', fontWeight: 800, fontFamily: 'Nunito', color: '#1e293b' },
+          name: { show: true, fontSize: '14px', fontFamily: 'Nunito', color: $q.dark.isActive ? '#94a3b8' : '#64748b' },
+          value: { show: true, fontSize: '24px', fontWeight: 800, fontFamily: 'Nunito', color: $q.dark.isActive ? '#f1f5f9' : '#1e293b' },
           total: {
             show: true,
             label: 'Total',
-            color: '#64748b',
+            color: $q.dark.isActive ? '#94a3b8' : '#64748b',
             fontSize: '14px',
             fontWeight: 600,
             formatter: (w) => {
@@ -263,22 +316,22 @@ const ticketsQueueOptions = ref({
   fill: {
     type: 'gradient',
     gradient: {
-      shade: 'light',
+      shade: $q.dark.isActive ? 'dark' : 'light',
       type: "diagonal1",
       shadeIntensity: 0.2,
       opacityFrom: 1,
       opacityTo: 0.9,
       stops: [0, 90, 100]
     }
-  },
-  theme: { mode: 'light' }
-})
+  }
+}))
 
-const ticketsChannelsOptions = ref({
+const ticketsChannelsOptions = computed(() => ({
+  ...baseChartOptions.value,
   chart: { 
+    ...baseChartOptions.value.chart,
     type: 'donut', 
-    height: 320,
-    toolbar: { show: false }
+    height: 320
   },
   stroke: { show: false },
   plotOptions: {
@@ -287,12 +340,12 @@ const ticketsChannelsOptions = ref({
         size: '75%',
         labels: {
           show: true,
-          name: { show: true, fontSize: '14px', fontFamily: 'Nunito', color: '#64748b' },
-          value: { show: true, fontSize: '24px', fontWeight: 800, fontFamily: 'Nunito', color: '#1e293b' },
+          name: { show: true, fontSize: '14px', fontFamily: 'Nunito', color: $q.dark.isActive ? '#94a3b8' : '#64748b' },
+          value: { show: true, fontSize: '24px', fontWeight: 800, fontFamily: 'Nunito', color: $q.dark.isActive ? '#f1f5f9' : '#1e293b' },
           total: {
             show: true,
             label: 'Total',
-            color: '#64748b',
+            color: $q.dark.isActive ? '#94a3b8' : '#64748b',
             fontSize: '14px',
             fontWeight: 600,
             formatter: (w) => ticketsAndTimes.value.qtd_total_atendimentos || 0
@@ -301,90 +354,129 @@ const ticketsChannelsOptions = ref({
       }
     }
   },
-  labels: [],
-  series: [],
+  labels: ticketsChannels.value.map(e => e.label),
+  series: ticketsChannels.value.map(e => +e.qtd),
+  legend: { 
+    position: 'bottom', 
+    horizontalAlign: 'center', 
+    fontFamily: 'Nunito',
+    labels: {
+      colors: $q.dark.isActive ? '#94a3b8' : '#64748b'
+    }
+  },
   tooltip: {
+    ...baseChartOptions.value.tooltip,
     enabled: true,
-    theme: 'light',
-    style: { fontSize: '13px', fontFamily: 'Nunito' },
     y: {
       formatter: (val) => val + " atendimentos",
       title: { formatter: (seriesName) => seriesName + ':' }
     }
-  },
-  theme: { mode: 'light' }
-})
+  }
+}))
 
-const ticketsEvolutionByPeriodOptions = ref({
-  chart: { 
-    type: 'line', 
-    height: 350, 
-    toolbar: { show: false }
-  },
-  colors: ['#6366f1'],
-  stroke: { curve: 'smooth', width: 6, lineCap: 'round' },
-  markers: { 
-    size: 7,
-    colors: ['#fff'],
-    strokeColors: '#6366f1',
-    strokeWidth: 4,
-    hover: { size: 9, strokeWidth: 5 }
-  },
-  grid: {
-    borderColor: '#f1f5f9',
-    strokeDashArray: 3,
-    padding: { left: 20, right: 20 }
-  },
-  xaxis: { 
-    type: 'category',
-    categories: [],
-    axisBorder: { show: false },
-    axisTicks: { show: false },
-    labels: { style: { colors: '#64748b', fontWeight: 600 } }
-  },
-  yaxis: {
-    labels: { style: { colors: '#64748b', fontWeight: 600 } }
-  },
-  tooltip: { 
-    shared: true, 
-    intersect: false,
-    theme: 'light',
-    style: { fontSize: '13px', fontFamily: 'Nunito' },
-    y: {
-      formatter: (val) => val + " total"
+const ticketsEvolutionByPeriodOptions = computed(() => {
+    const rawData = Array.isArray(ticketsEvolutionByPeriod.value) ? ticketsEvolutionByPeriod.value : []
+    const labels = rawData.map(e => e.label)
+    const seriesData = rawData.map(e => +e.qtd)
+    
+    return {
+      ...baseChartOptions.value,
+      chart: { 
+        ...baseChartOptions.value.chart,
+        type: 'line', 
+        height: 350
+      },
+      colors: ['#6366f1'],
+      stroke: { curve: 'smooth', width: 6, lineCap: 'round' },
+      markers: { 
+        size: 7,
+        colors: [ $q.dark.isActive ? '#1e293b' : '#fff' ],
+        strokeColors: '#6366f1',
+        strokeWidth: 4,
+        hover: { size: 9, strokeWidth: 5 }
+      },
+      xaxis: { 
+        ...baseChartOptions.value.xaxis,
+        type: 'category',
+        categories: labels,
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        ...baseChartOptions.value.yaxis
+      },
+      tooltip: { 
+        ...baseChartOptions.value.tooltip,
+        shared: true, 
+        intersect: false,
+        y: {
+          formatter: (val) => val + " total"
+        }
+      },
+      series: [{ name: 'Atendimentos', data: seriesData }]
     }
-  },
-  series: [],
-  theme: { mode: 'light' }
 })
 
-const ticketsEvolutionChannelsOptions = ref({
-  chart: { 
-    type: 'area', 
-    height: 350, 
-    stacked: true, 
-    toolbar: { show: false },
-    animations: { enabled: true, easing: 'easeinout', speed: 800 }
-  },
-  dataLabels: { enabled: false },
-  stroke: { curve: 'smooth', width: 4 },
-  markers: { 
-    size: 5,
-    strokeWidth: 3,
-    strokeColors: '#fff',
-    hover: { size: 7 }
-  },
-  tooltip: { 
-    shared: true, 
-    intersect: false,
-    theme: 'light',
-    style: { fontSize: '13px', fontFamily: 'Nunito' },
-    marker: { show: true },
-    x: { show: true }
-  },
-  legend: { position: 'top', horizontalAlign: 'left', fontFamily: 'Nunito', fontWeight: 600 },
-  series: [],
-  theme: { mode: 'light' }
+const ticketsEvolutionChannelsOptions = computed(() => {
+    const data = ticketsEvolutionChannels.value || []
+    const rawData = Array.isArray(data) ? data : Object.values(data)
+    const dataLabel = groupBy(rawData, 'dt_referencia')
+    
+    const labels = Object.keys(dataLabel).sort((a, b) => {
+      const [da, ma, ya] = a.split('/')
+      const [db, mb, yb] = b.split('/')
+      return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db)
+    })
+    
+    const canais = [...new Set(rawData.map(d => d.label))]
+    const series = canais.map(canal => {
+      const dataForCanal = labels.map(dataRef => {
+        const item = rawData.find(d => d.label === canal && d.dt_referencia === dataRef)
+        return item ? Number(item.qtd) : 0
+      })
+      return { name: canal, data: dataForCanal }
+    })
+
+    return {
+      ...baseChartOptions.value,
+      chart: { 
+        ...baseChartOptions.value.chart,
+        type: 'area', 
+        height: 350, 
+        stacked: true, 
+        animations: { enabled: true, easing: 'easeinout', speed: 800 }
+      },
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth', width: 4 },
+      markers: { 
+        size: 5,
+        strokeWidth: 3,
+        strokeColors: $q.dark.isActive ? '#1e293b' : '#fff',
+        hover: { size: 7 }
+      },
+      xaxis: {
+        ...baseChartOptions.value.xaxis,
+        categories: labels
+      },
+      tooltip: { 
+        ...baseChartOptions.value.tooltip,
+        shared: true, 
+        intersect: false,
+        marker: { show: true },
+        x: { show: true }
+      },
+      legend: { 
+        ...baseChartOptions.value.legend,
+        position: 'top', 
+        horizontalAlign: 'left', 
+        fontFamily: 'Nunito', 
+        fontWeight: 600,
+        labels: {
+          colors: $q.dark.isActive ? '#94a3b8' : '#64748b'
+        }
+      },
+      series: series
+    }
 })
 
 const paginationTableUser = ref({
@@ -418,8 +510,16 @@ const TicketsPerUsersDetailColumn = [
   }
 ]
 
-const cTmaFormat = computed(() => formatDuration(ticketsAndTimes.value.tma || {}) || '0s')
-const cTmeFormat = computed(() => formatDuration(ticketsAndTimes.value.tme || {}) || '0s')
+const formatTimeCompact = (obj) => {
+  if (!obj || (!obj.hours && !obj.minutes && !obj.seconds)) return '0s'
+  const h = obj.hours ? `${obj.hours}h ` : ''
+  const m = obj.minutes ? `${obj.minutes}m ` : ''
+  const s = obj.seconds ? `${obj.seconds}s` : ''
+  return `${h}${m}${s}`.trim()
+}
+
+const cTmaFormat = computed(() => formatTimeCompact(ticketsAndTimes.value.tma))
+const cTmeFormat = computed(() => formatTimeCompact(ticketsAndTimes.value.tme))
 
 const statCards = computed(() => [
   {
@@ -474,27 +574,11 @@ const statCards = computed(() => [
     icon: 'mdi-timer-sand',
     color: 'error',
     formatType: 'text',
-    progressValue: 0.9 // Representa urgência se estiver alto
+    progressValue: 0.9
   }
 ])
 
 const filaStore = useFilaStore()
-const { filas } = storeToRefs(filaStore)
-
-const {
-  ticketsAndTimes,
-  ticketsQueue,
-  ticketsChannels,
-  ticketsEvolutionChannels,
-  ticketsEvolutionByPeriod,
-  ticketsPerUsersDetail,
-  obterDashTicketsAndTimes,
-  obterDashTicketsQueue,
-  obterDashTicketsChannels,
-  obterDashTicketsEvolutionChannels,
-  obterDashTicketsEvolutionByPeriod,
-  obterDashTicketsPerUsersDetail
-} = useRelatorios()
 
 const getDashData = () => {
   obterDashTicketsAndTimes(params)
@@ -505,165 +589,17 @@ const getDashData = () => {
   obterDashTicketsPerUsersDetail(params)
 }
 
-watch(ticketsQueue, (data) => {
-    if (!data) return
-    ticketsQueueOptions.value = {
-      ...ticketsQueueOptions.value,
-      series: data.map(e => +e.qtd),
-      labels: data.map(e => e.label)
-    }
-})
-
-watch(ticketsChannels, (data) => {
-    if (!data) return
-    ticketsChannelsOptions.value = {
-      ...ticketsChannelsOptions.value,
-      series: data.map(e => +e.qtd),
-      labels: data.map(e => e.label)
-    }
-})
-
-watch(ticketsEvolutionChannels, (data) => {
-    if (!data || data.length === 0) return
-    
-    // 1. Agrupar dados por data (usando array puro para evitar proxy bugs)
-    const rawData = Array.isArray(data) ? data : Object.values(data)
-    const dataLabel = groupBy(rawData, 'dt_referencia')
-    
-    let labels = Object.keys(dataLabel).sort((a, b) => {
-      const [da, ma, ya] = a.split('/')
-      const [db, mb, yb] = b.split('/')
-      return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db)
-    })
-    
-    const canais = [...new Set(rawData.map(d => d.label))]
-    
-    // 2. Padding para 1 dia
-    const paddingData = []
-    if (labels.length === 1) {
-      const [d, m, y] = labels[0].split('/')
-      const current = new Date(y, m - 1, d)
-      
-      const yesterday = new Date(current)
-      yesterday.setDate(yesterday.getDate() - 1)
-      const tomorrow = new Date(current)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      
-      const yesterdayStr = format(yesterday, 'dd/MM/yyyy')
-      const tomorrowStr = format(tomorrow, 'dd/MM/yyyy')
-      
-      const originalLabels = labels
-      labels = [yesterdayStr, ...originalLabels, tomorrowStr]
-      
-      canais.forEach(canal => {
-        paddingData.push({ label: canal, dt_referencia: yesterdayStr, qtd: 0 })
-        paddingData.push({ label: canal, dt_referencia: tomorrowStr, qtd: 0 })
-      })
-    }
-
-    const combinedData = [...paddingData, ...rawData]
-    
-    // 3. Montar séries
-    const series = canais.map(canal => {
-      const dataForCanal = labels.map(dataRef => {
-        const item = combinedData.find(d => d.label === canal && d.dt_referencia === dataRef)
-        return item ? Number(item.qtd) : 0
-      })
-      return { name: canal, data: dataForCanal }
-    })
-
-    // 4. Force Redraw
-    ticketsEvolutionChannelsOptions.value = {
-      ...ticketsEvolutionChannelsOptions.value,
-      xaxis: {
-        ...ticketsEvolutionChannelsOptions.value.xaxis,
-        categories: labels
-      },
-      series: series
-    }
-    evolutionKey.value++
-})
-
-watch(ticketsEvolutionByPeriod, (data) => {
-    if (!data || data.length === 0) return
-    const rawData = Array.isArray(data) ? data : Object.values(data)
-    
-    let labels = rawData.map(e => e.label)
-    let finalData = rawData
-    
-    // Padding para 1 dia
-    if (labels.length === 1) {
-      const currentStr = labels[0]
-      const [d, m, y] = currentStr.split('/')
-      const current = new Date(y, m - 1, d)
-      
-      const yesterday = new Date(current)
-      yesterday.setDate(yesterday.getDate() - 1)
-      const tomorrow = new Date(current)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      
-      const yesterdayStr = format(yesterday, 'dd/MM/yyyy')
-      const tomorrowStr = format(tomorrow, 'dd/MM/yyyy')
-      
-      labels = [yesterdayStr, currentStr, tomorrowStr]
-      finalData = [
-        { label: yesterdayStr, qtd: 0 },
-        ...rawData,
-        { label: tomorrowStr, qtd: 0 }
-      ]
-    }
-    
-    const series = [
-      { name: 'Atendimentos', data: finalData.map(e => +e.qtd) }
-    ]
-    
-    ticketsEvolutionByPeriodOptions.value = {
-      ...ticketsEvolutionByPeriodOptions.value,
-      xaxis: {
-        ...ticketsEvolutionByPeriodOptions.value.xaxis,
-        categories: labels
-      },
-      series: series
-    }
-    evolutionByPeriodKey.value++
-})
-
 const listarFilas = async () => {
   await filaStore.listarFilas()
 }
 
-watch(
-  () => $q.dark.isActive,
-  () => {
-    router.go()
-  }
-)
-
 onMounted(() => {
-  const mode = $q.dark.isActive ? 'dark' : 'light'
-  const theme = {
-    mode,
-    palette: 'palette1',
-    monochrome: {
-      enabled: false
-    }
-  }
-  ticketsQueueOptions.value.theme = theme
-  ticketsChannelsOptions.value.theme = theme
-  ticketsEvolutionChannelsOptions.value.theme = theme
-  ticketsEvolutionByPeriodOptions.value.theme = theme
   listarFilas()
   getDashData()
 })
 </script>
 
 <style lang="scss" scoped>
-.q-page {
-  background: radial-gradient(circle at top right, rgba(var(--q-primary), 0.05), transparent),
-              radial-gradient(circle at bottom left, rgba(var(--q-secondary), 0.05), transparent);
-  min-height: 100vh;
-}
-
 .tracking-tight {
   letter-spacing: -1px;
 }

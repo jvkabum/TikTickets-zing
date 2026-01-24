@@ -20,10 +20,15 @@
         </div>
         
         <div class="col">
-          <div class="text-caption text-grey-7 text-uppercase text-weight-bolder letter-spacing-1">
+          <div 
+            class="text-caption text-uppercase text-weight-bolder letter-spacing-1"
+            :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-7'"
+          >
             {{ label }}
           </div>
-          <div class="text-h4 text-weight-bolder text-dark line-height-1">
+          <div 
+            class="text-h4 text-weight-bolder line-height-1 text-dark-theme"
+          >
             {{ formattedValue }}
           </div>
         </div>
@@ -48,7 +53,7 @@
           style="height: 6px"
         />
         
-        <div v-if="description" class="text-caption text-grey-6 q-mt-sm row items-center">
+        <div v-if="description" class="text-caption q-mt-sm row items-center" :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-6'">
           <q-icon name="mdi-clock-outline" size="14px" class="q-mr-xs" v-if="formatType === 'time'" />
           <q-icon name="mdi-trending-up" size="14px" class="q-mr-xs" v-else-if="trend > 0" color="positive" />
           <q-icon name="mdi-trending-down" size="14px" class="q-mr-xs" v-else-if="trend < 0" color="negative" />
@@ -60,6 +65,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 
 const props = defineProps({
   value: {
