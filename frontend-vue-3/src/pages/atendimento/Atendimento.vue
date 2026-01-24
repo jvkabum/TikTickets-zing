@@ -340,8 +340,8 @@
       </q-page-container>
 
       <q-drawer
-        v-if="ticketFocado.id && !cRouteContatos"
-        v-model="drawerContact"
+        v-show="ticketFocado.id && !cRouteContatos"
+        v-model="ticketStore.drawerContact"
         side="right"
         bordered
         :width="350"
@@ -349,14 +349,25 @@
       >
         <q-toolbar
           class="glass-premium text-bold"
-          style="height: 64px"
+          style="min-height: 64px; height: 64px"
         >
-          Informações do Contato
+          Dados do Contato
           <q-space />
+          <q-btn
+            flat
+            rounded
+            dense
+            color="primary"
+            label="Logs"
+            icon="mdi-history"
+            class="q-px-sm"
+            @click="abrirModalLogs"
+          />
           <q-btn
             flat
             round
             icon="close"
+            class="q-ml-sm"
             @click="drawerContact = false"
           />
         </q-toolbar>
@@ -401,14 +412,15 @@
               </q-card-section>
             </q-card>
 
+            <!-- Etiquetas Interativas -->
             <q-card
-              class="q-mt-sm glass-premium border-glass"
+              class="q-mt-sm glass-premium border-glass overflow-hidden"
               flat
               v-if="ticketFocado.contact"
             >
-              <q-card-section class="text-bold">
-                Etiquetas
-                <q-separator />
+              <q-card-section class="text-bold q-pb-none row items-center justify-between">
+                <span>Etiquetas</span>
+                <q-icon name="mdi-tag-multiple-outline" color="primary" />
               </q-card-section>
               <q-card-section class="q-pa-sm">
                 <q-select
@@ -420,59 +432,69 @@
                   option-label="tag"
                   emit-value
                   map-options
-                  outlined
+                  borderless
                   dense
-                  @update:model-value="atualizarEtiquetasContato"
-                />
+                  @update:model-value="handleTagSelecionada"
+                  dropdown-icon="add"
+                >
+                  <template v-slot:selected-item="scope">
+                    <q-chip
+                      removable
+                      dense
+                      @remove="scope.removeAtIndex(scope.index)"
+                      :tabindex="scope.tabindex"
+                      class="q-ma-xs"
+                      :style="`border: 1px solid ${scope.opt.color || '#ccc'}; color: ${scope.opt.color || 'primary'}`"
+                      color="white"
+                    >
+                      <q-icon name="mdi-pound" size="xs" class="q-mr-xs" :style="`color: ${scope.opt.color}`" />
+                      {{ scope.opt.tag }}
+                    </q-chip>
+                  </template>
+                </q-select>
               </q-card-section>
             </q-card>
 
+            <!-- Carteira (Wallets) -->
             <q-card
               class="q-mt-sm glass-premium border-glass"
               flat
-              v-if="cIsExtraInfo"
+              v-if="ticketFocado.contact"
             >
-              <q-card-section class="text-bold">
-                Informações Extras
-                <q-separator />
-              </q-card-section>
-              <q-card-section class="q-pa-none">
-                <q-list separator>
-                  <q-item
-                    v-for="info in ticketFocado.contact.extraInfo"
-                    :key="info.id"
-                  >
-                    <q-item-section>
-                      <q-item-label caption>{{ info.name }}</q-item-label>
-                      <q-item-label>{{ info.value }}</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-card-section>
-            </q-card>
-
-            <!-- Carteira -->
-            <q-card
-              class="q-mt-sm glass-premium border-glass"
-              flat
-              v-if="ticketFocado.contact?.wallets?.length"
-            >
-              <q-card-section class="text-bold">
-                Carteira
-                <q-separator />
+              <q-card-section class="text-bold q-pb-none row items-center justify-between">
+                <span>Carteira</span>
+                <q-icon name="mdi-wallet-outline" color="primary" />
               </q-card-section>
               <q-card-section class="q-pa-sm">
-                <q-chip
-                  v-for="wallet in ticketFocado.contact.wallets"
-                  :key="wallet.id"
+                <q-select
+                  v-model="ticketFocado.contact.wallets"
+                  multiple
+                  :options="usuarios"
+                  use-chips
+                  option-value="id"
+                  option-label="name"
+                  emit-value
+                  map-options
+                  borderless
                   dense
-                  square
-                  color="primary"
-                  text-color="white"
-                  class="q-ma-xs"
+                  @update:model-value="handleCarteiraDefinida"
+                  dropdown-icon="add"
+                  placeholder="Atribuir contato..."
                 >
-                  {{ wallet.name }}
-                </q-chip>
+                  <template v-slot:selected-item="scope">
+                    <q-chip
+                      removable
+                      dense
+                      @remove="scope.removeAtIndex(scope.index)"
+                      :tabindex="scope.tabindex"
+                      class="q-ma-xs"
+                      color="primary"
+                      text-color="white"
+                    >
+                      {{ scope.opt.name }}
+                    </q-chip>
+                  </template>
+                </q-select>
               </q-card-section>
             </q-card>
 
@@ -482,10 +504,11 @@
               flat
               v-if="ticketFocado.scheduledMessages?.length"
             >
-              <q-card-section class="text-bold">
-                Mensagens Agendadas
-                <q-separator />
+              <q-card-section class="text-bold row items-center justify-between">
+                <span>Mensagens Agendadas</span>
+                <q-icon name="mdi-clock-outline" color="primary" />
               </q-card-section>
+              <q-separator />
               <q-card-section class="q-pa-none">
                 <q-list separator>
                   <q-item
@@ -493,12 +516,47 @@
                     :key="idx"
                   >
                     <q-item-section>
-                      <q-item-label caption>
-                        <b>Agendado:</b> {{ formatarData(msg.scheduleDate, 'dd/MM/yyyy HH:mm') }}
+                      <q-item-label caption class="row justify-between items-center">
+                        <b>{{ formatarData(msg.scheduleDate, 'dd/MM/yyyy HH:mm') }}</b>
+                        <q-btn
+                          flat
+                          round
+                          dense
+                          color="negative"
+                          icon="mdi-delete-outline"
+                          size="sm"
+                          @click="deletarMensagemAgendada(msg)"
+                        />
                       </q-item-label>
                       <q-item-label lines="2">
                         {{ msg.mediaName || msg.body }}
                       </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-card-section>
+            </q-card>
+
+            <!-- Informações Extras (Legacy Refined) -->
+            <q-card
+              class="q-mt-sm glass-premium border-glass"
+              flat
+              v-if="cIsExtraInfo"
+            >
+              <q-card-section class="text-bold row items-center justify-between">
+                <span>Outras Informações</span>
+                <q-icon name="mdi-information-outline" color="primary" />
+              </q-card-section>
+              <q-separator />
+              <q-card-section class="q-pa-none">
+                <q-list separator>
+                  <q-item
+                    v-for="info in ticketFocado.contact.extraInfo"
+                    :key="info.id"
+                  >
+                    <q-item-section>
+                      <q-item-label caption>{{ info.name }}</q-item-label>
+                      <q-item-label>{{ info.value }}</q-item-label>
                     </q-item-section>
                   </q-item>
                 </q-list>
@@ -520,6 +578,46 @@
       :usuario-edicao="authStore.user"
       :is-profile="true"
     />
+
+    <!-- Modal de Logs (Timeline Estilo Drawer) -->
+    <q-dialog
+      v-model="exibirModalLogs"
+      position="right"
+      full-height
+    >
+      <q-card style="width: 450px; max-width: 90vw" class="glass-premium no-border-radius">
+        <q-toolbar class="bg-primary text-white">
+          <q-toolbar-title>Logs do Ticket #{{ ticketFocado.id }}</q-toolbar-title>
+          <q-btn flat round dense icon="close" v-close-popup />
+        </q-toolbar>
+
+        <q-card-section class="q-pa-md">
+          <q-scroll-area style="height: calc(100vh - 120px)">
+            <q-timeline color="primary" class="q-px-md">
+              <q-timeline-entry
+                v-for="log in logsTicket"
+                :key="log.id"
+                :subtitle="formatarData(log.createdAt, 'dd/MM/yyyy HH:mm')"
+                :icon="messagesLog[log.type]?.icon || 'mdi-information-outline'"
+                :color="messagesLog[log.type]?.color || 'grey'"
+              >
+                <template v-slot:title>
+                  <div class="text-bold text-body2">
+                    {{ log.user?.name || 'Sistema/Bot' }}
+                  </div>
+                </template>
+                <div>
+                  {{ messagesLog[log.type]?.message || log.type }}
+                  <div v-if="log.ticketId" class="text-caption text-grey">
+                    Ticket #{{ log.ticketId }}
+                  </div>
+                </div>
+              </q-timeline-entry>
+            </q-timeline>
+          </q-scroll-area>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -534,6 +632,7 @@ const $q = useQuasar()
 const ticketStore = useTicketStore()
 const { setupSockets, disconnectSockets } = useTicketSockets()
 const { ticketFocado } = storeToRefs(ticketStore)
+import bus from 'src/utils/eventBus'
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
@@ -549,20 +648,36 @@ const whatsappStore = useWhatsappStore()
 const { whatsapps } = storeToRefs(whatsappStore)
 const { listarWhatsapps } = useSessoesWhatsapp()
 
+const usuarioStore = useUsuarioStore()
+const { usuarios } = storeToRefs(usuarioStore)
+
+const { listarContatos } = useContatos()
+import { ConsultarLogsTicket, DeletarMensagem } from 'src/service/tickets'
+const apiDeletarMensagem = DeletarMensagem
+const consultarLogsTicket = ConsultarLogsTicket
+
 const cRouteContatos = computed(() => {
   return route.name === 'contatos'
 })
 
-
-
 const drawerTickets = ref(true)
-const drawerContact = ref(false)
 const selectedTab = ref('open')
 const toolbarSearch = ref(true)
 const modalUsuario = ref(false)
 const modalNovoTicket = ref(false)
 const modalContato = ref(false)
 const selectedContactId = ref(null)
+
+const exibirModalLogs = ref(false)
+const logsTicket = ref([])
+const messagesLog = {
+  access: { message: 'Acessou o ticket', color: 'blue', icon: 'mdi-account-check' },
+  transfer: { message: 'Transferiu o ticket', color: 'orange', icon: 'mdi-swap-horizontal' },
+  status: { message: 'Alterou o status', color: 'purple', icon: 'mdi-cached' },
+  closed: { message: 'Encerrou o atendimento', color: 'negative', icon: 'mdi-close-circle-outline' },
+  open: { message: 'Abriu o atendimento', color: 'positive', icon: 'mdi-check-circle-outline' },
+  pending: { message: 'Marcou como pendente', color: 'warning', icon: 'mdi-alert-circle-outline' }
+}
 
 const {
   filtros: pesquisaTickets,
@@ -572,7 +687,7 @@ const {
   limparFiltros: limparFiltro
 } = useTicketFilters()
 
-const { editarContato } = useContatos()
+const { editarContato, editarEtiquetasContato, editarCarteiraContato } = useContatos()
 
 // O estado pesquisaTickets agora vem do useTicketFilters()
 // O cFiltroSelecionado também vem do useTicketFilters()
@@ -582,7 +697,16 @@ const style = computed(() => ({
   height: $q.screen.height + 'px'
 }))
 
-const cIsExtraInfo = computed(() => ticketFocado.value?.contact?.extraInfo?.length > 0)
+const cIsExtraInfo = computed(() => {
+  const info = ticketFocado.value?.contact?.extraInfo
+  const hasExtra = Array.isArray(info) && info.length > 0
+  console.log('DEBUG [Atendimento] cIsExtraInfo:', hasExtra, '| Data:', info)
+  return hasExtra
+})
+
+watch(() => ticketFocado.value?.scheduledMessages, (val) => {
+  console.log('DEBUG [Atendimento] scheduledMessages:', val?.length, '| Data:', val)
+}, { deep: true, immediate: true })
 
 // Contagem de tickets por status para os badges
 const { tickets, notifications, notificationsP, ticketsCount } = storeToRefs(ticketStore)
@@ -618,8 +742,62 @@ const handleEditarContato = () => {
   modalContato.value = true
 }
 
+const handleTagSelecionada = async tagsIds => {
+  try {
+    const { data } = await editarEtiquetasContato(ticketFocado.value.contact.id, tagsIds)
+    ticketStore.updateTicketContact(data)
+  } catch (error) {
+    console.error('Erro ao atualizar etiquetas', error)
+  }
+}
+
+const handleCarteiraDefinida = async walletsIds => {
+  try {
+    const { data } = await editarCarteiraContato(ticketFocado.value.contact.id, walletsIds)
+    ticketStore.updateTicketContact(data)
+  } catch (error) {
+    console.error('Erro ao atualizar carteira', error)
+  }
+}
+
+const abrirModalLogs = async () => {
+  try {
+    const { data } = await consultarLogsTicket({ ticketId: ticketFocado.value.id })
+    logsTicket.value = data
+    exibirModalLogs.value = true
+  } catch (error) {
+    console.error('Erro ao buscar logs', error)
+  }
+}
+
+const deletarMensagemAgendada = async mensagem => {
+  $q.dialog({
+    title: 'Atenção!!',
+    message: 'Deseja realmente deletar esta mensagem agendada?',
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await apiDeletarMensagem(mensagem)
+      ticketStore.updateTicketScheduledMessages(ticketFocado.value.id, mensagem.id)
+      $q.notify({ type: 'positive', message: 'Mensagem deletada!' })
+    } catch (error) {
+      console.error('Erro ao deletar mensagem agendada', error)
+    }
+  })
+}
+
 const efetuarLogout = () => {
   authStore.handleLogout()
+}
+
+const handleAcaoMenu = () => {
+  drawerTickets.value = !drawerTickets.value
+}
+
+const handleInfoContato = () => {
+  console.log('DEBUG [Atendimento] EVENT: alternando drawerContact via Store. Anterior:', drawerContact.value)
+  drawerContact.value = !drawerContact.value
 }
 
 onMounted(() => {
@@ -627,9 +805,11 @@ onMounted(() => {
   etiquetaStore.listarEtiquetas(true)
   filaStore.listarFilas()
   listarWhatsapps() // Carregar status dos canais
+  usuarioStore.listarUsuarios() // Carregar usuários para carteira
   carregarFiltros() // Carrega filtros salvos ao montar
   ticketStore.atualizarContadoresGerais() // Sincroniza todos os números do topo
 
+  bus.on('infor-cabecalo-chat:acao-menu', handleAcaoMenu)
 
   if ($q.screen.lt.md) {
     drawerTickets.value = false
@@ -639,6 +819,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   disconnectSockets()
+  bus.off('infor-cabecalo-chat:acao-menu', handleAcaoMenu)
 })
 </script>
 

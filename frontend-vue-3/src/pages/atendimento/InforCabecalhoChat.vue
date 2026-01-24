@@ -244,6 +244,7 @@
 import { useTicketActions } from './useTicketActions.js'
 import bus from 'src/utils/eventBus'
 import { notificarErro, notificarSucesso, notificarInfo } from 'src/utils/helpersNotifications'
+import { BuscarTicketPorId } from 'src/service/tickets'
 
 const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)
@@ -265,6 +266,15 @@ const transferencia = reactive({
   filaId: null,
   usuarioId: null
 })
+
+// Computed Style para altura dinámica
+const style = computed(() => ({
+  height: $q.screen.height + 'px'
+}))
+
+watch(() => ticketFocado.value, (val) => {
+  console.log('DEBUG [InforCabecalhoChat] ticketFocado mudou:', val)
+}, { deep: true })
 
 const usuariosFiltrados = computed(() => {
   if (!transferencia.filaId) return usuarios.value
@@ -328,8 +338,16 @@ const emitirAcaoMenu = () => {
 }
 
 const emitirInfoContato = () => {
-  bus.emit('update-ticket:info-contato')
+  console.log('DEBUG [InforCabecalhoChat] CLICK: alternando drawerContact via Store. Anterior:', ticketStore.drawerContact)
+  ticketStore.drawerContact = !ticketStore.drawerContact
 }
+
+watch(() => ticketFocado.value, (val) => {
+  console.log('DEBUG [InforCabecalhoChat] ticketFocado mudou:', JSON.parse(JSON.stringify(val)))
+}, { deep: true })
+
+onMounted(() => {
+})
 
 // Carregar protocolos e informações do contato quando trocar o ticket
 const initChat = async () => {
@@ -337,12 +355,22 @@ const initChat = async () => {
     // Buscar protocolos
     ticketStore.listarProtocolos(ticketFocado.value.id)
     
-    // Se o contato não tem foto ou info completa, buscar
-    if (ticketFocado.value.contactId && (!ticketFocado.value.contact?.name || !ticketFocado.value.contact?.profilePicUrl)) {
+    // Buscar dados completos do ticket (Agendamentos, etc)
+    try {
+      const { data: ticketCompleto } = await BuscarTicketPorId(ticketFocado.value.id)
+      console.log('DEBUG [InforCabecalhoChat] Ticket Completo (Vindo da API):', ticketCompleto)
+      ticketStore.updateTicket(ticketCompleto)
+    } catch (err) {
+      console.error('Erro ao buscar dados completos do ticket:', err)
+    }
+
+    // Carregar informações detalhadas do contato (Info Extra, Tags, etc)
+    if (ticketFocado.value.contactId) {
       try {
         const fullContact = await contatoStore.obterContato(ticketFocado.value.contactId)
+        console.log('DEBUG [InforCabecalhoChat] Contato Completo (Vindo da API):', fullContact)
         if (fullContact) {
-          // Atualizar o ticket localmente com o novo contato
+          // Atualizar o ticket localmente com o novo contato completo para popular painel lateral
           ticketStore.updateTicketContact(fullContact)
         }
       } catch (err) {

@@ -25,6 +25,7 @@ export const useTicketStore = defineStore('ticket', () => {
     closed: 0,
     groups: 0
   })
+  const drawerContact = ref(false)
 
   const openTickets = computed(() => tickets.value.filter(t => t.status === 'open' && !t.isGroup))
 
@@ -326,6 +327,7 @@ export const useTicketStore = defineStore('ticket', () => {
     listarProtocolos,
     protocolos,
     ticketsCount,
+    drawerContact,
     atualizarContadoresGerais
   }
 })
