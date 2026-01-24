@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div class="q-pa-md height-fix">
     <q-table
-      class="my-sticky-dynamic"
+      class="my-sticky-dynamic glass-premium border-glass no-shadow"
       title="Contatos"
       :id="`tabela-contatos-${isChatContact ? 'atendimento' : ''}`"
       :rows="contatos"
@@ -14,12 +14,12 @@
       v-model:pagination="pagination"
       :rows-per-page-options="[0]"
       @virtual-scroll="onScroll"
-      :bordered="isChatContact"
-      :square="isChatContact"
-      :flat="isChatContact"
+      :bordered="false"
+      :square="false"
+      :flat="true"
       :separator="isChatContact ? 'vertical' : 'horizontal'"
       :class="{
-        'q-ma-lg': !isChatContact,
+        'q-ma-md rounded-all': !isChatContact,
         'q-ml-md heightChat': isChatContact
       }"
     >
@@ -362,5 +362,21 @@ onMounted(() => {
 <style lang="scss" scoped>
 .heightChat {
   height: calc(100vh - 120px);
+}
+
+.height-fix {
+  height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+}
+
+.height-fix :deep(.q-table__container) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.height-fix :deep(.q-table__middle) {
+  flex-grow: 1;
 }
 </style>

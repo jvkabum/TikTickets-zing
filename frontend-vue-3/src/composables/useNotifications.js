@@ -1,7 +1,7 @@
 import { useQuasar } from 'quasar'
 import { ref } from 'vue'
 
-export function useNotifications() {
+export function useNotifications () {
     const $q = useQuasar()
     const permission = ref('Notification' in window ? Notification.permission : 'denied')
     const isWebSupported = ref('Notification' in window)

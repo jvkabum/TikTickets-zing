@@ -2,7 +2,7 @@
 /**
  * Composable para gerenciar horários de atendimento
  */
-export function useHorarioAtendimento() {
+export function useHorarioAtendimento () {
     const $q = useQuasar()
 
     const horarios = ref([])
@@ -93,7 +93,7 @@ export function useHorarioAtendimento() {
      */
     const getProximaAbertura = () => {
         const agora = new Date()
-        let diaSemana = agora.getDay()
+        const diaSemana = agora.getDay()
 
         for (let i = 0; i < 7; i++) {
             const dia = (diaSemana + i) % 7

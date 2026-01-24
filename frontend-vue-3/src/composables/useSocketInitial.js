@@ -11,7 +11,7 @@ import { socketIO } from 'src/utils/socket'
 
 const socket = socketIO()
 
-export function useSocketInitial() {
+export function useSocketInitial () {
   const $q = useQuasar()
   const router = useRouter()
   const authStore = useAuthStore()

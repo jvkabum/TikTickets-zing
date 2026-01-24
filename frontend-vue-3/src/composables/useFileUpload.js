@@ -3,7 +3,7 @@ import { ref } from 'vue'
 /**
  * Composable para gerenciar upload de arquivos
  */
-export function useFileUpload() {
+export function useFileUpload () {
     const uploading = ref(false)
     const uploadProgress = ref(0)
     const previewUrl = ref(null)

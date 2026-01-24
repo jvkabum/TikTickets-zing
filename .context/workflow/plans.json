@@ -1,13 +1,13 @@
 {
   "active": [
     {
-      "slug": "fix-ffmpeg-enoent-final-resolution",
-      "path": "plans/fix-ffmpeg-enoent-final-resolution.md",
-      "title": "🎯 Plano: Resolução Final FFmpeg e Organização de Git",
-      "linkedAt": "2026-01-23T17:09:43.572Z",
+      "slug": "dark-mode-global-frontend",
+      "path": "plans/dark-mode-global-frontend.md",
+      "title": "🚀 Plano de Implementação Global de Dark Mode Premium",
+      "linkedAt": "2026-01-24T02:56:48.279Z",
       "status": "active"
     }
   ],
   "completed": [],
-  "primary": "fix-ffmpeg-enoent-final-resolution"
+  "primary": "dark-mode-global-frontend"
 }

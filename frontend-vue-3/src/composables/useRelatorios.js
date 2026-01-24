@@ -2,7 +2,7 @@
 /**
  * Composable para relatórios (Binding para useRelatorioStore)
  */
-export function useRelatorios() {
+export function useRelatorios () {
     const store = useRelatorioStore()
     const {
         dadosResumo,

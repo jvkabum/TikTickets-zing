@@ -164,12 +164,20 @@ const headerColor = computed(() => {
   background-color: #dcf8c6;
   margin-left: auto;
   border-bottom-right-radius: 0;
+  body.body--dark & {
+    background-color: #056162;
+    color: #f1f5f9;
+  }
 }
 
 .bubble-received {
   background-color: #fff;
   margin-right: auto;
   border-bottom-left-radius: 0;
+  body.body--dark & {
+    background-color: #1e293b;
+    color: #f1f5f9;
+  }
 }
 
 .bubble-deleted {
@@ -181,9 +189,15 @@ const headerColor = computed(() => {
   border-left: 3px solid #1976D2;
   border-radius: 4px;
   cursor: pointer;
+  body.body--dark & {
+    background: rgba(255, 255, 255, 0.1);
+  }
 
   &:hover {
     background: rgba(0, 0, 0, 0.08);
+    body.body--dark & {
+      background: rgba(255, 255, 255, 0.15);
+    }
   }
 }
 
@@ -199,6 +213,9 @@ const headerColor = computed(() => {
 .message-time {
   font-size: 11px;
   color: rgba(0, 0, 0, 0.45);
+  body.body--dark & {
+    color: rgba(255, 255, 255, 0.5);
+  }
 }
 
 .ellipsis-2-lines {

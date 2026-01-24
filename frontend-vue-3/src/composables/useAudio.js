@@ -3,7 +3,7 @@ import { ref } from 'vue'
 /**
  * Composable para gerenciar gravação e reprodução de áudio
  */
-export function useAudio() {
+export function useAudio () {
     const isRecording = ref(false)
     const isPaused = ref(false)
     const recordingTime = ref(0)

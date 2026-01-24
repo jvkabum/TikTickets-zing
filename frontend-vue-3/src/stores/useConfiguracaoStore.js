@@ -18,7 +18,7 @@ export const useConfiguracaoStore = defineStore('configuracao', {
     loading: false
   }),
   actions: {
-    async listarConfiguracoes() {
+    async listarConfiguracoes () {
       this.loading = true
       try {
         const { data } = await ListarConfiguracoes()
@@ -38,7 +38,7 @@ export const useConfiguracaoStore = defineStore('configuracao', {
         this.loading = false
       }
     },
-    async atualizarConfiguracao(key, value) {
+    async atualizarConfiguracao (key, value) {
       this.loading = true
       const newValue = (value !== undefined && value !== null) ? value : this.settings[key]
       const params = {

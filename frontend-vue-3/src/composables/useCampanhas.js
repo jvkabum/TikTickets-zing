@@ -2,7 +2,7 @@
 /**
  * Composable para gerenciar campanhas (Binding para useCampanhaStore)
  */
-export function useCampanhas() {
+export function useCampanhas () {
     const store = useCampanhaStore()
     const {
         campanhas,

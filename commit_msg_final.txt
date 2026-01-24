@@ -1,0 +1,7 @@
+feat(dashboard): completa modernização premium incluindo StatCard e Roadmap de contexto
+
+- Adiciona componente StatCard.vue refatorado com micro-animações, suporte a Glassmorphism e melhor formatação de métricas.
+- Inclui o arquivo de roadmap de contexto (.context/plans) que documenta toda a estratégia de modernização premium v1.
+- Garante a consistência visual entre os cartões de estatística e o novo design do dashboard centralizado.
+
+Por que: Estes arquivos são peças fundamentais da refatoração estética liderada pelo padrão "Quasar Guru", garantindo que tanto a lógica de métricas quanto a documentação do projeto estejam sincronizadas com a nova UI.

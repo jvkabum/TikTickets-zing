@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 /**
  * Composable para centralizar acesso ao localStorage com reatividade
  */
-export function useAppLocalStorage() {
+export function useAppLocalStorage () {
     // Cache reativo para evitar parsing repetido
     const cachedUsuario = ref(null)
     const cachedConfiguracoes = ref(null)

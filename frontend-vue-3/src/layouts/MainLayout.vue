@@ -1,7 +1,7 @@
 <template>
   <q-layout view="hHh Lpr lFf">
     <q-header
-      class="glass text-grey-10 q-py-xs"
+      class="q-py-xs glass-premium no-shadow border-glass text-grey-9"
       height-hint="65"
     >
       <q-toolbar>
@@ -12,6 +12,7 @@
           @click="leftDrawerOpen = !leftDrawerOpen"
           aria-label="Menu"
           icon="menu"
+          color="primary"
         >
           <q-tooltip>Menu</q-tooltip>
         </q-btn>
@@ -76,7 +77,7 @@
       @mouseover="miniState = false"
       @mouseout="miniState = true"
       mini-to-overlay
-      content-class="bg-white text-grey-9"
+      :content-class="$q.dark.isActive ? 'bg-transparent border-glass' : 'bg-transparent border-glass'"
     >
       <MainSidebar 
         :user-profile="userProfile"
@@ -86,9 +87,16 @@
     </q-drawer>
 
     <q-page-container>
-      <q-page class="q-pa-xs">
-        <router-view />
-      </q-page>
+      <router-view v-slot="{ Component }">
+        <transition
+          appear
+          enter-active-class="animated fadeIn"
+          leave-active-class="animated fadeOut"
+          mode="out-in"
+        >
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </q-page-container>
 
     <audio
@@ -249,7 +257,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  socket.disconnect()
+  // socket.disconnect() // Manter conexão ativa
 })
 </script>
 

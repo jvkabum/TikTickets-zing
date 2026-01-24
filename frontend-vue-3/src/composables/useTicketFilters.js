@@ -4,7 +4,7 @@ import { reactive, computed } from 'vue'
  * Composable para gerenciar filtros de tickets
  * Substitui a lógica duplicada de checkTicketFilter.js
  */
-export function useTicketFilters() {
+export function useTicketFilters () {
     const storage = useAppLocalStorage()
     const config = useConfiguracoes()
     const permissoes = usePermissoes()

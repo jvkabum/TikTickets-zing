@@ -2,7 +2,7 @@
 /**
  * Composable para gerenciar contatos (Binding para useContatoStore)
  */
-export function useContatos() {
+export function useContatos () {
     const store = useContatoStore()
     const {
         contatos,

@@ -11,7 +11,7 @@ import {
 } from 'src/service/sessoesWhatsapp'
 import { notificarErro } from 'src/utils/helpersNotifications'
 
-export function useSessoesWhatsapp() {
+export function useSessoesWhatsapp () {
     const $q = useQuasar()
     const whatsappStore = useWhatsappStore()
 

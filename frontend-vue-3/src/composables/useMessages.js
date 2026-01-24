@@ -4,7 +4,7 @@ import { orderBy } from 'lodash'
 /**
  * Composable para manipulação e formatação de mensagens
  */
-export function useMessages() {
+export function useMessages () {
     /**
      * Ordena mensagens por timestamp (mais antigas primeiro)
      */

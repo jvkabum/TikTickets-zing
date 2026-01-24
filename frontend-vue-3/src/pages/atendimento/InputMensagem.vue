@@ -46,7 +46,7 @@
     <!-- Header Actions (Schedule) -->
     <div
       v-if="isScheduleDate"
-      class="q-pa-sm bg-grey-1 row col-12 justify-center"
+      class="q-pa-sm glass-premium row col-12 justify-center border-glass"
     >
       <cDateTimePick
         style="width: 300px"
@@ -57,8 +57,8 @@
 
     <!-- Main Input Bar -->
     <div
-      style="min-height: 80px; border-radius: 16px; border-top: 1px solid rgba(0,0,0,0.05)"
-      class="row q-pb-md q-pt-sm glass justify-start items-center text-grey-9 relative-position no-wrap q-px-md"
+      style="min-height: 80px; border-radius: 20px 20px 0 0; border-top: 1px solid rgba(var(--q-primary), 0.1)"
+      class="row q-pb-md q-pt-sm glass-premium justify-start items-center text-grey-9 relative-position no-wrap q-px-md no-shadow"
     >
       <template v-if="!isRecordingAudio">
         <!-- Attachments & Emojis Buttons (Desktop) -->
@@ -72,6 +72,7 @@
             icon="mdi-paperclip"
             @click="abrirEnvioArquivo"
             class="btn-rounded"
+            :color="$q.dark.isActive ? 'white' : 'primary'"
           >
             <q-tooltip>Anexar arquivo</q-tooltip>
           </q-btn>
@@ -80,17 +81,9 @@
             dense
             icon="mdi-emoticon-happy-outline"
             class="btn-rounded"
+            :color="$q.dark.isActive ? 'white' : 'primary'"
           >
             <q-tooltip>Emojis</q-tooltip>
-            <q-menu
-              anchor="top right"
-              self="bottom middle"
-            >
-                <!-- <EmojiPicker
-                  :native="true"
-                  @select="onInsertSelectEmoji"
-                /> -->
-            </q-menu>
           </q-btn>
           <q-btn
             flat
@@ -98,6 +91,7 @@
             icon="mdi-message-video"
             @click="handlSendLinkVideo"
             class="btn-rounded"
+            :color="$q.dark.isActive ? 'white' : 'primary'"
           >
             <q-tooltip>Videoconferência</q-tooltip>
           </q-btn>
@@ -117,7 +111,7 @@
         <!-- Preview Inline -->
         <div
           v-if="arquivos.length"
-          class="col-grow row items-center q-gutter-sm bg-grey-2 q-pa-xs btn-rounded"
+          class="col-grow row items-center q-gutter-sm glass-premium q-pa-xs btn-rounded border-glass"
         >
           <q-chip
             v-for="(file, index) in arquivos"
@@ -143,7 +137,7 @@
           rounded
           autogrow
           class="col-grow q-mx-xs"
-          bg-color="grey-2"
+          :bg-color="$q.dark.isActive ? 'grey-10' : 'grey-2'"
           @keydown.enter.exact.prevent="handleEnter"
           @paste="handleInputPaste"
           input-style="max-height: 200px"
@@ -187,6 +181,7 @@
           flat
           round
           icon="mdi-microphone"
+          :color="$q.dark.isActive ? 'white' : 'black'"
           @click="handleSartRecordingAudio"
         />
       </template>
@@ -217,16 +212,18 @@
     <!-- Start Service Bar (Pending Tickets) -->
     <div
       v-if="ticketFocado.status === 'pending'"
-      class="absolute-full flex flex-center bg-white z-max"
+      class="absolute-full flex flex-center glass-premium z-max border-glass"
+      style="border-radius: 20px 20px 0 0"
     >
       <q-btn
         push
         rounded
+        class="grad-success"
         color="positive"
         icon="mdi-send-circle"
         label="Aceitar atendimento"
         @click="iniciarAtendimento(ticketFocado)"
-        style="width: 250px"
+        style="width: 280px; height: 50px"
       />
     </div>
   </div>

@@ -15,7 +15,7 @@ export const useUsuarioStore = defineStore('usuarios', {
   }),
   actions: {
     // ... rest of actions
-    async listarUsuarios(params) {
+    async listarUsuarios (params) {
       try {
         const { data } = await ListarUsuarios(params)
         this.usuarios = data.users
@@ -24,17 +24,17 @@ export const useUsuarioStore = defineStore('usuarios', {
         throw error
       }
     },
-    async criarUsuario(data) {
+    async criarUsuario (data) {
       const { data: res } = await CriarUsuario(data)
       this.usuarios.push(res)
       return res
     },
-    async criarUsuarioTenant(data) {
+    async criarUsuarioTenant (data) {
       const { data: res } = await CriarUsuarioTenant(data)
       this.usuarios.push(res)
       return res
     },
-    async updateUsuarios(userId, data) {
+    async updateUsuarios (userId, data) {
       try {
         const { data: res } = await UpdateUsuarios(userId, data)
         const index = this.usuarios.findIndex(u => u.id === userId)
@@ -46,7 +46,7 @@ export const useUsuarioStore = defineStore('usuarios', {
         throw error
       }
     },
-    async deleteUsuario(userId) {
+    async deleteUsuario (userId) {
       try {
         await DeleteUsuario(userId)
         const index = this.usuarios.findIndex(u => u.id === userId)
@@ -57,7 +57,7 @@ export const useUsuarioStore = defineStore('usuarios', {
         throw error
       }
     },
-    setUsersApp(data) {
+    setUsersApp (data) {
       this.usersApp = data
     }
   }

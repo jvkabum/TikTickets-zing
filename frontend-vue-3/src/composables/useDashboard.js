@@ -11,7 +11,7 @@ import { useQuasar } from 'quasar'
 /**
  * Composable para gerenciar dados do dashboard
  */
-export function useDashboard() {
+export function useDashboard () {
     const $q = useQuasar()
 
     const loading = ref(false)

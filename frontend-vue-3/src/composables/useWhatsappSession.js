@@ -10,7 +10,7 @@ import {
 /**
  * Composable para gerenciar sessões do WhatsApp
  */
-export function useWhatsappSession() {
+export function useWhatsappSession () {
     const $q = useQuasar()
 
     const sessoes = ref([])

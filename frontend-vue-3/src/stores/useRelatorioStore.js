@@ -29,7 +29,7 @@ export const useRelatorioStore = defineStore('relatorios', {
         loading: false
     }),
     actions: {
-        async obterRelatorioResumoAtendimentosUsuarios(params) {
+        async obterRelatorioResumoAtendimentosUsuarios (params) {
             this.loading = true
             try {
                 const { data } = await RelatorioResumoAtendimentosUsuarios(params)
@@ -39,7 +39,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.loading = false
             }
         },
-        async obterRelatorioContatos(params) {
+        async obterRelatorioContatos (params) {
             this.loading = true
             try {
                 const { data } = await RelatorioContatos(params)
@@ -48,7 +48,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.loading = false
             }
         },
-        async obterDashTicketsAndTimes(params) {
+        async obterDashTicketsAndTimes (params) {
             try {
                 const { data } = await GetDashTicketsAndTimes(params)
                 this.ticketsAndTimes = data[0] || {}
@@ -57,7 +57,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 console.error(error)
             }
         },
-        async obterDashTicketsQueue(params) {
+        async obterDashTicketsQueue (params) {
             try {
                 const { data } = await GetDashTicketsQueue(params)
                 this.ticketsQueue = data
@@ -66,7 +66,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 console.error(error)
             }
         },
-        async obterDashTicketsChannels(params) {
+        async obterDashTicketsChannels (params) {
             try {
                 const { data } = await GetDashTicketsChannels(params)
                 this.ticketsChannels = data
@@ -75,7 +75,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 console.error(error)
             }
         },
-        async obterDashTicketsEvolutionChannels(params) {
+        async obterDashTicketsEvolutionChannels (params) {
             try {
                 const { data } = await GetDashTicketsEvolutionChannels(params)
                 this.ticketsEvolutionChannels = data
@@ -84,7 +84,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 console.error(error)
             }
         },
-        async obterDashTicketsEvolutionByPeriod(params) {
+        async obterDashTicketsEvolutionByPeriod (params) {
             try {
                 const { data } = await GetDashTicketsEvolutionByPeriod(params)
                 this.ticketsEvolutionByPeriod = data
@@ -93,7 +93,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 console.error(error)
             }
         },
-        async obterDashTicketsPerUsersDetail(params) {
+        async obterDashTicketsPerUsersDetail (params) {
             try {
                 const { data } = await GetDashTicketsPerUsersDetail(params)
                 this.ticketsPerUsersDetail = data

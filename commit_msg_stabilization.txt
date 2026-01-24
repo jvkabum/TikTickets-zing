@@ -1,0 +1,9 @@
+feat(dashboard): unifica BI senior com dark mode reativo e refina metricas
+
+- Migra logicas de padding (Efeito Montanha) e tratamento de datas para dentro de 'computed properties' para evitar erros de readonly.
+- Corrige erro 500 no salvamento de tema em 'ccComponents.js' ajustando a referencia do ID do usuario de .userId para .id.
+- Refina formatacao de tempo (TMA/TME) no Dashboard e StatCard removendo a exibicao de segundos para um visual mais clean.
+- Garante reatividade total dos graficos ApexCharts durante a troca instantanea de tema sem necessidade de recarregar a pagina.
+- Preserva creditos do PR #3 (cadusantosofc) atraves de merge oficial e estabilizacao do codigo.
+
+Por que: A refatoracao era necessaria para sanar conflitos tecnicos entre a arquitetura do PR #3 e as melhorias de BI implementadas anteriormente, garantindo um dashboard estavel e esteticamente superior.

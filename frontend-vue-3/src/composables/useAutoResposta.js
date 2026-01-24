@@ -10,7 +10,7 @@ import {
 /**
  * Composable para gerenciar fluxos de auto resposta
  */
-export function useAutoResposta() {
+export function useAutoResposta () {
     const $q = useQuasar()
 
     const autoRespostas = ref([])

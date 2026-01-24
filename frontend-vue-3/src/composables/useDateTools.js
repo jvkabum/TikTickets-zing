@@ -1,7 +1,7 @@
 import { format, formatDistance, isValid, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-export function useDateTools() {
+export function useDateTools () {
     /**
      * Formata uma data para o padrão de exibição no chat (HH:mm)
      * @param {string|Date} date 

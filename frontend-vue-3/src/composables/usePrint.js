@@ -4,7 +4,7 @@ import { ref } from 'vue'
  * Composable para impressão de relatórios
  * Substitui o antigo PrintMixin.js
  */
-export function usePrint() {
+export function usePrint () {
     const isPrinting = ref(false)
 
     /**

@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { RealizarLogout } from 'src/service/login'
 
-export function useAuth() {
+export function useAuth () {
     const authStore = useAuthStore()
     const router = useRouter()
     const $q = useQuasar()

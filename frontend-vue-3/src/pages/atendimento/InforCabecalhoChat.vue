@@ -1,8 +1,8 @@
 <template>
   <div>
     <q-header
-      class="glass text-grey-10 no-border-radius"
-      style="z-index: 100"
+      class="glass-premium text-grey-10 no-border-radius no-shadow"
+      style="z-index: 100; border-bottom: 1px solid rgba(var(--q-primary), 0.1)"
     >
       <q-toolbar
         style="min-height: 60px; height: 60px"
@@ -15,7 +15,7 @@
           icon="mdi-menu"
           v-if="$q.screen.lt.md"
           class="q-mx-xs-none q-ml-md"
-          :color="$q.dark.isActive ? 'white' : ''"
+          :color="$q.dark.isActive ? 'primary' : 'primary'"
           @click="emitirAcaoMenu"
         />
 

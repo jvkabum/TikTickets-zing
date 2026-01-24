@@ -189,8 +189,10 @@ watch(
 
 <style lang="sass" scoped>
 .ticket-active-item
-  background: rgba(var(--q-primary), 0.05) !important
-  border-right: 3px solid var(--q-primary)
+  background: rgba(var(--q-primary), 0.08) !important
+  border-right: 4px solid var(--q-primary)
+  body.body--dark &
+    background: rgba(var(--q-primary), 0.15) !important
 
 .ticket-item
   transition: all 0.2s ease
@@ -198,10 +200,16 @@ watch(
   min-height: 85px
   border: 1px solid rgba(0, 0, 0, 0.05)
   background: white
+  body.body--dark &
+    background: rgba(255, 255, 255, 0.03)
+    border: 1px solid rgba(255, 255, 255, 0.05)
+    color: #f1f5f9
 
   &:hover
-    background: rgba(0, 0, 0, 0.01)
+    background: rgba(0, 0, 0, 0.02)
     transform: translateY(-1px)
+    body.body--dark &
+      background: rgba(255, 255, 255, 0.06)
 
 .ticket-unread
   background-color: rgba(var(--q-negative), 0.05)

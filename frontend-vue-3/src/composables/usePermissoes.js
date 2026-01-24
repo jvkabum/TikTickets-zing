@@ -3,7 +3,7 @@ import { computed } from 'vue'
 /**
  * Composable para gerenciar permissões e perfis de usuário
  */
-export function usePermissoes() {
+export function usePermissoes () {
     const storage = useAppLocalStorage()
 
     /**

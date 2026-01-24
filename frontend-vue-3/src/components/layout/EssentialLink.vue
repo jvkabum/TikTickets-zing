@@ -75,12 +75,22 @@ const navigateTo = () => {
     content: ''
     position: absolute
     left: 0
-    top: 20%
-    bottom: 20%
+    top: 25%
+    bottom: 25%
     width: 4px
     background: $primary
     border-radius: 0 4px 4px 0
 
-body.body--dark .active-main-menu-item
-  background: rgba(255, 255, 255, 0.05) !important
+body.body--dark 
+  .sidebar-menu-item
+    color: #94a3b8
+    &:hover
+      background: rgba(255, 255, 255, 0.05)
+      color: #f1f5f9
+  
+  .active-main-menu-item
+    background: rgba(255, 255, 255, 0.05) !important
+    color: #fff !important
+    &::before
+      background: #fff
 </style>

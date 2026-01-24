@@ -4,7 +4,7 @@ import checkTicketFilter from 'src/utils/checkTicketFilter'
 import { socketIO } from 'src/utils/socket'
 import { useTicketStore } from './useTicketStore'
 
-export function useTicketSockets() {
+export function useTicketSockets () {
   const store = useTicketStore()
   const $q = useQuasar()
   const socket = socketIO()
@@ -130,10 +130,10 @@ export function useTicketSockets() {
   }
 
   const disconnectSockets = () => {
+    if (!usuario?.tenantId) return
     socket.off(`${usuario.tenantId}:ticketList`)
     socket.off(`${usuario.tenantId}:contactList`)
     socket.off(`${usuario.tenantId}:ticket`)
-    socket.disconnect()
   }
 
   return {

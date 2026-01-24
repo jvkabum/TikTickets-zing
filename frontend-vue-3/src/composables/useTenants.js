@@ -10,7 +10,7 @@ import {
 /**
  * Composable para gerenciar empresas/tenants
  */
-export function useTenants() {
+export function useTenants () {
     const $q = useQuasar()
 
     const tenants = ref([])

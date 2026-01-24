@@ -5,7 +5,7 @@ import { CriarChatFlow, DeletarChatFlow, EditarChatFlow, ListarChatFlow } from '
 /**
  * Composable para gerenciar Chat Flows
  */
-export function useChatFlow() {
+export function useChatFlow () {
     const $q = useQuasar()
 
     const chatFlows = ref([])

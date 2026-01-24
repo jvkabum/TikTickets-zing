@@ -5,7 +5,7 @@ import { useConfiguracaoStore } from 'src/stores/useConfiguracaoStore'
 /**
  * Composable para ler e interpretar configurações do sistema
  */
-export function useConfiguracoes() {
+export function useConfiguracoes () {
     const configuracaoStore = useConfiguracaoStore()
     const { settings } = storeToRefs(configuracaoStore)
 

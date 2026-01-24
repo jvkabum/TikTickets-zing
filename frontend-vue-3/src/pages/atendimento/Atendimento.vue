@@ -1,7 +1,6 @@
 <template>
   <div
-    class="WAL position-relative"
-    style="background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);"
+    class="WAL position-relative q-page"
     :style="style"
   >
     <q-layout
@@ -19,11 +18,11 @@
         :breakpoint="769"
         bordered
         :width="$q.screen.lt.md ? $q.screen.width : 380"
-        content-class="hide-scrollbar full-width"
+        :content-class="$q.dark.isActive ? 'bg-transparent border-glass' : 'bg-transparent border-glass'"
       >
         <q-toolbar
-          class="q-gutter-xs full-width no-border-radius glass"
-          style="height: 60px; min-height: 60px; border-bottom: 1px solid rgba(0,0,0,0.05)"
+          class="q-gutter-xs full-width no-border-radius glass-premium no-shadow"
+          style="height: 60px; min-height: 60px; border-bottom: 2px solid rgba(var(--q-primary), 0.1)"
         >
           <q-btn-dropdown
             no-caps
@@ -187,7 +186,7 @@
         <q-tabs
           v-model="selectedTab"
           dense
-          class="text-grey-7 bg-grey-2 rounded-borders q-ma-sm"
+          class="text-grey-7 rounded-borders q-ma-sm glass-premium"
           active-color="primary"
           indicator-color="primary"
           align="justify"
@@ -256,7 +255,7 @@
         <q-tab-panels
           v-model="selectedTab"
           animated
-          class="bg-grey-3"
+          class="bg-transparent"
         >
           <q-tab-panel
             v-for="tab in ['open', 'pending', 'closed', 'groups']"
@@ -274,8 +273,8 @@
 
         <!-- Barra inferior: Dark Mode + Status Canais -->
         <div
-          class="absolute-bottom row justify-between items-center q-px-sm"
-          style="height: 50px; background: rgba(255,255,255,0.9)"
+          class="absolute-bottom row justify-between items-center q-px-sm glass-premium"
+          style="height: 50px; border-top: 1px solid rgba(255,255,255,0.2)"
         >
           <q-toggle
             size="lg"
@@ -315,13 +314,10 @@
       </q-drawer>
 
 
-      <q-page-container class="bg-grey-3">
+      <q-page-container class="bg-transparent">
         <q-page
           class="flex flex-center"
-          :class="{
-            'bg-grey-3': !ticketFocado.id,
-          }"
-          style="background-image: url('/assets/wa-background.png'); background-repeat: repeat; background-size: contain;"
+          style="background-image: url('/assets/wa-background.png'); background-repeat: repeat; background-size: contain; opacity: 0.9"
           v-if="!ticketFocado.id"
         >
           <div class="text-center">
@@ -348,10 +344,10 @@
         side="right"
         bordered
         :width="350"
-        content-class="bg-grey-1"
+        :content-class="$q.dark.isActive ? 'bg-transparent border-glass' : 'bg-transparent border-glass'"
       >
         <q-toolbar
-          class="bg-white text-bold"
+          class="glass-premium text-bold"
           style="height: 64px"
         >
           Informações do Contato
@@ -367,8 +363,7 @@
         <q-scroll-area style="height: calc(100vh - 120px)">
           <div class="q-pa-sm">
             <q-card
-              class="bg-white btn-rounded"
-              bordered
+              class="glass-premium btn-rounded border-glass"
               flat
             >
               <q-card-section class="text-center" v-if="ticketFocado.contact">
@@ -406,8 +401,7 @@
             </q-card>
 
             <q-card
-              class="q-mt-sm bg-white btn-rounded"
-              bordered
+              class="q-mt-sm glass-premium btn-rounded border-glass"
               flat
               v-if="ticketFocado.contact"
             >
@@ -433,8 +427,7 @@
             </q-card>
 
             <q-card
-              class="q-mt-sm bg-white btn-rounded"
-              bordered
+              class="q-mt-sm glass-premium btn-rounded border-glass"
               flat
               v-if="cIsExtraInfo"
             >
@@ -459,8 +452,7 @@
 
             <!-- Carteira -->
             <q-card
-              class="q-mt-sm bg-white btn-rounded"
-              bordered
+              class="q-mt-sm glass-premium btn-rounded border-glass"
               flat
               v-if="ticketFocado.contact?.wallets?.length"
             >
@@ -485,8 +477,7 @@
 
             <!-- Mensagens Agendadas -->
             <q-card
-              class="q-mt-sm bg-white btn-rounded"
-              bordered
+              class="q-mt-sm glass-premium btn-rounded border-glass"
               flat
               v-if="ticketFocado.scheduledMessages?.length"
             >

@@ -9,7 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => profile.value === 'admin')
   const userId = computed(() => user.value?.id || localStorage.getItem('userId'))
 
-  function login(userData, userToken) {
+  function login (userData, userToken) {
     user.value = userData
     token.value = userToken
     profile.value = userData.profile || 'user'
@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('userId', userData.id)
   }
 
-  function logout() {
+  function logout () {
     user.value = null
     token.value = null
     profile.value = 'user'
@@ -29,7 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('userId')
   }
 
-  async function handleLogin({ email, password }) {
+  async function handleLogin ({ email, password }) {
     const { router } = this || {} // O router estará disponível na instância se injetado via plugin
     try {
       const { data } = await request({
@@ -80,7 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function updateUser(userData) {
+  function updateUser (userData) {
     user.value = { ...user.value, ...userData }
     localStorage.setItem('usuario', JSON.stringify(user.value))
   }

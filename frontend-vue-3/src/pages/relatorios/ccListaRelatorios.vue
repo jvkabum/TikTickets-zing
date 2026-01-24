@@ -1,9 +1,8 @@
 <template>
   <q-card
     v-if="userProfile === 'admin'"
-    class="q-ma-sm q-pa-sm q-card q-ma-md"
-    square
-    style="height: calc(100vh - 130px)"
+    class="q-ma-md q-pa-sm glass-premium no-shadow border-glass"
+    style="min-height: calc(100vh - 130px)"
   >
     <q-card-section class="row wrap justify-start items-center content-center q-pa-sm q-mb-md">
       <q-list
@@ -19,16 +18,15 @@
             min-height: 90px;
             height: 90px;
             max-height: 90px;
-            border-left: solid #3e72af 3px;
           "
-          class="shadow-1 q-px-sm items-start"
+          class="glass-premium border-glass shadow-premium q-px-sm items-start hover-premium rounded-all"
           clickable
           v-ripple
           :to="{ name: menu.name }"
         >
           <q-item-section>
-            <q-item-label class="text-primary">{{ menu.titulo }}</q-item-label>
-            <q-item-label caption>{{ menu.objetivo }}</q-item-label>
+            <q-item-label class="text-primary text-bold text-h6">{{ menu.titulo }}</q-item-label>
+            <q-item-label caption class="text-dark-theme">{{ menu.objetivo }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>

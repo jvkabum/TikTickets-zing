@@ -3,7 +3,7 @@ import { notificarErro } from 'src/utils/helpersNotifications'
 
 let Mp3Recorder = null
 
-export function useAudioRecorder() {
+export function useAudioRecorder () {
     const isRecording = ref(false)
     const isLoading = ref(false)
 

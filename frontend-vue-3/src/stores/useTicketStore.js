@@ -25,17 +25,17 @@ export const useTicketStore = defineStore('ticket', () => {
 
   const groupTickets = computed(() => tickets.value.filter(t => t.isGroup))
 
-  function setTickets(data) {
+  function setTickets (data) {
     tickets.value = data
   }
 
-  function addTickets(data) {
+  function addTickets (data) {
     // Evitar duplicados ao adicionar
     const uniqueTickets = data.filter(nt => !tickets.value.find(t => t.id === nt.id))
     tickets.value = [...tickets.value, ...uniqueTickets]
   }
 
-  function updateTicket(ticket) {
+  function updateTicket (ticket) {
     const idx = tickets.value.findIndex(t => t.id === ticket.id)
     if (idx !== -1) {
       tickets.value[idx] = { ...tickets.value[idx], ...ticket }
@@ -47,60 +47,60 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
-  function deleteTicket(ticketId) {
+  function deleteTicket (ticketId) {
     tickets.value = tickets.value.filter(t => t.id !== ticketId)
     if (ticketFocado.value.id === ticketId) {
       ticketFocado.value = {}
     }
   }
 
-  function setTicketFocado(ticket) {
+  function setTicketFocado (ticket) {
     ticketFocado.value = ticket
   }
 
-  function setHasMore(value) {
+  function setHasMore (value) {
     hasMore.value = value
   }
 
-  function resetTickets() {
+  function resetTickets () {
     tickets.value = []
     hasMore.value = true
   }
 
-  function setMensagens(data) {
+  function setMensagens (data) {
     mensagens.value = data
   }
 
-  function addMensagem(msg) {
+  function addMensagem (msg) {
     const idx = mensagens.value.findIndex(m => m.id === msg.id)
     if (idx === -1) {
       mensagens.value.push(msg)
     }
   }
 
-  function updateMensagem(msg) {
+  function updateMensagem (msg) {
     const idx = mensagens.value.findIndex(m => m.id === msg.id)
     if (idx !== -1) {
       mensagens.value[idx] = { ...mensagens.value[idx], ...msg }
     }
   }
 
-  function updateMessageStatus(msg) {
+  function updateMessageStatus (msg) {
     const idx = mensagens.value.findIndex(m => m.id === msg.id)
     if (idx !== -1) {
       mensagens.value[idx].ack = msg.ack
     }
   }
 
-  function updateNotifications(data) {
+  function updateNotifications (data) {
     notifications.value = data.tickets
   }
 
-  function updateNotificationsP(data) {
+  function updateNotificationsP (data) {
     notificationsP.value = data.tickets
   }
 
-  function updateTicketContact(contact) {
+  function updateTicketContact (contact) {
     tickets.value.forEach(t => {
       if (t.contactId === contact.id) {
         t.contact = contact
@@ -111,7 +111,7 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
-  async function consultarMensagens(params) {
+  async function consultarMensagens (params) {
     loading.value = true
     try {
       const { data } = await LocalizarMensagens(params)
@@ -132,7 +132,7 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
-  async function consultarTickets(params, isLoadMore = false) {
+  async function consultarTickets (params, isLoadMore = false) {
     loading.value = true
     try {
       const { data } = await ConsultarTickets(params)
@@ -151,7 +151,7 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
-  async function encaminharMensagem(messages, contact) {
+  async function encaminharMensagem (messages, contact) {
     try {
       await EncaminharMensagem(messages, contact)
     } catch (error) {
@@ -160,7 +160,7 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
-  async function enviarMensagem(ticketId, formData) {
+  async function enviarMensagem (ticketId, formData) {
     try {
       const { data } = await EnviarMensagemTexto(ticketId, formData)
       return data
@@ -170,7 +170,7 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
-  async function sincronizarMensagens(ticketId) {
+  async function sincronizarMensagens (ticketId) {
     try {
       await SincronizarMensagensTicket(ticketId)
     } catch (error) {
@@ -179,7 +179,7 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
-  async function atualizarStatusTicket(ticketId, status) {
+  async function atualizarStatusTicket (ticketId, status) {
     try {
       const { data } = await AtualizarStatusTicket(ticketId, status)
       updateTicket(data)
@@ -190,7 +190,7 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
-  async function criarTicket(data) {
+  async function criarTicket (data) {
     try {
       const { data: res } = await CriarTicket(data)
       updateTicket(res)

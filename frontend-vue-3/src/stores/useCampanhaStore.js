@@ -50,7 +50,7 @@ export const useCampanhaStore = defineStore('campanha', {
     }
   },
   actions: {
-    async listarCampanhas() {
+    async listarCampanhas () {
       this.loading = true
       try {
         const { data } = await ListarCampanhas(this.filtros)
@@ -62,7 +62,7 @@ export const useCampanhaStore = defineStore('campanha', {
         this.loading = false
       }
     },
-    async criarCampanha(campanha) {
+    async criarCampanha (campanha) {
       this.loading = true
       try {
         const { data } = await CriarCampanha(campanha)
@@ -75,7 +75,7 @@ export const useCampanhaStore = defineStore('campanha', {
         this.loading = false
       }
     },
-    async alterarCampanha(campanha) {
+    async alterarCampanha (campanha) {
       this.loading = true
       try {
         const id = campanha.id || campanha.get('id')
@@ -92,7 +92,7 @@ export const useCampanhaStore = defineStore('campanha', {
         this.loading = false
       }
     },
-    async deletarCampanha(campanha) {
+    async deletarCampanha (campanha) {
       this.loading = true
       try {
         await DeletarCampanha(campanha)
@@ -106,7 +106,7 @@ export const useCampanhaStore = defineStore('campanha', {
         this.loading = false
       }
     },
-    async cancelarCampanha(id) {
+    async cancelarCampanha (id) {
       try {
         await CancelarCampanha(id)
         // Atualização da lista será feita pelo socket ou recarregamento
@@ -115,7 +115,7 @@ export const useCampanhaStore = defineStore('campanha', {
         throw error
       }
     },
-    async iniciarCampanha(id) {
+    async iniciarCampanha (id) {
       try {
         await IniciarCampanha(id)
         // Atualização da lista será feita pelo socket ou recarregamento
@@ -124,7 +124,7 @@ export const useCampanhaStore = defineStore('campanha', {
         throw error
       }
     },
-    async adicionarContatosCampanha(contatos, campaignId) {
+    async adicionarContatosCampanha (contatos, campaignId) {
       try {
         const { data } = await AdicionarContatosCampanha(contatos, campaignId)
         return data
@@ -133,7 +133,7 @@ export const useCampanhaStore = defineStore('campanha', {
         throw error
       }
     },
-    async listarContatosCampanha(campaignId) {
+    async listarContatosCampanha (campaignId) {
       try {
         const { data } = await ListarContatosCampanha(campaignId)
         return data
@@ -142,7 +142,7 @@ export const useCampanhaStore = defineStore('campanha', {
         throw error
       }
     },
-    async deletarContatoCampanha(campaignId, contactId) {
+    async deletarContatoCampanha (campaignId, contactId) {
       try {
         await DeletarContatoCampanha(campaignId, contactId)
       } catch (error) {
@@ -150,7 +150,7 @@ export const useCampanhaStore = defineStore('campanha', {
         throw error
       }
     },
-    async deletarTodosContatosCampanha(campaignId) {
+    async deletarTodosContatosCampanha (campaignId) {
       try {
         await DeletarTodosContatosCampanha(campaignId)
       } catch (error) {
@@ -158,7 +158,7 @@ export const useCampanhaStore = defineStore('campanha', {
         throw error
       }
     },
-    atualizarCampanha(campanha) {
+    atualizarCampanha (campanha) {
       const index = this.campanhas.findIndex(c => c.id === campanha.id)
       if (index !== -1) {
         this.campanhas[index] = campanha

@@ -69,13 +69,12 @@
     </div>
 
     <q-footer
-      class="bg-white"
-      bordered
+      class="bg-transparent no-shadow no-border"
     >
       <!-- Replying Banner -->
       <div
         v-if="replyingMessage"
-        class="q-pa-sm bg-grey-2 row items-center no-wrap"
+        class="q-pa-sm glass-premium row items-center no-wrap q-mx-md q-mb-sm rounded-all border-glass"
       >
         <div class="col overflow-hidden">
           <div class="text-bold text-primary">
@@ -98,7 +97,7 @@
       <!-- Forward Banner -->
       <div
         v-if="ativarMultiEncaminhamento"
-        class="q-pa-md bg-blue-1"
+        class="q-pa-md glass-premium border-glass q-mx-md q-mb-sm rounded-all"
       >
         <div class="row items-center justify-between q-mb-sm">
           <span class="text-bold">{{ mensagensParaEncaminhar.length }} mensagens selecionadas</span>
@@ -132,7 +131,7 @@
           </template>
         </q-select>
         <q-btn
-          class="full-width q-mt-sm"
+          class="full-width q-mt-sm grad-primary"
           color="primary"
           label="Encaminhar"
           icon="mdi-send"

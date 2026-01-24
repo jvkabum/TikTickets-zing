@@ -6,32 +6,32 @@ export const useWhatsappStore = defineStore('whatsapp', () => {
 
   const whatsappById = computed(() => id => whatsapps.value.find(w => w.id === id))
 
-  function setWhatsapps(data) {
+  function setWhatsapps (data) {
     whatsapps.value = data
   }
 
-  function addWhatsapp(whatsapp) {
+  function addWhatsapp (whatsapp) {
     const exists = whatsapps.value.some(w => w.id === whatsapp.id)
     if (!exists) {
       whatsapps.value.push(whatsapp)
     }
   }
 
-  function updateWhatsapp(whatsapp) {
+  function updateWhatsapp (whatsapp) {
     const idx = whatsapps.value.findIndex(w => w.id === whatsapp.id)
     if (idx !== -1) {
       whatsapps.value[idx] = { ...whatsapps.value[idx], ...whatsapp }
     }
   }
 
-  function removeWhatsapp(id) {
+  function removeWhatsapp (id) {
     const idx = whatsapps.value.findIndex(w => w.id === id)
     if (idx !== -1) {
       whatsapps.value.splice(idx, 1)
     }
   }
 
-  function updateSession(session) {
+  function updateSession (session) {
     const idx = whatsapps.value.findIndex(w => String(w.id) === String(session.id))
     if (idx !== -1) {
       // Substituição completa do objeto para garantir reatividade total do Vue 3
