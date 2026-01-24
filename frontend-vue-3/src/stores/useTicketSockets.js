@@ -3,13 +3,16 @@ import { ConsultarTickets } from 'src/service/tickets'
 import checkTicketFilter from 'src/utils/checkTicketFilter'
 import { socketIO } from 'src/utils/socket'
 import { useTicketStore } from './useTicketStore'
+import { useAuthStore } from './useAuthStore'
+import { storeToRefs } from 'pinia'
+import { watch } from 'vue'
 
-export function useTicketSockets () {
+export function useTicketSockets() {
   const store = useTicketStore()
+  const authStore = useAuthStore()
+  const { user } = storeToRefs(authStore)
   const $q = useQuasar()
   const socket = socketIO()
-  const usuario = JSON.parse(localStorage.getItem('usuario'))
-  const userId = +localStorage.getItem('userId')
 
   const handlerNotifications = data => {
     if (Notification.permission === 'granted') {
@@ -30,26 +33,69 @@ export function useTicketSockets () {
   }
 
   const setupSockets = () => {
-    if (!usuario?.tenantId) return
+    // Função para reconectar e configurar listeners
+    const connect = () => {
+      const usuario = user.value
+      const userId = usuario?.id || +localStorage.getItem('userId')
 
-    socket.on('connect', () => {
-      socket.emit(`${usuario.tenantId}:joinNotification`)
-      socket.emit(`${usuario.tenantId}:setUserActive`)
+      if (!usuario?.tenantId) {
+        console.warn('[Socket] Usuário ou Tenant ID não definido. Aguardando...')
+        return
+      }
+
+      console.log('[Socket] Configurando sockets para Tenant:', usuario.tenantId)
+
+      socket.removeAllListeners(`${usuario.tenantId}:ticketList`)
+      socket.removeAllListeners(`${usuario.tenantId}:contactList`)
+      socket.removeAllListeners(`${usuario.tenantId}:ticket`)
+
+      socket.on('connect', () => {
+        console.log('[Socket] Conectado! Emitindo joinNotification...')
+        socket.emit(`${usuario.tenantId}:joinNotification`)
+        socket.emit(`${usuario.tenantId}:setUserActive`)
+      })
+
+      // Se já estiver conectado, emite o join
+      if (socket.connected) {
+        socket.emit(`${usuario.tenantId}:joinNotification`)
+      }
 
       socket.on(`${usuario.tenantId}:ticketList`, async data => {
+        console.log('[Socket] Evento ticketList recebido:', data.type, data.payload)
+
         if (data.type === 'chat:create') {
+          // Correção robusta para "null name"
+          // Injeta dados se:
+          // 1. Mensagem enviada por mim (fromMe ou mesmo userId)
+          // 2. Contato não existe OU nome do contato é inválido
+          const isMe = data.payload.fromMe || data.payload.ticket.userId === userId
+          const hasValidContact = data.payload.contact && data.payload.contact.name
+
+          if (isMe && !hasValidContact) {
+            console.log('[Socket] Injetando MEUS dados no contato da mensagem')
+            data.payload.contact = { name: usuario.name, profilePicUrl: usuario.profilePicUrl }
+          }
+          else if (!isMe && !hasValidContact && data.payload.ticket && data.payload.ticket.contact) {
+            console.log('[Socket] Injetando dados do TICKET no contato da mensagem')
+            data.payload.contact = data.payload.ticket.contact
+          }
+
+          // Verifica se é para mim ou se é do cliente (não enviado por mim)
           if (
             !data.payload.read &&
             (data.payload.ticket.userId === userId || !data.payload.ticket.userId) &&
-            data.payload.ticket.id !== store.ticketFocado.id
+            String(data.payload.ticket.id) !== String(store.ticketFocado.id)
           ) {
             if (checkTicketFilter(data.payload.ticket)) {
               handlerNotifications(data.payload)
             }
           }
+
           store.updateTicket(data.payload.ticket)
-          // Se for a mensagem do chat focado, adiciona à lista
-          if (data.payload.ticket.id === store.ticketFocado.id) {
+
+          // Adiciona mensagem ao chat se for o focado
+          if (String(data.payload.ticket.id) === String(store.ticketFocado.id)) {
+            console.log('[Socket] Adicionando nova mensagem ao chat focado')
             store.addMensagem(data.payload)
           }
 
@@ -126,10 +172,22 @@ export function useTicketSockets () {
           }
         }
       })
-    })
+    }
+
+    // Inicializa
+    connect()
+
+    // Reage a mudanças no usuário
+    watch(user, (newUser) => {
+      console.log('[Socket] Usuário alterado, reconectando sockets...', newUser?.name)
+      if (newUser && newUser.tenantId) {
+        connect()
+      }
+    }, { deep: true })
   }
 
   const disconnectSockets = () => {
+    const usuario = user.value
     if (!usuario?.tenantId) return
     socket.off(`${usuario.tenantId}:ticketList`)
     socket.off(`${usuario.tenantId}:contactList`)

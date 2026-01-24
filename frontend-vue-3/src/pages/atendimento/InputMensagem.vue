@@ -233,6 +233,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { LocalStorage, uid } from 'quasar'
 import { storeToRefs } from 'pinia'
+import { useAuthStore } from 'src/stores/useAuthStore'
 import { useTicketStore } from 'src/stores/useTicketStore'
 import { useTicketActions } from './useTicketActions'
 import { notificarErro } from 'src/utils/helpersNotifications'
@@ -250,6 +251,8 @@ const emit = defineEmits(['update:replyingMessage'])
 
 const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)
+const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
 const { iniciarAtendimento } = useTicketActions()
 
 // Instância lazy para garantir que o boot/audio.js já tenha rodado
@@ -372,7 +375,7 @@ const enviarMensagem = async () => {
       formData.append('id', uid())
     } else {
       let body = textChat.value.trim()
-      if (sign.value) body = `*${LocalStorage.getItem('username')}*\n${body}`
+      if (sign.value) body = `*${user.value.name}*\n${body}`
       formData.append('body', body)
       formData.append('fromMe', true)
       if (props.replyingMessage) formData.append('quotedMsg', JSON.stringify(props.replyingMessage))

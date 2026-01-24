@@ -288,6 +288,14 @@ const VerifyStepsChatFlowTicket = async (
         return;
 
       if (stepCondition && !ticket.isCreated) {
+        // Garantir que contact esteja carregado
+        if (!ticket.contact) {
+          await ticket.reload({ include: ["contact"] });
+        }
+
+        // Se mesmo após reload não tiver contato (improvável), retorna
+        if (!ticket.contact) return;
+
         // await CreateAutoReplyLogsService(stepAutoReplyAtual, ticket, msg.body);
         // Verificar se rotina em teste
         if (

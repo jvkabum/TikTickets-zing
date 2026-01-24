@@ -73,13 +73,18 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     });
 
   try {
-    const isConnected = await checkWhatsAppConnection(ticket.whatsappId, String(tenantId));
-    if (!isConnected) {
-      throw new AppError("A sessão do WhatsApp não está conectada. Por favor, reconecte a sessão.", 400);
+    if (ticket.whatsappId) {
+      const isConnected = await checkWhatsAppConnection(ticket.whatsappId, String(tenantId));
+      if (isConnected) {
+        SetTicketMessagesAsRead(ticket);
+      }
     }
-    SetTicketMessagesAsRead(ticket);
   } catch (error) {
-    logger.error(`Erro ao marcar mensagens como lidas no ticket ${ticketId}: ${error}`);
+    if (error.statusCode === 404 || error.message === "ERR_NO_WAPP_FOUND") {
+      logger.warn(`Ticket ${ticketId} associado a conexão de WhatsApp inexistente ou deletada.`);
+    } else {
+      logger.error(`Erro ao marcar mensagens como lidas no ticket ${ticketId}: ${JSON.stringify(error, null, 2)}`);
+    }
   }
 
   return res.json({ count, messages, messagesOffLine, ticket, hasMore });

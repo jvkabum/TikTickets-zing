@@ -81,7 +81,9 @@ const VerifyMediaMessage = async (
       })
       .then(() => {
         if (outputFile) {
-          fs.unlinkSync(inputFile);
+          if (fs.existsSync(inputFile)) {
+            fs.unlinkSync(inputFile);
+          }
           media.filename = outputFile.split('/').pop();
         }
       })
