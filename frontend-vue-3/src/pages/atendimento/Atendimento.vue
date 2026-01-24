@@ -194,7 +194,7 @@
         >
           <q-tab name="open" class="q-py-sm">
             <div class="column items-center">
-              <span class="text-uppercase text-weight-bold" style="font-size: 10px">Abertos</span>
+              <span class="text-uppercase text-weight-bold" style="font-size: 10px">ABERTO</span>
               <q-badge 
                 v-if="ticketCounts?.open > 0" 
                 :label="ticketCounts.open" 
@@ -208,7 +208,7 @@
           </q-tab>
           <q-tab name="pending" class="q-py-sm">
             <div class="column items-center">
-              <span class="text-uppercase text-weight-bold" style="font-size: 10px">Pendentes</span>
+              <span class="text-uppercase text-weight-bold" style="font-size: 10px">PENDENTE</span>
               <q-badge 
                 v-if="ticketCounts?.pending > 0" 
                 :label="ticketCounts.pending" 
@@ -222,7 +222,7 @@
           </q-tab>
           <q-tab name="closed" class="q-py-sm">
             <div class="column items-center">
-              <span class="text-uppercase text-weight-bold" style="font-size: 10px">Fechados</span>
+              <span class="text-uppercase text-weight-bold" style="font-size: 10px">FECHADO</span>
               <q-badge 
                 v-if="ticketCounts?.closed > 0" 
                 :label="ticketCounts.closed" 
@@ -236,7 +236,7 @@
           </q-tab>
           <q-tab name="groups" class="q-py-sm">
             <div class="column items-center">
-              <span class="text-uppercase text-weight-bold" style="font-size: 10px">Grupos</span>
+              <span class="text-uppercase text-weight-bold" style="font-size: 10px">GRUPO</span>
               <q-badge 
                 v-if="ticketCounts?.groups > 0" 
                 :label="ticketCounts.groups" 
@@ -585,14 +585,13 @@ const style = computed(() => ({
 const cIsExtraInfo = computed(() => ticketFocado.value?.contact?.extraInfo?.length > 0)
 
 // Contagem de tickets por status para os badges
-const { tickets } = storeToRefs(ticketStore)
+const { tickets, notifications, notificationsP, ticketsCount } = storeToRefs(ticketStore)
 const ticketCounts = computed(() => {
-  const list = Array.isArray(tickets.value) ? tickets.value : []
   return {
-    open: list.filter(t => t.status === 'open' && !t.isGroup).length,
-    pending: list.filter(t => t.status === 'pending' && !t.isGroup).length,
-    closed: list.filter(t => t.status === 'closed' && !t.isGroup).length,
-    groups: list.filter(t => t.isGroup).length
+    open: ticketsCount.value.open || notifications.value.length,
+    pending: ticketsCount.value.pending || notificationsP.value.length,
+    closed: ticketsCount.value.closed,
+    groups: ticketsCount.value.groups
   }
 })
 
@@ -629,6 +628,7 @@ onMounted(() => {
   filaStore.listarFilas()
   listarWhatsapps() // Carregar status dos canais
   carregarFiltros() // Carrega filtros salvos ao montar
+  ticketStore.atualizarContadoresGerais() // Sincroniza todos os números do topo
 
 
   if ($q.screen.lt.md) {

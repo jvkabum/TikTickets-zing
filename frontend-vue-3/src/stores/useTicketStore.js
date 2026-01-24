@@ -19,6 +19,12 @@ export const useTicketStore = defineStore('ticket', () => {
   const notifications = ref([])
   const notificationsP = ref([])
   const protocolos = ref([]) // Novo state
+  const ticketsCount = ref({
+    open: 0,
+    pending: 0,
+    closed: 0,
+    groups: 0
+  })
 
   const openTickets = computed(() => tickets.value.filter(t => t.status === 'open' && !t.isGroup))
 
@@ -97,10 +103,12 @@ export const useTicketStore = defineStore('ticket', () => {
 
   function updateNotifications(data) {
     notifications.value = data.tickets
+    ticketsCount.value.open = data.count
   }
 
   function updateNotificationsP(data) {
     notificationsP.value = data.tickets
+    ticketsCount.value.pending = data.count
   }
 
   function updateTicketContact(contact) {
@@ -145,6 +153,17 @@ export const useTicketStore = defineStore('ticket', () => {
         setTickets(data.tickets)
       }
       setHasMore(data.hasMore)
+
+      // Atualizar contagem global conforme o status pesquisado
+      if (params.isGroup) {
+        ticketsCount.value.groups = data.count
+      } else if (params.status && params.status.length === 1) {
+        const status = params.status[0]
+        if (ticketsCount.value[status] !== undefined) {
+          ticketsCount.value[status] = data.count
+        }
+      }
+
       return data
     } catch (error) {
       notificarErro('Erro ao carregar tickets', error)
@@ -215,6 +234,40 @@ export const useTicketStore = defineStore('ticket', () => {
     }
   }
 
+  async function atualizarContadoresGerais() {
+    const baseParams = {
+      searchParam: '',
+      pageNumber: 1,
+      showAll: false,
+      count: null,
+      queuesIds: [],
+      withUnreadMessages: false,
+      isNotAssignedUser: false,
+      includeNotQueueDefined: true,
+      limit: 1 // Queremos apenas o count, não os tickets
+    }
+
+    try {
+      // Aberto
+      const { data: openData } = await ConsultarTickets({ ...baseParams, status: ['open'] })
+      ticketsCount.value.open = openData.count
+
+      // Pendente
+      const { data: pendingData } = await ConsultarTickets({ ...baseParams, status: ['pending'] })
+      ticketsCount.value.pending = pendingData.count
+
+      // Fechado
+      const { data: closedData } = await ConsultarTickets({ ...baseParams, status: ['closed'] })
+      ticketsCount.value.closed = closedData.count
+
+      // Grupos
+      const { data: groupsData } = await ConsultarTickets({ ...baseParams, status: ['open', 'pending'], isGroup: true })
+      ticketsCount.value.groups = groupsData.count
+    } catch (error) {
+      console.error('Erro ao sincronizar contadores globais', error)
+    }
+  }
+
   return {
     tickets,
     ticketFocado,
@@ -249,6 +302,8 @@ export const useTicketStore = defineStore('ticket', () => {
     atualizarStatusTicket,
     criarTicket,
     listarProtocolos,
-    protocolos
+    protocolos,
+    ticketsCount,
+    atualizarContadoresGerais
   }
 })
