@@ -15,7 +15,7 @@
     "db:seed": "npx sequelize db:seed:all"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "author": "Durans/FlowDeskPro/TiOKaBuM",
   "private": false,

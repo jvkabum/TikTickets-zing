@@ -4,7 +4,7 @@
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
 [![Quasar Framework](https://img.shields.io/badge/Quasar-2.17%2B-1976D2?style=flat-square&logo=quasar&logoColor=white)](https://quasar.dev/)
 [![Pinia](https://img.shields.io/badge/Pinia-3.0-FFD75E?style=flat-square&logo=pinia&logoColor=white)](https://pinia.vuejs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 
 Um ecossistema **SaaS Multi-tenant** avançado para gestão de atendimento multicanais centralizado, agora totalmente modernizado e otimizado para performance e experiência do usuário (UX).
 
@@ -35,7 +35,7 @@ A v3 representou um salto tecnológico e de usabilidade para o projeto:
 - **Wavesurfer.js**: Visualização de áudio premium.
 
 ### **Backend**
-- **Node.js 20+**: Runtime estável e veloz.
+- **Node.js 22**: Runtime estável e veloz.
 - **Express**: Framework web robusto.
 - **Sequelize / PostgreSQL**: Persistência de dados profissional.
 - **Redis & Bull**: Fila de processos e cache de alta velocidade.
@@ -59,7 +59,7 @@ A utilização desta ferramenta é feita por sua conta e risco. O código é abe
 
 ## ⚙️ Instalação e Setup
 
-1. **Requisitos**: Docker (opcional) ou Instalação manual de Node 20 / Postgres / Redis.
+1. **Requisitos**: Docker (opcional) ou Instalação manual de Node 22 / Postgres / Redis.
 2. **Ambiente**: Utilize os arquivos `.env.example` tanto no `/backend` quanto no `/frontend-vue-3` como guia.
 3. **Instalação**:
    ```bash
