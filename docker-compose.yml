@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: tik-backend
+    restart: always
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    networks:
+      - tik-net
+
+  frontend:
+    build:
+      context: ./frontend-vue-3
+    container_name: tik-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - tik-net
+
+networks:
+  tik-net:
+    driver: bridge

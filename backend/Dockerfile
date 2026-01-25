@@ -1,9 +1,9 @@
-FROM node:18-bookworm-slim as global-deps-stage
+FROM node:22-bookworm-slim as global-deps-stage
 
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y wget gnupg nano ffmpeg=7:5.1.4-0+deb12u1 \
+  && apt-get install -y wget gnupg nano ffmpeg build-essential \
   && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
   && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
   && apt-get update \
@@ -17,7 +17,7 @@ ENV CHROME_BIN=google-chrome-stable
 
 FROM global-deps-stage as develop-stage
 COPY package*.json ./
-RUN npm install
+RUN npm install --include=dev
 
 FROM develop-stage as build-stage
 COPY . .
@@ -31,4 +31,5 @@ FROM build-stage as production-stage
 ENV NODE_ENV=production
 COPY docker-entrypoint.sh .
 RUN chmod +x docker-entrypoint.sh
+EXPOSE 3000
 ENTRYPOINT ["./docker-entrypoint.sh"]

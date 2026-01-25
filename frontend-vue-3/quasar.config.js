@@ -218,7 +218,7 @@ export default configure(function (ctx) {
         dark: false
       },
 
-      lang: 'pt-br',
+      lang: 'pt-BR',
       iconSet: 'material-icons', // Quasar icon set
 
       // For special cases outside of where the auto-import strategy can have an impact
