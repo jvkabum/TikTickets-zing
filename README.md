@@ -1,45 +1,82 @@
+# TikTickets-zing v3.0.0 🚀
 [![Grupo do WhatsApp](https://img.shields.io/badge/Grupo_Whatsapp-IzingFlow-blue)](https://chat.whatsapp.com/GHNJVQRoLzrGuO1lmCr7vR)
-## Mudanças feitas
-- Adicionado anexo em messagens rapidas ✅
-- Fechamento Automático de Tickets x dias sem interações ✅
-- Melhoria na interação visual para destacar tickets com novas mensagens ✅
 
-# FlowDevcom Painel SaaS
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
+[![Quasar Framework](https://img.shields.io/badge/Quasar-2.17%2B-1976D2?style=flat-square&logo=quasar&logoColor=white)](https://quasar.dev/)
+[![Pinia](https://img.shields.io/badge/Pinia-3.0-FFD75E?style=flat-square&logo=pinia&logoColor=white)](https://pinia.vuejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 
-Um sistema para gestão de atendimento multicanais centralizado.
+Um ecossistema **SaaS Multi-tenant** avançado para gestão de atendimento multicanais centralizado, agora totalmente modernizado e otimizado para performance e experiência do usuário (UX).
 
-Usuário Painel SaaS: super@izing.io senha: 123456
+---
 
-Usuário normal: admin@izing.io senha: 123456
+## 💎 Inovações da Versão 3.0.0
 
-**IMPORTANTE**: não garantimos que a utilização desta ferramenta não irá gerar bloqueio nas contas utilizadas. São bots que em sua maioria utilizam APIs secundarias para comunicação com os fornecedores dos serviços. Use com responsabilidade!
+A v3 representou um salto tecnológico e de usabilidade para o projeto:
 
-<br/>
+- **🔥 Vue 3.5 & Composition API**: Refatoração completa do frontend para o motor mais moderno do Vue, garantindo reatividade de alta performance.
+- **🛰️ State Management (Pinia)**: Transição do Vuex para Pinia. Agora a interface é controlada por uma arquitetura de "Stores" descentralizadas e leves, eliminando bugs de sincronização.
+- **🎙️ Engine Real-MP3 (LameJS)**: Novo sistema de gravação de áudio nativo. Codificação MP3 em tempo real diretamente no navegador, garantindo compatibilidade universal em todos os dispositivos.
+- **🎨 Design Arredondado & Premium**:
+    - **Cards Estilizados (12px)**: Interface visual limpa e moderna.
+    - **Glassmorphism**: Efeitos de transparência em barras e drawers.
+    - **Timeline Inteligente**: Detecção automática de protocolos e visualização cronológica de atendimentos.
+- **⚡ Sincronização Satélite**: O painel lateral de contatos e os cabeçalhos de chat agora operam em sincronia total via Store Global, reagindo instantaneamente a qualquer mudança.
 
-## Principais funcionalidades
+---
 
-- Multíplos canais de atendimento ✅
-- Multíplos usuários simultâneos por canais de atendimento ✅
-- Iniciar conversa com contatos existentes (whatsapp) ✅
-- Construção de Chatbot interativo ✅
-- Enviar e receber mensagens ✅
-- Enviar e receber mídias diversas (imagens/áudio/documentos) ✅
-- Multiempresas (abordagem de base compartilhada) ✅
+## 🛠️ Ecossistema Tecnológico
 
-<br/>
+### **Frontend**
+- **Vue.js 3.5**: Core framework.
+- **Quasar Framework 2**: UI Components & Build system.
+- **Pinia**: Gestão de estado reativa.
+- **Vite**: Build tool de ultra velocidade.
+- **Wavesurfer.js**: Visualização de áudio premium.
 
-## Instalando
-Seguem links sugerimos:
-https://docs.google.com/document/d/14XF2Q6jLmooanMzuAxHQUqcP2C9CY5EBysuBhhLy80U/edit?usp=sharing
-<br/>
+### **Backend**
+- **Node.js 20+**: Runtime estável e veloz.
+- **Express**: Framework web robusto.
+- **Sequelize / PostgreSQL**: Persistência de dados profissional.
+- **Redis & Bull**: Fila de processos e cache de alta velocidade.
+- **Socket.io v3+**: Comunicação realtime bidirecional.
+- **RabbitMQ**: Mensageria avançada para alta escala.
 
 **IMPORTANTE**: verifique sempre o .env.example e ajuste o seu .env antes de atualizar, uma vez que algumas novas variáveis podem ser adicionadas.
 
+## 🚀 Funcionalidades Principais
 
-<br/>
+- **Multicanais**: WhatsApp (WebJS & WABA), Telegram, Instagram e Messenger.
+- **Multi-tenant**: Suporte nativo a múltiplas empresas no mesmo banco (SaaS).
+- **Chatbot Inteligente**: Construtor de fluxos interativos (FlowBuilder).
+- **Mídias**: Envio e recepção de imagens, áudios (MP3), documentos e vídeos.
+- **Agendamentos**: Sistema integrado de mensagens agendadas e lembretes.
+- **Gestão de Equipe**: Departamentos/Filas, transferência de tickets e auditoria de logs.
 
 ## FIQUE ATENTO
 
 A utilização desta ferramenta é feita por sua conta e risco. O código é aberto e todos podem contribuir.
 
-Este projeto não é afiliado, associado, autorizado, endossado por, ou de qualquer forma oficialmente ligado à WhatsApp, ou a qualquer uma das suas filiais ou afiliadas. O website oficial da WhatsApp pode ser encontrado em <https://whatsapp.com>. "WhatsApp", bem como nomes, marcas, emblemas e imagens relacionadas são marcas registadas dos seus respectivos proprietários.
+## ⚙️ Instalação e Setup
+
+1. **Requisitos**: Docker (opcional) ou Instalação manual de Node 20 / Postgres / Redis.
+2. **Ambiente**: Utilize os arquivos `.env.example` tanto no `/backend` quanto no `/frontend-vue-3` como guia.
+3. **Instalação**:
+   ```bash
+   # No Backend
+   npm install
+   npm run build
+   npx sequelize db:migrate
+   npx sequelize db:seed:all
+
+   # No Frontend
+   npm install
+   ```
+
+---
+
+## ⚠️ FIQUE ATENTO
+
+A utilização desta ferramenta é feita por sua conta e risco. O projeto não é afiliado à WhatsApp Inc. O código é aberto para contribuições da comunidade.
+
+**Use com responsabilidade!** 🎉✨🏆🥇

@@ -1,13 +1,4 @@
 {
-  "active": [
-    {
-      "slug": "dark-mode-global-frontend",
-      "path": "plans/dark-mode-global-frontend.md",
-      "title": "🚀 Plano de Implementação Global de Dark Mode Premium",
-      "linkedAt": "2026-01-24T02:56:48.279Z",
-      "status": "active"
-    }
-  ],
-  "completed": [],
-  "primary": "dark-mode-global-frontend"
+  "active": [],
+  "completed": []
 }

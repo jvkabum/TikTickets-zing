@@ -8,7 +8,8 @@ This directory contains plans for coordinating work across documentation and pla
 3. [Fix Wbot Stability](./fix-wbot-stability.md)
 4. [Modernizacao Dashboard Premium V1](./modernizacao-dashboard-premium-v1.md)
 5. [Paridade Visual Atendimento Chat V4](./paridade-visual-atendimento-chat-v4.md)
-6. [Setup Context Documentation](./setup-context-documentation.md)
+6. [Release 3 0 0](./release-3-0-0.md)
+7. [Setup Context Documentation](./setup-context-documentation.md)
 
 ## How To Create Or Update Plans
 - Run "ai-context plan <name>" to scaffold a new plan template.
