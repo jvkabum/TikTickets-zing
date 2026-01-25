@@ -33,7 +33,20 @@ const VerifyMediaMessage = async (
 ): Promise<Message | void> => {
   const quotedMsg = await VerifyQuotedMessage(msg);
 
-  const media = await msg.downloadMedia();
+  // Verificar se a mensagem tem mídia antes de tentar baixar
+  // Mensagens interativas (botões, listas) não possuem mídia
+  if (!msg.hasMedia) {
+    logger.warn(`Mensagem ${msg.id.id} não possui mídia para download (tipo: ${msg.type})`);
+    return;
+  }
+
+  let media;
+  try {
+    media = await msg.downloadMedia();
+  } catch (error: any) {
+    logger.error(`ERR_WAPP_DOWNLOAD_MEDIA:: ID: ${msg.id.id}`, error);
+    return;
+  }
 
   if (!media) {
     logger.error(`ERR_WAPP_DOWNLOAD_MEDIA:: ID: ${msg.id.id}`);

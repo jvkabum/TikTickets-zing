@@ -677,6 +677,7 @@
 </template>
 
 <script setup>
+import { useQuasar, uid } from 'quasar'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 

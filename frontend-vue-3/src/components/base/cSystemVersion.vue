@@ -1,5 +1,5 @@
 <template>
-  <div class="text-caption text-center bg-grey-1 q-pa-sm">
+  <div :class="['text-caption text-center q-pa-sm', $q.dark.isActive ? 'bg-transparent' : 'bg-grey-1']">
     Versão Sistema:
     <q-badge
       align="middle"
@@ -16,7 +16,9 @@
 </template>
 <script setup>
 import packageEnv from 'src/../package.json'
+import { useQuasar } from 'quasar'
 
+const $q = useQuasar()
 const cVersion = computed(() => packageEnv.version)
 const github = computed(() => packageEnv.github)
 </script>

@@ -11,7 +11,7 @@
       {{ node.name }}
     </q-tooltip>
 
-    <!-- Botão de exclusão de nó que aparece ao passar o mouse -->
+    <!-- Botão de exclusão de nó -->
     <div
       v-if="!['start', 'configurations'].includes(node.type)"
       class="node-delete-btn"
@@ -19,10 +19,21 @@
       title="Remover nó"
     >
       <q-tooltip>Excluir nó</q-tooltip>
-      <i class="mdi mdi-close"></i>
+      <i class="mdi mdi-delete"></i>
     </div>
 
-    <!-- Botão de edição que aparece ao passar o mouse -->
+    <!-- Botão de duplicar nó -->
+    <div
+      v-if="!['start', 'configurations'].includes(node.type)"
+      class="node-duplicate-btn"
+      @click.stop="duplicateNode"
+      title="Duplicar nó"
+    >
+      <q-tooltip>Duplicar nó</q-tooltip>
+      <i class="mdi mdi-content-copy"></i>
+    </div>
+
+    <!-- Botão de edição -->
     <div
       v-if="!['start', 'configurations'].includes(node.type)"
       class="node-edit-btn"
@@ -112,7 +123,8 @@ const emit = defineEmits([
   'nodeRightMenu',
   'updateNodeName',
   'nodeAction',
-  'openNodeEditor'
+  'openNodeEditor',
+  'duplicateNode'
 ])
 
 const $q = useQuasar()
@@ -150,6 +162,7 @@ const clickNode = () => {
 }
 
 const changeNodeSite = () => {
+  if (!nodeRef.value) return 
   if (props.node.left === nodeRef.value.style.left && props.node.top === nodeRef.value.style.top) {
     return
   }
@@ -245,6 +258,9 @@ const openNodeEditor = () => {
   emit('clickNode', props.node.id)
   emit('openNodeEditor', props.node.id)
 }
+const duplicateNode = () => {
+  emit('duplicateNode', props.node.id)
+}
 </script>
 
 <style>
@@ -286,13 +302,13 @@ const openNodeEditor = () => {
   white-space: nowrap;
 }
 
-/* Estilo para o botão de exclusão */
+/* Botões de Ação no Topo do Card */
 .node-delete-btn {
   position: absolute;
   top: 4px;
-  right: 4px;
-  width: 18px;
-  height: 18px;
+  right: 4px; /* Mais à direita */
+  width: 20px;
+  height: 20px;
   background-color: #ff5252;
   border-radius: 50%;
   color: white;
@@ -301,29 +317,55 @@ const openNodeEditor = () => {
   justify-content: center;
   font-size: 12px;
   cursor: pointer;
-  opacity: 0;
-  transition:
-    opacity 0.2s,
-    transform 0.2s;
+  opacity: 0; /* Aparece no Hover */
+  transition: opacity 0.2s, transform 0.2s;
   z-index: 5;
 }
 
-.nodeStyle:hover .node-delete-btn {
-  opacity: 0.8;
+.node-duplicate-btn {
+  position: absolute;
+  top: 4px;
+  right: 28px; /* Ao lado do delete */
+  width: 20px;
+  height: 20px;
+  background-color: #ff9800; /* Laranja para duplicar */
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 5;
 }
 
-.node-delete-btn:hover {
-  opacity: 1 !important;
-  transform: scale(1.2);
+.node-config-btn {
+  position: absolute;
+  top: 4px;
+  right: 52px; /* Ao lado do duplicate */
+  width: 20px;
+  height: 20px;
+  background-color: #009688;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 5;
 }
 
-/* Estilo para o botão de edição */
 .node-edit-btn {
   position: absolute;
   top: 4px;
-  right: 28px;
-  width: 18px;
-  height: 18px;
+  right: 76px; /* Ao lado do config */
+  width: 20px;
+  height: 20px;
   background-color: #1976d2;
   border-radius: 50%;
   color: white;
@@ -333,19 +375,23 @@ const openNodeEditor = () => {
   font-size: 12px;
   cursor: pointer;
   opacity: 0;
-  transition:
-    opacity 0.2s,
-    transform 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   z-index: 5;
 }
 
+.nodeStyle:hover .node-delete-btn,
+.nodeStyle:hover .node-duplicate-btn,
+.nodeStyle:hover .node-config-btn,
 .nodeStyle:hover .node-edit-btn {
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
+.node-delete-btn:hover,
+.node-duplicate-btn:hover,
+.node-config-btn:hover,
 .node-edit-btn:hover {
   opacity: 1 !important;
-  transform: scale(1.2);
+  transform: scale(1.15);
 }
 
 /* Estilo para o campo de edição do nome */

@@ -219,6 +219,7 @@
             @updateNodeName="updateNodeName"
             @nodeAction="handleNodeAction"
             @openNodeEditor="openNodeEditor"
+            @duplicateNode="duplicateNode"
           >
           </flow-node>
         </template>
@@ -307,9 +308,31 @@ const efContainer = ref(null)
 const menu = reactive({
   show: false,
   curNodeId: '',
-  left: '0px',
   top: '0px'
 })
+
+// Diretiva v-flowDrag para evitar o aviso
+const vFlowDrag = {
+  created(el, binding) {
+    // jsPlumb gerencia o drag, então esta diretiva pode ser apenas um marcador ou ter lógica minimalista se necessário.
+    // Se houver lógica específica de drag anterior, ela deveria estar aqui.
+    // Por enquanto, deixamos vazio para silenciar o erro.
+  }
+}
+
+const nodeRightMenu = (nodeId, { action, x, y }) => {
+  menu.show = true
+  menu.curNodeId = nodeId
+  menu.left = `${x}px`
+  menu.top = `${y}px`
+
+  // Se a ação for delete, já executa. Caso contrário abre o menu.
+  if (action === 'delete') {
+    const node = data.nodeList.find(n => n.id === nodeId)
+    deleteNode(node)
+    menu.show = false
+  }
+}
 
 const addNewLineCondition = (from, to, oldTo) => {
   const sourceNode = data.nodeList.find(node => node.id === from)
@@ -700,6 +723,44 @@ const addNodeFromButton = type => {
     jsPlumb.value.makeSource(id, jsplumbSourceOptions)
     jsPlumb.value.makeTarget(id, jsplumbTargetOptions)
     jsPlumb.value.draggable(id, { containment: 'parent' })
+  })
+}
+
+
+
+
+
+const duplicateNode = nodeId => {
+  const originalNode = data.nodeList.find(n => n.id === nodeId)
+  if (!originalNode) return
+
+  const id = getUUID()
+  const newNode = cloneDeep(originalNode)
+  
+  newNode.id = id
+  newNode.nodeId = id
+  newNode.name = `${newNode.name} (Cópia)`
+  
+  const left = parseInt(originalNode.left || '0') + 30
+  const top = parseInt(originalNode.top || '0') + 30
+  newNode.left = `${left}px`
+  newNode.top = `${top}px`
+
+  data.nodeList.push(newNode)
+
+  nextTick(() => {
+    jsPlumb.value.makeSource(id, jsplumbSourceOptions)
+    jsPlumb.value.makeTarget(id, jsplumbTargetOptions)
+    jsPlumb.value.draggable(id, {
+      containment: 'parent',
+      stop: el => {
+        changeNodeSite({
+          id: id,
+          left: el.el.style.left,
+          top: el.el.style.top
+        })
+      }
+    })
   })
 }
 
