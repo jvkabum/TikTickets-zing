@@ -17,9 +17,9 @@
     <q-btn
       round
       flat
-      class="text-bold q-mx-sm q-ml-lg"
+      class="q-mx-sm q-ml-md"
     >
-      <q-avatar size="26px" color="primary" text-color="white">
+      <q-avatar size="32px" color="primary" text-color="white" class="text-bold shadow-2">
         {{ iniciais }}
       </q-avatar>
       <q-menu>
@@ -80,10 +80,10 @@ const $q = useQuasar()
 
 const emit = defineEmits(['abrir-perfil', 'logout', 'update-usuario'])
 
-const username = computed(() => localStorage.getItem('username'))
+const username = computed(() => usuario.value?.name || 'Usuário')
 const iniciais = computed(() => {
   const name = username.value || ''
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+  return name.charAt(0).toUpperCase() || 'U'
 })
 
 const atualizarStatusLocal = () => {
