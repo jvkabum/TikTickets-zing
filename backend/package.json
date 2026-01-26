@@ -1,8 +1,12 @@
 {
-  "name": "backend",
+  "name": "tiktickets-backend",
   "version": "3.0.1",
-  "description": "Bot Multiatendimento, multicanais e multiempresas.",
+  "description": "TikTickets: Bot Multiatendimento, multicanais e multiempresas.",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvkabum/TikTickets-zing"
+  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",

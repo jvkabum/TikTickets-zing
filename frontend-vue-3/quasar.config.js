@@ -278,9 +278,9 @@ export default configure(function (ctx) {
       useCredentialsForProxySSR: false,
 
       manifest: {
-        name: 'IZING',
-        short_name: 'IZING',
-        description: 'Bot Multi-atendimento para whatsapp',
+        name: 'TikTickets',
+        short_name: 'TikTickets',
+        description: 'TikTickets: Bot Multi-atendimento para whatsapp',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#ffffff',

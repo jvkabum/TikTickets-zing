@@ -1,12 +1,12 @@
 # TikTickets-zing v3.0.1 🚀
-[![Grupo do WhatsApp](https://img.shields.io/badge/Grupo_Whatsapp-IzingFlow-blue)](https://chat.whatsapp.com/GHNJVQRoLzrGuO1lmCr7vR)
+[![Grupo do WhatsApp](https://img.shields.io/badge/Grupo_Whatsapp-TikTickets-blue)](https://chat.whatsapp.com/GHNJVQRoLzrGuO1lmCr7vR)
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
 [![Quasar Framework](https://img.shields.io/badge/Quasar-2.17%2B-1976D2?style=flat-square&logo=quasar&logoColor=white)](https://quasar.dev/)
 [![Pinia](https://img.shields.io/badge/Pinia-3.0-FFD75E?style=flat-square&logo=pinia&logoColor=white)](https://pinia.vuejs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 
-Um ecossistema **SaaS Multi-tenant** avançado para gestão de atendimento multicanais centralizado, agora totalmente modernizado e otimizado para performance e experiência do usuário (UX).
+Um ecossistema **SaaS Multi-tenant** avançado para gestão de atendimento multicanais centralizado, agora totalmente modernizado e otimizado para performance e experiência do usuário (UX), sob a marca **TikTickets**.
 
 ---
 

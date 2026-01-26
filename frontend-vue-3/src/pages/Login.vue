@@ -28,7 +28,7 @@
             <!-- Logo Section -->
             <q-card-section class="text-center q-pb-none">
               <q-img
-                src="/izing-logo_5_transparent.png"
+                src="/logo.png"
                 spinner-color="primary"
                 class="logo-img q-mb-md"
               />

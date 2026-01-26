@@ -1,15 +1,16 @@
 {
-  "name": "izing-flow",
+  "name": "tiktickets-flow",
   "version": "3.0.1",
-  "description": "Bot Multiatendimento, multicanais e multiempresas.",
-  "productName": "izingFlow",
+  "description": "TikTickets: Bot Multiatendimento, multicanais e multiempresas.",
+  "productName": "TikTickets",
   "author": "Durans/FlowDeskPro/TiOKaBuM",
   "private": false,
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jvkabum/Izingflow"
+    "url": "https://github.com/jvkabum/TikTickets-zing"
   },
+  "github": "https://github.com/jvkabum/TikTickets-zing",
   "scripts": {
     "dev": "npx quasar dev",
     "lint": "eslint --ext .js,.vue src",
