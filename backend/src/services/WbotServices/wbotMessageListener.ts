@@ -62,7 +62,16 @@ const wbotMessageListener = (wbot: Session): void => {
         let contact: Contact;
         if (msg.fromMe) {
           // Se o bot enviou a enquete, associa ao destinatário (msg.to)
-          const recipientNumber = msg.to.replace('@c.us', '');
+          let recipientNumber: string;
+
+          if (msg.to.endsWith("@lid")) {
+            // Se for LID, tenta obter o número real através do contato
+            const recipientContactWbot = await wbot.getContactById(msg.to);
+            recipientNumber = recipientContactWbot?.number || msg.to.replace('@lid', '').split('@')[0];
+          } else {
+            recipientNumber = msg.to.replace('@c.us', '').replace('@g.us', '');
+          }
+
           const recipientContact = await Contact.findOne({
             where: { number: recipientNumber, tenantId }
           });
@@ -78,7 +87,9 @@ const wbotMessageListener = (wbot: Session): void => {
           }
         } else {
           // Se o cliente enviou, associa ao remetente (msg.from)
-          const phoneNumber = wbotContact.id._serialized.replace('@c.us', '');
+          // Prioriza wbotContact.number que contem o número real mesmo se o ID for LID
+          const phoneNumber = wbotContact.number || wbotContact.id._serialized.replace('@c.us', '').replace('@lid', '');
+
           const senderContact = await Contact.findOne({
             where: { number: phoneNumber, tenantId }
           });
@@ -113,9 +124,9 @@ const wbotMessageListener = (wbot: Session): void => {
         }
 
         if (msg.type === "poll_creation") {
-          await handlePollCreation(msg, ticket, contact);
+          await handlePollCreation(msg, ticket, contact, wbot);
         } else if (msg.type === "poll_vote") {
-          await handlePollVote(msg, ticket, contact);
+          await handlePollVote(msg, ticket, contact, wbot);
         }
 
         return;
@@ -158,7 +169,9 @@ const wbotMessageListener = (wbot: Session): void => {
 
       const wbotContact = await msg.getContact();
       const tenantId = await getTenantIdByWbotId(wbot.id);
-      const phoneNumber = wbotContact.id._serialized.replace('@c.us', '');
+
+      // Prioriza wbotContact.number para obter o número real (mesmo se vier de LID)
+      const phoneNumber = wbotContact.number || wbotContact.id._serialized.replace('@c.us', '').replace('@lid', '');
 
       let contact = await Contact.findOne({
         where: { number: phoneNumber, tenantId }
@@ -190,7 +203,7 @@ const wbotMessageListener = (wbot: Session): void => {
         });
       }
 
-      await handlePollVote(msg, ticket, contact);
+      await handlePollVote(msg, ticket, contact, wbot);
 
       // Emitir evento para o frontend via WebSocket
       // USO SEGURO: msg.id.id (obtido via getMessage()) em vez de vote.pollCreationMessageKey.id

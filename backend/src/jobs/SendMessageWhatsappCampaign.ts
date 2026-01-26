@@ -34,16 +34,28 @@ export default {
       /// feito por está apresentando problema com o tipo
       const wbot = getWbot(data.whatsappId);
       let message = {} as WbotMessage;
+      // Tenta obter o ID formatado corretamente do WhatsApp
+      let chatId = `${data.number}@c.us`;
+      try {
+        const numberId = await wbot.getNumberId(data.number);
+        if (numberId) {
+          chatId = numberId._serialized;
+        }
+      } catch (e) {
+        // Fallback para o formato padrão se falhar a verificação
+        console.warn('Falha ao validar número para campanha, usando fallback:', e);
+      }
+
       if (data.mediaUrl) {
         const customPath = join(__dirname, "..", "..", "public");
         const mediaPath = join(customPath, data.mediaName);
         const newMedia = MessageMedia.fromFilePath(mediaPath);
-        message = await wbot.sendMessage(`${data.number}@c.us`, newMedia, {
+        message = await wbot.sendMessage(chatId, newMedia, {
           sendAudioAsVoice: true,
           caption: data.message
         });
       } else {
-        message = await wbot.sendMessage(`${data.number}@c.us`, data.message, {
+        message = await wbot.sendMessage(chatId, data.message, {
           linkPreview: false
         });
       }

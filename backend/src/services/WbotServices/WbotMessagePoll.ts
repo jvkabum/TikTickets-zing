@@ -84,7 +84,8 @@ export interface PollMessageData {
 const handlePollCreation = async (
   msg: ExtendedWbotMessage,
   ticket: Ticket,
-  contact: Contact
+  contact: Contact,
+  wbot?: Client
 ) => {
   // Removido: console.log("Iniciando handlePollCreation:", {...});
 
@@ -144,7 +145,15 @@ const handlePollCreation = async (
   let recipientContactId: number | undefined;
   if (msg.fromMe) {
     // Se o bot enviou a enquete, associa ao destinatário (msg.to)
-    const recipientNumber = msg.to.replace('@c.us', '');
+    let recipientNumber: string;
+
+    if (msg.to.endsWith("@lid") && wbot) {
+      const recipientContactWbot = await wbot.getContactById(msg.to);
+      recipientNumber = recipientContactWbot?.number || msg.to.replace('@lid', '').split('@')[0];
+    } else {
+      recipientNumber = msg.to.replace('@c.us', '').replace('@g.us', '');
+    }
+
     let recipientContact = await Contact.findOne({
       where: { number: recipientNumber, tenantId: ticket.tenantId }
     });
@@ -209,7 +218,8 @@ const handlePollCreation = async (
 const handlePollVote = async (
   msg: ExtendedWbotMessage,
   ticket: Ticket,
-  contact: Contact
+  contact: Contact,
+  wbot?: Client
 ) => {
   // Removido: console.log("Iniciando handlePollVote:", {...});
 
@@ -225,9 +235,9 @@ const handlePollVote = async (
 
     // Busca a mensagem da enquete original
     const pollMessage = await Message.findOne({
-      where: { 
+      where: {
         messageId: parentMessageId,
-        tenantId: ticket.tenantId 
+        tenantId: ticket.tenantId
       }
     });
 
@@ -245,8 +255,8 @@ const handlePollVote = async (
 
     // Extrai os votos existentes e as opções selecionadas
     const updatedVotes = Array.isArray(pollMessage.pollData.votes) ? [...pollMessage.pollData.votes] : [];
-    const selectedOptions = msg._data && Array.isArray(msg._data.selectedOptions) 
-      ? msg._data.selectedOptions.map(opt => opt.name).filter(name => name) 
+    const selectedOptions = msg._data && Array.isArray(msg._data.selectedOptions)
+      ? msg._data.selectedOptions.map(opt => opt.name).filter(name => name)
       : [];
 
     if (selectedOptions.length === 0) {
@@ -254,9 +264,23 @@ const handlePollVote = async (
       return;
     }
 
+    let sender = msg._data?.voter || msg.from;
+
+    // Tratamento de LID para sender
+    if (sender.endsWith('@lid')) {
+      if (wbot) {
+        const senderContact = await wbot.getContactById(sender);
+        sender = senderContact?.number || sender.replace('@lid', '').split('@')[0];
+      } else {
+        sender = sender.replace('@lid', '').split('@')[0];
+      }
+    } else {
+      sender = sender.replace('@c.us', '').replace('@g.us', '');
+    }
+
     // Cria o objeto de dados do voto
     const voteData = {
-      sender: msg._data?.voter || msg.from.replace('@c.us', ''), // Padroniza o sender
+      sender, // Padroniza o sender
       selectedOptions,
       parentMessageId,
       timestamp: msg.timestamp || Math.floor(Date.now() / 1000)
@@ -311,9 +335,9 @@ const handlePollVote = async (
     };
 
     // Removido: console.log("Salvando mensagem de voto:", JSON.stringify(voteMessageData, null, 2));
-    const savedVoteMessage = await CreateMessageService({ 
-      messageData: voteMessageData, 
-      tenantId: ticket.tenantId 
+    const savedVoteMessage = await CreateMessageService({
+      messageData: voteMessageData,
+      tenantId: ticket.tenantId
     });
 
     // Removido: console.log("Mensagem de voto salva com sucesso:", {...});

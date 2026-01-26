@@ -26,8 +26,19 @@ export default {
   async handle({ data }: any) {
     try {
       const wbot = getWbot(data.ticket.whatsappId);
+      let chatId = `${data.ticket.contact.number}@c.us`;
+
+      try {
+        const numberId = await wbot.getNumberId(data.ticket.contact.number);
+        if (numberId) {
+          chatId = numberId._serialized;
+        }
+      } catch (e) {
+        // Fallback para o padrão
+      }
+
       const message = await wbot.sendMessage(
-        `${data.ticket.contact.number}@c.us`,
+        chatId,
         data.tenant.messageBusinessHours,
         {
           linkPreview: false

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
 import { removeWbot } from "../libs/wbot";
 import AppError from "../errors/AppError";
-import Tenant from "../models/Tenant"; 
+import Tenant from "../models/Tenant";
 
 import DeleteWhatsAppService from "../services/WhatsappService/DeleteWhatsAppService";
 import ListWhatsAppsService from "../services/WhatsappService/ListWhatsAppsService";
@@ -67,7 +67,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   if (whatsapps.length >= Number(process.env.CONNECTIONS_LIMIT)) {
     throw new AppError("ERR_NO_PERMISSION_CONNECTIONS_LIMIT", 400);
   }
-  
+
   const maxConnections = await getTenantmaxConnections(String(tenantId));
   if (whatsapps.length >= maxConnections) {
     throw new AppError("ERR_NO_PERMISSION_CONNECTIONS_LIMIT", 400);
@@ -130,18 +130,19 @@ export const getProfilePic = async (req: Request, res: Response): Promise<Respon
   const { tenantId } = req.user;
 
   const whatsapp = await ShowWhatsAppService({ id: whatsappId, tenantId });
-  
+
   try {
     const wbot = getWbot(whatsapp.id);
-    const profilePicUrl = await wbot.getProfilePicUrl(`${whatsapp.number}@c.us`);
-    
+    const profilePicId = whatsapp.number.includes('@') ? whatsapp.number : `${whatsapp.number}@c.us`;
+    const profilePicUrl = await wbot.getProfilePicUrl(profilePicId);
+
     if (!profilePicUrl) {
       return res.status(404).json({ error: "Profile picture not found" });
     }
-    
+
     // Atualiza a URL no banco de dados
     await whatsapp.update({ profilePicUrl });
-    
+
     return res.status(200).json({ profilePicUrl });
   } catch (error) {
     // Se houver erro ao buscar a foto atual, retorna a URL salva no banco

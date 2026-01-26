@@ -29,7 +29,7 @@ const SyncContactsWhatsappInstanceService = async (
     const dataArray: object[] = [];
     await Promise.all(
       contacts.map(async ({ name, pushname, number, isGroup, id }) => {
-        if ((name || pushname) && !isGroup && id.server !== "lid") {
+        if ((name || pushname) && !isGroup) {
           // const profilePicUrl = await wbot.getProfilePicUrl(`${number}@c.us`);
           const contactObj = { name: name || pushname, number, tenantId };
           dataArray.push(contactObj);
