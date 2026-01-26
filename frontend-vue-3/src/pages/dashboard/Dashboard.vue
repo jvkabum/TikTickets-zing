@@ -29,13 +29,12 @@
               :dark="$q.dark.isActive"
             />
             <q-btn
-              class="grad-primary shadow-neon"
+              class="grad-primary shadow-neon text-white"
               unelevated
-              padding="10px 24px"
               icon="refresh"
               label="Atualizar"
               @click="getDashData"
-              style="border-radius: 10px; height: 40px;"
+              style="border-radius: 10px; height: 40px; font-weight: bold"
             />
           </div>
         </q-card-section>
