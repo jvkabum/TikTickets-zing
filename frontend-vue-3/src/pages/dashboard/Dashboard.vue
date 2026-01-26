@@ -5,37 +5,47 @@
       appear
       enter-active-class="animated fadeInDown"
     >
-      <q-card class="q-mb-xl glass-premium shadow-2 rdsPainelDate overflow-hidden" style="border-radius: 24px">
-        <q-card-section class="row justify-between items-center q-py-md">
-          <div class="col-xs-12 col-md-4">
-            <div class="text-h4 text-weight-bolder text-primary tracking-tight">
-              Dashboard
-              <q-badge align="top" color="primary" class="q-ml-sm" :outline="!$q.dark.isActive">BETA</q-badge>
+      <q-card class="q-mb-xl glass-premium shadow-2 rdsPainelDate overflow-hidden" style="border-radius: 20px; border: 1px solid rgba(255,255,255,0.05)">
+        <q-card-section class="column items-center q-py-md q-md-py-lg q-px-md text-center">
+          <div class="column items-center q-mb-sm q-md-mb-md">
+            <div class="row items-center q-gutter-sm justify-center">
+              <div class="text-h4 text-weight-bolder text-primary tracking-tight">
+                Dashboard
+              </div>
+              <q-badge align="middle" color="primary" class="q-px-sm q-py-xs text-weight-bold" style="border-radius: 6px; font-size: 10px; opacity: 0.8">BETA</q-badge>
             </div>
-            <div class="text-caption text-grey-8" :class="{ 'text-grey-5': $q.dark.isActive }">Visão geral e performance operacional</div>
+            <div class="text-subtitle2 text-grey-8 q-mt-xs" :class="{ 'text-grey-5': $q.dark.isActive }">Visão geral e performance operacional</div>
           </div>
           
-          <div class="col-xs-12 col-md-8 justify-end flex items-center q-gutter-md q-pt-md q-md-pt-none">
-            <DatePick
-              style="width: 170px"
-              v-model="params.startDate"
-              dense
-              :dark="$q.dark.isActive"
-            />
-            <DatePick
-              style="width: 170px"
-              v-model="params.endDate"
-              dense
-              :dark="$q.dark.isActive"
-            />
+          <div class="row items-center q-gutter-md justify-center full-width">
+            <div class="row items-center q-gutter-sm no-wrap">
+              <DatePick
+                style="width: 150px"
+                v-model="params.startDate"
+                dense
+                outlined
+                :dark="$q.dark.isActive"
+              />
+              <span class="text-grey-6 text-weight-light">até</span>
+              <DatePick
+                style="width: 150px"
+                v-model="params.endDate"
+                dense
+                outlined
+                :dark="$q.dark.isActive"
+              />
+            </div>
+            
             <q-btn
-              class="grad-primary shadow-neon text-white"
               unelevated
               icon="refresh"
-              label="Atualizar"
+              label="ATUALIZAR"
               @click="getDashData"
-              style="border-radius: 10px; height: 40px; font-weight: bold"
-            />
+              class="text-white q-px-xl"
+              style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50px; height: 44px; font-weight: 900; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);"
+            >
+              <q-tooltip>Recarregar estatísticas</q-tooltip>
+            </q-btn>
           </div>
         </q-card-section>
       </q-card>
