@@ -1,6 +1,6 @@
 {
   "name": "tiktickets-backend",
-  "version": "3.0.1",
+  "version": "3.2.4",
   "description": "TikTickets: Bot Multiatendimento, multicanais e multiempresas.",
   "main": "index.js",
   "repository": {
