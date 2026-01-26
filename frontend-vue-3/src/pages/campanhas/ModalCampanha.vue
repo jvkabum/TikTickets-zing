@@ -134,34 +134,219 @@
       </q-card-section>
       <q-card-section class="row q-pt-sm q-gutter-sm justify-center">
         <div style="min-width: 400px">
-          <!-- 1ª Mensagem -->
-          <CampaignMessageInput
-             label="1ª Mensagem"
-             placeholder="Digite a mensagem"
-             v-model="message1"
-             :variaveis="variaveis"
-             :class="{ 'bg-red-1': !!errors.message1 }"
-           />
-           <q-separator class="q-my-md" />
-
-          <!-- 2ª Mensagem -->
-          <CampaignMessageInput
-             label="2ª Mensagem"
-             placeholder="Digite a mensagem"
-             v-model="message2"
-             :variaveis="variaveis"
-             :class="{ 'bg-red-1': !!errors.message2 }"
-           />
-           <q-separator class="q-my-md" />
-
-          <!-- 3ª Mensagem -->
-          <CampaignMessageInput
-             label="3ª Mensagem"
-             placeholder="Digite a mensagem"
-             v-model="message3"
-             :variaveis="variaveis"
-             :class="{ 'bg-red-1': !!errors.message3 }"
-           />
+          <div class="row items-center q-pt-none">
+            <label class="text-heading text-bold">1ª Mensagem</label>
+            <div class="col-xs-3 col-sm-2 col-md-1">
+              <q-btn
+                round
+                flat
+                class="q-ml-sm"
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-emoticon-happy-outline"
+                />
+                <q-tooltip> Emoji </q-tooltip>
+                <q-menu
+                  anchor="top right"
+                  self="bottom middle"
+                  :offset="[5, 40]"
+                >
+                  <EmojiPicker
+                    :native="true"
+                    :hide-search="false"
+                    :disable-skin-tones="true"
+                    @select="v => onInsertSelectEmoji(v, 'message1')"
+                  />
+                </q-menu>
+              </q-btn>
+            </div>
+            <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
+              <textarea
+                ref="message1Ref"
+                style="min-height: 12.5vh; max-height: 12.5vh"
+                class="q-pa-sm bg-white full-width rounded-all"
+                :class="{
+                  'bg-red-1': !!errors.message1
+                }"
+                placeholder="Digite a mensagem"
+                autogrow
+                dense
+                outlined
+                v-model="message1"
+                v-bind="message1Props"
+              />
+              <q-btn
+                round
+                flat
+                dense
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-variable"
+                />
+                <q-tooltip> Variáveis </q-tooltip>
+                <q-menu touch-position>
+                  <q-list
+                    dense
+                    style="min-width: 100px"
+                  >
+                    <q-item
+                      v-for="variavel in variaveis"
+                      :key="variavel.label"
+                      clickable
+                      @click="onInsertSelectVariable(variavel.value, 'message1', 'message1')"
+                      v-close-popup
+                    >
+                      <q-item-section>{{ variavel.label }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+              <q-separator class="q-my-md" />
+            </div>
+          </div>
+          <div class="row items-center q-pt-none">
+            <label class="text-heading text-bold">2ª Mensagem</label>
+            <div class="col-xs-3 col-sm-2 col-md-1">
+              <q-btn
+                round
+                flat
+                class="q-ml-sm"
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-emoticon-happy-outline"
+                />
+                <q-tooltip> Emoji </q-tooltip>
+                <q-menu
+                  anchor="top right"
+                  self="bottom middle"
+                  :offset="[5, 40]"
+                >
+                  <EmojiPicker
+                    :native="true"
+                    :hide-search="false"
+                    @select="v => onInsertSelectEmoji(v, 'message2')"
+                  />
+                </q-menu>
+              </q-btn>
+            </div>
+            <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
+              <textarea
+                ref="message2Ref"
+                style="min-height: 12.5vh; max-height: 12.5vh"
+                class="q-pa-sm bg-white full-width rounded-all"
+                placeholder="Digite a mensagem"
+                autogrow
+                dense
+                outlined
+                :class="{
+                  'bg-red-1': !!errors.message2
+                }"
+                v-model="message2"
+                v-bind="message2Props"
+              />
+              <q-btn
+                round
+                flat
+                dense
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-variable"
+                />
+                <q-tooltip> Variáveis </q-tooltip>
+                <q-menu touch-position>
+                  <q-list
+                    dense
+                    style="min-width: 100px"
+                  >
+                    <q-item
+                      v-for="variavel in variaveis"
+                      :key="variavel.label"
+                      clickable
+                      @click="onInsertSelectVariable(variavel.value, 'message2', 'message2')"
+                      v-close-popup
+                    >
+                      <q-item-section>{{ variavel.label }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+              <q-separator class="q-my-md" />
+            </div>
+          </div>
+          <div class="row items-center q-pt-none">
+            <label class="text-heading text-bold">3ª Mensagem</label>
+            <div class="col-xs-3 col-sm-2 col-md-1">
+              <q-btn
+                round
+                flat
+                class="q-ml-sm"
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-emoticon-happy-outline"
+                />
+                <q-tooltip> Emoji </q-tooltip>
+                <q-menu
+                  anchor="top right"
+                  self="bottom middle"
+                  :offset="[5, 40]"
+                >
+                  <EmojiPicker
+                    :native="true"
+                    :hide-search="false"
+                    @select="v => onInsertSelectEmoji(v, 'message3')"
+                  />
+                </q-menu>
+              </q-btn>
+            </div>
+            <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
+              <textarea
+                ref="message3Ref"
+                style="min-height: 12.5vh; max-height: 12.5vh"
+                class="q-pa-sm bg-white full-width rounded-all"
+                placeholder="Digite a mensagem"
+                autogrow
+                dense
+                outlined
+                :class="{
+                  'bg-red-1': !!errors.message3
+                }"
+                v-model="message3"
+                v-bind="message3Props"
+              />
+              <q-btn
+                round
+                flat
+                dense
+              >
+                <q-icon
+                  size="2em"
+                  name="mdi-variable"
+                />
+                <q-tooltip> Variáveis </q-tooltip>
+                <q-menu touch-position>
+                  <q-list
+                    dense
+                    style="min-width: 100px"
+                  >
+                    <q-item
+                      v-for="variavel in variaveis"
+                      :key="variavel.label"
+                      clickable
+                      @click="onInsertSelectVariable(variavel.value, 'message3', 'message3')"
+                      v-close-popup
+                    >
+                      <q-item-section>{{ variavel.label }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+            </div>
+          </div>
         </div>
         <div style="width: 500px">
           <q-card
@@ -220,7 +405,8 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { parseISO, startOfDay } from 'date-fns'
 import { notificarErro } from 'src/utils/helpersNotifications'
-import CampaignMessageInput from 'src/components/campanhas/CampaignMessageInput.vue'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'vue3-emoji-picker/css'
 import { z } from 'zod'
 
 const props = defineProps({
@@ -261,9 +447,184 @@ const optRadio = [
 const messagemPreview = ref('message1')
 const loading = ref(false)
 const arquivos = ref([])
-// const message1Ref = ref(null) // Não precisamos mais refs aqui
-// const message2Ref = ref(null)
-// const message3Ref = ref(null)
+const message1Ref = ref(null)
+const message2Ref = ref(null)
+const message3Ref = ref(null)
+
+const isValidDate = dateString => {
+  const date = parseISO(dateString)
+  return startOfDay(date).getTime() >= startOfDay(new Date()).getTime()
+}
+
+const validationSchema = toTypedSchema(
+  z.object({
+    name: z.string().min(1, 'Obrigatório'),
+    start: z.string().min(1, 'Obrigatório').refine(isValidDate, 'Não pode ser inferior ao dia atual'),
+    message1: z.string().min(1, 'Obrigatório'),
+    message2: z.string().min(1, 'Obrigatório'),
+    message3: z.string().min(1, 'Obrigatório'),
+    sessionId: z.any().refine(val => !!val, 'Obrigatório'), // Adjust based on sessionId type
+    delay: z.coerce.number().min(61, 'Deve ser no mínimo 61'),
+    status: z.string().min(1, 'Obrigatório')
+  })
+)
+
+const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
+  validationSchema
+})
+
+const [name, nameProps] = defineField('name')
+const [start, startProps] = defineField('start')
+const [message1, message1Props] = defineField('message1')
+const [message2, message2Props] = defineField('message2')
+const [message3, message3Props] = defineField('message3')
+const [sessionId, sessionIdProps] = defineField('sessionId')
+const [delay, delayProps] = defineField('delay')
+const [status, statusProps] = defineField('status')
+
+// State for non-form fields matching exact previous behavior
+const campanhaState = reactive({
+  id: null,
+  mediaUrl: null
+})
+
+const modalCampanhaModel = computed({
+  get: () => props.modalCampanha,
+  set: v => emit('update:modalCampanha', v)
+})
+
+const handleResetMedia = () => {
+  campanhaState.mediaUrl = null
+  arquivos.value = []
+}
+
+const cSessions = computed(() => {
+  return whatsapps.value.filter(w => w.type === 'whatsapp' && !w.isDeleted)
+})
+
+const cKey = computed(() => {
+  return (message1.value || '') + (message2.value || '') + (message3.value || '')
+})
+
+const cArquivoName = computed(() => {
+  if (!campanhaState.mediaUrl) return ''
+  const split = campanhaState.mediaUrl.split('/')
+  return split[split.length - 1]
+})
+
+const cMessages = computed(() => {
+  const messages = []
+  if (arquivos.value && arquivos.value.type) {
+    const blob = new Blob([arquivos.value], { type: arquivos.value.type })
+    messages.push({
+      ...messageTemplate,
+      id: 'mediaUrl',
+      mediaUrl: window.URL.createObjectURL(blob),
+      body: arquivos.value.name,
+      mediaType: arquivos.value.type.substr(0, arquivos.value.type.indexOf('/'))
+    })
+  } else if (campanhaState.mediaUrl) {
+    messages.push({
+      ...messageTemplate,
+      id: 'mediaUrl',
+      mediaUrl: campanhaState.mediaUrl,
+      body: '',
+      mediaType: 'chat'
+    })
+  }
+
+  const el = messagemPreview.value
+  let bodyValue = ''
+  if (el === 'message1') bodyValue = message1.value
+  if (el === 'message2') bodyValue = message2.value
+  if (el === 'message3') bodyValue = message3.value
+
+  if (bodyValue) {
+    messages.push({
+      ...messageTemplate,
+      id: el,
+      body: bodyValue
+    })
+  }
+  return messages
+})
+
+const messageTemplate = {
+  mediaUrl: null,
+  id: null,
+  ack: 3,
+  read: true,
+  fromMe: true,
+  body: null,
+  mediaType: 'chat',
+  isDeleted: false,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  quotedMsgId: null,
+  delay: 61,
+  ticketId: 0,
+  contactId: null,
+  userId: null,
+  contact: null,
+  quotedMsg: null
+}
+
+const onInsertSelectVariable = (variable, textAreaRefName, fieldName) => {
+  const refs = {
+    message1: message1Ref,
+    message2: message2Ref,
+    message3: message3Ref
+  }
+  const tArea = refs[textAreaRefName].value
+  if (!tArea || !variable) return
+
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const originalText = tArea.value
+
+  const newText = originalText.substring(0, startPos) + variable + originalText.substring(endPos)
+
+  const fieldSetters = {
+    message1: v => (message1.value = v),
+    message2: v => (message2.value = v),
+    message3: v => (message3.value = v)
+  }
+  fieldSetters[fieldName](newText)
+
+  nextTick(() => {
+    const newCursorPos = startPos + variable.length
+    tArea.setSelectionRange(newCursorPos, newCursorPos)
+    tArea.focus()
+  })
+}
+
+const onInsertSelectEmoji = (emoji, textAreaRefName) => {
+  const refs = {
+    message1: message1Ref,
+    message2: message2Ref,
+    message3: message3Ref
+  }
+  const tArea = refs[textAreaRefName].value
+  if (!tArea || !emoji.i) return
+
+  const startPos = tArea.selectionStart
+  const endPos = tArea.selectionEnd
+  const tmpStr = tArea.value
+
+  const newText = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos)
+
+  const fieldSetters = {
+    message1: v => (message1.value = v),
+    message2: v => (message2.value = v),
+    message3: v => (message3.value = v)
+  }
+  fieldSetters[textAreaRefName](newText)
+
+  nextTick(() => {
+    tArea.selectionStart = tArea.selectionEnd = startPos + emoji.i.length
+    tArea.focus()
+  })
+}
 
 const resetarCampanha = () => {
   resetForm()
@@ -380,4 +741,9 @@ const handleCampanha = handleSubmit(async values => {
 })
 </script>
 
-
+<style lang="scss">
+border-error {
+  border: 3px solid red;
+  background: red !important;
+}
+</style>
