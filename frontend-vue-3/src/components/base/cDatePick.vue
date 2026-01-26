@@ -5,19 +5,18 @@
       hide-bottom-space
       outlined
       stack-label
-      type="date"
       bottom-slots
+      readonly
       v-bind="$attrs"
       :class="classAtrrs"
-      :model-value="modelValue"
-      @update:model-value="v => $emit('update:modelValue', v)"
+      :model-value="cDateDisplay"
       :error="cError"
       :error-message="cErrorMessage"
     >
       <template v-slot:append>
         <q-icon
           name="event"
-          class="cursor-pointer q-mr-sm"
+          class="cursor-pointer"
         >
           <q-popup-proxy
             ref="qDateProxy"
@@ -102,6 +101,15 @@ const cErrorMessage = computed(() => {
     return props.firstErrorMessage
   }
   return props.errorMessage
+})
+
+const cDateDisplay = computed(() => {
+  if (!props.modelValue) return ''
+  const date = typeof props.modelValue === 'string' ? parseISO(props.modelValue) : props.modelValue
+  if (isValid(date)) {
+    return format(date, 'dd/MM/yyyy')
+  }
+  return props.modelValue
 })
 
 const emitDate = value => {

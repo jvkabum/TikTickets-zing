@@ -6,40 +6,43 @@
     @click="clickable && $emit('click')"
   >
     <q-card-section class="q-pa-lg">
-      <div class="row items-center no-wrap q-mb-md">
-        <div 
-          class="flex flex-center q-mr-md rounded-all shadow-1"
-          :class="`grad-${color}`"
-          style="width: 48px; height: 48px; border-radius: 12px;"
-        >
-          <q-icon
-            :name="icon"
-            color="white"
-            size="24px"
-          />
-        </div>
-        
-        <div class="col">
+      <div class="row no-wrap items-start justify-between q-mb-md">
+        <div class="row no-wrap items-start col">
           <div 
-            class="text-caption text-uppercase text-weight-bolder letter-spacing-1"
-            :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-7'"
+            class="flex flex-center q-mr-md rounded-all shadow-1 flex-shrink-0"
+            :class="`grad-${color}`"
+            style="width: 44px; height: 44px; border-radius: 12px;"
           >
-            {{ label }}
+            <q-icon
+              :name="icon"
+              color="white"
+              size="22px"
+            />
           </div>
-          <div 
-            class="text-h4 text-weight-bolder line-height-1 text-dark-theme"
-          >
-            {{ formattedValue }}
+          
+          <div class="col overflow-hidden">
+            <div 
+              class="text-caption text-uppercase text-weight-bolder letter-spacing-1 ellipsis"
+              :class="$q.dark.isActive ? 'text-grey-4' : 'text-grey-7'"
+              style="font-size: 0.7rem; line-height: 1.2"
+            >
+              {{ label }}
+            </div>
+            <div 
+              class="text-h4 text-weight-bolder line-height-1 text-dark-theme q-mt-xs"
+            >
+              {{ formattedValue }}
+            </div>
           </div>
         </div>
 
         <div
           v-if="trend !== null"
-          class="trend-bubble flex flex-center"
+          class="trend-bubble flex flex-center flex-shrink-0 q-ml-sm"
           :class="trendClass"
         >
-          <q-icon :name="trendIcon" size="14px" />
-          <span class="text-caption text-weight-bold q-ml-xs">{{ Math.abs(trend) }}%</span>
+          <q-icon :name="trendIcon" size="12px" />
+          <span class="text-caption text-weight-bolder q-ml-xs">{{ Math.abs(trend) }}%</span>
         </div>
       </div>
 
@@ -176,18 +179,20 @@ const trendIcon = computed(() => {
 }
 
 .trend-bubble {
-  padding: 6px 10px;
-  border-radius: 10px;
+  padding: 4px 8px;
+  border-radius: 8px;
   background: rgba(0, 0, 0, 0.03);
+  align-self: flex-start;
+  margin-top: 2px;
   
   &.text-positive {
-    background: rgba(var(--q-positive), 0.1);
-    color: var(--q-positive) !important;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981 !important;
   }
   
   &.text-negative {
-    background: rgba(var(--q-negative), 0.1);
-    color: var(--q-negative) !important;
+    background: rgba(244, 63, 94, 0.1);
+    color: #f43f5e !important;
   }
 }
 

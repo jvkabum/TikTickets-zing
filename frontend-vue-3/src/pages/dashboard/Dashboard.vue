@@ -15,15 +15,15 @@
             <div class="text-caption text-grey-8" :class="{ 'text-grey-5': $q.dark.isActive }">Visão geral e performance operacional</div>
           </div>
           
-          <div class="col-xs-12 col-md-8 justify-end flex q-gutter-md q-pt-md q-md-pt-none">
+          <div class="col-xs-12 col-md-8 justify-end flex items-center q-gutter-md q-pt-md q-md-pt-none">
             <DatePick
-              style="width: 180px"
+              style="width: 170px"
               v-model="params.startDate"
               dense
               :dark="$q.dark.isActive"
             />
             <DatePick
-              style="width: 180px"
+              style="width: 170px"
               v-model="params.endDate"
               dense
               :dark="$q.dark.isActive"
@@ -31,11 +31,11 @@
             <q-btn
               class="grad-primary shadow-neon"
               unelevated
-              padding="12px 24px"
+              padding="10px 24px"
               icon="refresh"
               label="Atualizar"
               @click="getDashData"
-              style="border-radius: 12px"
+              style="border-radius: 10px; height: 40px;"
             />
           </div>
         </q-card-section>
