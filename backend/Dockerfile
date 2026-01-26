@@ -17,7 +17,7 @@ ENV CHROME_BIN=google-chrome-stable
 
 FROM global-deps-stage as develop-stage
 COPY package*.json ./
-RUN npm install --include=dev
+RUN npm ci --include=dev --no-audit --no-fund
 
 FROM develop-stage as build-stage
 COPY . .

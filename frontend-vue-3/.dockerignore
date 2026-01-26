@@ -1,0 +1,14 @@
+node_modules
+dist
+.quasar
+.vscode
+.git
+.gitignore
+*.log
+npm-debug.log*
+.env*
+build
+docs
+check_vue.*
+lint_results.txt
+q_info.txt
