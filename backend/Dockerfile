@@ -13,7 +13,8 @@ RUN apt-get update \
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 ENV NODE_ENV=dev
-ENV CHROME_BIN=google-chrome-stable
+ENV CHROME_BIN=/usr/bin/google-chrome-stable
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 FROM global-deps-stage as develop-stage
 COPY package*.json ./
