@@ -14,7 +14,7 @@
         @hide="drawerTickets = false"
         show-if-above
         :overlay="$q.screen.lt.md"
-        persistent
+        :persistent="!$q.screen.lt.md"
         :breakpoint="769"
         bordered
         :width="$q.screen.lt.md ? $q.screen.width : 350"
@@ -795,6 +795,12 @@ const handleAcaoMenu = () => {
   drawerTickets.value = !drawerTickets.value
 }
 
+watch(() => ticketFocado.value.id, (newId) => {
+  if (newId && $q.screen.lt.md) {
+    drawerTickets.value = false
+  }
+})
+
 const handleInfoContato = () => {
   console.log('DEBUG [Atendimento] EVENT: alternando drawerContact via Store. Anterior:', drawerContact.value)
   drawerContact.value = !drawerContact.value
@@ -810,9 +816,11 @@ onMounted(() => {
   ticketStore.atualizarContadoresGerais() // Sincroniza todos os números do topo
 
   bus.on('infor-cabecalo-chat:acao-menu', handleAcaoMenu)
-
+  
   if ($q.screen.lt.md) {
-    drawerTickets.value = false
+    // No celular, se não tiver ticket selecionado, abre o menu de conversas
+    // Se tiver ticket, esconde o menu para mostrar o chat
+    drawerTickets.value = !ticketFocado.value.id
   }
 })
 

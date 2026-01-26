@@ -265,8 +265,18 @@ const {
   obterDashTicketsChannels,
   obterDashTicketsEvolutionChannels,
   obterDashTicketsEvolutionByPeriod,
-  obterDashTicketsPerUsersDetail
+  obterDashTicketsPerUsersDetail,
+  cancelarConsultas
 } = useRelatorios()
+
+onMounted(() => {
+  listarFilas()
+  getDashData()
+})
+
+onBeforeUnmount(() => {
+  cancelarConsultas()
+})
 
 const ticketsQueueOptions = computed(() => ({
   ...baseChartOptions.value,
@@ -635,11 +645,6 @@ const getDashData = () => {
 const listarFilas = async () => {
   await filaStore.listarFilas()
 }
-
-onMounted(() => {
-  listarFilas()
-  getDashData()
-})
 
 onMounted(() => {
   listarFilas()

@@ -158,6 +158,13 @@
         </q-card>
       </template>
     </div>
+    
+    <!-- Loading não-bloqueante -->
+    <div v-if="loading && whatsapps.length === 0" class="row full-width justify-center q-pa-xl">
+      <q-spinner-gears size="50px" color="primary" />
+      <div class="q-ml-md text-grey-7">Carregando conexões...</div>
+    </div>
+    
     <ModalQrCode
       v-model:abrirModalQR="abrirModalQR"
       :channel="cDadosWhatsappSelecionado"
@@ -210,11 +217,15 @@ const listarChatFlow = async () => {
   await chatFlowStore.listarChatFlows()
 }
 
-onMounted(() => {
+onMounted(async () => {
   userProfile.value = localStorage.getItem('profile')
   isAdmin.value = localStorage.getItem('profile') === 'admin'
-  listarWhatsapps()
-  listarChatFlow()
+  
+  // Rodar requisições em paralelo para economizar tempo
+  await Promise.all([
+    listarWhatsapps(),
+    listarChatFlow()
+  ])
 })
 </script>
 

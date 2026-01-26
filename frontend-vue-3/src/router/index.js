@@ -21,13 +21,16 @@ const createRouterInstance = () => {
     history: createWebHistory(process.env.VUE_ROUTER_BASE)
   })
 
+  let routeStartTime
   const whiteListName = ['login']
 
   Router.beforeEach((to, from, next) => {
+    routeStartTime = performance.now()
+    console.debug(`[Router] Navegando para: ${to.name || to.fullPath}`)
     const token = JSON.parse(localStorage.getItem('token'))
 
     if (!token) {
-      if (whiteListName.indexOf(to.name) == -1) {
+      if (whiteListName.indexOf(to.name) === -1) {
         if (to.fullPath !== '/login' && !to.query.tokenSetup) {
           Notify.create({
             message: 'Necessário realizar login',
@@ -46,6 +49,8 @@ const createRouterInstance = () => {
   })
 
   Router.afterEach(to => {
+    const duration = (performance.now() - routeStartTime).toFixed(2)
+    console.debug(`[Router] Navegação para ${to.name || to.fullPath} concluída em ${duration}ms`)
     window.scrollTo(0, 0)
   })
 

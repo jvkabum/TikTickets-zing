@@ -2,7 +2,7 @@
 /**
  * Composable para relatórios (Binding para useRelatorioStore)
  */
-export function useRelatorios () {
+export function useRelatorios() {
     const store = useRelatorioStore()
     const {
         dadosResumo,
@@ -34,6 +34,7 @@ export function useRelatorios () {
         obterDashTicketsChannels: store.obterDashTicketsChannels,
         obterDashTicketsEvolutionChannels: store.obterDashTicketsEvolutionChannels,
         obterDashTicketsEvolutionByPeriod: store.obterDashTicketsEvolutionByPeriod,
-        obterDashTicketsPerUsersDetail: store.obterDashTicketsPerUsersDetail
+        obterDashTicketsPerUsersDetail: store.obterDashTicketsPerUsersDetail,
+        cancelarConsultas: store.cancelarConsultas
     }
 }

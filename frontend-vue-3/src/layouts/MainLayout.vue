@@ -89,10 +89,8 @@
     <q-page-container>
       <router-view v-slot="{ Component }">
         <transition
-          appear
           enter-active-class="animated fadeIn"
           leave-active-class="animated fadeOut"
-          mode="out-in"
         >
           <component :is="Component" />
         </transition>
@@ -174,14 +172,9 @@ const listarConfiguracoes = async () => {
   await configuracaoStore.listarConfiguracoes()
 }
 
-const conectarSocket = u => {
-  socket.on(`${u.tenantId}:chat:updateOnlineBubbles`, data => {
-    usuarioStore.setUsersApp(data)
-  })
-}
-
 const atualizarUsuario = () => {
   const u = JSON.parse(localStorage.getItem('usuario'))
+  if (!u) return
   authStore.user = u
   if (u.status === 'offline') {
     socket.emit(`${u.tenantId}:setUserIdle`)
@@ -246,14 +239,22 @@ const abrirAtendimentoExistente = (contato, ticket) => {
 
 onMounted(async () => {
   atualizarUsuario()
-  await listarWhatsapps()
-  await listarConfiguracoes()
-  await consultarTickets()
+  
+  // Rodar requisições iniciais em paralelo para economizar tempo
+  try {
+    await Promise.all([
+      listarWhatsapps(),
+      listarConfiguracoes(),
+      consultarTickets()
+    ])
+  } catch (error) {
+    console.error('Erro na inicialização do layout:', error)
+  }
+
   if ('Notification' in window) {
     Notification.requestPermission()
   }
   userProfile.value = localStorage.getItem('profile')
-  conectarSocket(usuario.value)
 })
 
 onUnmounted(() => {
