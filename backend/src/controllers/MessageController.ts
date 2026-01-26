@@ -10,6 +10,7 @@ import DeleteMessageSystem from "../helpers/DeleteMessageSystem";
 import FastReply from "../models/FastReply";
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
 import Message from "../models/Message";
+import Ticket from "../models/Ticket";
 import CreateForwardMessageService from "../services/MessageServices/CreateForwardMessageService";
 // import CreateMessageOffilineService from "../services/MessageServices/CreateMessageOfflineService";
 import CreateMessageSystemService from "../services/MessageServices/CreateMessageSystemService";
@@ -22,6 +23,7 @@ import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService
 // import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
 // import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
 import EditWhatsAppMessage from "../services/WbotServices/EditWhatsAppMessage";
+import SyncPollVotesService from "../services/WbotServices/SyncPollVotesService";
 
 /**
  * Interface para parâmetros de paginação na listagem de mensagens
@@ -85,6 +87,18 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     } else {
       logger.error(`Erro ao marcar mensagens como lidas no ticket ${ticketId}: ${JSON.stringify(error, null, 2)}`);
     }
+  }
+
+  // Sincronização automática de enquetes ao abrir o chat (página 1)
+  if (+pageNumber === 1 && ticket.whatsappId) {
+    const pollMessages = messages.filter(m => m.mediaType === "poll_creation");
+    pollMessages.forEach(pollMessage => {
+      SyncPollVotesService({
+        pollMessageId: pollMessage.messageId,
+        ticketId: pollMessage.ticketId,
+        wbotId: ticket.whatsappId
+      }).catch(err => logger.error(`Erro ao sincronizar enquete automática: ${err}`));
+    });
   }
 
   return res.json({ count, messages, messagesOffLine, ticket, hasMore });
@@ -292,5 +306,49 @@ export const getMediaFileFromServer = async (
   } catch (error) {
     logger.error(`Erro ao buscar o arquivo no servidor: ${error.message}`);
     throw new Error(`Erro ao buscar o arquivo no servidor: ${error.message}`);
+  }
+};
+
+export const syncPollVotes = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { messageId } = req.params;
+  const { tenantId } = req.user;
+
+  try {
+    const message = await Message.findOne({
+      where: { messageId, tenantId },
+      include: [
+        {
+          model: Ticket,
+          as: "ticket",
+          attributes: ["whatsappId"],
+          required: true
+        }
+      ]
+    });
+
+    if (!message) {
+      throw new AppError("Message not found or does not belong to your tenant", 404);
+    }
+
+    if (!message.ticket?.whatsappId) {
+      throw new AppError("Ticket related to this message does not have a connected WhatsApp session", 400);
+    }
+
+    const result = await SyncPollVotesService({
+      pollMessageId: messageId,
+      ticketId: message.ticketId,
+      wbotId: message.ticket.whatsappId
+    });
+
+    return res.json(result);
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    logger.error(`Erro ao sincronizar votos da enquete: ${error}`);
+    throw new AppError("Failed to sync poll votes.");
   }
 };
