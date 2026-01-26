@@ -1,4 +1,4 @@
-# TikTickets-zing v3.0.0 🚀
+# TikTickets-zing v3.0.1 🚀
 [![Grupo do WhatsApp](https://img.shields.io/badge/Grupo_Whatsapp-IzingFlow-blue)](https://chat.whatsapp.com/GHNJVQRoLzrGuO1lmCr7vR)
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
@@ -72,6 +72,15 @@ A utilização desta ferramenta é feita por sua conta e risco. O código é abe
    # No Frontend
    npm install
    ```
+
+---
+
+## 🔑 Credenciais Padrão
+
+Para o acesso inicial ao sistema, utilize as seguintes credenciais:
+
+- **Usuário Painel SaaS**: `super@izing.io` | **Senha**: `123456`
+- **Usuário Normal**: `admin@izing.io` | **Senha**: `123456`
 
 ---
 
