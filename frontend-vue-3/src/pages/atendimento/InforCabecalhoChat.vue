@@ -80,72 +80,74 @@
             </q-btn>
 
             <q-btn
-              @click="atualizarStatusTicket(ticketFocado, 'open')"
-              flat
-              icon="mdi-reload"
-              color="primary"
-              class="btn-rounded"
-              :disable="ticketFocado.status === 'open'"
-            >
-              <q-tooltip class="bg-primary text-bold">Reabrir Ticket</q-tooltip>
-            </q-btn>
-
-            <q-btn
-              flat
-              icon="sync"
-              color="primary"
-              class="btn-rounded"
-              :loading="sincronizando"
-              :disable="ticketFocado.status === 'closed'"
-              @click="sincronizarMensagens"
-            >
-              <q-tooltip class="bg-primary text-bold">Sincronizar Mensagens</q-tooltip>
-            </q-btn>
-
-            <q-btn
-              @click="$emit('abrir:modalAgendamentoMensagem')"
-              v-if="['whatsapp', 'waba'].includes(ticketFocado.channel)"
-              flat
-              icon="mdi-message-text-clock-outline"
-              color="primary"
-              class="btn-rounded"
-              :disable="ticketFocado.status === 'closed'"
-            >
-              <q-tooltip class="bg-primary text-bold">Agendamento</q-tooltip>
-            </q-btn>
-
-            <q-btn
-              @click="atualizarStatusTicket(ticketFocado, 'pending')"
-              flat
-              icon="mdi-replay"
-              color="primary"
-              class="btn-rounded"
-              :disable="ticketFocado.status === 'closed'"
-            >
-              <q-tooltip class="bg-primary text-bold">Retornar à Fila</q-tooltip>
-            </q-btn>
-
-            <q-btn
               @click="atualizarStatusTicket(ticketFocado, 'closed')"
               color="green"
               flat
               class="btn-rounded"
               icon="mdi-comment-check"
-              label="Resolver"
               :disable="ticketFocado.status === 'closed'"
             >
               <q-tooltip class="bg-positive text-bold">Resolver</q-tooltip>
             </q-btn>
 
             <q-btn
-              @click="abrirTransferencia"
               flat
+              icon="mdi-dots-horizontal"
               color="primary"
               class="btn-rounded"
-              icon="mdi-transfer"
-              :disable="ticketFocado.status === 'closed'"
             >
-              <q-tooltip class="bg-primary text-bold">Transferir</q-tooltip>
+              <q-tooltip class="bg-primary text-bold">Mais Ações</q-tooltip>
+              <q-menu auto-close>
+                <q-list style="min-width: 100px">
+                  <q-item 
+                    clickable 
+                    @click="atualizarStatusTicket(ticketFocado, 'open')"
+                    :disable="ticketFocado.status === 'open'"
+                  >
+                    <q-item-section avatar>
+                      <q-icon name="mdi-reload" color="primary" />
+                    </q-item-section>
+                    <q-item-section>Reabrir</q-item-section>
+                  </q-item>
+
+                  <q-item clickable @click="sincronizarMensagens" :disable="ticketFocado.status === 'closed'">
+                    <q-item-section avatar>
+                      <q-icon name="sync" color="primary" />
+                    </q-item-section>
+                    <q-item-section>Sincronizar</q-item-section>
+                  </q-item>
+
+                  <q-item 
+                    clickable 
+                    @click="$emit('abrir:modalAgendamentoMensagem')"
+                    v-if="['whatsapp', 'waba'].includes(ticketFocado.channel)"
+                    :disable="ticketFocado.status === 'closed'"
+                  >
+                    <q-item-section avatar>
+                      <q-icon name="mdi-message-text-clock-outline" color="primary" />
+                    </q-item-section>
+                    <q-item-section>Agendamento</q-item-section>
+                  </q-item>
+
+                  <q-item 
+                    clickable 
+                    @click="atualizarStatusTicket(ticketFocado, 'pending')"
+                    :disable="ticketFocado.status === 'closed'"
+                  >
+                    <q-item-section avatar>
+                      <q-icon name="mdi-replay" color="primary" />
+                    </q-item-section>
+                    <q-item-section>Retornar à Fila</q-item-section>
+                  </q-item>
+
+                  <q-item clickable @click="abrirTransferencia" :disable="ticketFocado.status === 'closed'">
+                    <q-item-section avatar>
+                      <q-icon name="mdi-transfer" color="primary" />
+                    </q-item-section>
+                    <q-item-section>Transferir</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
             </q-btn>
           </template>
 
@@ -185,6 +187,12 @@
                 flat
                 color="primary"
                 icon="mdi-transfer"
+              />
+              <q-fab-action
+                @click="sairConversa"
+                flat
+                icon="mdi-exit-to-app"
+                color="grey-7"
               />
             </q-fab>
           </template>
