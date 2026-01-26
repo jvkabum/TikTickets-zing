@@ -221,6 +221,7 @@
     "useElementHover": true,
     "useElementSize": true,
     "useElementVisibility": true,
+    "useEmoji": true,
     "useEtiquetaStore": true,
     "useEventBus": true,
     "useEventListener": true,

@@ -2,27 +2,10 @@
   <div class="row items-center q-pt-none">
     <label class="text-heading text-bold">{{ label }}</label>
     <div class="col-xs-3 col-sm-2 col-md-1">
-      <q-btn
-        round
-        flat
-        class="q-ml-sm"
-      >
-        <q-icon
-          size="2em"
-          name="mdi-emoticon-happy-outline"
-        />
-        <q-tooltip> Emoji </q-tooltip>
-        <q-menu
-          anchor="top right"
-          self="bottom middle"
-          :offset="[5, 40]"
-        >
-          <EmojiPicker
-            :native="true"
-            @select="onSelectEmoji"
-          />
-        </q-menu>
-      </q-btn>
+      <EmojiPickerComponent
+        height="450px"
+        @select="onSelectEmoji"
+      />
     </div>
     <div class="col-xs-3 col-sm-2 col-md-1">
       <q-btn
@@ -54,13 +37,16 @@
       </q-btn>
     </div>
     <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
-      <textarea
+      <q-input
         ref="inputRef"
-        style="min-height: 12.5vh; max-height: 12.5vh"
-        class="q-pa-sm bg-white full-width rounded-all"
+        style="min-height: 12.5vh"
+        class="q-pa-sm full-width rounded-all"
         :placeholder="placeholder"
-        :value="modelValue"
-        @input="onInput"
+        :model-value="modelValue"
+        @update:model-value="val => emit('update:modelValue', val)"
+        autogrow
+        type="textarea"
+        filled
       />
     </div>
   </div>
@@ -68,8 +54,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
 
 const props = defineProps({
   modelValue: {
@@ -99,11 +85,14 @@ const onInput = (event) => {
 }
 
 const insertAtCursor = (text) => {
-  const input = inputRef.value
-  if (!input) return
+  const qInput = inputRef.value
+  if (!qInput) return
 
-  const start = input.selectionStart
-  const end = input.selectionEnd
+  const el = qInput.nativeEl || (qInput.$refs && qInput.$refs.input)
+  if (!el) return
+
+  const start = el.selectionStart || 0
+  const end = el.selectionEnd || 0
   const currentValue = props.modelValue || ''
 
   const newValue = currentValue.substring(0, start) + text + currentValue.substring(end)
@@ -112,13 +101,15 @@ const insertAtCursor = (text) => {
 
   // Restaurar foco e posição do cursor após atualização
   setTimeout(() => {
-    input.focus()
-    input.setSelectionRange(start + text.length, start + text.length)
+    el.focus()
+    el.setSelectionRange(start + text.length, start + text.length)
   }, 0)
 }
 
+const { insertEmoji } = useEmoji()
+
 const onSelectEmoji = (emoji) => {
-  insertAtCursor(emoji.i)
+  insertEmoji(emoji, inputRef.value, props.modelValue, val => emit('update:modelValue', val))
 }
 
 const onInsertVariable = (variable) => {
@@ -137,3 +128,4 @@ textarea:focus {
   outline: none;
 }
 </style>
+

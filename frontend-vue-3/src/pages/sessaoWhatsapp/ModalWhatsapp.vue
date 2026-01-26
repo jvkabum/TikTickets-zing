@@ -147,32 +147,12 @@
             >
             </textarea>
             <div class="absolute-top-right q-pa-xs">
-              <q-btn
-                rounded
-                dense
-                flat
+              <EmojiPickerComponent
+                icon="mdi-emoticon-happy-outline"
                 color="black"
-              >
-                <q-icon
-                  size="1.5em"
-                  name="mdi-emoticon-happy-outline"
-                />
-                <q-tooltip> Emoji </q-tooltip>
-                <q-menu
-                  anchor="top right"
-                  self="bottom middle"
-                  :offset="[5, 40]"
-                >
-                  <EmojiPicker
-                    style="width: 40vw"
-                    :showSearch="false"
-                    :emojisByRow="20"
-                    labelSearch="Localizar..."
-                    lang="pt-BR"
-                    @select="onInsertSelectEmoji"
-                  />
-                </q-menu>
-              </q-btn>
+                height="450px"
+                @select="onInsertSelectEmoji"
+              />
               <q-btn
                 rounded
                 dense
@@ -229,9 +209,10 @@
 </template>
 
 <script setup>
+import { nextTick, ref } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
 import { z } from 'zod'
 
 const props = defineProps({
@@ -305,21 +286,10 @@ const variaveis = [
   { label: 'Protocolo', value: '{{protocol}}' }
 ]
 
+const { insertEmoji } = useEmoji()
+
 const onInsertSelectEmoji = emoji => {
-  const tArea = inputFarewellMessage.value
-  if (!tArea || !emoji.i) return
-
-  const startPos = tArea.selectionStart
-  const endPos = tArea.selectionEnd
-  const tmpStr = tArea.value
-
-  const newText = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos)
-  setValues({ farewellMessage: newText })
-
-  nextTick(() => {
-    tArea.selectionStart = tArea.selectionEnd = startPos + emoji.i.length
-    tArea.focus()
-  })
+  insertEmoji(emoji, inputFarewellMessage.value, farewellMessage.value, val => setValues({ farewellMessage: val }))
 }
 
 const onInsertSelectVariable = variable => {
@@ -407,3 +377,4 @@ const handleSave = handleSubmit(async values => {
   background: transparent !important;
 }
 </style>
+

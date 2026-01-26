@@ -41,6 +41,7 @@ declare module 'vue' {
     Dashboard: typeof import('./pages/dashboard/Dashboard.vue')['default']
     DashTicketsFilas: typeof import('./pages/dashboard/DashTicketsFilas.vue')['default']
     DocumentViewer: typeof import('./components/utils/MediaViewer/DocumentViewer.vue')['default']
+    EmojiPickerComponent: typeof import('./components/EmojiPickerComponent.vue')['default']
     EmpresasSuper: typeof import('./pages/empresassuper/EmpresasSuper.vue')['default']
     EssentialLink: typeof import('./components/layout/EssentialLink.vue')['default']
     Etiquetas: typeof import('./pages/etiquetas/Etiquetas.vue')['default']

@@ -498,6 +498,7 @@
           <q-card-section>
             <div class="text-bold q-px-sm">Mensagem de Saudação:</div>
             <q-input
+              ref="welcomeMessageRef"
               v-model="node.configurations.welcomeMessage.message"
               type="textarea"
               outlined
@@ -506,24 +507,19 @@
               placeholder="Olá! Como posso ajudar?"
             >
               <template v-slot:append>
-                <q-btn
-                  flat
-                  round
-                  icon="mdi-emoticon-outline"
-                >
-                  <q-menu
-                    anchor="bottom right"
-                    self="top right"
-                  >
-                    <EmojiPicker @select="onInsertSelectEmojiSaudacao" />
-                  </q-menu>
-                </q-btn>
+                <EmojiPickerComponent
+                  icon="mdi-emoticon-happy-outline"
+                  dense
+                  height="450px"
+                  @select="onInsertSelectEmojiSaudacao"
+                />
               </template>
             </q-input>
           </q-card-section>
           <q-card-section>
             <div class="text-bold q-px-sm">Mensagem quando não encontrar opção válida:</div>
             <q-input
+              ref="notOptionsMessageRef"
               v-model="node.configurations.notOptionsSelectMessage.message"
               type="textarea"
               outlined
@@ -532,18 +528,12 @@
               placeholder="Desculpe, não entendi. Escolha uma das opções abaixo."
             >
               <template v-slot:append>
-                <q-btn
-                  flat
-                  round
-                  icon="mdi-emoticon-outline"
-                >
-                  <q-menu
-                    anchor="bottom right"
-                    self="top right"
-                  >
-                    <EmojiPicker @select="onInsertSelectEmojiNotOptionsSelectMessage" />
-                  </q-menu>
-                </q-btn>
+                <EmojiPickerComponent
+                  icon="mdi-emoticon-happy-outline"
+                  dense
+                  height="450px"
+                  @select="onInsertSelectEmojiNotOptionsSelectMessage"
+                />
               </template>
             </q-input>
           </q-card-section>
@@ -678,8 +668,8 @@
 
 <script setup>
 import { useQuasar, uid } from 'quasar'
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
 
 const props = defineProps({
   nodesList: { type: Object, default: () => ({ nodeList: [], lineList: [] }) },
@@ -704,6 +694,8 @@ const tabNodeForm = ref('interacoes')
 const elements = ref([])
 const showPreview = ref(false)
 const type = ref('node')
+const welcomeMessageRef = ref(null)
+const notOptionsMessageRef = ref(null)
 const node = ref({ interactions: [], conditions: [], configurations: {} })
 const line = ref({ from: '', to: '', label: '' })
 
@@ -975,22 +967,34 @@ defineExpose({
   }
 })
 
+const { insertEmoji } = useEmoji()
+
 const onInsertSelectEmojiSaudacao = emoji => {
-  if (!emoji.i) return
   if (!node.value.configurations.welcomeMessage) {
     node.value.configurations.welcomeMessage = { message: '' }
   }
   const currentText = node.value.configurations.welcomeMessage.message || ''
-  node.value.configurations.welcomeMessage.message = currentText + emoji.i
+  
+  insertEmoji(
+    emoji, 
+    welcomeMessageRef.value, 
+    currentText, 
+    val => (node.value.configurations.welcomeMessage.message = val)
+  )
 }
 
 const onInsertSelectEmojiNotOptionsSelectMessage = emoji => {
-  if (!emoji.i) return
   if (!node.value.configurations.notOptionsSelectMessage) {
     node.value.configurations.notOptionsSelectMessage = { message: '' }
   }
   const currentText = node.value.configurations.notOptionsSelectMessage.message || ''
-  node.value.configurations.notOptionsSelectMessage.message = currentText + emoji.i
+  
+  insertEmoji(
+    emoji, 
+    notOptionsMessageRef.value, 
+    currentText, 
+    val => (node.value.configurations.notOptionsSelectMessage.message = val)
+  )
 }
 
 onMounted(() => console.log('node_form montou', node.value))
@@ -1093,3 +1097,4 @@ onMounted(() => console.log('node_form montou', node.value))
   color: #666;
 }
 </style>
+

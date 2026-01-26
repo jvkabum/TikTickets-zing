@@ -75,30 +75,12 @@
           >
             <q-tooltip>Anexar arquivo</q-tooltip>
           </q-btn>
-          <q-btn
-            flat
-            dense
-            icon="mdi-emoticon-happy-outline"
-            class="btn-rounded"
+          <EmojiPickerComponent
             :color="$q.dark.isActive ? 'white' : 'grey-8'"
-          >
-            <q-tooltip>Emojis</q-tooltip>
-            <q-menu
-              anchor="top left"
-              self="bottom left"
-              :offset="[0, 15]"
-              class="emoji-menu"
-            >
-              <EmojiPicker
-                :native="true"
-                theme="light"
-                :hide-search="true"
-                :emojis-by-row="20"
-                @select="onInsertSelectEmoji"
-                style="width: 600px; height: 450px"
-              />
-            </q-menu>
-          </q-btn>
+            class="btn-rounded"
+            height="450px"
+            @select="onInsertSelectEmoji"
+          />
           <q-btn
             flat
             dense
@@ -254,8 +236,8 @@ import { notificarErro } from 'src/utils/helpersNotifications'
 import MicRecorder from 'mic-recorder-to-mp3'
 import RecordingTimer from './RecordingTimer.vue'
 import bus from 'src/utils/eventBus'
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
 
 const props = defineProps({
   replyingMessage: { type: Object, default: null },
@@ -306,16 +288,10 @@ const handleInputPaste = e => {
 
 const abrirEnvioArquivo = () => filePickerRef.value.pickFiles()
 
+const { insertEmoji } = useEmoji()
+
 const onInsertSelectEmoji = emoji => {
-  const input = inputRef.value.$refs.input
-  const start = input.selectionStart
-  const end = input.selectionEnd
-  const char = emoji.i || emoji.data || emoji
-  textChat.value = textChat.value.substring(0, start) + char + textChat.value.substring(end)
-  nextTick(() => {
-    input.selectionStart = input.selectionEnd = start + char.length
-    input.focus()
-  })
+  insertEmoji(emoji, inputRef.value, textChat.value, val => (textChat.value = val))
 }
 
 const mensagemRapidaSelecionada = m => {
@@ -443,21 +419,4 @@ watch(
 <style lang="sass" scoped>
 .btn-rounded
   border-radius: 8px
-</style>
-
-<!-- CSS GLOBAL para forçar tamanho dos emojis - SEM SCOPED -->
-<style lang="scss">
-.v3-emoji-picker {
-  .v3-emojis button {
-    width: 28px !important;
-    height: 28px !important;
-    padding: 2px !important;
-    margin-bottom: 8px !important;  // Espaço vertical entre linhas
-    
-    span {
-      font-size: 30px !important;
-      line-height: 24px !important;
-    }
-  }
-}
 </style>

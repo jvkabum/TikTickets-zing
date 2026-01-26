@@ -40,31 +40,11 @@
         <div class="row items-center">
           <div class="col-xs-3 col-sm-2 col-md-1">
             <!-- Emoji Icon -->
-            <q-btn
-              round
-              flat
+            <EmojiPickerComponent
               class="q-ml-sm"
-            >
-              <q-icon
-                size="2em"
-                name="mdi-emoticon-happy-outline"
-              />
-              <q-tooltip> Emoji </q-tooltip>
-              <q-menu
-                anchor="top right"
-                self="bottom middle"
-                :offset="[5, 40]"
-              >
-                <!-- <EmojiPicker
-                  style="width: 40vw"
-                  :showSearch="false"
-                  :emojisByRow="20"
-                  labelSearch="Localizar..."
-                  lang="pt-BR"
-                  @select="onInsertSelectEmoji"
-                /> -->
-              </q-menu>
-            </q-btn>
+              height="450px"
+              @select="onInsertSelectEmoji"
+            />
 
             <!-- Variáveis Icon -->
             <q-btn
@@ -99,14 +79,14 @@
           <!-- Textarea for Message -->
           <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
             <label class="text-caption">Mensagem:</label>
-            <textarea
+            <q-input
               ref="inputEnvioMensagem"
-              style="min-height: 15vh; max-height: 25vh"
-              class="q-pa-sm glass-input full-width rounded-all"
+              style="min-height: 15vh"
+              class="q-pa-sm full-width rounded-all"
               placeholder="Digite a mensagem"
               autogrow
-              dense
-              outlined
+              type="textarea"
+              filled
               v-model="message"
               v-bind="messageProps"
             />
@@ -164,7 +144,10 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod'
+import { nextTick, reactive, ref } from 'vue'
 import MediaPreviewList from 'src/components/mensagensRapidas/MediaPreviewList.vue'
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
 import { z } from 'zod'
 
 const props = defineProps({
@@ -224,21 +207,10 @@ const variaveis = [
   { label: 'Protocolo', value: '{{protocol}}' }
 ]
 
+const { insertEmoji } = useEmoji()
+
 const onInsertSelectEmoji = emoji => {
-  const tArea = inputEnvioMensagem.value
-  if (!tArea || !emoji.data) return
-
-  const startPos = tArea.selectionStart
-  const endPos = tArea.selectionEnd
-  const tmpStr = message.value || ''
-
-  const newMessage = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos)
-  setValues({ message: newMessage })
-
-  nextTick(() => {
-    tArea.selectionStart = tArea.selectionEnd = startPos + emoji.data.length
-    tArea.focus()
-  })
+  insertEmoji(emoji, inputEnvioMensagem.value, message.value, val => setValues({ message: val }))
 }
 
 const inserirVariavel = variavel => {

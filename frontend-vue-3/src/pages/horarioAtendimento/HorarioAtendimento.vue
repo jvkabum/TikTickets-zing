@@ -130,31 +130,11 @@
       <q-card-section class="q-pt-none">
         <div class="row items-center">
           <div class="col-xs-3 col-sm-2 col-md-1">
-            <q-btn
-              round
-              flat
+            <EmojiPickerComponent
               class="q-ml-sm"
-            >
-              <q-icon
-                size="2em"
-                name="mdi-emoticon-happy-outline"
-              />
-              <q-tooltip> Emoji </q-tooltip>
-              <q-menu
-                anchor="top right"
-                self="bottom middle"
-                :offset="[5, 40]"
-              >
-                <EmojiPicker
-                  style="width: 40vw"
-                  :showSearch="false"
-                  :emojisByRow="20"
-                  labelSearch="Localizar..."
-                  lang="pt-BR"
-                  @select="onInsertSelectEmoji"
-                />
-              </q-menu>
-            </q-btn>
+              height="450px"
+              @select="onInsertSelectEmoji"
+            />
             <q-btn
               round
               flat
@@ -184,16 +164,15 @@
             </q-btn>
           </div>
           <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
-            <textarea
+            <q-input
               ref="inputEnvioMensagem"
-              style="min-height: 9vh; max-height: 9vh"
-              class="q-pa-sm bg-white rounded-all full-width"
+              style="min-height: 9vh"
+              class="q-pa-sm full-width rounded-all"
               placeholder="Digite a mensagem"
               autogrow
-              dense
-              outlined
-              @input="v => (messageBusinessHours = v.target.value)"
-              :value="messageBusinessHours"
+              type="textarea"
+              filled
+              v-model="messageBusinessHours"
             />
           </div>
         </div>
@@ -203,8 +182,8 @@
 </template>
 
 <script setup>
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
 
 const horarioAtendimentoStore = useHorarioAtendimentoStore()
 const { listarHorariosAtendimento, atualizarHorariosAtendimento, atualizarMensagemAusencia } = horarioAtendimentoStore
@@ -232,35 +211,28 @@ const salvarMensagemAusencia = async () => {
   await atualizarMensagemAusencia(messageBusinessHours.value)
 }
 
+const { insertEmoji } = useEmoji()
+
 const onInsertSelectEmoji = emoji => {
-  const tArea = inputEnvioMensagem.value
-  if (!tArea || !emoji.data) return
-
-  const startPos = tArea.selectionStart
-  const endPos = tArea.selectionEnd
-  const tmpStr = messageBusinessHours.value || ''
-
-  messageBusinessHours.value = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos)
-
-  nextTick(() => {
-    tArea.selectionStart = tArea.selectionEnd = startPos + emoji.data.length
-    tArea.focus()
-  })
+  insertEmoji(emoji, inputEnvioMensagem.value, messageBusinessHours.value, val => (messageBusinessHours.value = val))
 }
 
 const onInsertSelectVariable = variable => {
-  const tArea = inputEnvioMensagem.value
-  if (!tArea || !variable) return
+  const qInput = inputEnvioMensagem.value
+  if (!qInput || !variable) return
 
-  const startPos = tArea.selectionStart
-  const endPos = tArea.selectionEnd
+  const el = qInput.nativeEl || (qInput.$refs && qInput.$refs.input)
+  if (!el) return
+
+  const startPos = el.selectionStart || 0
+  const endPos = el.selectionEnd || 0
   const tmpStr = messageBusinessHours.value || ''
 
   messageBusinessHours.value = tmpStr.substring(0, startPos) + variable + tmpStr.substring(endPos)
 
   nextTick(() => {
-    tArea.selectionStart = tArea.selectionEnd = startPos + variable.length
-    tArea.focus()
+    el.setSelectionRange(startPos + variable.length, startPos + variable.length)
+    el.focus()
   })
 }
 
@@ -271,3 +243,4 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped></style>
+

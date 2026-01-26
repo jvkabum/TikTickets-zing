@@ -210,6 +210,7 @@ declare global {
   const useElementHover: typeof import('@vueuse/core').useElementHover
   const useElementSize: typeof import('@vueuse/core').useElementSize
   const useElementVisibility: typeof import('@vueuse/core').useElementVisibility
+  const useEmoji: typeof import('./composables/useEmoji.js').default
   const useEtiquetaStore: typeof import('./stores/useEtiquetaStore.js').useEtiquetaStore
   const useEventBus: typeof import('@vueuse/core').useEventBus
   const useEventListener: typeof import('@vueuse/core').useEventListener
@@ -582,6 +583,7 @@ declare module 'vue' {
     readonly useElementHover: UnwrapRef<typeof import('@vueuse/core')['useElementHover']>
     readonly useElementSize: UnwrapRef<typeof import('@vueuse/core')['useElementSize']>
     readonly useElementVisibility: UnwrapRef<typeof import('@vueuse/core')['useElementVisibility']>
+    readonly useEmoji: UnwrapRef<typeof import('./composables/useEmoji.js')['default']>
     readonly useEtiquetaStore: UnwrapRef<typeof import('./stores/useEtiquetaStore.js')['useEtiquetaStore']>
     readonly useEventBus: UnwrapRef<typeof import('@vueuse/core')['useEventBus']>
     readonly useEventListener: UnwrapRef<typeof import('@vueuse/core')['useEventListener']>

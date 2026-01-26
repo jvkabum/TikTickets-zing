@@ -10,31 +10,11 @@
             class="flex flex-inline text-left"
             style="width: 40px"
           >
-            <q-btn
-              round
-              flat
-              dense
-            >
-              <q-icon
-                size="2em"
-                name="mdi-emoticon-happy-outline"
+              <EmojiPickerComponent
+                icon="mdi-emoticon-happy-outline"
+                height="450px"
+                @select="onInsertSelectEmoji"
               />
-              <q-tooltip> Emoji </q-tooltip>
-              <q-menu
-                anchor="top right"
-                self="bottom middle"
-                :offset="[5, 40]"
-              >
-                <EmojiPicker
-                  style="width: 40vw"
-                  :showSearch="false"
-                  :emojisByRow="20"
-                  labelSearch="Localizar..."
-                  lang="pt-BR"
-                  @select="onInsertSelectEmoji"
-                />
-              </q-menu>
-            </q-btn>
             <q-btn
               round
               flat
@@ -63,14 +43,16 @@
               </q-menu>
             </q-btn>
           </div>
-          <textarea
+          <q-input
             ref="inputEnvioMensagem"
-            style="min-height: 10vh; max-height: 30vh; flex: auto"
-            class="q-pa-sm bg-white rounded-all"
+            style="min-height: 10vh; flex: auto"
+            class="q-pa-sm rounded-all"
             placeholder="Digite a mensagem"
             v-model="element.data.message"
-          >
-          </textarea>
+            autogrow
+            type="textarea"
+            filled
+          />
         </div>
       </q-card-section>
 
@@ -161,8 +143,9 @@
 </template>
 
 <script setup>
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
+import { ref } from 'vue'
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
 
 const props = defineProps({
   element: {
@@ -181,22 +164,10 @@ const variaveis = [
   { label: 'Protocolo', value: '{{protocol}}' }
 ]
 
+const { insertEmoji } = useEmoji()
+
 const onInsertSelectEmoji = emoji => {
-  const tArea = inputEnvioMensagem.value
-  const startPos = tArea.selectionStart
-  const endPos = tArea.selectionEnd
-  const cursorPos = startPos
-  const tmpStr = tArea.value
-
-  if (!emoji.i) return
-
-  const txtContent = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos, tmpStr.length)
-  props.element.data.message = txtContent
-
-  setTimeout(() => {
-    tArea.focus()
-    tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.i.length
-  }, 10)
+  insertEmoji(emoji, inputEnvioMensagem.value, props.element.data.message, val => (props.element.data.message = val))
 }
 
 const onInsertSelectVariable = variable => {
@@ -352,3 +323,4 @@ const limparTodasOpcoes = () => {
 </script>
 
 <style lang="scss" scoped></style>
+
