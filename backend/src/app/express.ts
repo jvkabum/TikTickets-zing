@@ -4,27 +4,28 @@ import { Application, json, urlencoded, Request, Response, NextFunction } from "
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { logger } from "../utils/logger";
 
 // Função principal de configuração do Express
 export default async function express(app: Application): Promise<void> {
+  // Habilita a confiança no proxy (IP real vindo do Traefik)
+  app.set("trust proxy", true);
+
+  // Middleware de Blacklist (Firewall de Aplicação)
+  const blacklist = ["168.138.151.75"];
+  app.use((req, res, next) => {
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    if (blacklist.includes(clientIp as string)) {
+      logger.warn(`[FIREWALL] Bloqueando acesso de IP na Blacklist: ${clientIp}`);
+      return res.status(403).send("Acesso negado por motivos de segurança.");
+    }
+    next();
+  });
+
   app.use(
     cors({
-      origin: (requestOrigin, callback) => {
-        if (!requestOrigin) return callback(null, true);
-
-        // Allow any localhost origin in development environment
-        if (process.env.NODE_ENV === "dev" && requestOrigin.startsWith("http://localhost")) {
-          return callback(null, true);
-        }
-
-        const allowedOrigin = process.env.FRONTEND_URL || "https://app.tikanais.com.br";
-        if (requestOrigin === allowedOrigin) {
-          return callback(null, true);
-        }
-
-        callback(new Error("Not allowed by CORS"));
-      },
+      origin: true,
       credentials: true
     })
   );
