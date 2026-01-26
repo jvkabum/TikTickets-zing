@@ -58,13 +58,13 @@ export const initIO = (httpServer: Server): SocketIO => {
           ]
         });
         socket.handshake.auth.user = user; // Adiciona o usuário autenticado ao handshake
-        next(); // Chama o próximo middleware
+        return next(); // Chama o próximo middleware e encerra a execução
       }
-      next(new Error("authentication error")); // Lança erro se a autenticação falhar
+      return next(new Error("authentication error")); // Lança erro se a autenticação falhar
     } catch (error) {
       logger.warn(`tokenInvalid: ${socket}`); // Registra aviso no logger
       socket.emit(`tokenInvalid:${socket.id}`); // Emite evento de token inválido
-      next(new Error("authentication error")); // Lança erro se a autenticação falhar
+      return next(new Error("authentication error")); // Lança erro se a autenticação falhar
     }
   });
 

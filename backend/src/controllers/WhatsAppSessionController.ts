@@ -79,56 +79,62 @@ export const remove = async (req: Request, res: Response): Promise<Response> => 
   const io = getIO(); // Obtém a instância do socket
 
   try {
+    logger.info(`[SESSION] Iniciando remocao de conexao ID ${whatsappId} para tenant ${tenantId}`);
     if (channel.type === "whatsapp") {
-      const wbot = getWbot(channel.id); // Obtém a instância do bot do WhatsApp
-      await setValue(`${channel.id}-retryQrCode`, 0); // Reseta o contador de tentativas de QR Code
-
-      // Define um valor no Redis para indicar que a desconexão foi manual
-      await setValue(`${channel.id}-manualDisconnect`, "true");
-
-      await wbot
-        .logout()
-        .catch(error => logger.error("Erro ao fazer logout da conexão", error)); // Fecha a conexão e conserva a sessão para reconexão
-      removeWbot(channel.id); // Remove o bot do WhatsApp
+      try {
+        const wbot = getWbot(channel.id);
+        await setValue(`${channel.id}-retryQrCode`, 0);
+        await setValue(`${channel.id}-manualDisconnect`, "true");
+        await wbot.logout().catch(error => logger.error(`[SESSION] Erro no logout wbot: ${error.message}`));
+        removeWbot(channel.id);
+      } catch (e) {
+        logger.warn(`[SESSION] Wbot nao encontrado para logout: ${e.message}`);
+      }
     }
 
     if (channel.type === "telegram") {
-      const tbot = getTbot(channel.id); // Obtém a instância do bot do Telegram
-      await tbot.telegram
-        .logOut()
-        .catch(error => logger.error("Erro ao fazer logout da conexão", error)); // Faz logout do bot do Telegram
-      removeTbot(channel.id); // Remove o bot do Telegram
+      try {
+        const tbot = getTbot(channel.id);
+        await tbot.telegram.logOut().catch(error => logger.error(`[SESSION] Erro no logout tbot: ${error.message}`));
+        removeTbot(channel.id);
+      } catch (e) {
+        logger.warn(`[SESSION] Tbot nao encontrado para logout: ${e.message}`);
+      }
     }
 
     if (channel.type === "instagram") {
-      const instaBot = getInstaBot(channel.id); // Obtém a instância do bot do Instagram
-      await instaBot.destroy(); // Destrói a instância do bot do Instagram
-      removeInstaBot(channel); // Remove o bot do Instagram
+      try {
+        const instaBot = getInstaBot(channel.id);
+        await instaBot.destroy();
+        removeInstaBot(channel);
+      } catch (e) {
+        logger.warn(`[SESSION] InstaBot nao encontrado para logout: ${e.message}`);
+      }
     }
 
     await channel.update({
-      status: "DISCONNECTED", // Atualiza o status do canal para desconectado
-      session: "", // Limpa a sessão
-      qrcode: null, // Limpa o QR Code
-      retries: 0, // Reseta o contador de tentativas
-      disconnectedAt: new Date() // Adiciona a data de desconexão
-    });
-  } catch (error) {
-    logger.error(error); // Registra erro no logger
-    await channel.update({
-      status: "DISCONNECTED", // Atualiza o status do canal para desconectado
-      session: "", // Limpa a sessão
-      qrcode: null, // Limpa o QR Code
-      retries: 0 // Reseta o contador de tentativas
+      status: "DISCONNECTED",
+      session: "",
+      qrcode: null,
+      retries: 0,
+      disconnectedAt: new Date()
     });
 
-    io.emit(`${channel.tenantId}:whatsappSession`, {
-      action: "update",
-      session: channel // Emite evento de atualização da sessão
-    });
-    throw new AppError("ERR_NO_WAPP_FOUND", 404); // Lança erro se não encontrar a sessão do WhatsApp
+    return res.status(200).json({ message: "Session disconnected." });
+
+  } catch (error) {
+    logger.error(`[SESSION] Erro fatal ao remover sessao: ${error.message}`);
+
+    // Tenta pelo menos atualizar o status no banco se algo falhar drasticamente
+    try {
+      await channel.update({ status: "DISCONNECTED", qrcode: null });
+      io.emit(`${channel.tenantId}:whatsappSession`, { action: "update", session: channel });
+    } catch (dbErr) {
+      logger.error(`[SESSION] Erro ao forcar status DISCONNECTED: ${dbErr.message}`);
+    }
+
+    throw new AppError(`Erro ao desconectar sessão: ${error.message}`, 500);
   }
-  return res.status(200).json({ message: "Session disconnected." }); // Retorna resposta de sucesso
 };
 
 // Procura pela função destroy e encontra onde está sendo chamada a função apagarPastaSessao
