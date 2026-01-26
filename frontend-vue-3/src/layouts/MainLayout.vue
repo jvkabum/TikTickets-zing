@@ -87,14 +87,7 @@
     </q-drawer>
 
     <q-page-container>
-      <router-view v-slot="{ Component }">
-        <transition
-          enter-active-class="animated fadeIn"
-          leave-active-class="animated fadeOut"
-        >
-          <component :is="Component" />
-        </transition>
-      </router-view>
+      <router-view />
     </q-page-container>
 
     <audio

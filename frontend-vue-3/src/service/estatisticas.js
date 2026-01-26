@@ -32,7 +32,8 @@ export function GetDashTicketsAndTimes(params, signal) {
     url: '/statistics-tickets-times',
     method: 'get',
     params,
-    signal
+    signal,
+    timeout: 10000
   })
 }
 
@@ -41,7 +42,8 @@ export function GetDashTicketsChannels(params, signal) {
     url: '/statistics-tickets-channels',
     method: 'get',
     params,
-    signal
+    signal,
+    timeout: 10000
   })
 }
 
@@ -77,6 +79,7 @@ export function GetDashTicketsQueue(params, signal) {
     url: '/statistics-tickets-queue',
     method: 'get',
     params,
-    signal
+    signal,
+    timeout: 10000
   })
 }

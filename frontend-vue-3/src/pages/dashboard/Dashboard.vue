@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-lg">
+  <q-page class="q-pa-lg" v-show="!isLeavingPage">
     <!-- Header Flutuante / Toolbar Premium -->
     <transition
       appear
@@ -208,7 +208,8 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, onMounted, watch } from 'vue'
+import { computed, reactive, ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -238,7 +239,10 @@ const baseChartOptions = computed(() => ({
         background: 'transparent',
         toolbar: { show: false },
         fontFamily: 'Nunito, sans-serif',
-        foreColor: $q.dark.isActive ? '#94a3b8' : '#64748b'
+        foreColor: $q.dark.isActive ? '#94a3b8' : '#64748b',
+        animations: { enabled: false }, // Desabilita animações para melhor performance
+        redrawOnParentResize: false,
+        redrawOnWindowResize: false
     },
     theme: {
         mode: $q.dark.isActive ? 'dark' : 'light',
@@ -268,6 +272,30 @@ const {
   obterDashTicketsPerUsersDetail,
   cancelarConsultas
 } = useRelatorios()
+
+const isLeavingPage = ref(false)
+
+// Cancelar requisições ANTES de sair da página (mais rápido que onBeforeUnmount)
+onBeforeRouteLeave(() => {
+  // Esconder Dashboard IMEDIATAMENTE via CSS (sem esperar destruição)
+  isLeavingPage.value = true
+  
+  cancelarConsultas()
+  
+  // Destruir gráficos em background (async)
+  setTimeout(() => {
+    try {
+      ChartTicketsQueue.value?.chart?.destroy()
+      ChartTicketsChannels.value?.chart?.destroy()
+      ChartTicketsEvolutionChannels.value?.chart?.destroy()
+      ChartTicketsEvolutionByPeriod.value?.chart?.destroy()
+    } catch (e) {
+      // Ignorar erros
+    }
+  }, 0)
+  
+  return true // Permitir navegação imediatamente
+})
 
 onMounted(() => {
   listarFilas()
