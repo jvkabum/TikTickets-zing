@@ -20,16 +20,18 @@ const waitForPostgresConnection = async function () {
 
       if (process.env.NODE_ENV === "production") {
         logger.info("Iniciando a execução das migrations...");
-        // eslint-disable-next-line no-await-in-loop
-        const { stdout, stderr } = await execAsync(
-          "npm run copy-templates-files && npx sequelize db:migrate"
-        );
-        logger.info(`Saída do comando: ${stdout}`);
-        if (stderr) {
-          logger.error(`Erro ao executar o comando: ${stderr}`);
-          throw new Error(`Erro ao executar o comando: ${stderr}`);
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const { stdout, stderr } = await execAsync(
+            "npm run copy-templates-files && npx sequelize db:migrate"
+          );
+          if (stdout) logger.info(`Saída do comando: ${stdout}`);
+          if (stderr) logger.warn(`Avisos nas migrations: ${stderr}`);
+          logger.info("Migrations processadas com sucesso!");
+        } catch (execErr) {
+          logger.error(`Falha ao processar migrations: ${execErr.message}`);
+          // Não lançamos erro aqui para não travar o boot se o banco já estiver migrado por outro processo
         }
-        logger.info("Migrations executadas com sucesso!");
       }
       break;
     } catch (error) {
