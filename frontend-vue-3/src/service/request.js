@@ -5,8 +5,32 @@ import { RouterInstance as Router } from '../router/index'
 import backendErrors from './erros'
 import { RefreshToken } from './login'
 
+const getBaseURL = () => {
+  const envUrl = process.env.VUE_URL_API
+  if (envUrl && envUrl !== 'undefined' && envUrl !== 'http://localhost:8082') {
+    return envUrl
+  }
+
+  // Fallback dinâmico genérico:
+  // Se o hostname tiver subdomínios (ex: izing.seudominio.com ou app.xyz.com),
+  // tenta substituir o primeiro segmento por 'backend'.
+  if (typeof window !== 'undefined') {
+    const { hostname, protocol } = window.location
+    const parts = hostname.split('.')
+    if (parts.length > 2) {
+      // Substitui o primeiro prefixo por 'backend'
+      // Ex: izing.autotick.com.br -> backend.autotick.com.br
+      // Ex: chat.meu-zap.com -> backend.meu-zap.com
+      const backendHostname = ['backend', ...parts.slice(1)].join('.')
+      return `${protocol}//${backendHostname}`
+    }
+  }
+
+  return 'http://localhost:8082'
+}
+
 const service = axios.create({
-  baseURL: process.env.VUE_URL_API,
+  baseURL: getBaseURL(),
   timeout: 20000
 })
 
