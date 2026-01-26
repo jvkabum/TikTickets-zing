@@ -18,7 +18,7 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 FROM global-deps-stage as develop-stage
 COPY package*.json ./
-RUN npm ci --include=dev --no-audit --no-fund
+RUN npm install --include=dev --no-audit --no-fund
 
 FROM develop-stage as build-stage
 COPY . .
