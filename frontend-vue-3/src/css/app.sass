@@ -265,3 +265,26 @@ body.body--dark
     span
       font-size: 30px !important
       line-height: 24px !important
+
+// --- Sincronização de Cores de Modais (Light/Dark Mode) ---
+.unified-modal-color
+  background: rgba(255, 255, 255, 0.85) !important
+  color: #1e293b !important
+  backdrop-filter: blur(16px) saturate(180%) !important
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important
+  border: 1px solid rgba(255, 255, 255, 0.5) !important
+  
+  body.body--dark &
+    background: #1e293b !important
+    color: #f1f5f9 !important
+    border: 1px solid rgba(255, 255, 255, 0.1) !important
+
+.unified-modal-color
+  .q-card__section,
+  .q-table,
+  .q-table__container,
+  .q-table__middle,
+  .q-table__top,
+  .q-table__bottom,
+  .q-card__actions
+    background: transparent !important

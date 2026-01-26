@@ -193,18 +193,4 @@ const handleEtiqueta = async () => {
 }
 </script>
 
-<style lang="scss" scoped>
-.unified-modal-color {
-  background: #1e293b !important;
-}
 
-.unified-modal-color :deep(.q-card__section),
-.unified-modal-color :deep(.q-table),
-.unified-modal-color :deep(.q-table__container),
-.unified-modal-color :deep(.q-table__middle),
-.unified-modal-color :deep(.q-table__top),
-.unified-modal-color :deep(.q-table__bottom),
-.unified-modal-color :deep(.q-card__actions) {
-  background: transparent !important;
-}
-</style>

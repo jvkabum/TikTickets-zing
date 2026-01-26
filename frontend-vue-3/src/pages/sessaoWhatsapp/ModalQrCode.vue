@@ -262,7 +262,6 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .qr-code-container {
-  background-color: white !important;
   padding: 24px;
   border-radius: 12px;
   display: inline-block;

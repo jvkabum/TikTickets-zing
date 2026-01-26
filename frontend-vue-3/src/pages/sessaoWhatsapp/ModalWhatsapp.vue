@@ -355,11 +355,6 @@ const handleSave = handleSubmit(async values => {
   body.body--dark & {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
-    color: white;
-    &:focus {
-       background: rgba(255, 255, 255, 0.1);
-       border-color: var(--q-primary);
-    }
   }
 }
 
@@ -377,4 +372,3 @@ const handleSave = handleSubmit(async values => {
   background: transparent !important;
 }
 </style>
-
