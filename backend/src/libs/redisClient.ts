@@ -8,6 +8,7 @@ const redisClient = new Redis({
   port: Number(process.env.IO_REDIS_PORT), // Porta do Redis
   host: process.env.IO_REDIS_SERVER, // Host do servidor Redis
   db: Number(process.env.IO_REDIS_DB_SESSION) || 9, // Seleciona o banco de dados do Redis
+  username: process.env.IO_REDIS_USER || undefined, // Nome de usuário do Redis, se houver (Redis 6+)
   password: process.env.IO_REDIS_PASSWORD || undefined // Senha do Redis, se houver
 });
 
