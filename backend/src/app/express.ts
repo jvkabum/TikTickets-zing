@@ -48,6 +48,7 @@ export default async function express(app: Application): Promise<void> {
           "object-src": ["'none'"],
           "script-src-attr": ["'none'"],
           "style-src": ["'self'", "https:", "'unsafe-inline'"],
+          "connect-src": ["'self'", "*", "wss:", "ws:"], // Permite conexões websocket/socket.io
           "upgrade-insecure-requests": [],
           scriptSrc: [
             "'self'",

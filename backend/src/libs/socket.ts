@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { Server as SocketIO } from "socket.io"; 
-import socketRedis from "socket.io-redis"; 
-import { Server } from "http"; 
-import AppError from "../errors/AppError"; 
-import decodeTokenSocket from "./decodeTokenSocket"; 
-import { logger } from "../utils/logger"; 
-import User from "../models/User"; 
-import Chat from "./socketChat/Chat"; 
+import { Server as SocketIO } from "socket.io";
+import socketRedis from "socket.io-redis";
+import { Server } from "http";
+import AppError from "../errors/AppError";
+import decodeTokenSocket from "./decodeTokenSocket";
+import { logger } from "../utils/logger";
+import User from "../models/User";
+import Chat from "./socketChat/Chat";
 
 let io: SocketIO; // Declara a variável io para armazenar a instância do SocketIO
 
@@ -93,6 +93,7 @@ export const initIO = (httpServer: Server): SocketIO => {
         logger.info(`A client joined to ${tenantId}:${status} tickets channel.`); // Registra no logger
         socket.join(`${tenantId}:${status}`); // Adiciona o socket à sala de tickets
       });
+      console.log(`[SOCKET] Cliente autenticado no tenant ${tenantId}. Socket ID: ${socket.id}`);
       Chat.register(socket); // Registra o socket no módulo de chat
     }
 
