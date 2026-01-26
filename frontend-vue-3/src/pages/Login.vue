@@ -257,7 +257,7 @@ const clearCache = () => {
   background: rgba(255, 255, 255, 0.92) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-radius: 20px !important;
+  border-radius: 28px !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
 }

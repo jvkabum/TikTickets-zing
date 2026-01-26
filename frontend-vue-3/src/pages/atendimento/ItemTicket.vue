@@ -233,7 +233,7 @@ watch(
   min-height: 85px
   border: 1px solid rgba(0, 0, 0, 0.08)
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02)
-  background: white
+  background: transparent
   overflow: hidden
   
   .absolute-left

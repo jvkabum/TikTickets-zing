@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-md height-fix">
     <q-table
-      class="my-sticky-dynamic glass-premium border-glass no-shadow"
+      class="my-sticky-dynamic glass-premium border-glass shadow-premium"
       title="Contatos"
       :id="`tabela-contatos-${isChatContact ? 'atendimento' : ''}`"
       :rows="contatos"
@@ -16,7 +16,7 @@
       @virtual-scroll="onScroll"
       :bordered="false"
       :square="false"
-      :flat="true"
+      :flat="false"
       :separator="isChatContact ? 'vertical' : 'horizontal'"
       :class="{
         'q-ma-md rounded-all': !isChatContact,

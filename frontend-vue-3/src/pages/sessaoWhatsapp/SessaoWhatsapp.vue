@@ -2,8 +2,7 @@
   <div v-if="userProfile === 'admin'">
     <div class="row col full-width q-pa-sm">
       <q-card
-        flat
-        class="full-width"
+        class="full-width glass-premium border-glass"
       >
         <q-card-section class="text-h6 text-bold">
           Canais
@@ -25,9 +24,7 @@
         :key="item.id"
       >
         <q-card
-          flat
-          bordered
-          class="col-xs-12 col-sm-5 col-md-4 col-lg-3 q-ma-sm"
+          class="col-xs-12 col-sm-5 col-md-4 col-lg-3 q-ma-sm glass-premium border-glass shadow-premium"
         >
           <q-item>
             <q-item-section avatar>

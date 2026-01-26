@@ -5,22 +5,22 @@
     @hide="fecharModal"
     @show="abrirModal"
   >
-    <q-card style="width: 400px">
+    <q-card style="width: 400px" class="glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color">
       <q-card-section class="q-pa-none">
-        <div class="full-width text-h6 row col bg-grey-4 q-pa-sm">Filas Usuário</div>
+        <div class="full-width text-h5 text-bold text-primary q-pa-md">Filas Usuário</div>
+        <q-separator spaced />
         <div
-          style="font-size: 1em"
-          class="text-caption text-bold row col q-px-sm q-pt-sm"
+          style="font-size: 1.1em"
+          class="text-weight-bold row col q-px-md q-pt-sm text-dark-theme"
         >
           Nome: {{ usuarioSelecionado.name }}
         </div>
         <div
           style="font-size: 1em"
-          class="text-caption text-bold row col q-px-sm"
+          class="text-caption text-weight-bold row col q-px-md q-mb-sm"
         >
           Email: {{ usuarioSelecionado.email }}
         </div>
-        <q-separator spaced />
       </q-card-section>
       <q-card-section>
         <template
@@ -114,4 +114,18 @@ const handleFilaUsuario = async () => {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.unified-modal-color {
+  background: #1e293b !important;
+}
+
+.unified-modal-color :deep(.q-card__section),
+.unified-modal-color :deep(.q-table),
+.unified-modal-color :deep(.q-table__container),
+.unified-modal-color :deep(.q-table__middle),
+.unified-modal-color :deep(.q-table__top),
+.unified-modal-color :deep(.q-table__bottom),
+.unified-modal-color :deep(.q-card__actions) {
+  background: transparent !important;
+}
+</style>

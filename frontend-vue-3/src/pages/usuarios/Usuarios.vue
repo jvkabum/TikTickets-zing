@@ -1,7 +1,7 @@
 <template>
   <div v-if="userProfile === 'admin'">
     <q-table
-      class="my-sticky-dynamic q-ma-lg"
+      class="my-sticky-dynamic q-ma-lg shadow-premium"
       title="Usuarios"
       :rows="usuarioStore.usuarios"
       :columns="columns"

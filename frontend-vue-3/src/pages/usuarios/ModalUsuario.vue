@@ -5,9 +5,10 @@
     @hide="fecharModal"
     @show="abrirModal"
   >
-    <q-card style="width: 600px">
+    <q-card style="width: 600px" class="glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color">
       <q-card-section>
-        <div class="text-h6">{{ usuario.id ? 'Editar' : 'Cadastrar' }} Usuário</div>
+        <div class="text-h5 text-bold text-primary">{{ usuario.id ? 'Editar' : 'Cadastrar' }} Usuário</div>
+        <q-separator spaced />
       </q-card-section>
       <q-card-section class="q-col-gutter-sm">
         <div class="row q-col-gutter-sm">
@@ -240,4 +241,18 @@ const onSubmit = handleSubmit(async values => {
 })
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.unified-modal-color {
+  background: #1e293b !important;
+}
+
+.unified-modal-color :deep(.q-card__section),
+.unified-modal-color :deep(.q-table),
+.unified-modal-color :deep(.q-table__container),
+.unified-modal-color :deep(.q-table__middle),
+.unified-modal-color :deep(.q-table__top),
+.unified-modal-color :deep(.q-table__bottom),
+.unified-modal-color :deep(.q-card__actions) {
+  background: transparent !important;
+}
+</style>

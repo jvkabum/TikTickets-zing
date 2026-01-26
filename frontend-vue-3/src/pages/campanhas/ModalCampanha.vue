@@ -6,12 +6,13 @@
     @show="abrirModal"
   >
     <q-card
-      class="q-pa-sm"
+      class="q-pa-md glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color"
       style="min-width: 70vw"
     >
       <q-card-section class="q-pa-none q-px-md">
-        <div class="text-h6 text-bold">{{ campanhaEdicao.id ? 'Editar' : 'Criar' }} Campanha</div>
-        <div class="row">As mensagens sempre serão enviadas em horário comercial e dias úteis.</div>
+        <div class="text-h5 text-bold text-primary q-mb-md">{{ campanhaEdicao.id ? 'Editar' : 'Criar' }} Campanha</div>
+        <q-separator spaced />
+        <div class="row q-mt-sm text-weight-medium">As mensagens sempre serão enviadas em horário comercial e dias úteis.</div>
       </q-card-section>
       <q-card-section class="q-pb-none">
         <div class="row q-gutter-sm">
@@ -383,5 +384,21 @@ const handleCampanha = handleSubmit(async values => {
 border-error {
   border: 3px solid red;
   background: red !important;
+}
+</style>
+
+<style scoped>
+.unified-modal-color {
+  background: #1e293b !important;
+}
+
+.unified-modal-color :deep(.q-card__section),
+.unified-modal-color :deep(.q-table),
+.unified-modal-color :deep(.q-table__container),
+.unified-modal-color :deep(.q-table__middle),
+.unified-modal-color :deep(.q-table__top),
+.unified-modal-color :deep(.q-table__bottom),
+.unified-modal-color :deep(.q-card__actions) {
+  background: transparent !important;
 }
 </style>

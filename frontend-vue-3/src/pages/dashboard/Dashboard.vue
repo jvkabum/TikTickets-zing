@@ -5,7 +5,7 @@
       appear
       enter-active-class="animated fadeInDown"
     >
-      <q-card class="q-mb-xl glass-premium shadow-2 rdsPainelDate overflow-hidden" style="border-radius: 20px; border: 1px solid rgba(255,255,255,0.05)">
+      <q-card class="q-mb-xl glass-premium border-glass no-shadow rdsPainelDate overflow-hidden">
         <q-card-section class="column items-center q-py-md q-md-py-lg q-px-md text-center">
           <div class="column items-center q-mb-sm q-md-mb-md">
             <div class="row items-center q-gutter-sm justify-center">
@@ -70,7 +70,7 @@
     <!-- Gráficos de Pizza em Linha -->
     <div class="row q-col-gutter-xl q-mb-xl">
       <div class="col-xs-12 col-md-6">
-        <q-card class="glass-premium no-shadow hover-premium" style="border-radius: 20px">
+        <q-card class="glass-premium border-glass no-shadow hover-premium">
           <q-card-section class="q-pa-lg">
             <div class="text-subtitle1 text-weight-bold q-mb-md text-dark-theme">Atendimentos por Canal</div>
             <apexchart
@@ -86,7 +86,7 @@
         </q-card>
       </div>
       <div class="col-xs-12 col-md-6">
-        <q-card class="glass-premium no-shadow hover-premium" style="border-radius: 20px">
+        <q-card class="glass-premium border-glass no-shadow hover-premium">
           <q-card-section class="q-pa-lg">
             <div class="text-subtitle1 text-weight-bold q-mb-md text-dark-theme">Atendimentos por Fila</div>
             <apexchart
@@ -104,7 +104,7 @@
     </div>
 
     <!-- Gráfico de Evolução de Canais (Destaque Central) -->
-    <q-card class="q-mb-xl glass-premium no-shadow hover-premium overflow-hidden" style="border-radius: 28px">
+    <q-card class="q-mb-xl glass-premium border-glass no-shadow hover-premium overflow-hidden">
       <q-card-section class="q-pa-lg">
         <div class="row items-center q-mb-lg">
           <q-icon name="mdi-chart-timeline-variant" color="primary" size="24px" class="q-mr-sm" />
@@ -123,7 +123,7 @@
     </q-card>
 
     <!-- Gráfico de Evolução por Período -->
-    <q-card class="q-mb-xl glass-premium no-shadow hover-premium" style="border-radius: 28px">
+    <q-card class="q-mb-xl glass-premium border-glass no-shadow hover-premium">
       <q-card-section class="q-pa-lg">
         <div class="row items-center q-mb-lg">
           <q-icon name="mdi-trending-up" color="secondary" size="24px" class="q-mr-sm" />
@@ -141,7 +141,7 @@
     </q-card>
 
     <!-- Tabela de Performance de Usuários -->
-    <q-card class="glass-premium no-shadow" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.4)">
+    <q-card class="glass-premium border-glass no-shadow">
       <q-card-section class="q-pa-lg">
         <div class="row items-center q-mb-xl">
           <div class="grad-primary rounded-all q-pa-sm q-mr-md" style="width: 42px; height: 42px; border-radius: 12px">

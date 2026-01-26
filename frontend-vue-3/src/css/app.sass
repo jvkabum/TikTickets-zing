@@ -80,12 +80,20 @@ h6, .text-h6
   border-radius: 12px !important
 
 .rounded-all
-  border-radius: 16px !important
+  border-radius: 28px !important
 
 .q-card
-  border-radius: 20px !important
-  border: 1px solid rgba(0, 0, 0, 0.05)
-  box-shadow: none !important
+  @extend .glass-premium
+  overflow: hidden
+
+.q-table__container
+  @extend .glass-premium
+  overflow: hidden
+  background: transparent !important
+  .q-table
+    background: transparent !important
+    thead tr
+      background: transparent !important
 
 .messageLeft, .messageRight
   padding: 8px 12px
@@ -131,13 +139,17 @@ body.body--dark .q-page
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important
   border: 1px solid rgba(255, 255, 255, 0.5) !important
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important
-  border-radius: 24px !important
+  border-radius: 28px !important
   transition: all 0.3s ease
 
 body.body--dark .glass-premium
-  background: rgba(30, 41, 59, 0.7) !important
+  background: #1e293b !important
   border: 1px solid rgba(255, 255, 255, 0.08) !important
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2) !important
+
+.q-dialog__inner > div
+  @extend .glass-premium
+  overflow: hidden
 
 .q-header, .q-footer
   background: rgba(255, 255, 255, 0.6) !important
@@ -198,9 +210,13 @@ body.body--dark .q-drawer
 // --- Ajustes Globais de Contraste ---
 body.body--dark
   .q-table
+    background: transparent !important
     color: #cbd5e1 !important
+    thead tr
+      background: rgba(255, 255, 255, 0.03) !important
     thead tr th
       color: #94a3b8 !important
+      font-weight: 700
     tbody tr td
       border-color: rgba(255, 255, 255, 0.05) !important
   
@@ -211,14 +227,22 @@ body.body--dark
     border-color: rgba(255, 255, 255, 0.05) !important
 
   .q-dialog__inner > div
-    background: rgba(30, 41, 59, 0.9) !important
-    backdrop-filter: blur(16px) saturate(180%) !important
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important
+    background: #1e293b !important
+    backdrop-filter: blur(20px) saturate(180%) !important
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important
     border: 1px solid rgba(255, 255, 255, 0.1) !important
     color: #f1f5f9
+  
+  .bg-white
+    background: rgba(255, 255, 255, 0.05) !important
+    color: #f1f5f9 !important
+  
+  .bg-grey-2, .bg-grey-3, .bg-grey-4
+    background: rgba(255, 255, 255, 0.08) !important
+    color: #f1f5f9 !important
 
   .q-menu
-    background: rgba(30, 41, 59, 0.9) !important
+    background: rgba(30, 41, 59, 0.95) !important
     backdrop-filter: blur(12px) !important
     border: 1px solid rgba(255, 255, 255, 0.1) !important
     color: #f1f5f9

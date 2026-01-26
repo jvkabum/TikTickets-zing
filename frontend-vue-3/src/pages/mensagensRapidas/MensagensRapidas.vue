@@ -1,11 +1,7 @@
 <template>
   <div>
     <q-table
-      flat
-      bordered
-      square
-      hide-bottom
-      class="my-sticky-dynamic q-ma-lg"
+      class="my-sticky-dynamic q-ma-lg shadow-premium"
       title="Mensagens Rápidas"
       :rows="mensagensRapidas"
       :columns="columns"

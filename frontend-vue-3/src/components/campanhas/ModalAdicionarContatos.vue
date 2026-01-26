@@ -4,7 +4,7 @@
     @update:model-value="emit('update:modelValue', $event)"
     persistent
   >
-    <q-card style="min-width: 80vw; width: 80vw">
+    <q-card style="min-width: 80vw; width: 80vw" class="glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color">
       <q-card-section class="q-pt-none q-pt-md">
         <fieldset class="rounded-all">
           <legend class="q-px-sm">Filtros (Data criação do contato)</legend>
@@ -378,3 +378,19 @@ const addContatosCampanha = async () => {
 
 // Inicializar listagem ao abrir? Pode ser opcional.
 </script>
+
+<style lang="scss" scoped>
+.unified-modal-color {
+  background: #1e293b !important;
+}
+
+.unified-modal-color :deep(.q-card__section),
+.unified-modal-color :deep(.q-table),
+.unified-modal-color :deep(.q-table__container),
+.unified-modal-color :deep(.q-table__middle),
+.unified-modal-color :deep(.q-table__top),
+.unified-modal-color :deep(.q-table__bottom),
+.unified-modal-color :deep(.q-card__actions) {
+  background: transparent !important;
+}
+</style>

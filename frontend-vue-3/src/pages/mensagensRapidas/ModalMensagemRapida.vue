@@ -7,12 +7,13 @@
   >
     <q-card
       :style="$q.screen.width < 500 ? 'width: 95vw' : 'min-width: 500px; max-width: 700px'"
-      class="q-pa-lg"
+      class="q-pa-lg glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color"
     >
-      <div class="text-h6">
+      <div class="text-h5 text-bold text-primary">
         {{ mensagemRapida.id ? 'Editar' : 'Criar' }} Mensagem Rápida
         {{ mensagemRapida.id ? `(ID: ${mensagemRapida.id})` : '' }}
       </div>
+      <q-separator spaced />
       <q-card-section class="q-pa-none">
         <div class="row q-my-sx">
           <div class="col flex justify-center">
@@ -101,7 +102,7 @@
             <textarea
               ref="inputEnvioMensagem"
               style="min-height: 15vh; max-height: 25vh"
-              class="q-pa-sm bg-white full-width rounded-all"
+              class="q-pa-sm glass-input full-width rounded-all"
               placeholder="Digite a mensagem"
               autogrow
               dense
@@ -332,5 +333,38 @@ const handleMensagemRapida = handleSubmit(async values => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+.glass-input {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: all 0.3s;
+  &:focus {
+    border-color: var(--q-primary);
+    background: rgba(255, 255, 255, 0.8);
+  }
+  body.body--dark & {
+    background: rgba(100, 150, 255, 0.05);
+    border-color: rgba(135, 150, 255, 0.2);
+    color: white;
+    &:focus {
+       background: rgba(100, 150, 255, 0.1);
+       border-color: var(--q-primary);
+    }
+  }
+}
+
+.unified-modal-color {
+  background: #1e293b !important;
+}
+
+.unified-modal-color :deep(.q-card__section),
+.unified-modal-color :deep(.q-table),
+.unified-modal-color :deep(.q-table__container),
+.unified-modal-color :deep(.q-table__middle),
+.unified-modal-color :deep(.q-table__top),
+.unified-modal-color :deep(.q-table__bottom),
+.unified-modal-color :deep(.q-card__actions) {
+  background: transparent !important;
+}
 </style>

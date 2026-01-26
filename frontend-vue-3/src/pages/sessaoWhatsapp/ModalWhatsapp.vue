@@ -6,7 +6,7 @@
     persistent
   >
     <q-card
-      class="q-pa-md"
+      class="q-pa-md glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color"
       style="width: 500px"
     >
       <q-card-section>
@@ -141,7 +141,7 @@
             <textarea
               ref="inputFarewellMessage"
               style="min-height: 15vh; max-height: 15vh"
-              class="q-pa-sm rounded-all bg-white full-width border-quasar"
+              class="q-pa-sm rounded-all glass-input full-width border-glass"
               placeholder="Digite a mensagem"
               v-model="whatsapp.farewellMessage"
             >
@@ -373,13 +373,37 @@ const handleSave = handleSubmit(async values => {
 </script>
 
 <style lang="scss" scoped>
-.border-quasar {
-  border: 1px solid rgba(0, 0, 0, 0.24);
-  border-radius: 4px;
+.glass-input {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   outline: none;
-  transition: border-color 0.3s;
+  transition: all 0.3s;
   &:focus {
     border-color: var(--q-primary);
+    background: rgba(255, 255, 255, 0.8);
   }
+  body.body--dark & {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    &:focus {
+       background: rgba(255, 255, 255, 0.1);
+       border-color: var(--q-primary);
+    }
+  }
+}
+
+.unified-modal-color {
+  background: #1e293b !important;
+}
+
+.unified-modal-color :deep(.q-card__section),
+.unified-modal-color :deep(.q-table),
+.unified-modal-color :deep(.q-table__container),
+.unified-modal-color :deep(.q-table__middle),
+.unified-modal-color :deep(.q-table__top),
+.unified-modal-color :deep(.q-table__bottom),
+.unified-modal-color :deep(.q-card__actions) {
+  background: transparent !important;
 }
 </style>

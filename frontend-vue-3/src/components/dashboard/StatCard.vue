@@ -169,7 +169,7 @@ const trendIcon = computed(() => {
 
 <style lang="scss" scoped>
 .stat-card {
-  border-radius: 20px;
+  border-radius: 28px;
   overflow: hidden;
   position: relative;
   

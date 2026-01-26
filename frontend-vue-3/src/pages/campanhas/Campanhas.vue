@@ -1,10 +1,7 @@
 <template>
   <div v-if="userProfile === 'admin'">
     <q-table
-      flat
-      square
-      hide-bottom
-      class="my-sticky-dynamic q-ma-lg"
+      class="my-sticky-dynamic q-ma-lg shadow-premium"
       title="Campanhas"
       :rows="campanhas"
       :columns="columns"

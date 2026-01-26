@@ -6,13 +6,14 @@
     persistent
   >
     <q-card
-      class="q-pa-lg"
+      class="q-pa-lg glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color"
       style="min-width: 700px"
     >
       <q-card-section>
-        <div class="text-h6">
+        <div class="text-h5 text-bold text-primary">
           {{ contactId ? 'Editar Contato' : 'Adicionar Contato' }}
         </div>
+        <q-separator spaced />
       </q-card-section>
       <q-card-section class="q-pa-sm q-pl-md text-bold"> Dados Contato </q-card-section>
       <q-card-section class="q-pa-sm q-pl-md row q-col-gutter-md">
@@ -47,7 +48,7 @@
         />
       </q-card-section>
       <q-card
-        class="bg-white q-mt-sm btn-rounded"
+      class="q-mt-sm btn-rounded glass-premium border-glass"
         style="width: 100%"
         bordered
         flat
@@ -310,4 +311,18 @@ const onSubmit = handleSubmit(async values => {
 })
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.unified-modal-color {
+  background: #1e293b !important;
+}
+
+.unified-modal-color :deep(.q-card__section),
+.unified-modal-color :deep(.q-table),
+.unified-modal-color :deep(.q-table__container),
+.unified-modal-color :deep(.q-table__middle),
+.unified-modal-color :deep(.q-table__top),
+.unified-modal-color :deep(.q-table__bottom),
+.unified-modal-color :deep(.q-card__actions) {
+  background: transparent !important;
+}
+</style>

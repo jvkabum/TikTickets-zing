@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-white no-scroll hide-scrollbar overflow-hidden full-height full-width"
+    class="no-scroll hide-scrollbar overflow-hidden full-height full-width"
     :style="style"
   >
     <InforCabecalhoChat @abrir:modalAgendamentoMensagem="modalAgendamentoMensagem = true" />

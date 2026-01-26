@@ -7,7 +7,7 @@
   >
     <q-card
       style="width: 500px"
-      class="q-pa-lg"
+      class="q-pa-lg glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color"
     >
       <div class="text-h6">{{ filaEdicao.id ? 'Editar' : 'Criar' }} Fila</div>
       <q-card-section>
@@ -161,4 +161,18 @@ const handleFila = handleSubmit(async values => {
 })
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.unified-modal-color {
+  background: #1e293b !important;
+}
+
+.unified-modal-color :deep(.q-card__section),
+.unified-modal-color :deep(.q-table),
+.unified-modal-color :deep(.q-table__container),
+.unified-modal-color :deep(.q-table__middle),
+.unified-modal-color :deep(.q-table__top),
+.unified-modal-color :deep(.q-table__bottom),
+.unified-modal-color :deep(.q-card__actions) {
+  background: transparent !important;
+}
+</style>
