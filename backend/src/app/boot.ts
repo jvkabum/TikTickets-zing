@@ -13,9 +13,6 @@ export default async function bootstrap(app: Application): Promise<void> {
   // Isso garante que o banco de dados esteja pronto antes de continuar
   await waitForPostgresConnection();
 
-  // Configura o Express com middlewares, rotas e configurações de segurança
-  await express(app);
-
   // Inicializa a conexão com o banco de dados e sincroniza os modelos
   await database(app);
 

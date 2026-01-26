@@ -1,14 +1,14 @@
 import request from 'src/service/request'
 
-export function CriarCampanha (data) {
+export function CriarCampanha(data) {
   return request({
-    url: '/campaigns/',
+    url: '/campaigns',
     method: 'post',
     data
   })
 }
 
-export function IniciarCampanha (campaignId) {
+export function IniciarCampanha(campaignId) {
   return request({
     url: `/campaigns/start/${campaignId}/`,
     method: 'post',
@@ -18,7 +18,7 @@ export function IniciarCampanha (campaignId) {
   })
 }
 
-export function CancelarCampanha (campaignId) {
+export function CancelarCampanha(campaignId) {
   return request({
     url: `/campaigns/cancel/${campaignId}/`,
     method: 'post',
@@ -28,14 +28,14 @@ export function CancelarCampanha (campaignId) {
   })
 }
 
-export function ListarCampanhas () {
+export function ListarCampanhas() {
   return request({
-    url: '/campaigns/',
+    url: '/campaigns',
     method: 'get'
   })
 }
 
-export function AlterarCampanha (data, id) {
+export function AlterarCampanha(data, id) {
   return request({
     url: `/campaigns/${id}`,
     method: 'put',
@@ -43,14 +43,14 @@ export function AlterarCampanha (data, id) {
   })
 }
 
-export function DeletarCampanha (data) {
+export function DeletarCampanha(data) {
   return request({
     url: `/campaigns/${data.id}`,
     method: 'delete'
   })
 }
 
-export function AdicionarContatosCampanha (data, campaignId) {
+export function AdicionarContatosCampanha(data, campaignId) {
   return request({
     url: `/campaigns/contacts/${campaignId}/`,
     method: 'post',
@@ -58,7 +58,7 @@ export function AdicionarContatosCampanha (data, campaignId) {
   })
 }
 
-export function ListarContatosCampanha (campaignId) {
+export function ListarContatosCampanha(campaignId) {
   return request({
     url: `/campaigns/contacts/${campaignId}/`,
     method: 'get',
@@ -68,7 +68,7 @@ export function ListarContatosCampanha (campaignId) {
   })
 }
 
-export function DeletarContatoCampanha (campaignId, contactId) {
+export function DeletarContatoCampanha(campaignId, contactId) {
   return request({
     url: `/campaigns/contacts/${campaignId}/${contactId}/`,
     method: 'delete',
@@ -79,7 +79,7 @@ export function DeletarContatoCampanha (campaignId, contactId) {
   })
 }
 
-export function DeletarTodosContatosCampanha (campaignId) {
+export function DeletarTodosContatosCampanha(campaignId) {
   return request({
     url: `/campaigns/deleteall/contacts/${campaignId}/`,
     method: 'delete',

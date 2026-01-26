@@ -1,11 +1,12 @@
 import { io } from 'socket.io-client'
+import { getBaseURL } from 'src/service/request'
 
 let socketInstance = null
 
 export const socketIO = () => {
   if (socketInstance) return socketInstance
 
-  socketInstance = io(process.env.VUE_URL_API, {
+  socketInstance = io(getBaseURL(), {
     reconnection: true,
     autoConnect: true,
     transports: ['websocket'], // Forcing websocket to match legacy behavior

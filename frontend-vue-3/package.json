@@ -21,8 +21,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "start": "pm2 start server.js --name FlowDeskPro-frontend",
-    "stop": "pm2 stop server.js --name FlowDeskPro-frontend",
+    "start": "pm2 start server.js --name TikTickets-frontend",
+    "stop": "pm2 stop server.js --name TikTickets-frontend",
     "build": "npx quasar build -P -m pwa",
     "build:spa": "npx quasar build -m spa"
   },

@@ -174,8 +174,8 @@ const cBaseUrlIntegração = computed(() => {
 
 const download = () => {
   const link = document.createElement('a')
-  link.href = 'apiizing.json'
-  link.download = 'apiizing.json'
+      link.href = 'tiktickets.json'
+      link.download = 'tiktickets.json'
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)

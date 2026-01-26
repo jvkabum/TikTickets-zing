@@ -1,41 +1,41 @@
 import request from 'src/service/request'
 
-export function AdminListarChannels (whatsAppId) {
+export function AdminListarChannels(whatsAppId) {
   return request({
-    url: '/admin/channels/',
+    url: '/admin/channels',
     method: 'get'
   })
 }
 
-export function StartWhatsappSession (whatsAppId) {
+export function StartWhatsappSession(whatsAppId) {
   return request({
     url: `/whatsappsession/${whatsAppId}`,
     method: 'post'
   })
 }
 
-export function DeleteWhatsappSession (whatsAppId) {
+export function DeleteWhatsappSession(whatsAppId) {
   return request({
     url: `/whatsappsession/${whatsAppId}`,
     method: 'delete'
   })
 }
 
-export function RequestNewQrCode (whatsAppId) {
+export function RequestNewQrCode(whatsAppId) {
   return request({
     url: `/whatsappsession/${whatsAppId}`,
     method: 'put'
   })
 }
 
-export function GetWhatSession (whatsAppId) {
+export function GetWhatSession(whatsAppId) {
   return request({
     url: `/whatsapp/${whatsAppId}`,
     method: 'get'
   })
 }
 
-export function UpdateChannel (channelId, data) {
+export function UpdateChannel(channelId, data) {
   return request({
     url: `/whatsapp/${channelId}`,
     method: 'put',
@@ -43,7 +43,7 @@ export function UpdateChannel (channelId, data) {
   })
 }
 
-export function CriarChannel (data) {
+export function CriarChannel(data) {
   return request({
     url: '/admin/channels',
     method: 'post',
@@ -51,14 +51,14 @@ export function CriarChannel (data) {
   })
 }
 
-export function DeletarWhatsapp (whatsAppId) {
+export function DeletarWhatsapp(whatsAppId) {
   return request({
     url: `/whatsapp/${whatsAppId}`,
     method: 'delete'
   })
 }
 
-export function SincronizarContatosWhatsapp (whatsAppId) {
+export function SincronizarContatosWhatsapp(whatsAppId) {
   return request({
     url: `/whatsapp/sync-contacts/${whatsAppId}`,
     method: 'post',

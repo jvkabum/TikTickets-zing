@@ -146,7 +146,7 @@ export function EncaminharMensagem(messages, contato) {
     contact: contato
   }
   return request({
-    url: '/forward-messages/',
+    url: '/forward-messages',
     method: 'post',
     data
   })
