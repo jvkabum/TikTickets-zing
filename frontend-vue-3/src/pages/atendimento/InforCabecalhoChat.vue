@@ -46,7 +46,8 @@
               class="text-bold text-subtitle2"
               lines="1"
             >
-              {{ ticketFocado.contact?.name || ticketFocado.name || 'Sem nome' }}
+              {{ ticketFocado.contact?.name || ticketFocado.name }}
+              <q-skeleton v-if="!ticketFocado.contact?.name && !ticketFocado.name" animation="none" style="width: 200px" />
             </q-item-label>
             <q-item-label
               caption
@@ -54,6 +55,7 @@
               class="text-weight-medium"
             >
               <span v-if="ticketFocado.user?.name" class="text-primary">Atendimento: {{ ticketFocado.user.name }}</span>
+              <q-skeleton v-else-if="ticketFocado.id && !ticketFocado.user?.name" type="text" class="text-caption" animation="none" style="width: 150px" />
               <span v-else class="text-grey-7">Aguardando atribuição</span>
             </q-item-label>
           </q-item-section>
@@ -68,6 +70,16 @@
           <!-- Desktop Actions -->
           <template v-if="!$q.screen.xs">
             <q-btn
+              @click="sairConversa"
+              flat
+              icon="mdi-exit-to-app"
+              color="grey-7"
+              class="btn-rounded"
+            >
+              <q-tooltip class="bg-grey-9 text-bold">Sair da Conversa</q-tooltip>
+            </q-btn>
+
+            <q-btn
               @click="atualizarStatusTicket(ticketFocado, 'open')"
               flat
               icon="mdi-reload"
@@ -75,7 +87,7 @@
               class="btn-rounded"
               :disable="ticketFocado.status === 'open'"
             >
-              <q-tooltip>Reabrir Ticket</q-tooltip>
+              <q-tooltip class="bg-primary text-bold">Reabrir Ticket</q-tooltip>
             </q-btn>
 
             <q-btn
@@ -87,7 +99,7 @@
               :disable="ticketFocado.status === 'closed'"
               @click="sincronizarMensagens"
             >
-              <q-tooltip>Sincronizar Mensagens</q-tooltip>
+              <q-tooltip class="bg-primary text-bold">Sincronizar Mensagens</q-tooltip>
             </q-btn>
 
             <q-btn
@@ -99,7 +111,7 @@
               class="btn-rounded"
               :disable="ticketFocado.status === 'closed'"
             >
-              <q-tooltip>Agendamento</q-tooltip>
+              <q-tooltip class="bg-primary text-bold">Agendamento</q-tooltip>
             </q-btn>
 
             <q-btn
@@ -110,7 +122,7 @@
               class="btn-rounded"
               :disable="ticketFocado.status === 'closed'"
             >
-              <q-tooltip>Retornar à Fila</q-tooltip>
+              <q-tooltip class="bg-primary text-bold">Retornar à Fila</q-tooltip>
             </q-btn>
 
             <q-btn
@@ -122,7 +134,7 @@
               label="Resolver"
               :disable="ticketFocado.status === 'closed'"
             >
-              <q-tooltip>Resolver</q-tooltip>
+              <q-tooltip class="bg-positive text-bold">Resolver</q-tooltip>
             </q-btn>
 
             <q-btn
@@ -130,10 +142,10 @@
               flat
               color="primary"
               class="btn-rounded"
+              icon="mdi-transfer"
               :disable="ticketFocado.status === 'closed'"
             >
-              <q-icon name="mdi-transfer" />
-              <q-tooltip>Transferir</q-tooltip>
+              <q-tooltip class="bg-primary text-bold">Transferir</q-tooltip>
             </q-btn>
           </template>
 
@@ -331,6 +343,10 @@ const sincronizarMensagens = async () => {
   } finally {
     sincronizando.value = false
   }
+}
+
+const sairConversa = () => {
+  ticketStore.setTicketFocado({})
 }
 
 const emitirAcaoMenu = () => {
