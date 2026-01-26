@@ -1,402 +1,165 @@
 <template>
   <q-dialog
-    persistent
     v-model="modalCampanhaModel"
     @hide="fecharModal"
     @show="abrirModal"
   >
     <q-card
-      class="q-pa-md glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color"
-      style="min-width: 70vw"
+      class="glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color column no-wrap"
+      style="min-width: 75vw; max-height: 95vh;"
     >
-      <q-card-section class="q-pa-none q-px-md">
-        <div class="text-h5 text-bold text-primary q-mb-md">{{ campanhaEdicao.id ? 'Editar' : 'Criar' }} Campanha</div>
+      <!-- Cabeçalho Fixo -->
+      <q-card-section class="q-pa-md bg-transparent">
+        <div class="row items-center justify-between">
+          <div class="text-h5 text-bold text-primary">{{ campanhaEdicao.id ? 'Editar' : 'Criar' }} Campanha</div>
+          <q-btn icon="close" flat round dense v-close-popup />
+        </div>
         <q-separator spaced />
-        <div class="row q-mt-sm text-weight-medium">As mensagens sempre serão enviadas em horário comercial e dias úteis.</div>
+        <div class="text-weight-medium q-mt-xs">As mensagens sempre serão enviadas em horário comercial e dias úteis.</div>
       </q-card-section>
-      <q-card-section class="q-pb-none">
-        <div class="row q-gutter-sm">
-          <q-input
-            outlined
-            dense
-            rounded
-            style="width: 500px"
-            v-model="name"
-            v-bind="nameProps"
-            label="Nome da Campanha"
-            :error="!!errors.name"
-            :error-message="errors.name"
-          />
-          <cDateTimePick
-            style="width: 200px"
-            label="Data/Hora início"
-            v-model="start"
-            v-bind="startProps"
-            :error="!!errors.start"
-            :error-message="errors.start"
-          />
-          <q-select
-            rounded
-            dense
-            outlined
-            emit-value
-            map-options
-            label="Enviar por"
-            color="primary"
-            v-model="sessionId"
-            v-bind="sessionIdProps"
-            :options="cSessions"
-            :input-debounce="700"
-            option-value="id"
-            option-label="name"
-            input-style="width: 280px; max-width: 280px;"
-            :error="!!errors.sessionId"
-            :error-message="errors.sessionId"
-            style="width: 250px"
-          />
-          <q-input
-            rounded
-            outlined
-            dense
-            style="width: 160px"
-            v-model="delay"
-            v-bind="delayProps"
-            input-class="text-right"
-            suffix="segundos"
-            label="Delay"
-            :error="!!errors.delay"
-            :error-message="errors.delay"
-          />
-          <q-select
-            outlined
-            dense
-            rounded
-            label="Status"
-            v-model="status"
-            v-bind="statusProps"
-            :options="[
-              { label: 'Pendente', value: 'pending' },
-              { label: 'Programada', value: 'scheduled' }
-            ]"
-            :error="!!errors.status"
-            :error-message="errors.status"
-            style="width: 200px"
-          />
-          <q-file
-            dense
-            rounded
-            v-if="!campanhaState.mediaUrl"
-            :loading="loading"
-            label="Mídia composição mensagem"
-            ref="PickerFileMessage"
-            v-model="arquivos"
-            class="col-grow"
-            bg-color="blue-grey-1"
-            input-style="max-height: 30vh"
-            outlined
-            clearable
-            autogrow
-            append
-            :max-files="1"
-            counter
-            :max-file-size="10485760"
-            :max-total-size="30485760"
-            accept=".jpg, .png, image/jpeg, .pdf, .doc, .docx, .mp4, .xls, .xlsx, .jpeg, .zip, .ppt, .pptx, image/*"
-            @rejected="onRejectedFiles"
-            style="width: 350px"
-          />
-          <q-input
-            v-if="campanhaState.mediaUrl"
-            readonly
-            rounded
-            label="Mídia composição mensagem"
-            :value="cArquivoName"
-            class="col-grow"
-            bg-color="blue-grey-1"
-            input-style="max-height: 30vh"
-            outlined
-            autogrow
-            append
-            counter
-            style="width: 350px"
-          >
-            <template v-slot:append>
-              <q-btn
-                round
-                dense
-                flat
-                icon="close"
-                @click="handleResetMedia"
+
+      <!-- Conteúdo com Scroll -->
+      <q-card-section class="col scroll q-pa-md">
+        <div class="row q-col-gutter-md">
+          <!-- Configurações Gerais -->
+          <div class="col-12">
+            <div class="row q-gutter-sm">
+              <q-input
+                outlined dense rounded
+                style="width: 400px"
+                v-model="name"
+                v-bind="nameProps"
+                label="Nome da Campanha"
+                :error="!!errors.name"
+                :error-message="errors.name"
               />
-            </template>
-          </q-input>
-        </div>
-      </q-card-section>
-      <q-card-section class="row q-pt-sm q-gutter-sm justify-center">
-        <div style="min-width: 400px">
-          <div class="row items-center q-pt-none">
-            <label class="text-heading text-bold">1ª Mensagem</label>
-            <div class="col-xs-3 col-sm-2 col-md-1">
-              <q-btn
-                round
-                flat
-                class="q-ml-sm"
-              >
-                <q-icon
-                  size="2em"
-                  name="mdi-emoticon-happy-outline"
-                />
-                <q-tooltip> Emoji </q-tooltip>
-                <q-menu
-                  anchor="top right"
-                  self="bottom middle"
-                  :offset="[5, 40]"
-                >
-                  <EmojiPicker
-                    :native="true"
-                    :hide-search="false"
-                    :disable-skin-tones="true"
-                    @select="v => onInsertSelectEmoji(v, 'message1')"
-                  />
-                </q-menu>
-              </q-btn>
-            </div>
-            <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
-              <textarea
-                ref="message1Ref"
-                style="min-height: 12.5vh; max-height: 12.5vh"
-                class="q-pa-sm bg-white full-width rounded-all"
-                :class="{
-                  'bg-red-1': !!errors.message1
-                }"
-                placeholder="Digite a mensagem"
-                autogrow
-                dense
-                outlined
-                v-model="message1"
-                v-bind="message1Props"
+              <cDateTimePick
+                style="width: 200px"
+                label="Data/Hora início"
+                v-model="start"
+                v-bind="startProps"
+                :error="!!errors.start"
+                :error-message="errors.start"
               />
-              <q-btn
-                round
-                flat
-                dense
-              >
-                <q-icon
-                  size="2em"
-                  name="mdi-variable"
-                />
-                <q-tooltip> Variáveis </q-tooltip>
-                <q-menu touch-position>
-                  <q-list
-                    dense
-                    style="min-width: 100px"
-                  >
-                    <q-item
-                      v-for="variavel in variaveis"
-                      :key="variavel.label"
-                      clickable
-                      @click="onInsertSelectVariable(variavel.value, 'message1', 'message1')"
-                      v-close-popup
-                    >
-                      <q-item-section>{{ variavel.label }}</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
-              <q-separator class="q-my-md" />
-            </div>
-          </div>
-          <div class="row items-center q-pt-none">
-            <label class="text-heading text-bold">2ª Mensagem</label>
-            <div class="col-xs-3 col-sm-2 col-md-1">
-              <q-btn
-                round
-                flat
-                class="q-ml-sm"
-              >
-                <q-icon
-                  size="2em"
-                  name="mdi-emoticon-happy-outline"
-                />
-                <q-tooltip> Emoji </q-tooltip>
-                <q-menu
-                  anchor="top right"
-                  self="bottom middle"
-                  :offset="[5, 40]"
-                >
-                  <EmojiPicker
-                    :native="true"
-                    :hide-search="false"
-                    @select="v => onInsertSelectEmoji(v, 'message2')"
-                  />
-                </q-menu>
-              </q-btn>
-            </div>
-            <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
-              <textarea
-                ref="message2Ref"
-                style="min-height: 12.5vh; max-height: 12.5vh"
-                class="q-pa-sm bg-white full-width rounded-all"
-                placeholder="Digite a mensagem"
-                autogrow
-                dense
-                outlined
-                :class="{
-                  'bg-red-1': !!errors.message2
-                }"
-                v-model="message2"
-                v-bind="message2Props"
-              />
-              <q-btn
-                round
-                flat
-                dense
-              >
-                <q-icon
-                  size="2em"
-                  name="mdi-variable"
-                />
-                <q-tooltip> Variáveis </q-tooltip>
-                <q-menu touch-position>
-                  <q-list
-                    dense
-                    style="min-width: 100px"
-                  >
-                    <q-item
-                      v-for="variavel in variaveis"
-                      :key="variavel.label"
-                      clickable
-                      @click="onInsertSelectVariable(variavel.value, 'message2', 'message2')"
-                      v-close-popup
-                    >
-                      <q-item-section>{{ variavel.label }}</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
-              <q-separator class="q-my-md" />
-            </div>
-          </div>
-          <div class="row items-center q-pt-none">
-            <label class="text-heading text-bold">3ª Mensagem</label>
-            <div class="col-xs-3 col-sm-2 col-md-1">
-              <q-btn
-                round
-                flat
-                class="q-ml-sm"
-              >
-                <q-icon
-                  size="2em"
-                  name="mdi-emoticon-happy-outline"
-                />
-                <q-tooltip> Emoji </q-tooltip>
-                <q-menu
-                  anchor="top right"
-                  self="bottom middle"
-                  :offset="[5, 40]"
-                >
-                  <EmojiPicker
-                    :native="true"
-                    :hide-search="false"
-                    @select="v => onInsertSelectEmoji(v, 'message3')"
-                  />
-                </q-menu>
-              </q-btn>
-            </div>
-            <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
-              <textarea
-                ref="message3Ref"
-                style="min-height: 12.5vh; max-height: 12.5vh"
-                class="q-pa-sm bg-white full-width rounded-all"
-                placeholder="Digite a mensagem"
-                autogrow
-                dense
-                outlined
-                :class="{
-                  'bg-red-1': !!errors.message3
-                }"
-                v-model="message3"
-                v-bind="message3Props"
-              />
-              <q-btn
-                round
-                flat
-                dense
-              >
-                <q-icon
-                  size="2em"
-                  name="mdi-variable"
-                />
-                <q-tooltip> Variáveis </q-tooltip>
-                <q-menu touch-position>
-                  <q-list
-                    dense
-                    style="min-width: 100px"
-                  >
-                    <q-item
-                      v-for="variavel in variaveis"
-                      :key="variavel.label"
-                      clickable
-                      @click="onInsertSelectVariable(variavel.value, 'message3', 'message3')"
-                      v-close-popup
-                    >
-                      <q-item-section>{{ variavel.label }}</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
-            </div>
-          </div>
-        </div>
-        <div style="width: 500px">
-          <q-card
-            bordered
-            flat
-            class="full-width"
-          >
-            <div class="text-body1 text-bold q-pa-sm full-width text-center bg-grey-3">Visualização</div>
-            <q-card-section class="row justify-center">
-              <q-option-group
-                class="q-mb-sm"
-                inline
-                dense
-                v-model="messagemPreview"
-                :options="optRadio"
+              <q-select
+                rounded dense outlined
+                emit-value map-options
+                label="Enviar por"
                 color="primary"
+                v-model="sessionId"
+                v-bind="sessionIdProps"
+                :options="cSessions"
+                option-value="id"
+                option-label="name"
+                :error="!!errors.sessionId"
+                :error-message="errors.sessionId"
+                style="width: 220px"
               />
-              <cMolduraCelular
-                class="row justify-center"
-                :key="cKey"
-              >
-                <MensagemChat
-                  :isLineDate="false"
-                  size="8"
-                  class="full-width rounded-all"
-                  :mensagens="cMessages"
+              <q-input
+                rounded outlined dense
+                style="width: 140px"
+                v-model="delay"
+                v-bind="delayProps"
+                input-class="text-right"
+                suffix="seg"
+                label="Delay"
+                :error="!!errors.delay"
+                :error-message="errors.delay"
+              />
+              <q-select
+                outlined dense rounded
+                label="Status"
+                v-model="status"
+                v-bind="statusProps"
+                :options="[
+                  { label: 'Pendente', value: 'pending' },
+                  { label: 'Programada', value: 'scheduled' }
+                ]"
+                :error="!!errors.status"
+                :error-message="errors.status"
+                style="width: 180px"
+              />
+            </div>
+          </div>
+
+          <!-- Mensagens e Preview -->
+          <div class="col-12 col-md-7">
+            <div class="column q-gutter-y-md">
+              <CampaignMessageInput
+                label="1ª Mensagem"
+                v-model="message1"
+                v-model:media="media1"
+                :variaveis="variaveis"
+                :error="!!errors.message1"
+                :error-message="errors.message1"
+              />
+              <CampaignMessageInput
+                label="2ª Mensagem"
+                v-model="message2"
+                v-model:media="media2"
+                :variaveis="variaveis"
+                :error="!!errors.message2"
+                :error-message="errors.message2"
+              />
+              <CampaignMessageInput
+                label="3ª Mensagem"
+                v-model="message3"
+                v-model:media="media3"
+                :variaveis="variaveis"
+                :error="!!errors.message3"
+                :error-message="errors.message3"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-5">
+            <q-card
+              flat bordered
+              class="full-width glass-premium shadow-premium border-glass no-shadow"
+              style="min-height: 500px"
+            >
+              <q-card-section class="column items-center">
+                <q-option-group
+                  class="q-mb-md"
+                  inline dense
+                  v-model="messagemPreview"
+                  :options="optRadio"
+                  color="primary"
                 />
-              </cMolduraCelular>
-            </q-card-section>
-          </q-card>
+                <cMolduraCelular :key="cKey" style="transform: scale(1.0); transform-origin: top center; margin-top: 5px;">
+                  <MensagemChat
+                    :isLineDate="false"
+                    size="8"
+                    class="full-width"
+                    :mensagens="cMessages"
+                  />
+                </cMolduraCelular>
+              </q-card-section>
+            </q-card>
+          </div>
         </div>
       </q-card-section>
-      <q-card-section>
-        <div class="row justify-center">
-          <q-btn
-            label="Cancelar"
-            color="negative"
-            v-close-popup
-            class="q-mr-md"
-            rounded
-          />
-          <q-btn
-            rounded
-            label="Salvar"
-            color="positive"
-            icon="save"
-            @click="handleCampanha"
-          />
-        </div>
-      </q-card-section>
+
+      <!-- Rodapé Fixo -->
+      <q-card-actions align="center" class="q-pa-md bg-transparent">
+        <q-btn
+          label="Cancelar"
+          color="negative"
+          v-close-popup
+          class="q-px-lg"
+          rounded
+          outline
+        />
+        <q-btn
+          rounded
+          label="Salvar Campanha"
+          color="positive"
+          icon="save"
+          class="q-px-xl shadow-premium"
+          @click="handleCampanha"
+          :loading="loading"
+        />
+      </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
@@ -405,8 +168,6 @@
 import { toTypedSchema } from '@vee-validate/zod'
 import { parseISO, startOfDay } from 'date-fns'
 import { notificarErro } from 'src/utils/helpersNotifications'
-import EmojiPicker from 'vue3-emoji-picker'
-import 'vue3-emoji-picker/css'
 import { z } from 'zod'
 
 const props = defineProps({
@@ -447,9 +208,6 @@ const optRadio = [
 const messagemPreview = ref('message1')
 const loading = ref(false)
 const arquivos = ref([])
-const message1Ref = ref(null)
-const message2Ref = ref(null)
-const message3Ref = ref(null)
 
 const isValidDate = dateString => {
   const date = parseISO(dateString)
@@ -463,13 +221,16 @@ const validationSchema = toTypedSchema(
     message1: z.string().min(1, 'Obrigatório'),
     message2: z.string().min(1, 'Obrigatório'),
     message3: z.string().min(1, 'Obrigatório'),
-    sessionId: z.any().refine(val => !!val, 'Obrigatório'), // Adjust based on sessionId type
+    sessionId: z.any().refine(val => !!val, 'Obrigatório'),
     delay: z.coerce.number().min(61, 'Deve ser no mínimo 61'),
-    status: z.string().min(1, 'Obrigatório')
+    status: z.string().min(1, 'Obrigatório'),
+    media1: z.any().nullable().optional(),
+    media2: z.any().nullable().optional(),
+    media3: z.any().nullable().optional()
   })
 )
 
-const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
+const { handleSubmit, errors, defineField, setValues, resetForm, values: formValues } = useForm({
   validationSchema
 })
 
@@ -481,6 +242,9 @@ const [message3, message3Props] = defineField('message3')
 const [sessionId, sessionIdProps] = defineField('sessionId')
 const [delay, delayProps] = defineField('delay')
 const [status, statusProps] = defineField('status')
+const [media1, media1Props] = defineField('media1')
+const [media2, media2Props] = defineField('media2')
+const [media3, media3Props] = defineField('media3')
 
 // State for non-form fields matching exact previous behavior
 const campanhaState = reactive({
@@ -514,30 +278,41 @@ const cArquivoName = computed(() => {
 
 const cMessages = computed(() => {
   const messages = []
-  if (arquivos.value && arquivos.value.type) {
-    const blob = new Blob([arquivos.value], { type: arquivos.value.type })
-    messages.push({
-      ...messageTemplate,
-      id: 'mediaUrl',
-      mediaUrl: window.URL.createObjectURL(blob),
-      body: arquivos.value.name,
-      mediaType: arquivos.value.type.substr(0, arquivos.value.type.indexOf('/'))
-    })
-  } else if (campanhaState.mediaUrl) {
-    messages.push({
-      ...messageTemplate,
-      id: 'mediaUrl',
-      mediaUrl: campanhaState.mediaUrl,
-      body: '',
-      mediaType: 'chat'
-    })
+  const el = messagemPreview.value
+  let currentMedia = null
+  let bodyValue = ''
+
+  if (el === 'message1') {
+    currentMedia = media1.value
+    bodyValue = message1.value
+  } else if (el === 'message2') {
+    currentMedia = media2.value
+    bodyValue = message2.value
+  } else if (el === 'message3') {
+    currentMedia = media3.value
+    bodyValue = message3.value
   }
 
-  const el = messagemPreview.value
-  let bodyValue = ''
-  if (el === 'message1') bodyValue = message1.value
-  if (el === 'message2') bodyValue = message2.value
-  if (el === 'message3') bodyValue = message3.value
+  if (currentMedia) {
+    if (currentMedia instanceof File) {
+      const blob = new Blob([currentMedia], { type: currentMedia.type })
+      messages.push({
+        ...messageTemplate,
+        id: 'mediaUrl',
+        mediaUrl: window.URL.createObjectURL(blob),
+        body: currentMedia.name,
+        mediaType: currentMedia.type.split('/')[0]
+      })
+    } else if (typeof currentMedia === 'string') {
+      messages.push({
+        ...messageTemplate,
+        id: 'mediaUrl',
+        mediaUrl: currentMedia,
+        body: '',
+        mediaType: 'chat'
+      })
+    }
+  }
 
   if (bodyValue) {
     messages.push({
@@ -569,62 +344,7 @@ const messageTemplate = {
   quotedMsg: null
 }
 
-const onInsertSelectVariable = (variable, textAreaRefName, fieldName) => {
-  const refs = {
-    message1: message1Ref,
-    message2: message2Ref,
-    message3: message3Ref
-  }
-  const tArea = refs[textAreaRefName].value
-  if (!tArea || !variable) return
-
-  const startPos = tArea.selectionStart
-  const endPos = tArea.selectionEnd
-  const originalText = tArea.value
-
-  const newText = originalText.substring(0, startPos) + variable + originalText.substring(endPos)
-
-  const fieldSetters = {
-    message1: v => (message1.value = v),
-    message2: v => (message2.value = v),
-    message3: v => (message3.value = v)
-  }
-  fieldSetters[fieldName](newText)
-
-  nextTick(() => {
-    const newCursorPos = startPos + variable.length
-    tArea.setSelectionRange(newCursorPos, newCursorPos)
-    tArea.focus()
-  })
-}
-
-const onInsertSelectEmoji = (emoji, textAreaRefName) => {
-  const refs = {
-    message1: message1Ref,
-    message2: message2Ref,
-    message3: message3Ref
-  }
-  const tArea = refs[textAreaRefName].value
-  if (!tArea || !emoji.i) return
-
-  const startPos = tArea.selectionStart
-  const endPos = tArea.selectionEnd
-  const tmpStr = tArea.value
-
-  const newText = tmpStr.substring(0, startPos) + emoji.i + tmpStr.substring(endPos)
-
-  const fieldSetters = {
-    message1: v => (message1.value = v),
-    message2: v => (message2.value = v),
-    message3: v => (message3.value = v)
-  }
-  fieldSetters[textAreaRefName](newText)
-
-  nextTick(() => {
-    tArea.selectionStart = tArea.selectionEnd = startPos + emoji.i.length
-    tArea.focus()
-  })
-}
+// Redundant functions removed (moved to CampaignMessageInput)
 
 const resetarCampanha = () => {
   resetForm()
@@ -640,7 +360,10 @@ const resetarCampanha = () => {
     message3: '',
     sessionId: null,
     delay: 61,
-    status: 'pending'
+    status: 'pending',
+    media1: null,
+    media2: null,
+    media3: null
   })
 }
 
@@ -653,7 +376,6 @@ const fecharModal = () => {
 const abrirModal = () => {
   if (props.campanhaEdicao.id) {
     campanhaState.id = props.campanhaEdicao.id
-    campanhaState.mediaUrl = props.campanhaEdicao.mediaUrl
     setValues({
       name: props.campanhaEdicao.name,
       start: props.campanhaEdicao.start,
@@ -661,8 +383,11 @@ const abrirModal = () => {
       message2: props.campanhaEdicao.message2,
       message3: props.campanhaEdicao.message3,
       sessionId: props.campanhaEdicao.sessionId,
-      delay: props.campanhaEdicao.delay || 10, // Adjust default if needed
-      status: props.campanhaEdicao.status
+      delay: props.campanhaEdicao.delay || 10,
+      status: props.campanhaEdicao.status,
+      media1: props.campanhaEdicao.mediaUrl,
+      media2: props.campanhaEdicao.mediaUrl2,
+      media3: props.campanhaEdicao.mediaUrl3
     })
   } else {
     resetarCampanha()
@@ -700,23 +425,31 @@ const handleCampanha = handleSubmit(async values => {
   try {
     loading.value = true
     const medias = new FormData()
-    // Append form values
-    Object.keys(values).forEach(key => {
-      if (values[key] !== null && values[key] !== undefined) {
-        medias.append(key, values[key])
+    // Append form values (everything except media files first)
+    const dataToSend = { ...values }
+    delete dataToSend.media1
+    delete dataToSend.media2
+    delete dataToSend.media3
+
+    Object.keys(dataToSend).forEach(key => {
+      if (dataToSend[key] !== null && dataToSend[key] !== undefined) {
+        medias.append(key, dataToSend[key])
       }
     })
-    // Append extra state if needed
+
     if (campanhaState.id) {
       medias.append('id', campanhaState.id)
     }
-    if (campanhaState.mediaUrl) {
-      medias.append('mediaUrl', campanhaState.mediaUrl)
-    }
 
-    if (arquivos.value && !Array.isArray(arquivos.value)) {
-      medias.append('medias', arquivos.value)
-    }
+    // Attach media files in order for the backend 'medias' array
+    if (values.media1 instanceof File) medias.append('medias', values.media1)
+    if (values.media2 instanceof File) medias.append('medias', values.media2)
+    if (values.media3 instanceof File) medias.append('medias', values.media3)
+
+    // Handle existing media URLs (strings) to avoid losing them
+    if (typeof values.media1 === 'string') medias.append('mediaUrl', values.media1)
+    if (typeof values.media2 === 'string') medias.append('mediaUrl2', values.media2)
+    if (typeof values.media3 === 'string') medias.append('mediaUrl3', values.media3)
 
     if (campanhaState.id) {
       const data = await alterarCampanha(medias)

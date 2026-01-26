@@ -1,5 +1,5 @@
 <template>
-  <div style="width: 450px">
+  <div class="flex flex-center">
     <div class="main">
       <div class="inner">
         <div class="top-bar">

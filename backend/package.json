@@ -16,7 +16,7 @@
     "pretest": "NODE_ENV=test sequelize db:migrate && NODE_ENV=test sequelize db:seed:all",
     "test": "NODE_ENV=test jest",
     "posttest": "NODE_ENV=test sequelize db:migrate:undo:all",
-    "db:migrate": "rm -Rf dist && npm run build && npx sequelize db:migrate",
+    "db:migrate": "npx sequelize db:migrate",
     "db:seed": "npx sequelize db:seed:all"
   },
   "engines": {

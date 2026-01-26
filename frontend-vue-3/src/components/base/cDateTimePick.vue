@@ -31,7 +31,16 @@
               today-btn
               mask="DD/MM/YYYY HH:mm"
               @update:model-value="emitDate"
-            />
+            >
+              <div class="row items-center justify-end">
+                <q-btn
+                  v-close-popup
+                  label="OK"
+                  color="primary"
+                  flat
+                />
+              </div>
+            </q-date>
           </q-popup-proxy>
         </q-icon>
       </template>
@@ -54,7 +63,7 @@
               <div class="row items-center justify-end">
                 <q-btn
                   v-close-popup
-                  label="Close"
+                  label="OK"
                   color="primary"
                   flat
                 />
@@ -78,6 +87,8 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { parse, format, isValid, parseISO } from 'date-fns'
 
 defineOptions({
   inheritAttrs: false
@@ -116,7 +127,7 @@ const cDisplayValue = computed(() => {
       return format(date, 'dd/MM/yyyy HH:mm')
     }
   } catch (e) {
-    // silent
+    console.error('Erro ao formatar data para exibição:', e)
   }
   return ''
 })
@@ -153,8 +164,18 @@ const handleInput = val => {
 
 const emitDate = value => {
   if (!value) return
-  const parseDate = parse(value, 'dd/MM/yyyy HH:mm', new Date())
-  emit('update:modelValue', format(parseDate, 'yyyy-MM-dd HH:mm'))
+  try {
+    // O Quasar QDate/QTime emite no formato da máscara definida (DD/MM/YYYY HH:mm)
+    const parseDate = parse(value, 'dd/MM/yyyy HH:mm', new Date())
+    if (isValid(parseDate)) {
+      emit('update:modelValue', format(parseDate, 'yyyy-MM-dd HH:mm'))
+    } else {
+      // Se falhar o parse acima, tenta parse direto (fallback)
+      emit('update:modelValue', value)
+    }
+  } catch (e) {
+    console.error('Erro ao emitir data:', e)
+  }
 }
 </script>
 
