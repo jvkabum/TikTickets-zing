@@ -12,6 +12,7 @@
     "watch": "tsc -w",
     "start": "nodemon --inspect  dist/server.js",
     "dev": "ts-node-dev --inspect=9229 --respawn --transpile-only --ignore node_modules src/server.ts",
+    "copy-templates-files": "echo 'No templates to copy'",
     "pretest": "NODE_ENV=test sequelize db:migrate && NODE_ENV=test sequelize db:seed:all",
     "test": "NODE_ENV=test jest",
     "posttest": "NODE_ENV=test sequelize db:migrate:undo:all",

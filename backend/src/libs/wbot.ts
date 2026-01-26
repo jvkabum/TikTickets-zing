@@ -633,7 +633,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
         }),
         takeoverOnConflict: true,
         puppeteer: {
-          executablePath: process.env.CHROME_BIN || undefined,
+          executablePath: process.env.CHROME_BIN || "/usr/bin/google-chrome-stable",
           args: args,
           defaultViewport: null,
           timeout: 120000,
