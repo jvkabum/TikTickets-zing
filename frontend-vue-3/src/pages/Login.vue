@@ -1,13 +1,14 @@
 <template>
-  <div class="q-pa-md bg-video">
+  <div class="bg-video">
     <video
       autoplay
-      muted
       loop
+      muted
+      playsinline
       class="video-background"
     >
       <source
-        src="../assets/110694.mp4"
+        src="/110694.mp4"
         type="video/mp4"
       />
     </video>
@@ -180,7 +181,7 @@ const clearCache = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  z-index: -1;
+  z-index: 0;
 }
 
 .overlay {
@@ -196,6 +197,11 @@ const clearCache = () => {
 .q-layout {
   position: relative;
   z-index: 2;
+  background: transparent !important;
+}
+
+.q-page-container {
+  background: transparent !important;
 }
 
 .card {
@@ -203,5 +209,11 @@ const clearCache = () => {
   max-width: 430px;
   background-color: rgba(255, 255, 255, 0.7);
   z-index: 3;
+}
+
+/* FIX: Override global q-page gradient animation that covers the video */
+.q-page {
+  background: transparent !important;
+  animation: none !important;
 }
 </style>
