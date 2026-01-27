@@ -11,36 +11,29 @@
         <q-file
           style="display: none"
           :loading="loading"
-          rounded
-          label="Mídia composição mensagem"
           ref="PickerFileMessage"
           v-model="file"
-          class="col-grow"
-          bg-color="blue-grey-1"
-          input-style="max-height: 30vh"
-          outlined
-          clearable
-          autogrow
-          append
           :max-files="1"
-          counter
           :max-file-size="element.data.maxSize"
-          :max-total-size="element.data.maxSize"
           :accept="element.data.supportedTypes?.join(', ')"
           @rejected="onRejectedFiles"
           @update:model-value="getMediaUrl"
         />
-        <q-btn
-          v-if="!element.data.type"
-          icon="mdi-file-plus-outline"
-          @click="PickerFileMessage.pickFiles()"
-          round
-          flat
-          size="lg"
-          class="bg-grey-3 z-max q-pa-lg absolute-center"
-        >
-          <q-tooltip> Clique para adicionar um arquivo (máx. 10MB) </q-tooltip>
-        </q-btn>
+
+        <div v-if="!cMediaUrl" class="column items-center justify-center q-pa-lg">
+          <q-btn
+            icon="add_circle"
+            @click="PickerFileMessage.pickFiles()"
+            round
+            flat
+            size="32px"
+            color="primary"
+            class="bg-soft-input"
+          >
+            <q-tooltip>Anexar Mídia (Imagem, Vídeo, Áudio ou PDF)</q-tooltip>
+          </q-btn>
+          <div class="text-caption text-grey-7 q-mt-sm">Clique para adicionar um arquivo</div>
+        </div>
 
         <div class="text-center full-width hide-scrollbar no-scroll">
           <!-- Visualização de PDF -->
@@ -141,28 +134,28 @@
         <!-- Botões de ação -->
         <div
           v-if="cMediaUrl"
-          class="row justify-end q-mt-sm"
+          class="row justify-end q-mt-md q-gutter-x-sm"
         >
           <q-btn
             flat
-            class="bg-padrao btn-rounded q-ma-sm"
+            rounded
+            dense
             color="primary"
-            no-caps
-            icon="mdi-image-edit-outline"
+            label="Substituir"
+            icon="edit"
+            class="bg-soft-input"
             @click="PickerFileMessage.pickFiles()"
-          >
-            <q-tooltip> Substituir Arquivo </q-tooltip>
-          </q-btn>
+          />
           <q-btn
             flat
-            class="bg-padrao btn-rounded q-ma-sm"
+            rounded
+            dense
             color="negative"
-            no-caps
-            icon="mdi-delete-outline"
+            label="Remover"
+            icon="delete"
+            class="bg-soft-input"
             @click="clearFile"
-          >
-            <q-tooltip> Remover Arquivo </q-tooltip>
-          </q-btn>
+          />
         </div>
 
         <VueEasyLightbox
@@ -283,5 +276,15 @@ const clearFile = () => {
 :deep(.q-img__content > div) {
   padding: 0 !important;
   background: none;
+}
+
+.bg-soft-input {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.body--dark {
+  .bg-soft-input {
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 </style>

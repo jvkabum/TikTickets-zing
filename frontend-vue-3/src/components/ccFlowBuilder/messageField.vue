@@ -7,21 +7,23 @@
       <q-card-section class="q-pa-none">
         <div class="row full-width items-start no-wrap q-pa-sm">
           <!-- Coluna de Ferramentas -->
-          <div class="column items-center q-gutter-y-sm q-mr-sm debug-red-border" style="width: 44px">
-            <q-btn
+          <div class="column items-center q-gutter-y-sm q-mr-sm" style="width: 44px">
+            <EmojiPickerComponent
+              icon="face"
+              height="300px"
+              @select="onInsertSelectEmoji"
               flat
               round
               color="primary"
-              label="E"
-              @click="onInsertSelectEmoji"
             />
             <q-btn
-              flat
               round
+              flat
               color="grey-8"
-              label="V"
-              class="hover-bg-soft clean-btn"
+              size="13px"
+              class="hover-bg-soft tool-btn-no-text"
             >
+              <q-icon name="functions" size="20px" />
               <q-tooltip>Variáveis</q-tooltip>
               <q-menu touch-position transition-show="scale" transition-hide="scale">
                 <q-list dense style="min-width: 156px" class="bg-white">
@@ -34,7 +36,7 @@
                     @click="onInsertSelectVariable(variavel.value)"
                   >
                     <q-item-section avatar>
-                      <q-icon name="add" size="xs" color="primary" />
+                      <q-icon name="add_circle" size="xs" color="primary" />
                     </q-item-section>
                     <q-item-section>{{ variavel.label }}</q-item-section>
                   </q-item>
@@ -334,14 +336,15 @@ const limparTodasOpcoes = () => {
   }
 }
 
-.debug-red-border {
-  border: 1px solid rgba(255, 0, 0, 0.3);
-}
-
-.clean-btn {
-  &::before, &::after {
-    content: none !important;
-    display: none !important;
+.tool-btn-no-text {
+  font-size: 0 !important;
+  color: transparent !important;
+  :deep(.q-btn__content) {
+    font-size: 0 !important;
+    i {
+      font-size: 20px !important;
+      color: inherit;
+    }
   }
 }
 

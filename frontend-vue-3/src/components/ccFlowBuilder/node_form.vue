@@ -53,7 +53,7 @@
                   <q-btn
                     flat
                     round
-                    icon="mdi-message-text-outline"
+                    icon="chat_bubble_outline"
                     color="primary"
                     @click="addMessage"
                   >
@@ -63,7 +63,7 @@
                   <q-btn
                     flat
                     round
-                    icon="mdi-file-document-outline"
+                    icon="description"
                     color="primary"
                     @click="addMediaField"
                   >
@@ -75,7 +75,7 @@
                   <q-btn
                     flat
                     round
-                    icon="mdi-eye-outline"
+                    icon="visibility"
                     color="grey-7"
                     @click="showPreview = true"
                   >
@@ -109,11 +109,11 @@
                             <q-btn
                               round
                               dense
-                              icon="mdi-arrow-up"
+                              icon="arrow_upward"
                               flat
                               color="positive"
                               size="sm"
-                              class="bg-grey-2 hover-lighten"
+                              class="bg-grey-2"
                               :disable="idx === 0"
                               @click="changePosition(node.interactions, idx, idx - 1)"
                             >
@@ -122,11 +122,11 @@
                             <q-btn
                               round
                               dense
-                              icon="mdi-arrow-down"
+                              icon="arrow_downward"
                               flat
                               color="grey-8"
                               size="sm"
-                              class="bg-grey-2 hover-lighten"
+                              class="bg-grey-2"
                               :disable="idx === node.interactions.length - 1"
                               @click="changePosition(node.interactions, idx, idx + 1)"
                             >
@@ -135,11 +135,11 @@
                             <q-btn
                               round
                               dense
-                              icon="mdi-close"
+                              icon="close"
                               flat
                               color="negative"
                               size="sm"
-                              class="bg-grey-2 hover-lighten q-ml-sm"
+                              class="bg-grey-2 q-ml-sm"
                               @click="removeItem(element, idx + 1)"
                             >
                               <q-tooltip>Remover</q-tooltip>
@@ -556,9 +556,9 @@
 
     <!-- Modal de prévia das interações -->
     <q-dialog v-model="showPreview">
-      <q-card style="width: 400px">
-        <q-card-section class="row items-center">
-          <div class="text-h6">Prévia das Interações</div>
+      <q-card style="width: 450px; max-width: 90vw; border-radius: 16px" class="bg-surface shadow-24">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6 text-weight-bold text-primary">⚡ Prévia do Fluxo</div>
           <q-space />
           <q-btn
             icon="close"
@@ -566,11 +566,12 @@
             round
             dense
             v-close-popup
+            color="grey-7"
           />
         </q-card-section>
 
         <q-card-section class="q-pa-md">
-          <div class="chat-preview">
+          <div class="chat-preview border-soft">
             <template
               v-for="interaction in node.interactions"
               :key="interaction.id"
@@ -578,19 +579,21 @@
               <!-- Mensagem de texto -->
               <div
                 v-if="interaction.type === 'MessageField'"
-                class="chat-message"
+                class="chat-message animate-fade"
               >
-                <div class="message-content">
-                  <div class="message-text">{{ interaction.data.message }}</div>
+                <div class="message-content shadow-1">
+                  <div class="message-text">{{ interaction.data.message || '...' }}</div>
                   <div
                     v-if="interaction.data.options && interaction.data.options.length > 0"
-                    class="message-options"
+                    class="message-options q-gutter-xs q-mt-sm"
                   >
                     <q-chip
                       v-for="(option, optIdx) in interaction.data.options"
                       :key="optIdx"
                       dense
-                      class="q-ma-xs"
+                      outline
+                      color="primary"
+                      class="text-weight-medium bg-white"
                     >
                       {{ option }}
                     </q-chip>
@@ -601,43 +604,46 @@
               <!-- Mídia -->
               <div
                 v-if="interaction.type === 'MediaField'"
-                class="chat-message"
+                class="chat-message animate-fade"
               >
-                <div class="message-content">
+                <div class="message-content media-container shadow-1">
                   <!-- Imagem -->
                   <q-img
-                    v-if="interaction.data.type.indexOf('image') !== -1"
+                    v-if="interaction.data.type?.indexOf('image') !== -1"
                     :src="interaction.data.mediaUrl"
-                    style="max-height: 200px; border-radius: 8px"
+                    style="max-height: 250px; border-radius: 8px"
                     fit="contain"
+                    class="bg-grey-1"
                   />
 
                   <!-- Vídeo -->
                   <video
-                    v-if="interaction.data.type.indexOf('video') !== -1"
+                    v-else-if="interaction.data.type?.indexOf('video') !== -1"
                     :src="interaction.data.mediaUrl"
                     controls
-                    style="width: 100%; max-height: 200px; border-radius: 8px"
+                    style="width: 100%; max-height: 250px; border-radius: 8px"
+                    class="bg-black"
                   />
 
                   <!-- Áudio -->
                   <audio
-                    v-if="interaction.data.type.indexOf('audio') !== -1"
+                    v-else-if="interaction.data.type?.indexOf('audio') !== -1"
                     :src="interaction.data.mediaUrl"
                     controls
-                    class="full-width"
+                    class="full-width q-mt-xs"
                   />
 
-                  <!-- Outros arquivos -->
+                  <!-- Outros arquivos (PDF, etc) -->
                   <div
-                    v-if="!['image', 'video', 'audio'].some(type => interaction.data.type.indexOf(type) !== -1)"
-                    class="file-preview"
+                    v-else-if="interaction.data.type"
+                    class="file-preview-mini row items-center q-pa-sm bg-grey-2 rounded-borders"
                   >
                     <q-icon
                       :name="getFileIcon(interaction.data.name)"
-                      size="48px"
+                      size="32px"
+                      color="primary"
                     />
-                    <div class="text-caption q-mt-sm">
+                    <div class="text-caption q-ml-sm text-weight-bold truncate" style="max-width: 200px">
                       {{ interaction.data.name }}
                     </div>
                   </div>
@@ -645,13 +651,18 @@
                   <!-- Legenda -->
                   <div
                     v-if="interaction.data.caption"
-                    class="message-caption"
+                    class="message-caption q-mt-xs text-grey-8"
                   >
                     {{ interaction.data.caption }}
                   </div>
                 </div>
               </div>
             </template>
+            
+            <div v-if="!node.interactions?.length" class="text-center q-pa-xl text-grey-5">
+              <q-icon name="chat_bubble_outline" size="48px" />
+              <div class="text-subtitle1 q-mt-sm">Nenhuma interação adicionada</div>
+            </div>
           </div>
         </q-card-section>
       </q-card>
@@ -852,18 +863,18 @@ const changePosition = (arr, from, to) => {
 }
 
 const getFileIcon = name => {
-  if (!name) return 'mdi-file-outline'
+  if (!name) return 'description'
   const ext = name.split('.').pop().toLowerCase()
-  const icons = {
-    pdf: 'mdi-file-pdf-outline',
-    doc: 'mdi-file-word-outline',
-    docx: 'mdi-file-word-outline',
-    xls: 'mdi-file-excel-outline',
-    xlsx: 'mdi-file-excel-outline',
-    zip: 'mdi-file-zip-outline',
-    rar: 'mdi-file-zip-outline'
+  const map = {
+    pdf: 'picture_as_pdf',
+    doc: 'description',
+    docx: 'description',
+    xls: 'table_chart',
+    xlsx: 'table_chart',
+    zip: 'archive',
+    rar: 'archive'
   }
-  return icons[ext] || 'mdi-file-outline'
+  return map[ext] || 'insert_drive_file'
 }
 
 const extrairOpcoesAutomaticamente = () => {
@@ -998,6 +1009,7 @@ const onInsertSelectEmojiNotOptionsSelectMessage = emoji => {
   )
 }
 
+
 onMounted(() => console.log('node_form montou', node.value))
 </script>
 
@@ -1015,87 +1027,80 @@ onMounted(() => console.log('node_form montou', node.value))
 }
 
 .chat-preview {
-  background: #f5f5f5;
-  border-radius: 8px;
+  background: #f0f2f5;
+  border-radius: 12px;
   padding: 16px;
-  max-height: 60vh;
+  max-height: 65vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-message {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   display: flex;
   justify-content: flex-start;
 }
 
+.animate-fade {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .message-content {
-  max-width: 80%;
+  max-width: 85%;
   background: white;
-  border-radius: 12px;
-  padding: 8px 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border-radius: 0 12px 12px 12px;
+  padding: 10px 14px;
+  position: relative;
+  
+  &.media-container {
+    padding: 6px;
+    background: white;
+  }
 }
 
 .message-text {
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.message-options {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #1c1e21;
 }
 
 .message-caption {
-  margin-top: 4px;
-  font-size: 0.9em;
-  color: #666;
+  font-size: 0.85rem;
+  padding: 4px 6px;
+  line-height: 1.2;
 }
 
-.file-preview {
-  text-align: center;
-  padding: 16px;
-  background: #f9f9f9;
-  border-radius: 8px;
+.border-soft {
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.connection-preview {
+.bg-surface {
   background: white;
-  border-radius: 8px;
-  padding: 16px;
-  max-height: 200px;
-  overflow-y: auto;
 }
 
-.preview-title {
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-.preview-connection {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.preview-node {
-  flex: 1;
-  text-align: left;
-}
-
-.preview-arrow {
-  flex: 0;
-  text-align: right;
-}
-
-.preview-label {
-  flex: 1;
-  text-align: right;
-}
-
-.empty-label {
-  color: #666;
+body.body--dark {
+  .chat-preview {
+    background: #1a1a1b;
+  }
+  .bg-surface {
+    background: #242526;
+  }
+  .message-content {
+    background: #3a3b3c;
+    color: white;
+    &.media-container { background: #3a3b3c; }
+  }
+  .message-text { color: #e4e6eb; }
+  .message-caption { color: #b0b3b8; }
+  .border-soft { border-color: rgba(255, 255, 255, 0.1); }
 }
 </style>
 
