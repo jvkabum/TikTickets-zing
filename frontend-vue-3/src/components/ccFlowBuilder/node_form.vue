@@ -1,21 +1,5 @@
 <template>
   <div class="q-px-md q-py-sm">
-    <div class="row justify-between col q-mb-sm">
-      <q-btn
-        rounded
-        color="primary"
-        icon="mdi-plus"
-        label="Nova Etapa"
-        @click="addNode"
-      />
-      <q-btn
-        rounded
-        color="positive"
-        icon="mdi-content-save-outline"
-        label="Salvar"
-        @click="emit('saveFlow')"
-      />
-    </div>
     <q-card
       bordered
       flat
@@ -65,37 +49,39 @@
             >
               <div class="text-center">
                 <div class="row q-mt-sm col justify-center">
+                <div class="row q-mt-sm justify-center items-center q-gutter-x-sm bg-grey-2 q-pa-xs rounded-all shadow-1" style="display: inline-flex">
                   <q-btn
                     flat
+                    round
                     icon="mdi-message-text-outline"
-                    class="bg-padrao btn-rounded q-mx-xs"
-                    :color="$q.dark.isActive ? 'white' : ''"
+                    color="primary"
                     @click="addMessage"
                   >
-                    <q-tooltip content-class="text-bold"> Enviar Mensagem </q-tooltip>
+                    <q-tooltip content-class="text-bold">Enviar Mensagem</q-tooltip>
                   </q-btn>
 
                   <q-btn
-                    @click="addMediaField"
                     flat
+                    round
                     icon="mdi-file-document-outline"
-                    class="bg-padrao btn-rounded q-mx-xs"
-                    :color="$q.dark.isActive ? 'white' : ''"
+                    color="primary"
+                    @click="addMediaField"
                   >
-                    <q-tooltip content-class="text-bold">
-                      Enviar documentos, vídeo, aúdio e outros arquivos.
-                    </q-tooltip>
+                    <q-tooltip content-class="text-bold">Enviar Mídia</q-tooltip>
                   </q-btn>
 
+                  <q-separator vertical inset />
+
                   <q-btn
-                    @click="showPreview = true"
                     flat
+                    round
                     icon="mdi-eye-outline"
-                    class="bg-padrao btn-rounded q-mx-xs"
-                    :color="$q.dark.isActive ? 'white' : ''"
+                    color="grey-7"
+                    @click="showPreview = true"
                   >
-                    <q-tooltip content-class="text-bold"> Visualizar interações </q-tooltip>
+                    <q-tooltip content-class="text-bold">Visualizar</q-tooltip>
                   </q-btn>
+                </div>
                 </div>
                 <div
                   class="row bg-grey-3 q-pa-sm q-my-md justify-center scroll"
@@ -107,54 +93,61 @@
                       :key="element.id"
                     >
                       <div class="q-my-md">
-                        <div class="bg-white rounded-all full-width row col justify-between">
-                          <q-btn
-                            round
-                            dense
-                            disable
-                            :color="$q.dark.isActive ? 'grey-3' : 'black'"
-                            :label="idx + 1"
-                            style="z-index: 999"
-                          />
-                          <q-space />
-                          <q-btn
-                            round
-                            dense
-                            icon="mdi-arrow-up-bold"
-                            flat
-                            color="positive"
-                            class="bg-padrao q-mr-md"
-                            style="z-index: 999"
-                            :disable="idx === 0"
-                            @click="changePosition(node.interactions, idx, idx - 1)"
-                          >
-                            <q-tooltip> Reordenar </q-tooltip>
-                          </q-btn>
-                          <q-btn
-                            round
-                            dense
-                            icon="mdi-arrow-down-bold"
-                            flat
-                            :color="$q.dark.isActive ? 'grey-3' : 'black'"
-                            class="bg-padrao q-mr-md"
-                            style="z-index: 999"
-                            @click="changePosition(node.interactions, idx, idx + 1)"
-                          >
-                            <q-tooltip> Reordenar </q-tooltip>
-                          </q-btn>
-                          <q-btn
-                            round
-                            dense
-                            icon="mdi-close"
-                            flat
-                            color="negative"
-                            class="bg-padrao"
-                            style="z-index: 999"
-                            @click="removeItem(element, idx + 1)"
-                          />
+                        <div class="header-interacao full-width row items-center justify-between q-pa-xs q-mb-xs">
+                          <div class="row items-center q-gutter-x-sm">
+                            <q-avatar
+                              size="28px"
+                              :color="$q.dark.isActive ? 'grey-9' : 'grey-10'"
+                              text-color="white"
+                              class="text-weight-bold shadow-1"
+                            >
+                              {{ idx + 1 }}
+                            </q-avatar>
+                          </div>
+                          
+                          <div class="row items-center q-gutter-x-xs">
+                            <q-btn
+                              round
+                              dense
+                              icon="mdi-arrow-up"
+                              flat
+                              color="positive"
+                              size="sm"
+                              class="bg-grey-2 hover-lighten"
+                              :disable="idx === 0"
+                              @click="changePosition(node.interactions, idx, idx - 1)"
+                            >
+                              <q-tooltip>Subir</q-tooltip>
+                            </q-btn>
+                            <q-btn
+                              round
+                              dense
+                              icon="mdi-arrow-down"
+                              flat
+                              color="grey-8"
+                              size="sm"
+                              class="bg-grey-2 hover-lighten"
+                              :disable="idx === node.interactions.length - 1"
+                              @click="changePosition(node.interactions, idx, idx + 1)"
+                            >
+                              <q-tooltip>Descer</q-tooltip>
+                            </q-btn>
+                            <q-btn
+                              round
+                              dense
+                              icon="mdi-close"
+                              flat
+                              color="negative"
+                              size="sm"
+                              class="bg-grey-2 hover-lighten q-ml-sm"
+                              @click="removeItem(element, idx + 1)"
+                            >
+                              <q-tooltip>Remover</q-tooltip>
+                            </q-btn>
+                          </div>
                         </div>
                         <component
-                          :is="element.type"
+                          :is="interactionComponents[element.type]"
                           :element="element"
                         >
                         </component>
@@ -670,6 +663,14 @@
 import { useQuasar, uid } from 'quasar'
 import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
 import useEmoji from 'src/composables/useEmoji'
+import MessageField from './messageField.vue'
+import MediaField from './mediaField.vue'
+
+// Registrar componentes para uso dinâmico via :is
+const interactionComponents = {
+  MessageField,
+  MediaField
+}
 
 const props = defineProps({
   nodesList: { type: Object, default: () => ({ nodeList: [], lineList: [] }) },
