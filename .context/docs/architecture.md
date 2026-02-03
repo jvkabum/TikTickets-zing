@@ -55,6 +55,14 @@ graph TD
     Services -->|Notify| Client
 ```
 
+### 6. Camada de Observabilidade (OpenTelemetry)
+- **Localização**: `backend/src/telemetry/` e `monitoring/`.
+- **Estratégia**: Enterprise Observability utilizando **OpenTelemetry (OTel)** como padrão único.
+- **Componentes**:
+  - **OTel SDK**: Instrumentação automática (HTTP, PG) e manual (Wbot spans).
+  - **Collector**: Atua como hub central recebendo dados via OLP e distribuindo para Jaeger (Traces), Prometheus (Metrics) e Loki (Logs).
+  - **Grafana**: Painel unificado para correlação de sinais (Ex: Ver log de erro a partir de um rastro de latência).
+
 ## Diretórios Chave
 - `backend/src/libs/`: Motores de infraestrutura (Socket, Queue, Wbot).
 - `backend/src/services/`: Lógica de negócio segmentada.
