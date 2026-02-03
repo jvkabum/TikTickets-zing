@@ -1,0 +1,199 @@
+# =============================================================================
+# Vector Configuration
+# TikTickets-zing - Infrastructure Log Collection
+# =============================================================================
+# Vector coleta logs de infraestrutura (containers, nginx, postgres, etc.)
+# e os envia para o Loki para correlação com logs da aplicação.
+# =============================================================================
+
+data_dir = "/var/lib/vector"
+
+# =============================================================================
+# SOURCES - Entrada de dados
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Internal Metrics - Métricas do próprio Vector
+# ---------------------------------------------------------------------------
+[sources.internal_metrics]
+type = "internal_metrics"
+
+# ---------------------------------------------------------------------------
+# Docker Logs - Logs de todos os containers
+# ---------------------------------------------------------------------------
+[sources.docker_logs]
+type = "docker_logs"
+exclude_containers = []
+include_containers = []
+
+# ---------------------------------------------------------------------------
+# Host Logs - Logs do sistema (journald)
+# ---------------------------------------------------------------------------
+# [sources.journald_logs]
+# type = "journald"
+# current_boot_only = true
+
+# ---------------------------------------------------------------------------
+# File Logs - Logs de arquivos específicos
+# ---------------------------------------------------------------------------
+[sources.nginx_logs]
+type = "file"
+include = ["/var/log/nginx/*.log"]
+ignore_older_secs = 86400
+
+[sources.postgres_logs]
+type = "file"
+include = ["/var/log/postgresql/*.log"]
+ignore_older_secs = 86400
+
+# =============================================================================
+# TRANSFORMS - Processamento de dados
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Parse Docker Logs
+# ---------------------------------------------------------------------------
+[transforms.parse_docker]
+type = "remap"
+inputs = ["docker_logs"]
+source = '''
+# Adiciona labels padrão
+.source = "docker"
+.job = "vector-docker"
+
+# Extrai informações do container
+.container_name = .container_name
+.container_id = .container_id
+
+# Tenta detectar nível de log
+if contains(string!(.message), "ERROR") || contains(string!(.message), "error") {
+  .level = "error"
+} else if contains(string!(.message), "WARN") || contains(string!(.message), "warn") {
+  .level = "warn"
+} else if contains(string!(.message), "DEBUG") || contains(string!(.message), "debug") {
+  .level = "debug"
+} else {
+  .level = "info"
+}
+
+# Tenta extrair trace_id se presente no log (formato JSON)
+if is_string(.message) {
+  parsed, err = parse_json(.message)
+  if err == null {
+    if exists(parsed.trace_id) {
+      .trace_id = parsed.trace_id
+    }
+    if exists(parsed.span_id) {
+      .span_id = parsed.span_id
+    }
+    if exists(parsed.tenant_id) {
+      .tenant_id = parsed.tenant_id
+    }
+  }
+}
+'''
+
+# ---------------------------------------------------------------------------
+# Parse Nginx Logs
+# ---------------------------------------------------------------------------
+[transforms.parse_nginx]
+type = "remap"
+inputs = ["nginx_logs"]
+source = '''
+.source = "nginx"
+.job = "vector-nginx"
+.level = "info"
+
+# Parse nginx access log format
+parsed, err = parse_regex(.message, r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<request>[^"]*)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"')
+if err == null {
+  .remote_addr = parsed.remote_addr
+  .status = to_int!(parsed.status)
+  .request = parsed.request
+  
+  # Mark errors
+  if .status >= 400 {
+    .level = "error"
+  } else if .status >= 300 {
+    .level = "warn"
+  }
+}
+'''
+
+# ---------------------------------------------------------------------------
+# Parse PostgreSQL Logs
+# ---------------------------------------------------------------------------
+[transforms.parse_postgres]
+type = "remap"
+inputs = ["postgres_logs"]
+source = '''
+.source = "postgres"
+.job = "vector-postgres"
+.level = "info"
+
+# Detect log level from PostgreSQL output
+if contains(string!(.message), "ERROR") {
+  .level = "error"
+} else if contains(string!(.message), "WARNING") {
+  .level = "warn"
+} else if contains(string!(.message), "LOG") {
+  .level = "info"
+}
+'''
+
+# ---------------------------------------------------------------------------
+# Filter - Remove logs de baixa prioridade
+# ---------------------------------------------------------------------------
+[transforms.filter_noise]
+type = "filter"
+inputs = ["parse_docker", "parse_nginx", "parse_postgres"]
+condition = '''
+# Remove health checks e logs muito frequentes
+!contains(string!(.message), "GET /health") &&
+!contains(string!(.message), "GET /ready") &&
+!contains(string!(.message), "healthcheck")
+'''
+
+# =============================================================================
+# SINKS - Saída de dados
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Loki Sink - Envio de logs para Loki
+# ---------------------------------------------------------------------------
+[sinks.loki]
+type = "loki"
+inputs = ["filter_noise"]
+endpoint = "http://loki:3100"
+encoding.codec = "json"
+out_of_order_action = "accept"
+
+# Labels para indexação no Loki
+labels.source = "{{ source }}"
+labels.job = "{{ job }}"
+labels.level = "{{ level }}"
+labels.container_name = "{{ container_name }}"
+
+# Healthcheck
+healthcheck.enabled = true
+
+# Batching para eficiência
+batch.max_bytes = 1048576
+batch.timeout_secs = 1
+
+# ---------------------------------------------------------------------------
+# Console Sink - Debug (comentar em produção)
+# ---------------------------------------------------------------------------
+# [sinks.console]
+# type = "console"
+# inputs = ["filter_noise"]
+# encoding.codec = "json"
+
+# =============================================================================
+# METRICS - Métricas internas do Vector
+# =============================================================================
+
+[sinks.prometheus_exporter]
+type = "prometheus_exporter"
+inputs = ["internal_metrics"]
+address = "0.0.0.0:9598"

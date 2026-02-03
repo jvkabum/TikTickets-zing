@@ -1,0 +1,77 @@
+# =============================================================================
+# Prometheus Configuration
+# TikTickets-zing - Metrics Backend
+# =============================================================================
+# IMPORTANTE: A aplicação NÃO deve enviar métricas diretamente ao Prometheus.
+# Todas as métricas devem passar pelo OpenTelemetry Collector.
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: tiktickets-production
+    replica: primary
+
+# Alertmanager configuration (opcional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Rule files (para alertas)
+# rule_files:
+#   - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus self-monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # OpenTelemetry Collector metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8888']
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # Loki metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # Jaeger metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14269']
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # Grafana metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # Vector metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'vector'
+    static_configs:
+      - targets: ['vector:9598']
+    metrics_path: /metrics
+
+# Remote write receiver (para OTel Collector enviar métricas)
+# Habilitado via flag --web.enable-remote-write-receiver

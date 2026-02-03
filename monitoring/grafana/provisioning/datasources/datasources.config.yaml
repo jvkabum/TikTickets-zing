@@ -1,0 +1,79 @@
+# =============================================================================
+# Grafana Datasources Configuration
+# TikTickets-zing - Auto-provisioned Datasources
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  # ---------------------------------------------------------------------------
+  # Prometheus - Métricas
+  # ---------------------------------------------------------------------------
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.50.0
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: jaeger
+          urlDisplayLabel: "Ver Trace no Jaeger"
+
+  # ---------------------------------------------------------------------------
+  # Loki - Logs
+  # ---------------------------------------------------------------------------
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      derivedFields:
+        - name: TraceID
+          matcherRegex: '"trace_id":"([a-f0-9]+)"'
+          url: '$${__value.raw}'
+          datasourceUid: jaeger
+          urlDisplayLabel: "Ver Trace no Jaeger"
+        - name: TraceID
+          matcherRegex: 'trace_id=([a-f0-9]+)'
+          url: '$${__value.raw}'
+          datasourceUid: jaeger
+          urlDisplayLabel: "Ver Trace no Jaeger"
+      maxLines: 1000
+
+  # ---------------------------------------------------------------------------
+  # Jaeger - Traces
+  # ---------------------------------------------------------------------------
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    uid: jaeger
+    url: http://jaeger:16686
+    editable: false
+    jsonData:
+      tracesToLogs:
+        datasourceUid: loki
+        tags: ["service.name", "tenant_id"]
+        mappedTags: [{key: "service.name", value: "service_name"}]
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
+        filterByTraceID: true
+        filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: prometheus
+        tags: [{key: "service.name", value: "service_name"}]
+        queries:
+          - name: "Request Rate"
+            query: 'sum(rate(http_server_request_duration_seconds_count{service_name="$${__tags.service_name}"}[5m]))'
+          - name: "Error Rate"
+            query: 'sum(rate(http_server_request_duration_seconds_count{service_name="$${__tags.service_name}", http_status_code=~"5.."}[5m]))'
+      nodeGraph:
+        enabled: true
+      serviceMap:
+        datasourceUid: prometheus

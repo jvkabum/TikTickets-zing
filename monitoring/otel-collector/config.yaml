@@ -1,0 +1,142 @@
+# =============================================================================
+# OpenTelemetry Collector Configuration
+# TikTickets-zing - Central Hub for Metrics, Logs & Traces
+# =============================================================================
+
+receivers:
+  # ---------------------------------------------------------------------------
+  # OTLP - Protocolo padrão para receber dados da aplicação (SDK)
+  # ---------------------------------------------------------------------------
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:*"
+            - "http://127.0.0.1:*"
+            - "https://*"
+          allowed_headers:
+            - "*"
+
+  # ---------------------------------------------------------------------------
+  # Prometheus - Recebe métricas dos outros componentes da stack
+  # ---------------------------------------------------------------------------
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 10s
+          static_configs:
+            - targets: ['0.0.0.0:8888']
+
+processors:
+  # Loteamento para eficiência no envio
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
+
+  # Proteção contra OOM (Out of Memory)
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1024
+    spike_limit_mib: 512
+
+  # Adiciona labels automáticos
+  attributes:
+    actions:
+      - key: deployment.environment
+        value: "development"
+        action: insert
+
+  # Filtro para dados sensíveis
+  filter:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.request.header.authorization"] != nil'
+
+  # Amostragem inteligente (Tail Sampling)
+  # Garante que erros e latências altas sejam sempre rastreados
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100
+    expected_new_traces_per_sec: 10
+    policies:
+      [
+        {
+          name: errors-policy,
+          type: status_code,
+          status_code: {status_codes: [ERROR]}
+        },
+        {
+          name: latency-policy,
+          type: latency,
+          latency: {threshold_ms: 1000}
+        }
+      ]
+
+exporters:
+  # ---------------------------------------------------------------------------
+  # Prometheus - Exporta métricas
+  # ---------------------------------------------------------------------------
+  prometheusremotewrite:
+    endpoint: "http://prometheus:9090/api/v1/write"
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  # ---------------------------------------------------------------------------
+  # Loki - Exporta logs
+  # ---------------------------------------------------------------------------
+  loki:
+    endpoint: "http://loki:3100/loki/api/v1/push"
+
+  # ---------------------------------------------------------------------------
+  # Jaeger - Exporta traces
+  # ---------------------------------------------------------------------------
+  otlp/jaeger:
+    endpoint: "jaeger:14250"
+    tls:
+      insecure: true
+
+  # ---------------------------------------------------------------------------
+  # Sentry - Exporta erros críticos
+  # ---------------------------------------------------------------------------
+  sentry:
+    dsn: "${SENTRY_DSN}"
+  
+  # Exportador para o GlitchTip Local
+  sentry/glitchtip:
+    dsn: "${GLITCHTIP_DSN}"
+  
+  # ---------------------------------------------------------------------------
+  # Debug - Console (Apenas para desenvolvimento)
+  # ---------------------------------------------------------------------------
+  debug:
+    verbosity: normal
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:18888
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, filter, tail_sampling, batch]
+      exporters: [otlp/jaeger, sentry, sentry/glitchtip, debug]
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, batch]
+      exporters: [prometheusremotewrite, debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [loki, debug]
