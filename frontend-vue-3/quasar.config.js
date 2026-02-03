@@ -11,8 +11,8 @@ import 'dotenv/config'
 import path from 'path'
 import { configure } from 'quasar/wrappers'
 import AutoImport from 'unplugin-auto-import/vite'
-import Components from 'unplugin-vue-components/vite'
 import { QuasarResolver } from 'unplugin-vue-components/resolvers'
+import Components from 'unplugin-vue-components/vite'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -36,7 +36,9 @@ export default configure(function (ctx) {
       'vuelidate',
       'ccComponents',
       'apex',
-      'audio'
+      'audio',
+      'telemetry',
+      'sentry'
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -62,10 +64,11 @@ export default configure(function (ctx) {
     build: {
       env: {
         VUE_URL_API: process.env.VUE_URL_API || 'http://localhost:8082',
-        VUE_FACEBOOK_APP_ID: process.env.VUE_FACEBOOK_APP_ID
+        VUE_FACEBOOK_APP_ID: process.env.VUE_FACEBOOK_APP_ID,
+        VUE_SENTRY_DSN: process.env.VUE_SENTRY_DSN
       },
       vueRouterMode: 'history', // available values: 'hash', 'history'
-
+      sourcemap: true, // Ativa sourcemaps para debug preciso no Sentry
       // transpile: false,
       // publicPath: '/',
 

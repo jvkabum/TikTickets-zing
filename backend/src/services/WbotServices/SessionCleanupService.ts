@@ -1,12 +1,11 @@
+import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
-import { promisify } from "util";
-import { spawn } from "child_process";
 import { performance } from "perf_hooks";
-import { logger } from "../../utils/logger";
-import { getWbot, removeWbot } from "../../libs/wbot";
 import { getIO } from "../../libs/socket";
+import { getWbot, removeWbot } from "../../libs/wbot";
 import Whatsapp from "../../models/Whatsapp";
+import { logger } from "../../utils/logger";
 
 /**
  * Serviço centralizado para limpeza de sessões do WhatsApp (VERSÃO HÍBRIDA ENTERPRISE v4)
@@ -127,11 +126,12 @@ export const killChromiumProcesses = async (): Promise<void> => {
       }
     } else {
       try {
-        await spawnPromise("pkill", ["-f", "wwebjs_auth/session-wbot"]);
+        // Encerramento mais agressivo de qualquer chrome associado ao projeto
+        await spawnPromise("pkill", ["-f", "chrome.*--user-data-dir=.*wwebjs_auth"]);
         logger.info("[v4-PERF] Pkill executado com sucesso (Unix).");
       } catch {
         try {
-          await spawnPromise("pkill", ["-9", "-f", "wwebjs_auth/session-wbot"]);
+          await spawnPromise("pkill", ["-9", "-f", "chrome.*--user-data-dir=.*wwebjs_auth"]);
         } catch { }
       }
     }
@@ -211,12 +211,14 @@ export const cleanupSessionFiles = async (
 
     await killSessionChromiumProcesses(whatsappId);
     await new Promise(r => setTimeout(r, 500)); // Aumentado para 500ms para Windows liberar travas
+
+    // Limpeza mandatória de travas
     await removeLockFiles(pathSession);
     await new Promise(r => setTimeout(r, 200));
 
-    // No boot (startup), NUNCA apagamos a pasta da sessão, apenas limpamos processos e travas
+    // No boot (startup), NUNCA apagamos a pasta da sessão, mas limpamos travas com afinco
     if (context === "startup") {
-      logger.info(`[v4-PERF] Boot: Preservando pasta de sessão ${whatsappId} para reconexão automática.`);
+      logger.info(`[v4-PERF] Boot: Limpando travas e preservando sessão ${whatsappId}.`);
       return;
     }
 
@@ -273,7 +275,10 @@ export async function killSessionChromiumProcesses(idRaw: number | string): Prom
       try {
         await spawnPromise("pkill", ["-f", sessionPattern]);
       } catch {
-        try { await spawnPromise("pkill", ["-9", "-f", sessionPattern]); } catch { }
+        try {
+          // Segundo nível de precisão: busca por chrome que aponte para esta sessão específica
+          await spawnPromise("pkill", ["-9", "-f", `${sessionPattern}`]);
+        } catch { }
       }
     }
   } catch { }
@@ -294,26 +299,29 @@ const removeLockFiles = async (sessionPath: string): Promise<void> => {
     const defaultDir = path.join(sessionPath, "Default");
     const locks = [
       path.join(sessionPath, "SingletonLock"),
+      path.join(sessionPath, "SingletonCookie"),
+      path.join(sessionPath, "SingletonSocket"),
       path.join(defaultDir, "LOCK"),
       path.join(defaultDir, "Network/Cookies.lock"),
       path.join(defaultDir, "DevToolsActivePort")
     ];
 
     for (const lock of locks) {
-      if (await operationCache.fileExists(lock)) {
-        try {
-          await fs.unlink(lock);
-        } catch {
-          // Fallback via spawn para comandos de sistema
-          try {
-            if (process.platform === "win32") {
-              await spawnPromise("cmd", ["/c", "del", "/F", "/Q", lock.replace(/\//g, "\\")]);
-            } else {
-              await spawnPromise("rm", ["-f", lock]);
-            }
-          } catch { }
+      try {
+        // Tenta remover via lstat (não segue symlink) para detectar mesmo symlinks quebrados
+        const stats = await fs.lstat(lock).catch(() => null);
+        if (stats) {
+          logger.info(`[v4-PERF] Detectada trava (${stats.isSymbolicLink() ? 'Symlink' : 'File'}): ${lock}`);
+          await fs.unlink(lock).catch(() => { });
+
+          // Força bruta via comando de sistema para garantir
+          if (process.platform !== "win32") {
+            await spawnPromise("rm", ["-f", lock]).catch(() => { });
+          } else {
+            await spawnPromise("cmd", ["/c", "del", "/F", "/Q", lock.replace(/\//g, "\\")]).catch(() => { });
+          }
         }
-      }
+      } catch (err) { }
     }
   } catch { }
 };

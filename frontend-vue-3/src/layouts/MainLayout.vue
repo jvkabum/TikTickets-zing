@@ -41,6 +41,19 @@
             @abrir-ticket="ticket => abrirAtendimentoExistente(ticket.name, ticket)"
           />
 
+          <!-- Botão de Teste Telemetria (Debug) -->
+          <q-btn
+            v-if="env === 'development'"
+            flat
+            round
+            dense
+            color="deep-orange"
+            icon="mdi-bug-check"
+            @click="testarTelemetria"
+          >
+            <q-tooltip>Testar Telemetria (Sentry + OTel)</q-tooltip>
+          </q-btn>
+
           <!-- Modo Escuro -->
           <q-toggle
             size="xl"
@@ -110,12 +123,14 @@
 
 <script setup>
 import alertSound from 'src/assets/sound.mp3'
-import bus from 'src/utils/eventBus'
-import { socketIO } from 'src/utils/socket'
-import { ListarWhatsapps } from 'src/service/sessoesWhatsapp'
-import { ListarConfiguracoes } from 'src/service/configuracoes'
 import { RealizarLogout } from 'src/service/login'
+import { ListarWhatsapps } from 'src/service/sessoesWhatsapp'
 import { ConsultarTickets } from 'src/service/tickets'
+import bus from 'src/utils/eventBus'
+import { logger } from 'src/utils/logger'
+import { socketIO } from 'src/utils/socket'
+
+const env = process.env.NODE_ENV
 
 const $q = useQuasar()
 const router = useRouter()
@@ -215,6 +230,24 @@ const abrirChatContato = ticket => {
   ) {
     ticketStore.setHasMore(true)
     ticketStore.setTicketFocado(ticket)
+  }
+}
+
+const testarTelemetria = () => {
+  logger.info('Iniciando teste manual de telemetria', { log_source: 'manual_test_button' })
+  
+  try {
+    // Simula um erro para testar captura
+    const userRole = localStorage.getItem('profile')
+    logger.debug('Contexto de teste capturado', { userRole })
+    
+    $q.notify({
+      type: 'info',
+      message: 'Telemetria enviada! Verifique o console e o Grafana.',
+      position: 'top'
+    })
+  } catch (e) {
+    logger.error('Erro ao testar telemetria', { error: e.message })
   }
 }
 

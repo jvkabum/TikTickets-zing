@@ -1,0 +1,141 @@
+version: '3.8'
+
+networks:
+  tiktickets-observability:
+    driver: bridge
+  coolify:
+    external: true
+
+volumes:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  jaeger_data:
+
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    restart: unless-stopped
+    user: "0:0"
+    command: [ "--config=/etc/otel/config.yaml" ]
+    volumes:
+      - ./otel-collector/config.yaml:/etc/otel/config.yaml:ro
+    environment:
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - GLITCHTIP_DSN=${GLITCHTIP_DSN:-}
+    networks:
+      - tiktickets-observability
+      - coolify
+    depends_on:
+      - jaeger
+      - loki
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    restart: unless-stopped
+    user: "0:0"
+    volumes:
+      - jaeger_data:/badger
+    networks:
+      - tiktickets-observability
+      - coolify
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    restart: unless-stopped
+    user: "0:0"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--web.enable-remote-write-receiver'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - tiktickets-observability
+      - coolify
+
+  loki:
+    image: grafana/loki:3.0.0
+    restart: unless-stopped
+    user: "0:0"
+    command: -config.file=/etc/loki/loki.config.yaml
+    volumes:
+      - ./loki/config.yaml:/etc/loki/loki.config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - tiktickets-observability
+      - coolify
+
+  vector:
+    image: timberio/vector:0.37.0-alpine
+    restart: unless-stopped
+    user: "0:0"
+    command: [ "--config", "/etc/vector/vector.toml" ]
+    volumes:
+      - ./vector/config.toml:/etc/vector/vector.toml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - tiktickets-observability
+      - coolify
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    restart: unless-stopped
+    user: "0:0"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-change-me}
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL}
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources/datasources.config.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./grafana/provisioning/dashboards-configs:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - tiktickets-observability
+      - coolify
+    depends_on:
+      - prometheus
+      - loki
+      - jaeger
+
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    restart: unless-stopped
+    expose:
+      - 8000
+    user: "0:0"
+    command:
+      - "sh"
+      - "-c"
+      - "./manage.py migrate && ./manage.py collectstatic --noinput && export SESSION_ENGINE=django.contrib.sessions.backends.cache && export GLITCHTIP_SESSION_ENGINE=django.contrib.sessions.backends.cache && uwsgi --mime-file /etc/mime.types --http 0.0.0.0:8000 --http-keepalive --http-auto-gzip --module glitchtip.wsgi:application --master --enable-threads --processes 4 --buffer-size 65535 --static-map /static=/code/static --static-map /media=/code/media --offload-threads %k --route \"^/static/.*\\.js$$ addheader:Content-Type: text/javascript\" --route \"^/static/.*\\.css$$ addheader:Content-Type: text/css\" --static-expires-type text/javascript=31536000 --static-expires-type text/css=31536000 --static-mime-type js=text/javascript --static-mime-type .js=text/javascript --static-mime-type mjs=text/javascript --die-on-term --vacuum --harakiri 60 --http-timeout 300"
+    environment:
+      DATABASE_URL: "${DATABASE_URL}"
+      REDIS_URL: "redis://:123456@rw4gkcgoc4kgccoow00oc0gs:6379/0"
+      CELERY_BROKER_URL: "redis://:123456@rw4gkcgoc4kgccoow00oc0gs:6379/0"
+      CACHE_URL: "redis://:123456@rw4gkcgoc4kgccoow00oc0gs:6379/0"
+      SECRET_KEY: "${GLITCHTIP_SECRET_KEY}"
+      GLITCHTIP_SECRET_KEY: "${GLITCHTIP_SECRET_KEY}"
+      GLITCHTIP_DOMAIN: "https://y8o0coco4s88kwokwwswc0cg.212.56.43.28.sslip.io"
+      ALLOWED_HOSTS: "*"
+      CSRF_TRUSTED_ORIGINS: "https://y8o0coco4s88kwokwwswc0cg.212.56.43.28.sslip.io"
+      USE_X_FORWARDED_HOST: "True"
+      SECURE_PROXY_SSL_HEADER: "HTTP_X_FORWARDED_PROTO,https"
+      DEBUG: "False"
+      SESSION_ENGINE: django.contrib.sessions.backends.cache
+      GLITCHTIP_SESSION_ENGINE: django.contrib.sessions.backends.cache
+      PORT: 8000
+    volumes:
+      - ./mime.types:/etc/mime.types:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.glitchtip.loadbalancer.server.port=8000"
+      - "traefik.docker.network=coolify"
+    networks:
+      - tiktickets-observability
+      - coolify
