@@ -14,6 +14,10 @@ interface CampaignRequest {
   message3: string;
   mediaUrl?: string;
   mediaType?: string;
+  mediaUrl2?: string;
+  mediaType2?: string;
+  mediaUrl3?: string;
+  mediaType3?: string;
   userId: string;
   delay: string;
   sessionId: string;
@@ -33,22 +37,20 @@ const CreateCampaignService = async ({
   campaign,
   medias
 }: Request): Promise<Campaign> => {
-  let mediaData: Express.Multer.File | undefined;
-  if (medias) {
-    await Promise.all(
-      medias.map(async (media: Express.Multer.File) => {
-        try {
-          if (!media.filename) {
-            const ext = media.mimetype.split("/")[1].split(";")[0];
-            media.filename = `${new Date().getTime()}.${ext}`;
-          }
-          mediaData = media;
-        } catch (err) {
-          logger.error(err);
+  const mediaData: (Express.Multer.File | undefined)[] = [undefined, undefined, undefined];
+
+  if (medias && Array.isArray(medias)) {
+    medias.forEach((media, index) => {
+      if (index < 3) {
+        if (!media.filename) {
+          const ext = media.mimetype.split("/")[1].split(";")[0];
+          media.filename = `${new Date().getTime()}_${index}.${ext}`;
         }
-      })
-    );
+        mediaData[index] = media;
+      }
+    });
   }
+
   const data: any = {
     name: campaign.name,
     start: parseISO(campaign.start),
@@ -57,8 +59,12 @@ const CreateCampaignService = async ({
     message3: campaign.message3,
     userId: campaign.userId,
     delay: campaign.delay,
-    mediaUrl: mediaData?.filename,
-    mediaType: mediaData?.mimetype.substr(0, mediaData.mimetype.indexOf("/")),
+    mediaUrl: mediaData[0]?.filename || campaign.mediaUrl,
+    mediaType: mediaData[0]?.mimetype.split("/")[0] || campaign.mediaType,
+    mediaUrl2: mediaData[1]?.filename || campaign.mediaUrl2,
+    mediaType2: mediaData[1]?.mimetype.split("/")[0] || campaign.mediaType2,
+    mediaUrl3: mediaData[2]?.filename || campaign.mediaUrl3,
+    mediaType3: mediaData[2]?.mimetype.split("/")[0] || campaign.mediaType3,
     sessionId: campaign.sessionId,
     tenantId: campaign.tenantId
   };

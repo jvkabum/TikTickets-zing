@@ -76,9 +76,35 @@ class Campaign extends Model<Campaign> {
     return null;
   }
 
-  // Tipo de mídia (imagem, vídeo, áudio, etc)
+  // Tipos de mídia (imagem, vídeo, áudio, etc)
   @Column
   mediaType: string;
+
+  @Column(DataType.STRING)
+  get mediaUrl2(): string | null {
+    const value = this.getDataValue("mediaUrl2");
+    if (value && value !== "null") {
+      const { BACKEND_URL } = process.env;
+      return `${BACKEND_URL}:${process.env.PROXY_PORT}/public/${value}`;
+    }
+    return null;
+  }
+
+  @Column
+  mediaType2: string;
+
+  @Column(DataType.STRING)
+  get mediaUrl3(): string | null {
+    const value = this.getDataValue("mediaUrl3");
+    if (value && value !== "null") {
+      const { BACKEND_URL } = process.env;
+      return `${BACKEND_URL}:${process.env.PROXY_PORT}/public/${value}`;
+    }
+    return null;
+  }
+
+  @Column
+  mediaType3: string;
 
   // ID do usuário que criou a campanha
   @ForeignKey(() => User)

@@ -1,10 +1,9 @@
-import "reflect-metadata";
-import "express-async-errors";
-import { Application, json, urlencoded, Request, Response, NextFunction } from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import { Application, json, NextFunction, Request, Response, urlencoded } from "express";
+import "express-async-errors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import "reflect-metadata";
 import { logger } from "../utils/logger";
 
 // Função principal de configuração do Express
@@ -15,6 +14,9 @@ export default async function express(app: Application): Promise<void> {
   // Middleware de Blacklist (Firewall de Aplicação)
   const blacklist = ["168.138.151.75"];
   app.use((req, res, next) => {
+    // Permite profiling JS no navegador para o Sentry
+    res.set("Document-Policy", "js-profiling");
+
     const clientIp = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     if (blacklist.includes(clientIp as string)) {
       logger.warn(`[FIREWALL] Bloqueando acesso de IP na Blacklist: ${clientIp}`);

@@ -2,15 +2,15 @@
   <div class="row items-center no-wrap">
     <!-- Status Online/Offline Indicator (Header) -->
     <q-avatar
-      :color="usuario.status === 'offline' ? 'negative' : 'positive'"
+      :color="usuario?.status === 'offline' ? 'negative' : 'positive'"
       text-color="white"
       size="25px"
-      :icon="usuario.status === 'offline' ? 'mdi-account-off' : 'mdi-account-check'"
+      :icon="usuario?.status === 'offline' ? 'mdi-account-off' : 'mdi-account-check'"
       rounded
       class="q-ml-lg"
     >
       <q-tooltip>
-        {{ usuario.status === 'offline' ? 'Usuário Offline' : 'Usuário Online' }}
+        {{ usuario?.status === 'offline' ? 'Usuário Offline' : 'Usuário Online' }}
       </q-tooltip>
     </q-avatar>
 
@@ -69,10 +69,10 @@
 </template>
 
 <script setup>
-import { computed, defineEmits } from 'vue'
-import { useQuasar } from 'quasar'
 import { storeToRefs } from 'pinia'
+import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/useAuthStore'
+import { computed, defineEmits } from 'vue'
 
 const authStore = useAuthStore()
 const { user: usuario } = storeToRefs(authStore)

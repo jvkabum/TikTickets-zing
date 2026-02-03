@@ -32,6 +32,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 
 const props = defineProps({
   usuario: {
@@ -58,11 +59,11 @@ const statusOptions = [
 ]
 
 const cStatus = computed(() => {
-  return statusOptions.find(s => s.value === props.usuario.status) || {}
+  return statusOptions.find(s => s.value === props.usuario?.status) || {}
 })
 
 const statusUsuario = computed({
-  get: () => props.usuario.status,
+  get: () => props.usuario?.status,
   set: value => {
     const usuario = { ...props.usuario, status: value }
     localStorage.setItem('usuario', JSON.stringify(usuario))

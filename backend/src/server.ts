@@ -1,11 +1,36 @@
+import * as Sentry from "@sentry/node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
+
+// INICIALIZAÇÃO CRÍTICA DO SENTRY (DEVE SER O PRIMEIRO CÓDIGO A EXECUTAR)
+const SENTRY_DSN = process.env.SENTRY_DSN || "https://362610dc5ab76bba5e2c3db07dfda11e@o4510819566485504.ingest.us.sentry.io/4510822953058304";
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    integrations: [
+      nodeProfilingIntegration(),
+      // send console.log, console.warn, and console.error calls as logs to Sentry
+      Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+    ],
+    // Enable logs to be sent to Sentry
+    enableLogs: true,
+    tracesSampleRate: 1.0,
+    profilesSampleRate: 1.0,
+    sendDefaultPii: true,
+    environment: process.env.NODE_ENV || "development",
+  });
+  console.log("[Sentry] Inicializado com logs e prioridade máxima no server.ts");
+}
+
 import __init from "./app";
-import { logger } from "./utils/logger";
 import scheduleClosePendingTicketsJob from "./jobs/ClosePendingTicketsJob";
-import { scheduleConnectionVerification } from "./services/WbotServices/VerifyConnectionService";
 import {
   cleanupAllSessions,
   killChromiumProcesses
 } from "./services/WbotServices/SessionCleanupService";
+import { scheduleConnectionVerification } from "./services/WbotServices/VerifyConnectionService";
+import "./telemetry"; // OTel SDK vem em seguida
+import { logger } from "./utils/logger";
+import { sendTelemetryPing } from "./services/TelemetryService";
 
 // Função para limpar recursos antes de iniciar o servidor
 const limparRecursosAntigos = async (): Promise<void> => {
@@ -40,6 +65,9 @@ __init().then(async (app: any) => {
   app.start();
   // Registra no log que o sistema foi iniciado
   logger.info("Started system!!");
+
+  // Envia ping de telemetria anonima (Discord Webhook)
+  sendTelemetryPing();
 
   // Pequeno delay para evitar picos de CPU no boot
   const whatsappDelay = 500; // Reduzido de 3s para 0.5s

@@ -10,6 +10,7 @@ export interface Session extends Client {
   monitorInterval?: any;
   checkMessages?: any;
   reconnectionAttempts?: number;
+  tenantId: number | string;
   lastConnectionVerification?: number;
   clientId?: number;
   close?: () => void;

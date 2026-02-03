@@ -1,10 +1,10 @@
+import * as Sentry from "@sentry/node";
+import expressInstance, { NextFunction, Request, Response } from "express";
 import { readFileSync } from "fs";
 import moment from "moment";
-import expressInstance, { Request, Response, NextFunction } from "express";
-import * as Sentry from "@sentry/node";
-import routes from "../routes";
 import uploadConfig from "../config/upload";
 import AppError from "../errors/AppError";
+import routes from "../routes";
 import { logger } from "../utils/logger";
 
 // Função principal para configuração dos módulos da aplicação
@@ -15,13 +15,8 @@ export default async function modules(app): Promise<void> {
   const started = new Date();
   const { env } = process;
 
-  // Inicializa o Sentry para monitoramento de erros
-  // Configura com as informações do ambiente
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    serverName: env.BACKEND_URL,
-    release: version
-  });
+  // O Sentry já foi inicializado antecipadamente pelo src/instrument.ts
+  // para garantir a instrumentação correta do Express e Profiling.
 
   // Rota de verificação de saúde do servidor
   // Retorna informações sobre o estado atual do servidor
@@ -41,8 +36,14 @@ export default async function modules(app): Promise<void> {
     });
   });
 
+  // Rota de teste para o Sentry
+  app.get("/debug-sentry", (req, res) => {
+    throw new Error("My first Sentry error from TikTickets Backend!");
+  });
+
   // Adiciona o handler de requisições do Sentry
-  app.use(Sentry.Handlers.requestHandler());
+  // No Sentry v10+, o requestHandler não é mais obrigatório se usar setupExpressErrorHandler
+  // app.use(Sentry.Handlers.requestHandler());
 
   // Configura pasta pública para arquivos estáticos
   app.use("/public", expressInstance.static(uploadConfig.directory));
@@ -51,7 +52,8 @@ export default async function modules(app): Promise<void> {
   app.use(routes);
 
   // Adiciona o handler de erros do Sentry
-  app.use(Sentry.Handlers.errorHandler());
+  // Adiciona o handler de erros moderno do Sentry v10
+  Sentry.setupExpressErrorHandler(app);
 
   // Middleware global para tratamento de erros
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

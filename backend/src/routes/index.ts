@@ -1,28 +1,29 @@
 import { Router } from "express";
 
-import userRoutes from "./userRoutes";
-import authRoutes from "./authRoutes";
-import settingRoutes from "./settingRoutes";
-import contactRoutes from "./contactRoutes";
-import ticketRoutes from "./ticketRoutes";
-import whatsappRoutes from "./whatsappRoutes";
-import messageRoutes from "./messageRoutes";
-import whatsappSessionRoutes from "./whatsappSessionRoutes";
-import autoReplyRoutes from "./autoReplyRoutes";
-import fastReplyRoutes from "./fastReplyRoutes";
-import queueRoutes from "./queueRoutes";
-import statisticsRoutes from "./statisticsRoutes";
-import tagRoutes from "./tagRoutes";
-import campaignRoutes from "./campaignRoutes";
-import campaignContactsRoutes from "./campaignContactsRoutes";
+import adminRoutes from "./adminRoutes";
 import apiConfigRoutes from "./apiConfigRoutes";
 import apiExternalRoutes from "./apiExternalRoutes";
+import authRoutes from "./authRoutes";
+import autoReplyRoutes from "./autoReplyRoutes";
+import campaignContactsRoutes from "./campaignContactsRoutes";
+import campaignRoutes from "./campaignRoutes";
 import chatFlowRoutes from "./chatFlowRoutes";
-import tenantRoutes from "./tenantRoutes";
-import WebHooksRoutes from "./WebHooksRoutes";
-import adminRoutes from "./adminRoutes";
+import contactRoutes from "./contactRoutes";
 import facebookRoutes from "./facebookRoutes";
+import fastReplyRoutes from "./fastReplyRoutes";
+import messageRoutes from "./messageRoutes";
 import protocolRoutes from "./protocolRoutes";
+import queueRoutes from "./queueRoutes";
+import settingRoutes from "./settingRoutes";
+import statisticsRoutes from "./statisticsRoutes";
+import tagRoutes from "./tagRoutes";
+import telemetryRoutes from "./telemetryRoutes";
+import tenantRoutes from "./tenantRoutes";
+import ticketRoutes from "./ticketRoutes";
+import userRoutes from "./userRoutes";
+import WebHooksRoutes from "./WebHooksRoutes";
+import whatsappRoutes from "./whatsappRoutes";
+import whatsappSessionRoutes from "./whatsappSessionRoutes";
 
 const routes = Router();
 
@@ -49,5 +50,6 @@ routes.use(WebHooksRoutes);
 routes.use(adminRoutes);
 routes.use(facebookRoutes);
 routes.use("/protocols", protocolRoutes);
+routes.use(telemetryRoutes);
 
 export default routes;

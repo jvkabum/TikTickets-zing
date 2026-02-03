@@ -1,4 +1,5 @@
-import request from 'src/service/request'
+import * as Sentry from "@sentry/vue";
+import request from 'src/service/request';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('usuario')) || null)
@@ -9,7 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => profile.value === 'admin')
   const userId = computed(() => user.value?.id || localStorage.getItem('userId'))
 
-  function login (userData, userToken) {
+  function login(userData, userToken) {
     user.value = userData
     token.value = userToken
     profile.value = userData.profile || 'user'
@@ -17,9 +18,17 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('token', JSON.stringify(userToken))
     localStorage.setItem('profile', userData.profile || 'user')
     localStorage.setItem('userId', userData.id)
+
+    // Sentry Context
+    Sentry.setUser({
+      id: userData.id,
+      email: userData.email,
+      username: userData.name,
+      tenantId: userData.tenantId
+    })
   }
 
-  function logout () {
+  function logout() {
     user.value = null
     token.value = null
     profile.value = 'user'
@@ -27,9 +36,12 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
     localStorage.removeItem('profile')
     localStorage.removeItem('userId')
+
+    // Limpa Sentry Context
+    Sentry.setUser(null)
   }
 
-  async function handleLogin ({ email, password }) {
+  async function handleLogin({ email, password }) {
     const { router } = this || {} // O router estará disponível na instância se injetado via plugin
     try {
       const { data } = await request({
@@ -80,7 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function updateUser (userData) {
+  function updateUser(userData) {
     user.value = { ...user.value, ...userData }
     localStorage.setItem('usuario', JSON.stringify(user.value))
   }
