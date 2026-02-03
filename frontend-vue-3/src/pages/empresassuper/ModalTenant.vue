@@ -98,8 +98,8 @@ const toggleStatus = ref(true)
 const validationSchema = toTypedSchema(
   zod.object({
     name: zod.string().min(3, 'Mínimo de 3 caracteres').max(100, 'Máximo de 100 caracteres'),
-    maxUsers: zod.number({ invalid_type_error: 'Informe um número' }).min(1, 'Mínimo de 1'),
-    maxConnections: zod.number({ invalid_type_error: 'Informe um número' }).min(1, 'Mínimo de 1'),
+    maxUsers: zod.coerce.number({ invalid_type_error: 'Informe um número' }).min(1, 'Mínimo de 1'),
+    maxConnections: zod.coerce.number({ invalid_type_error: 'Informe um número' }).min(1, 'Mínimo de 1'),
     status: zod.string()
   })
 )
@@ -177,18 +177,4 @@ const onSubmit = handleSubmit(async values => {
 })
 </script>
 
-<style lang="scss" scoped>
-.unified-modal-color {
-  background: #1e293b !important;
-}
 
-.unified-modal-color :deep(.q-card__section),
-.unified-modal-color :deep(.q-table),
-.unified-modal-color :deep(.q-table__container),
-.unified-modal-color :deep(.q-table__middle),
-.unified-modal-color :deep(.q-table__top),
-.unified-modal-color :deep(.q-table__bottom),
-.unified-modal-color :deep(.q-card__actions) {
-  background: transparent !important;
-}
-</style>

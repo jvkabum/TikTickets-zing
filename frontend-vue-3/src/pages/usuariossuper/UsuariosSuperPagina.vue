@@ -3,7 +3,7 @@
     <q-table
       class="my-sticky-dynamic q-ma-lg"
       title="Usuarios"
-      :rows="usuarioStore.usuarios.filter(u => u.profile !== 'super')"
+      :rows="usuarioStore.usuarios.filter(u => u.profile !== 'super' && u.tenantId !== superTenantId)"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -15,6 +15,22 @@
       :rows-per-page-options="[0]"
     >
       <template v-slot:top-right>
+        <q-select
+          outlined
+          dense
+          rounded
+          style="width: 300px"
+          v-model="tenantId"
+          :options="tenantOptions"
+          option-label="name"
+          option-value="id"
+          map-options
+          emit-value
+          label="Filtrar por Empresa"
+          clearable
+          class="q-mr-md"
+          @update:model-value="filtrarPorTenant"
+        />
         <q-input
           style="width: 300px"
           outlined
@@ -79,8 +95,12 @@
 import ModalUsuarioEditSuper from './ModalUsuarioEditSuper.vue'
 import ModalUsuarioSuper from './ModalUsuarioSuper.vue'
 
+import { useTenantStore } from 'src/stores/useTenantStore'
+
 const $q = useQuasar()
 const usuarioStore = useUsuarioStore()
+const tenantStore = useTenantStore()
+const { tenants } = storeToRefs(tenantStore)
 
 const userProfile = ref('user')
 const usuarioSelecionado = ref({})
@@ -88,6 +108,16 @@ const modalUsuario = ref(false)
 const modalUsuarioEdit = ref(false)
 const filter = ref(null)
 const loading = ref(false)
+const tenantId = ref(null)
+
+const tenantOptions = computed(() => {
+  if (superTenantId.value) {
+    return tenants.value.filter(t => t.id !== superTenantId.value)
+  }
+  return tenants.value
+})
+
+const superTenantId = ref(null)
 
 const pagination = reactive({
   rowsPerPage: 40,
@@ -131,7 +161,9 @@ const columns = [
 const listarUsuarios = async () => {
   loading.value = true
   try {
-    const data = await usuarioStore.adminListarUsuarios(params)
+    const filters = { ...params }
+    if (tenantId.value) filters.tenantId = tenantId.value
+    const data = await usuarioStore.adminListarUsuarios(filters)
     params.hasMore = data.hasMore
     pagination.lastIndex = usuarioStore.usuarios.length - 1
     pagination.rowsNumber = data.count
@@ -149,6 +181,13 @@ const filtrarUsuario = data => {
   listarUsuarios()
 }
 
+const filtrarPorTenant = value => {
+  usuarioStore.usuarios = []
+  params.pageNumber = 1
+  tenantId.value = value
+  listarUsuarios()
+}
+
 const onScroll = ({ to }) => {
   if (loading.value !== true && params.hasMore === true && to === pagination.lastIndex) {
     params.pageNumber++
@@ -163,6 +202,11 @@ const editarUsuario = usuario => {
 
 onMounted(() => {
   userProfile.value = localStorage.getItem('profile')
+  const usuarioLogado = JSON.parse(localStorage.getItem('usuario'))
+  if (usuarioLogado) {
+    superTenantId.value = usuarioLogado.tenantId
+  }
+  tenantStore.listarTenants()
   listarUsuarios()
 })
 </script>

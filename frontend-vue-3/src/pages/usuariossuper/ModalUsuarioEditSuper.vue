@@ -6,8 +6,10 @@
     @show="abrirModal"
   >
     <q-card style="width: 600px" class="glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color">
+      <!-- Build Version: 2026-02-02-17-20 -->
       <q-card-section>
-        <div class="text-h6">Editar Usuário</div>
+        <div class="text-h5 text-bold text-primary">Editar Usuário</div>
+        <q-separator class="q-my-sm" />
       </q-card-section>
       <q-card-section class="q-col-gutter-sm">
         <div class="row q-col-gutter-sm">
@@ -36,9 +38,27 @@
               outlined
               v-model="password"
               :type="isPwd ? 'password' : 'text'"
-              label="Senha"
+              label="Nova Senha"
               :error="!!errors.password"
               :error-message="errors.password"
+            >
+              <template v-slot:append>
+                <q-icon
+                  :name="isPwd ? 'visibility_off' : 'visibility'"
+                  class="cursor-pointer"
+                  @click="isPwd = !isPwd"
+                />
+              </template>
+            </q-input>
+          </div>
+          <div class="col-12">
+            <q-input
+              outlined
+              v-model="confirmPassword"
+              :type="isPwd ? 'password' : 'text'"
+              label="Confirme Nova Senha"
+              :error="!!errors.confirmPassword"
+              :error-message="errors.confirmPassword"
             >
               <template v-slot:append>
                 <q-icon
@@ -78,7 +98,7 @@
         />
         <q-btn
           rounded
-          label="Salvar"
+          label="ATUALIZAR DADOS"
           class="q-px-md"
           color="primary"
           @click="onSubmit"
@@ -119,17 +139,23 @@ const optionsProfile = [
 ]
 
 const validationSchema = toTypedSchema(
-  zod.object({
-    name: zod.string().min(3, 'Mínimo de 3 caracteres').max(50, 'Máximo de 50 caracteres'),
-    email: zod.string().email('E-mail inválido'),
-    profile: zod.string(),
-    password: zod
-      .string()
-      .min(6, 'Mínimo de 6 caracteres')
-      .max(50, 'Máximo de 50 caracteres')
-      .optional()
-      .or(zod.literal(''))
-  })
+  zod
+    .object({
+      name: zod.string().min(3, 'Mínimo de 3 caracteres').max(50, 'Máximo de 50 caracteres'),
+      email: zod.string().email('E-mail inválido'),
+      profile: zod.string(),
+      password: zod
+        .string()
+        .min(6, 'Mínimo de 6 caracteres')
+        .max(50, 'Máximo de 50 caracteres')
+        .optional()
+        .or(zod.literal('')),
+      confirmPassword: zod.string().optional().or(zod.literal(''))
+    })
+    .refine(data => data.password === data.confirmPassword, {
+      message: 'As senhas não conferem',
+      path: ['confirmPassword']
+    })
 )
 
 const { handleSubmit, errors, resetForm, setValues } = useForm({
@@ -138,6 +164,7 @@ const { handleSubmit, errors, resetForm, setValues } = useForm({
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     profile: 'user'
   }
 })
@@ -145,16 +172,18 @@ const { handleSubmit, errors, resetForm, setValues } = useForm({
 const { value: name } = useField('name')
 const { value: email } = useField('email')
 const { value: password } = useField('password')
+const { value: confirmPassword } = useField('confirmPassword')
 const { value: profile } = useField('profile')
 
 const abrirModal = () => {
   const u = props.usuarioEdicao
   if (u.id || u.userId) {
-    setValues({
+      setValues({
       name: u.username || u.name,
       email: u.email,
       profile: u.profile,
-      password: ''
+      password: '',
+      confirmPassword: ''
     })
   } else {
     resetForm()
@@ -175,9 +204,14 @@ const onSubmit = handleSubmit(async values => {
     const userId = props.usuarioEdicao.id || props.usuarioEdicao.userId
     if (userId) {
       const payload = { ...values }
-      if (!payload.password) delete payload.password
+      console.log('Editando usuário ID:', userId, 'Payload:', payload)
+      if (!payload.password) {
+        delete payload.password
+      }
+      delete payload.confirmPassword
 
       const data = await usuarioStore.adminAtualizarUsuario(userId, payload)
+      console.log('Usuário editado com sucesso:', data)
       emit('modalUsuario:usuario-editado', data)
       $q.notify({
         type: 'info',
@@ -206,18 +240,4 @@ const onSubmit = handleSubmit(async values => {
 })
 </script>
 
-<style lang="scss" scoped>
-.unified-modal-color {
-  background: #1e293b !important;
-}
 
-.unified-modal-color :deep(.q-card__section),
-.unified-modal-color :deep(.q-table),
-.unified-modal-color :deep(.q-table__container),
-.unified-modal-color :deep(.q-table__middle),
-.unified-modal-color :deep(.q-table__top),
-.unified-modal-color :deep(.q-table__bottom),
-.unified-modal-color :deep(.q-card__actions) {
-  background: transparent !important;
-}
-</style>

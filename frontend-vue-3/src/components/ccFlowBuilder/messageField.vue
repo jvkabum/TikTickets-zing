@@ -5,138 +5,144 @@
       class="q-pa-sm q-pb-md"
     >
       <q-card-section class="q-pa-none">
-        <div class="flex flex-inline full-width items-center">
-          <div
-            class="flex flex-inline text-left"
-            style="width: 40px"
-          >
-              <EmojiPickerComponent
-                icon="mdi-emoticon-happy-outline"
-                height="450px"
-                @select="onInsertSelectEmoji"
-              />
+        <div class="row full-width items-start no-wrap q-pa-sm">
+          <!-- Coluna de Ferramentas -->
+          <div class="column items-center q-gutter-y-sm q-mr-sm" style="width: 44px">
+            <EmojiPickerComponent
+              icon="face"
+              height="300px"
+              @select="onInsertSelectEmoji"
+              flat
+              round
+              color="primary"
+            />
             <q-btn
               round
               flat
-              dense
+              color="grey-8"
+              size="13px"
+              class="hover-bg-soft tool-btn-no-text"
             >
-              <q-icon
-                size="2em"
-                name="mdi-variable"
-              />
-              <q-tooltip> Variáveis </q-tooltip>
-              <q-menu touch-position>
-                <q-list
-                  dense
-                  style="min-width: 100px"
-                >
+              <q-icon name="functions" size="20px" />
+              <q-tooltip>Variáveis</q-tooltip>
+              <q-menu touch-position transition-show="scale" transition-hide="scale">
+                <q-list dense style="min-width: 156px" class="bg-white">
+                  <q-item-label header class="text-caption text-bold text-primary">VARIÁVEIS DISPONÍVEIS</q-item-label>
                   <q-item
                     v-for="variavel in variaveis"
                     :key="variavel.label"
                     clickable
-                    @click="onInsertSelectVariable(variavel.value)"
                     v-close-popup
+                    @click="onInsertSelectVariable(variavel.value)"
                   >
+                    <q-item-section avatar>
+                      <q-icon name="add_circle" size="xs" color="primary" />
+                    </q-item-section>
                     <q-item-section>{{ variavel.label }}</q-item-section>
                   </q-item>
                 </q-list>
               </q-menu>
             </q-btn>
           </div>
+
+          <!-- Campo de Texto Principal -->
           <q-input
             ref="inputEnvioMensagem"
-            style="min-height: 10vh; flex: auto"
-            class="q-pa-sm rounded-all"
-            placeholder="Digite a mensagem"
             v-model="element.data.message"
-            autogrow
+            placeholder="Digite a mensagem..."
             type="textarea"
-            filled
+            autogrow
+            outlined
+            dense
+            bg-color="transparent"
+            class="full-width text-body2 custom-textarea-flow"
           />
         </div>
       </q-card-section>
 
       <!-- Seção de opções de mensagem -->
-      <q-card-section class="q-pa-none q-mt-md">
-        <div class="text-subtitle2 q-mb-sm row items-center justify-between">
-          <span>Opções de Resposta</span>
-          <div>
+      <q-card-section class="q-pa-none q-mt-lg border-top-soft">
+        <div class="row items-center justify-between q-mb-sm q-pt-sm">
+          <div class="text-subtitle2 text-weight-bold text-primary flex items-center">
+            <q-icon name="list" class="q-mr-xs" /> Opções de Resposta
+          </div>
+          <div class="q-gutter-x-xs">
             <q-btn
               flat
+              round
               dense
               color="primary"
-              icon="mdi-auto-fix"
-              class="q-mr-sm"
+              icon="auto_fix_high"
+              size="sm"
               @click="extrairOpcoesDoTexto"
             >
-              <q-tooltip>Extrair opções do texto automaticamente</q-tooltip>
+              <q-tooltip>Mágica: Extrair do texto</q-tooltip>
             </q-btn>
             <q-btn
               flat
+              round
               dense
               color="negative"
-              icon="mdi-delete-sweep"
+              icon="delete_outline"
+              size="sm"
               @click="limparTodasOpcoes"
               :disable="!element.data.options || element.data.options.length === 0"
             >
-              <q-tooltip>Limpar todas as opções</q-tooltip>
+              <q-tooltip>Limpar tudo</q-tooltip>
             </q-btn>
           </div>
         </div>
-        <div class="row q-col-gutter-sm">
-          <div class="col-12">
-            <q-input
-              v-model="newOption"
-              dense
-              outlined
-              rounded
-              placeholder="Digite uma opção e pressione Enter"
-              @keyup.enter="addOption"
-            >
-              <template v-slot:append>
-                <q-btn
-                  round
-                  dense
-                  flat
-                  icon="mdi-plus"
-                  @click="addOption"
-                />
-              </template>
-            </q-input>
-          </div>
-          <div class="col-12">
-            <div class="row q-col-gutter-sm">
-              <div
-                v-for="(option, index) in element.data.options"
-                :key="index"
-                class="col-auto"
-              >
-                <q-chip
-                  removable
-                  @remove="removeOption(index)"
-                >
-                  {{ option }}
-                </q-chip>
-              </div>
-            </div>
-          </div>
+
+        <q-input
+          v-model="newOption"
+          dense
+          outlined
+          placeholder="Adicionar nova opção..."
+          @keyup.enter="addOption"
+          class="bg-soft-input q-mb-sm shadow-1"
+        >
+          <template v-slot:append>
+            <q-btn
+              icon="add_circle"
+              flat
+              round
+              color="primary"
+              @click="addOption"
+            />
+          </template>
+        </q-input>
+
+        <div class="row q-gutter-xs q-mb-md">
+          <q-chip
+            v-for="(option, index) in element.data.options"
+            :key="index"
+            removable
+            dense
+            color="primary"
+            text-color="white"
+            class="glow-primary-soft text-caption text-weight-medium"
+            @remove="removeOption(index)"
+          >
+            {{ option }}
+          </q-chip>
         </div>
       </q-card-section>
 
       <!-- Seção de delay -->
-      <q-card-section class="q-pa-none q-mt-md">
-        <div class="text-subtitle2 q-mb-sm">Delay da Mensagem</div>
-        <q-input
-          v-model.number="element.data.delay"
-          type="number"
-          dense
-          outlined
-          rounded
-          suffix="ms"
-          :min="0"
-          :max="10000"
-          @update:model-value="validateDelay"
-        />
+      <q-card-section class="q-pa-none q-mt-md q-pt-sm border-top-soft">
+        <div class="row items-center justify-center q-gutter-x-sm">
+          <div class="text-caption text-weight-bold text-grey-7">DELAY DA MENSAGEM:</div>
+          <q-input
+            v-model.number="element.data.delay"
+            type="number"
+            dense
+            outlined
+            suffix="ms"
+            style="width: 100px"
+            input-class="text-center text-weight-bold"
+            @update:model-value="validateDelay"
+          />
+        </div>
       </q-card-section>
     </q-card>
   </div>
@@ -322,5 +328,53 @@ const limparTodasOpcoes = () => {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.custom-textarea-flow {
+  :deep(textarea) {
+    line-height: 1.5;
+    padding: 8px !important;
+  }
+}
+
+.tool-btn-no-text {
+  font-size: 0 !important;
+  color: transparent !important;
+  :deep(.q-btn__content) {
+    font-size: 0 !important;
+    i {
+      font-size: 20px !important;
+      color: inherit;
+    }
+  }
+}
+
+.hover-bg-soft:hover {
+  background: rgba(var(--q-primary), 0.1) !important;
+}
+
+.bg-soft-input {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.border-top-soft {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.glow-primary-soft {
+  box-shadow: 0 0 8px rgba(var(--q-primary), 0.2);
+}
+
+.bg-surface {
+  background: white;
+}
+
+body.body--dark {
+  .bg-soft-input {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .border-top-soft {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+</style>
 

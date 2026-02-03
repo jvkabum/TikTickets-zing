@@ -261,10 +261,10 @@
 </template>
 
 <script setup>
-import { useTicketActions } from './useTicketActions.js'
-import bus from 'src/utils/eventBus'
-import { notificarErro, notificarSucesso, notificarInfo } from 'src/utils/helpersNotifications'
 import { BuscarTicketPorId } from 'src/service/tickets'
+import bus from 'src/utils/eventBus'
+import { notificarErro, notificarInfo, notificarSucesso } from 'src/utils/helpersNotifications'
+import { useTicketActions } from './useTicketActions.js'
 
 const ticketStore = useTicketStore()
 const { ticketFocado } = storeToRefs(ticketStore)

@@ -239,8 +239,8 @@
           @setLineLabel="setLineLabel"
           @updateLineLabelRealtime="updateLineLabelRealtime"
           @repaintEverything="repaintEverything"
-          :filas="cDataFlow.filas"
-          :usuarios="cDataFlow.usuarios"
+          :filas="filas"
+          :usuarios="usuarios"
           :nodesList="data"
           @addNode="addNode"
           @deleteLine="deleteLine"
@@ -268,6 +268,8 @@ import { cloneDeep } from 'lodash'
 import { uid as getUUID } from 'quasar'
 import { UpdateChatFlow } from '../../service/chatFlow'
 import { useChatFlowStore } from '../../stores/useChatFlowStore'
+import { useFilaStore } from '../../stores/useFilaStore'
+import { useUsuarioStore } from '../../stores/useUsuarioStore'
 import { ForceDirected } from './force-directed'
 import FlowHelp from './help.vue'
 import './index.css'
@@ -279,7 +281,9 @@ import FlowNodeForm from './node_form.vue'
 
 const $q = useQuasar()
 const chatFlowStore = useChatFlowStore()
-const { flow: cDataFlow } = storeToRefs(chatFlowStore)
+const usuarioStore = useUsuarioStore()
+const filaStore = useFilaStore()
+const { flow: cDataFlow, usuarios, filas } = storeToRefs(chatFlowStore)
 
 const isFullScreen = ref(false)
 const isPanelVisible = ref(false)
@@ -894,7 +898,7 @@ watch(
   { deep: true }
 )
 
-onMounted(() => {
+onMounted(async () => {
   if (window.jsPlumb) {
     jsPlumb.value = window.jsPlumb.getInstance()
     jsPlumbInit()
@@ -903,6 +907,23 @@ onMounted(() => {
     }
   } else {
     console.error('jsPlumb não foi carregado corretamente.')
+  }
+  // Fallback: Fetch data if missing (e.g. on page refresh)
+  if (!chatFlowStore.usuarios || chatFlowStore.usuarios.length === 0) {
+    try {
+      const { users } = await usuarioStore.listarUsuarios({ pageNumber: 1, searchParam: null, hasMore: true })
+      chatFlowStore.usuarios = users
+    } catch (e) {
+      console.error('Erro ao carregar usuarios no panel', e)
+    }
+  }
+  if (!chatFlowStore.filas || chatFlowStore.filas.length === 0) {
+    try {
+      await filaStore.listarFilas()
+      chatFlowStore.filas = filaStore.filas
+    } catch (e) {
+      console.error('Erro ao carregar filas no panel', e)
+    }
   }
 })
 

@@ -37,9 +37,28 @@
               outlined
               v-model="password"
               :type="isPwd ? 'password' : 'text'"
-              label="Senha"
+              label="Nova Senha"
+              hint="Deixe em branco para não alterar"
               :error="!!errors.password"
               :error-message="errors.password"
+            >
+              <template v-slot:append>
+                <q-icon
+                  :name="isPwd ? 'visibility_off' : 'visibility'"
+                  class="cursor-pointer"
+                  @click="isPwd = !isPwd"
+                />
+              </template>
+            </q-input>
+          </div>
+          <div class="col-12">
+            <q-input
+              outlined
+              v-model="confirmPassword"
+              :type="isPwd ? 'password' : 'text'"
+              label="Confirme Nova Senha"
+              :error="!!errors.confirmPassword"
+              :error-message="errors.confirmPassword"
             >
               <template v-slot:append>
                 <q-icon
@@ -140,7 +159,8 @@ const validationSchema = toTypedSchema(
         .min(6, 'Mínimo de 6 caracteres')
         .max(50, 'Máximo de 50 caracteres')
         .optional()
-        .or(zod.literal(''))
+        .or(zod.literal('')),
+      confirmPassword: zod.string().optional().or(zod.literal(''))
     })
     .refine(
       data => {
@@ -154,6 +174,10 @@ const validationSchema = toTypedSchema(
         path: ['password']
       }
     )
+    .refine(data => data.password === data.confirmPassword, {
+      message: 'As senhas não conferem',
+      path: ['confirmPassword']
+    })
 )
 
 const { handleSubmit, errors, resetForm, setValues } = useForm({
@@ -162,6 +186,7 @@ const { handleSubmit, errors, resetForm, setValues } = useForm({
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     profile: 'user'
   }
 })
@@ -169,6 +194,7 @@ const { handleSubmit, errors, resetForm, setValues } = useForm({
 const { value: name } = useField('name')
 const { value: email } = useField('email')
 const { value: password } = useField('password')
+const { value: confirmPassword } = useField('confirmPassword')
 const { value: profile } = useField('profile')
 
 const abrirModal = () => {
@@ -178,7 +204,8 @@ const abrirModal = () => {
       name: props.usuarioEdicao.name,
       email: props.usuarioEdicao.email,
       profile: props.usuarioEdicao.profile,
-      password: ''
+      password: '',
+      confirmPassword: ''
     })
   } else if (props.usuarioEdicao.userId) {
     // Legado ou caso específico
@@ -187,7 +214,8 @@ const abrirModal = () => {
       name: props.usuarioEdicao.username || props.usuarioEdicao.name,
       email: props.usuarioEdicao.email,
       profile: props.usuarioEdicao.profile,
-      password: ''
+      password: '',
+      confirmPassword: ''
     })
   } else {
     usuario.id = null
@@ -209,6 +237,7 @@ const onSubmit = handleSubmit(async values => {
     if (usuario.id) {
       const payload = { ...values }
       if (!payload.password) delete payload.password
+      delete payload.confirmPassword
 
       const data = await usuarioStore.updateUsuarios(usuario.id, payload)
       emit('modalUsuario:usuario-editado', data)
@@ -241,18 +270,4 @@ const onSubmit = handleSubmit(async values => {
 })
 </script>
 
-<style lang="scss" scoped>
-.unified-modal-color {
-  background: #1e293b !important;
-}
 
-.unified-modal-color :deep(.q-card__section),
-.unified-modal-color :deep(.q-table),
-.unified-modal-color :deep(.q-table__container),
-.unified-modal-color :deep(.q-table__middle),
-.unified-modal-color :deep(.q-table__top),
-.unified-modal-color :deep(.q-table__bottom),
-.unified-modal-color :deep(.q-card__actions) {
-  background: transparent !important;
-}
-</style>
