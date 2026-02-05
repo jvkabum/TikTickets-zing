@@ -1,75 +1,91 @@
-# 📊 TikTickets-zing - Guia de Instalação no Coolify
+# 📊 TikTickets-zing - Guia de Observabilidade
 
-Este guia detalha como configurar a Stack de Observabilidade (Métricas, Logs, Traces e Erros) no seu painel Coolify.
+Stack de monitoramento simplificada usando **SigNoz** + **Sentry**.
 
-## 🚀 Componentes Inclusos
-- **Grafana**: Visualização de dashboards.
-- **Prometheus**: Armazenamento de métricas.
-- **Loki**: Agregação de logs (substitui o ELK/Kibana).
-- **Jaeger**: Rastreamento de requisições (Distributed Tracing).
-- **Vector**: Coletor de logs do Docker em tempo real.
-- **OpenTelemetry Collector**: O "cérebro" que recebe dados do seu app e distribui para a stack.
-- **GlitchTip**: Alternativa leve ao Sentry para captura de erros em localhost.
+## 🚀 Componentes
 
----
-
-## 🛠️ Passo a Passo da Instalação
-
-### 1. Criar novo Recurso no Coolify
-1. Vá em **Project** -> **Environment**.
-2. Clique em **+ New Resource**.
-3. Selecione **Docker Compose**.
-4. Cole o conteúdo do arquivo `docker-compose.yaml` (o que está na raiz do projeto).
-5. Defina um nome para a stack (ex: `observability-stack`).
-
-### 2. Configurações Prévias Requisitadas
-A stack está configurada para usar bancos de dados externos (Postgres e Redis) para o GlitchTip. Certifique-se de que eles estão rodando no seu Coolify:
-
-- **Postgres**: Configure seu Host, Usuário e Senha nas variáveis.
-- **Redis**: Configure seu Host e Senha nas variáveis.
-
-### 3. Variáveis de Ambiente
-No menu **Variables** do Coolify, adicione as seguintes (ajuste conforme necessário):
-
-| Variável | Valor Padrão / Sugestão | Descrição |
-| :--- | :--- | :--- |
-| `GRAFANA_ADMIN_USER` | `admin` | Usuário inicial do Grafana |
-| `GRAFANA_ADMIN_PASSWORD` | `(sua_senha)` | Senha inicial do Grafana |
-| `POSTGRES_HOST` | `(seu_host_db)` | Host do Postgres no Coolify |
-| `POSTGRES_USER` | `postgres` | Usuário do Postgres |
-| `POSTGRES_PASSWORD` | `(sua_senha_db)` | Senha do Postgres |
-| `POSTGRES_DB` | `postgres` | Nome do banco de dados |
-| `REDIS_HOST` | `(seu_host_redis)` | Host do Redis no Coolify |
-| `REDIS_USER` | `admin` | Usuário do Redis |
-| `REDIS_PASSWORD` | `123456` | Senha do Redis |
-| `SENTRY_DSN` | `""` | DSN do Sentry Cloud (Opcional) |
-| `GLITCHTIP_DSN` | `""` | DSN do GlitchTip Local (Pegar após o primeiro login) |
-| `GLITCHTIP_SECRET_KEY` | `gerar-uma-chave-longa` | Chave de segurança para o GlitchTip |
-
-### 4. Configuração de Rede e Domínios
-Para acessar cada serviço via navegador, você precisa configurar os domínios (FQDN) no Coolify apontando para as portas corretas:
-
-- **Grafana**: Porta `3000`
-- **Prometheus**: Porta `9090`
-- **Jaeger (UI)**: Porta `16686`
-- **GlitchTip**: Porta `8000`
-
-> **Importante**: A stack usa a rede externa `coolify`. Certifique-se de que essa rede existe no seu Docker host (o Coolify cria por padrão).
-
-### 5. Configurações Críticas (Coolify Dashboard)
-Nas configurações do recurso (**Settings**):
-1. **Base Directory**: `/`
-2. **Docker Compose Location**: `/docker-compose.yaml`
-3. **Preserve repository during deployment**: Marque como **ENABLED** (Crucial para que os arquivos de configuração das subpastas sejam encontrados).
+| Componente | Função | Porta |
+|---|---|---|
+| **SigNoz** | Traces, Logs e Métricas (tudo em um) | `3301` |
+| **ClickHouse** | Banco de dados ultra-rápido | `8123`, `9000` |
+| **OTel Collector** | Recebe dados do app e envia para SigNoz | `4317`, `4318` |
+| **Sentry** | Erros de código com IA e sourcemaps | Cloud |
 
 ---
 
-## 🔍 Como verificar se está funcionando?
+## 🛠️ Instalação no Coolify
 
-1. **Grafana**: Acesse o domínio configurado. Vá em `Dashboard` -> `Browse`. Já existem fontes de dados pré-configuradas para Prometheus e Loki.
-2. **Logs**: No Grafana, vá em `Explore`, selecione o `Loki` e busque por `{job="vector-docker"}`. Você verá os logs de todos os seus containers em tempo real.
-3. **Erros**: Acesse o GlitchTip, crie seu projeto. Pegue a DSN gerada e coloque-a na variável `GLITCHTIP_DSN` da stack no Coolify. Faça um Redeploy.
+### 1. Criar novo Recurso
+1. Vá em **Project** → **Environment**.
+2. Clique em **+ New Resource** → **Docker Compose**.
+3. Cole o conteúdo do `docker-compose.yaml`.
+4. Nome sugerido: `observability-signoz`.
+
+### 2. Variáveis de Ambiente
+| Variável | Descrição |
+|---|---|
+| `SENTRY_DSN` | DSN do Sentry Cloud |
+
+### 3. Configuração de Domínio
+Configure o FQDN para o SigNoz:
+- **URL:** `signoz.autotick.com.br`
+- **Porta:** `3301`
+
+### 4. Configurações Críticas
+- **Base Directory:** `/`
+- **Docker Compose Location:** `/docker-compose.yaml`
+- **Preserve repository:** ✅ **ENABLED**
 
 ---
-## 💡 Dicas de Performance
-Esta stack foi otimizada para o **TikTickets-zing** usando bancos de dados compartilhados, reduzindo o consumo de RAM em aproximadamente 1GB se comparado a uma instalação padrão.
+
+## 🔍 Verificação
+
+1. **SigNoz:** Acesse `https://signoz.autotick.com.br`
+   - Navegue em **Traces** para ver requisições
+   - Navegue em **Logs** para ver logs do backend
+   - Navegue em **Metrics** para ver métricas
+
+2. **Sentry:** Acesse `https://tikanais.sentry.io`
+   - Verifique erros de código
+   - Use o "Vidente" para correções automáticas
+
+---
+
+## 📦 O Que Foi Removido
+
+A stack anterior incluía 6+ containers:
+- ~~Jaeger~~ → Substituído por SigNoz Traces
+- ~~Loki~~ → Substituído por SigNoz Logs
+- ~~Prometheus~~ → Substituído por SigNoz Metrics
+- ~~Grafana~~ → Substituído por SigNoz UI
+- ~~Vector~~ → Não mais necessário
+- ~~GlitchTip~~ → Substituído por Sentry Cloud
+
+**Resultado:** De 6+ containers para 4 (Zookeeper, ClickHouse, SigNoz, OTel Collector).
+
+---
+
+## 💡 Recursos Necessários
+
+| Recurso | Mínimo | Recomendado |
+|---|---|---|
+| **RAM** | 4GB | 8GB+ |
+| **CPU** | 2 núcleos | 4+ núcleos |
+| **Disco** | 20GB | 50GB+ (depende da retenção) |
+
+---
+
+## 🔄 Rollback
+
+Se precisar voltar para a stack antiga:
+
+1. Restaure o backup da pasta `monitoring/`
+2. Execute: `docker-compose up -d`
+
+---
+
+## 📞 Suporte
+
+- [SigNoz Docs](https://signoz.io/docs/)
+- [OpenTelemetry Docs](https://opentelemetry.io/docs/)
+- [Sentry Docs](https://docs.sentry.io/)
