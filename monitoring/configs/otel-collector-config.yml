@@ -1,8 +1,3 @@
-# =============================================================================
-# OpenTelemetry Collector Configuration
-# TikTickets-zing - SigNoz Only (Stack Simplificada)
-# =============================================================================
-
 receivers:
   otlp:
     protocols:
@@ -11,33 +6,22 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
         cors:
-          allowed_origins:
-            - "http://localhost:*"
-            - "http://127.0.0.1:*"
-            - "https://*.autotick.com.br"
-            - "https://*"
-          allowed_headers:
-            - "*"
+          allowed_origins: ["http://*", "https://*"]
+          allowed_headers: ["*"]
 
 processors:
   batch:
     send_batch_size: 10000
     timeout: 10s
-  
   memory_limiter:
     check_interval: 1s
     limit_mib: 1500
     spike_limit_mib: 512
-
   resource:
     attributes:
       - key: deployment.environment
         value: "production"
         action: upsert
-      - key: service.namespace
-        value: "tiktickets"
-        action: upsert
-
   signozspanmetrics/prometheus:
     metrics_exporter: clickhousemetricswrite
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s]
@@ -45,32 +29,25 @@ processors:
     dimensions:
       - name: service.namespace
         default: default
-      - name: deployment.environment
-        default: production
-
   tail_sampling:
     decision_wait: 10s
     num_traces: 100
     expected_new_traces_per_sec: 10
     policies:
-      - name: errors-policy
-        type: status_code
-        status_code: {status_codes: [ERROR]}
-      - name: latency-policy
-        type: latency
-        latency: {threshold_ms: 1000}
+      [
+        {name: errors-policy, type: status_code, status_code: {status_codes: [ERROR]}},
+        {name: latency-policy, type: latency, latency: {threshold_ms: 1000}}
+      ]
 
 exporters:
   clickhousetraces:
-    datasource: "tcp://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD}@${CLICKHOUSE_HOST:-clickhouse}:${CLICKHOUSE_PORT:-9000}/signoz_traces?secure=false"
-
+    datasource: "tcp://admin:signoz_password@clickhouse:9000?secure=false&skip_verify=true"
   clickhousemetricswrite:
-    endpoint: "tcp://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD}@${CLICKHOUSE_HOST:-clickhouse}:${CLICKHOUSE_PORT:-9000}/?secure=false"
+    endpoint: "tcp://admin:signoz_password@clickhouse:9000?secure=false&skip_verify=true"
     resource_to_telemetry_conversion:
       enabled: true
-
   clickhouselogsexporter:
-    dsn: "tcp://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD}@${CLICKHOUSE_HOST:-clickhouse}:${CLICKHOUSE_PORT:-9000}/?secure=false"
+    dsn: "tcp://admin:signoz_password@clickhouse:9000?secure=false&skip_verify=true"
     timeout: 10s
     sending_queue:
       queue_size: 100
@@ -80,35 +57,27 @@ exporters:
       max_interval: 30s
       max_elapsed_time: 300s
 
-  debug:
-    verbosity: basic
-
 extensions:
   health_check:
     endpoint: 0.0.0.0:13133
-  pprof:
-    endpoint: 0.0.0.0:1777
   zpages:
     endpoint: 0.0.0.0:55679
 
 service:
-  extensions: [health_check, pprof, zpages]
+  extensions: [health_check, zpages]
   pipelines:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, signozspanmetrics/prometheus, tail_sampling, batch]
       exporters: [clickhousetraces]
-    
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
       exporters: [clickhousemetricswrite]
-    
     logs:
       receivers: [otlp]
       processors: [memory_limiter, resource, batch]
       exporters: [clickhouselogsexporter]
-
   telemetry:
     metrics:
       level: basic

@@ -1,0 +1,10 @@
+<remote_servers>
+    <cluster>
+        <shard>
+            <replica>
+                <host>127.0.0.1</host>
+                <port>9000</port>
+            </replica>
+        </shard>
+    </cluster>
+</remote_servers>
