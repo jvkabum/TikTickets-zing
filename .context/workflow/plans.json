@@ -1,22 +1,4 @@
 {
-  "active": [
-    {
-      "slug": "plano-de-migracao-stack-atual-signoz-sentry",
-      "path": "plans/plano-de-migracao-stack-atual-signoz-sentry.md",
-      "title": "Plano De Migracao Stack Atual Signoz Sentry",
-      "summary": "📋 Plano de Migração: Stack Atual → SigNoz + Sentry",
-      "linkedAt": "2026-02-03T20:58:30.250Z",
-      "status": "active"
-    },
-    {
-      "slug": "fix-signoz-frontend-503",
-      "path": "plans/fix-signoz-frontend-503.md",
-      "title": "Correção do Erro 503 no SigNoz Frontend",
-      "summary": "Resolver o erro 503 Service Unavailable no frontend do SigNoz hospedado no Coolify",
-      "linkedAt": "2026-02-05T02:34:14.562Z",
-      "status": "active"
-    }
-  ],
-  "completed": [],
-  "primary": "plano-de-migracao-stack-atual-signoz-sentry"
+  "active": [],
+  "completed": []
 }

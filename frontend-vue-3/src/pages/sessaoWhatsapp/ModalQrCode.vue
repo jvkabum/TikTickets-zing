@@ -4,7 +4,7 @@
     @hide="fecharModalQrModal"
     persistent
   >
-    <q-card style="min-width: 400px" class="glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color">
+    <q-card style="min-width: 400px">
       <q-card-section>
         <div class="text-h6 text-primary">
           Leia o QrCode para iniciar a sessão
@@ -262,6 +262,7 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .qr-code-container {
+  background-color: white !important;
   padding: 24px;
   border-radius: 12px;
   display: inline-block;
@@ -269,17 +270,19 @@ onUnmounted(() => {
   border: 2px solid #e0e0e0;
 }
 
-.unified-modal-color {
-  background: #1e293b !important;
+.qr-timer {
+  margin-top: 8px;
 }
 
-.unified-modal-color :deep(.q-card__section),
-.unified-modal-color :deep(.q-table),
-.unified-modal-color :deep(.q-table__container),
-.unified-modal-color :deep(.q-table__middle),
-.unified-modal-color :deep(.q-table__top),
-.unified-modal-color :deep(.q-table__bottom),
-.unified-modal-color :deep(.q-card__actions) {
-  background: transparent !important;
+.text-red {
+  color: red !important;
+}
+
+.text-orange {
+  color: orange !important;
+}
+
+.text-green {
+  color: green !important;
 }
 </style>

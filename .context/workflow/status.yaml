@@ -1,47 +1,20 @@
 project:
-  name: "migracao-signoz"
+  name: "SigNoz Translation Audit V2"
   scale: MEDIUM
-  started: "2026-02-03T20:58:19.546Z"
-  current_phase: V
+  started: "2026-02-05T13:57:52.033Z"
+  current_phase: P
 
 phases:
   P:
-    status: filled
-    started_at: "2026-02-03T20:58:19.546Z"
-    completed_at: "2026-02-03T21:10:37.359Z"
+    status: in_progress
+    started_at: "2026-02-05T13:57:52.033Z"
   R:
-    status: filled
-    started_at: "2026-02-03T21:10:37.364Z"
-    completed_at: "2026-02-03T21:11:14.501Z"
+    status: pending
   E:
-    status: filled
-    started_at: "2026-02-03T21:11:15.554Z"
-    completed_at: "2026-02-05T02:34:47.375Z"
+    status: pending
   V:
-    status: completed
-    started_at: "2026-02-05T02:34:47.377Z"
-    completed_at: "2026-02-05T03:07:17.518Z"
-    outputs:
-      - path: "d:/Git Hub/TikTickets-zing/monitoring/docker-compose.yaml"
-        status: filled
-      - path: "d:/Git Hub/TikTickets-zing/monitoring/.env.observability.example"
-        status: filled
+    status: pending
   C:
     status: skipped
     reason: "Not required for scale MEDIUM"
-
-execution:
-  history:
-    - timestamp: "2026-02-05T03:07:17.518Z"
-      phase: V
-      action: completed
-  last_activity: "2026-02-05T03:07:17.518Z"
-  resume_context: "Fase V (Validação) concluída"
-
-approval:
-  plan_created: true
-  plan_approved: true
-  approved_by: "architect"
-  approved_at: "2026-02-03T21:10:59.752Z"
-  approval_notes: "Plano de migração revisado e aprovado. Arquitetura validada: OTel Collector continua sendo o hub central, apenas os destinos mudam de Jaeger/Loki/Prometheus para SigNoz."
 
