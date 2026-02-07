@@ -96,11 +96,11 @@ import ModalUsuario from './ModalUsuario.vue'
 const $q = useQuasar()
 const usuarioStore = useUsuarioStore()
 const filaStore = useFilaStore()
+const { filas } = storeToRefs(filaStore)
 
 const userProfile = ref('user')
 const usuarioSelecionado = ref({})
 const modalFilaUsuario = ref(false)
-const filas = ref([])
 
 const optionsProfile = [
   { value: 'user', label: 'Usuário' },
@@ -225,8 +225,7 @@ const deletarUsuario = usuario => {
 
 const listarFilas = async () => {
   try {
-    const data = await filaStore.listarFilas()
-    filas.value = data
+    await filaStore.listarFilas()
   } catch (error) {
     console.error(error)
   }
