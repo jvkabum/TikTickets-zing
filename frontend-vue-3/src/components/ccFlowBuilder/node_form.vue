@@ -531,6 +531,216 @@
             </q-input>
           </q-card-section>
         </q-card>
+
+        <!-- Ausência de resposta -->
+        <q-card
+          class="full-width q-my-sm"
+          style="min-height: 250px"
+        >
+          <div class="ef-node-form-header">Ausência de resposta</div>
+          <div class="q-pa-sm text-grey-8">
+             Após o tempo determinado, se o cliente não responder,
+             o bot realizará o encaminhamento para a Fila/Usuário informados.
+          </div>
+          <q-card-section class="q-pa-sm">
+            <div class="row q-mt-sm">
+              <div class="col">
+                <q-input
+                  dense
+                  outlined
+                  mask="###"
+                  rounded
+                  v-model.number="node.configurations.notResponseMessage.time"
+                  label="Tempo (minutos)"
+                />
+              </div>
+            </div>
+            <div class="row q-mt-sm">
+              <div class="col">
+                <q-option-group
+                  class="text-center"
+                  inline
+                  v-model="node.configurations.notResponseMessage.type"
+                  :options="[
+                    { value: 1, label: 'Fila' },
+                    { value: 2, label: 'Usuário' }
+                  ]"
+                  color="primary"
+                />
+              </div>
+            </div>
+            <div class="row q-mt-sm">
+              <div class="col">
+                <q-select
+                  v-if="node.configurations.notResponseMessage.type === 1"
+                  dense
+                  outlined
+                  rounded
+                  class="full-width"
+                  v-model="node.configurations.notResponseMessage.destiny"
+                  :options="filas"
+                  option-label="queue"
+                  option-value="id"
+                  label="Fila"
+                  map-options
+                  emit-value
+                  clearable
+                />
+                <q-select
+                  v-if="node.configurations.notResponseMessage.type === 2"
+                  dense
+                  outlined
+                  rounded
+                  class="full-width"
+                  v-model="node.configurations.notResponseMessage.destiny"
+                  :options="usuarios"
+                  option-label="name"
+                  option-value="id"
+                  label="Usuário"
+                  map-options
+                  emit-value
+                  clearable
+                />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+
+        <!-- Máximo de Tentativas do Bot -->
+        <q-card
+          class="full-width q-my-sm"
+          style="min-height: 250px"
+        >
+           <div class="ef-node-form-header">Máximo de Tentativas do Bot</div>
+           <div class="q-pa-sm text-grey-8">
+              Uma vez excedido o número máximo de retentativas de pergunta/resposta,
+              caso o cliente não envie uma resposta válida, o bot irá realizar o encaminhamento
+              para a Fila/Usuário configurados.
+           </div>
+          <q-card-section class="q-pa-sm">
+            <div class="row q-mt-sm">
+              <div class="col">
+                <q-input
+                  dense
+                  rounded
+                  outlined
+                  mask="##"
+                  v-model.number="node.configurations.maxRetryBotMessage.number"
+                  label="Número de tentativas"
+                />
+              </div>
+            </div>
+            <div class="row q-mt-sm">
+              <div class="col">
+                <q-option-group
+                  class="text-center"
+                  inline
+                  v-model="node.configurations.maxRetryBotMessage.type"
+                  :options="[
+                    { value: 1, label: 'Fila' },
+                    { value: 2, label: 'Usuário' }
+                  ]"
+                  color="primary"
+                />
+              </div>
+            </div>
+            <div class="row q-mt-sm">
+              <div class="col">
+                <q-select
+                  v-if="node.configurations.maxRetryBotMessage.type === 1"
+                  dense
+                  outlined
+                  rounded
+                  class="full-width"
+                  v-model="node.configurations.maxRetryBotMessage.destiny"
+                  :options="filas"
+                  option-label="queue"
+                  option-value="id"
+                  label="Fila"
+                  map-options
+                  emit-value
+                  clearable
+                />
+                <q-select
+                  v-if="node.configurations.maxRetryBotMessage.type === 2"
+                  dense
+                  outlined
+                  rounded
+                  class="full-width"
+                  v-model="node.configurations.maxRetryBotMessage.destiny"
+                  :options="usuarios"
+                  option-label="name"
+                  option-value="id"
+                  label="Usuário"
+                  map-options
+                  emit-value
+                  clearable
+                />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+
+        <!-- Auto Distribuir Atendimento -->
+        <q-card
+          class="full-width q-my-sm"
+          style="min-height: 200px"
+        >
+          <div class="ef-node-form-header">Auto Distribuir Atendimento</div>
+          <div class="q-pa-sm text-grey-8">
+            <p><strong>Não:</strong> Desativado.</p>
+            <p><strong>Balancear:</strong> Distribui com base na carga de atendimentos.</p>
+            <p><strong>Aleatória:</strong> Distribui aleatoriamente.</p>
+          </div>
+          <q-card-section class="q-pa-sm">
+            <div class="row q-mt-sm">
+              <div class="col">
+                <q-option-group
+                  class="text-center"
+                  inline
+                  v-model="node.configurations.autoDistributeTickets"
+                  :options="[
+                    { value: 'N', label: 'Não' },
+                    { value: 'R', label: 'Aleatória' },
+                    { value: 'B', label: 'Balanceada' }
+                  ]"
+                  color="primary"
+                />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+
+        <!-- Encerrar Atendimento -->
+        <q-card
+          class="full-width q-my-sm"
+          style="min-height: 150px"
+        >
+          <div class="ef-node-form-header">Encerrar Atendimento</div>
+          <div class="q-pa-sm text-grey-8">
+            Caso o cliente digite uma das opções abaixo, o atendimento será encerrado.
+          </div>
+          <q-card-section class="q-pa-sm">
+            <div class="row q-mt-sm">
+              <div class="col">
+                <q-select
+                  dense
+                  label="Parâmetros de Encerramento"
+                  outlined
+                  rounded
+                  v-model="node.configurations.answerCloseTicket"
+                  use-input
+                  use-chips
+                  multiple
+                  hide-dropdown-icon
+                  input-debounce="0"
+                  new-value-mode="add-unique"
+                  hint="Digite o valor e aperte enter"
+                />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
       </q-card-section>
 
       <q-card-section
@@ -671,11 +881,11 @@
 </template>
 
 <script setup>
-import { useQuasar, uid } from 'quasar'
+import { uid, useQuasar } from 'quasar'
 import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
 import useEmoji from 'src/composables/useEmoji'
-import MessageField from './messageField.vue'
 import MediaField from './mediaField.vue'
+import MessageField from './messageField.vue'
 
 // Registrar componentes para uso dinâmico via :is
 const interactionComponents = {
@@ -724,13 +934,24 @@ const optionsSe = [
 
 const gerarUID = () => uid()
 
-const nodeInit = (data, id) => {
+// Replicar Vue 2.7: usar a referência do nó passada pelo panel (mesma que data.nodeList)
+const nodeInit = (data, id, nodeRef) => {
   type.value = 'node'
-  const foundNode = data.nodeList.find(n => n.id === id)
+  const foundNode = nodeRef ?? data.nodeList.find(n => n.id === id)
   if (foundNode) {
     node.value = foundNode
     if (!node.value.interactions) node.value.interactions = []
     if (!node.value.conditions) node.value.conditions = []
+    if (!node.value.configurations) node.value.configurations = {}
+    
+    // Inicializar objetos de configuração se não existirem
+    if (!node.value.configurations.welcomeMessage) node.value.configurations.welcomeMessage = { message: '' }
+    if (!node.value.configurations.notOptionsSelectMessage) node.value.configurations.notOptionsSelectMessage = { message: '' }
+    if (!node.value.configurations.notResponseMessage) node.value.configurations.notResponseMessage = { time: null, type: 1, destiny: null }
+    if (!node.value.configurations.maxRetryBotMessage) node.value.configurations.maxRetryBotMessage = { number: null, type: 1, destiny: null }
+    if (!node.value.configurations.autoDistributeTickets) node.value.configurations.autoDistributeTickets = 'N'
+    if (!node.value.configurations.answerCloseTicket) node.value.configurations.answerCloseTicket = []
+
     updateNodeConditions()
   }
 }
@@ -929,36 +1150,31 @@ const updateMessageWithNumbers = mensagem => {
 }
 
 const updateNodeConditions = () => {
-  if (node.value && node.value.conditions) {
-    node.value.conditions.forEach(c => {
-      if (!c.type || c.type === 'default' || c.type === 'US') c.type = 'R'
-      c.action = c.action === undefined ? 0 : Number(c.action)
-      if (!Array.isArray(c.condition)) {
-        if (typeof c.condition === 'string') {
-          if (c.condition === 'true' || c.condition === '') {
-            const target = props.nodesList.nodeList.find(n => n.id === (c.nextNode || c.nextStepId))
-            c.condition = target ? [target.name] : ['bot']
-          } else {
-            c.condition = [c.condition]
-          }
+  if (!node.value || !node.value.conditions) return
+  const currentNodeId = node.value.id
+  node.value.conditions.forEach(c => {
+    if (!c.type || c.type === 'default') c.type = 'R'
+    c.action = c.action === undefined ? 0 : Number(c.action)
+    if (!Array.isArray(c.condition)) {
+      if (typeof c.condition === 'string') {
+        if (c.condition === 'true' || c.condition === '') {
+          const target = props.nodesList.nodeList.find(n => n.id === (c.nextNode || c.nextStepId))
+          c.condition = target ? [target.name] : ['bot']
         } else {
-          c.condition = ['bot']
+          c.condition = [c.condition]
         }
-      } else if (c.condition.length === 0) {
+      } else {
         c.condition = ['bot']
       }
-    })
-    extrairOpcoesAutomaticamente()
-    nextTick(() => {
-      const conditions = [...node.value.conditions]
-      node.value.conditions = []
-      nextTick(() => {
-        node.value.conditions = conditions
-        tabNodeForm.value = 'condicoes'
-        emit('repaintEverything')
-      })
-    })
-  }
+    } else if (c.condition.length === 0 && c.type !== 'US') {
+      c.condition = ['bot']
+    }
+  })
+  extrairOpcoesAutomaticamente()
+  // Trigger repaint to update connections/endpoints if needed
+  nextTick(() => {
+    emit('repaintEverything')
+  })
 }
 
 const updateLineLabelRealtime = val => {
@@ -1010,7 +1226,12 @@ const onInsertSelectEmojiNotOptionsSelectMessage = emoji => {
 }
 
 
-onMounted(() => console.log('node_form montou', node.value))
+onMounted(() => {
+  console.log('node_form montou', node.value)
+  emit('formMounted')
+})
+
+
 </script>
 
 <style lang="scss" scoped>

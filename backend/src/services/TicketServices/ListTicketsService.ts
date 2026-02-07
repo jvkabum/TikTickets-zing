@@ -2,10 +2,10 @@
 import { QueryTypes } from "sequelize";
 // import { startOfDay, endOfDay, parseISO } from "date-fns";
 
-import Ticket from "../../models/Ticket";
-import UsersQueues from "../../models/UsersQueues";
 import AppError from "../../errors/AppError";
 import Queue from "../../models/Queue";
+import Ticket from "../../models/Ticket";
+import UsersQueues from "../../models/UsersQueues";
 // import ListSettingsService from "../SettingServices/ListSettingsService";
 // import Queue from "../../models/Queue";
 // import ListSettingsService from "../SettingServices/ListSettingsService";
@@ -73,7 +73,8 @@ const ListTicketsService = async ({
     throw new AppError("ERR_NO_STATUS_SELECTED", 404);
   }
 
-  if (isAdminShowAll) {
+  // Se for admin show all, mas NÃO houver status definido, buscar todos
+  if (isAdminShowAll && (!status || status.length === 0)) {
     status = ["open", "pending", "closed"];
   }
 
@@ -213,10 +214,16 @@ const ListTicketsService = async ({
   where t."tenantId" = :tenantId
   and c."tenantId" = :tenantId
   and t.status in ( :status )
-  and (( :isShowAll = 'N' and  (
-    (:isExistsQueueTenant = 'S' and t."queueId" in ( :queuesIdsUser ))
-    or t."userId" = :userId or exists (select 1 from "ContactWallets" cw where cw."walletId" = :userId and cw."contactId" = t."contactId") )
-  ) OR (:isShowAll = 'S') OR (t."isGroup" = true) OR (:isExistsQueueTenant = 'N') )
+  and (
+    (:isShowAll = 'S') OR
+    (t."isGroup" = true) OR
+    (:isExistsQueueTenant = 'N') OR
+    (
+      (:isExistsQueueTenant = 'S' and t."queueId" in ( :queuesIdsUser ))
+      or t."userId" = :userId 
+      or exists (select 1 from "ContactWallets" cw where cw."walletId" = :userId and cw."contactId" = t."contactId")
+    )
+  )
   and (( :isUnread = 'S'  and t."unreadMessages" > 0) OR (:isUnread = 'N'))
   and ((:isNotAssigned = 'S' and t."userId" is null) OR (:isNotAssigned = 'N'))
   and ((:isSearchParam = 'S' and ( /*exists (

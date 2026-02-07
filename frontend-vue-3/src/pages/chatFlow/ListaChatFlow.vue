@@ -198,6 +198,7 @@ const abrirFluxo = async flow => {
     filas: filas.value,
     flow
   })
+  localStorage.setItem('currentChatFlow', JSON.stringify(flow))
   router.push({ name: 'chat-flow-builder' })
 }
 
@@ -215,8 +216,12 @@ const confirmDeleteFoo = async () => {
 }
 
 // Handlers for modal events - can be placeholders as store handles logic
-const novoFluxoCriado = () => {}
-const fluxoEditado = () => {}
+const novoFluxoCriado = (flow) => {
+  listarChatFlows()
+}
+const fluxoEditado = (flow) => {
+  listarChatFlows()
+}
 
 onMounted(async () => {
   await listarChatFlows()

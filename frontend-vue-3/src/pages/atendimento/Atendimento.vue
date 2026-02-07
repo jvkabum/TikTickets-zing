@@ -264,7 +264,7 @@
             class="q-pa-none"
           >
             <TicketList
-              :key="`${tab}-${JSON.stringify(pesquisaTickets)}`"
+              :key="tab"
               :status="tab"
               :active-tab="selectedTab"
               :search-params="pesquisaTickets"
@@ -633,6 +633,7 @@ const $q = useQuasar()
 const ticketStore = useTicketStore()
 const { setupSockets, disconnectSockets } = useTicketSockets()
 const { ticketFocado } = storeToRefs(ticketStore)
+import { ConsultarLogsTicket, DeletarMensagem } from 'src/service/tickets'
 import bus from 'src/utils/eventBus'
 
 const authStore = useAuthStore()
@@ -653,7 +654,6 @@ const usuarioStore = useUsuarioStore()
 const { usuarios } = storeToRefs(usuarioStore)
 
 const { listarContatos } = useContatos()
-import { ConsultarLogsTicket, DeletarMensagem } from 'src/service/tickets'
 const apiDeletarMensagem = DeletarMensagem
 const consultarLogsTicket = ConsultarLogsTicket
 
@@ -700,13 +700,11 @@ const style = computed(() => ({
 
 const cIsExtraInfo = computed(() => {
   const info = ticketFocado.value?.contact?.extraInfo
-  const hasExtra = Array.isArray(info) && info.length > 0
-  console.log('DEBUG [Atendimento] cIsExtraInfo:', hasExtra, '| Data:', info)
-  return hasExtra
+  return Array.isArray(info) && info.length > 0
 })
 
 watch(() => ticketFocado.value?.scheduledMessages, (val) => {
-  console.log('DEBUG [Atendimento] scheduledMessages:', val?.length, '| Data:', val)
+  // Observando mudanças nas mensagens agendadas
 }, { deep: true, immediate: true })
 
 // Contagem de tickets por status para os badges
@@ -814,7 +812,7 @@ onMounted(() => {
   listarWhatsapps() // Carregar status dos canais
   usuarioStore.listarUsuarios() // Carregar usuários para carteira
   carregarFiltros() // Carrega filtros salvos ao montar
-  ticketStore.atualizarContadoresGerais() // Sincroniza todos os números do topo
+  ticketStore.atualizarContadoresGerais(pesquisaTickets) // Sincroniza todos os números do topo com os filtros reais
 
   bus.on('infor-cabecalo-chat:acao-menu', handleAcaoMenu)
   

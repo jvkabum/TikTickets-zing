@@ -184,13 +184,15 @@
         rounded
         class="q-ml-sm"
         color="positive"
+        :loading="savingFlow"
+        :disable="savingFlow"
         @click="saveFlow"
       >
         <q-icon
           name="mdi-content-save-outline"
           class="on-left"
         />
-        <span class="block">Salvar</span>
+        <span class="block">{{ savingFlow ? 'Salvando...' : 'Salvar' }}</span>
       </q-btn>
     </q-toolbar>
     <q-separator color="text-grey-3" />
@@ -239,6 +241,7 @@
           @setLineLabel="setLineLabel"
           @updateLineLabelRealtime="updateLineLabelRealtime"
           @repaintEverything="repaintEverything"
+          @formMounted="onNodeFormMounted"
           :filas="filas"
           :usuarios="usuarios"
           :nodesList="data"
@@ -265,7 +268,7 @@
 
 <script setup>
 import { cloneDeep } from 'lodash'
-import { uid as getUUID, Loading } from 'quasar'
+import { uid as getUUID } from 'quasar'
 import { UpdateChatFlow } from '../../service/chatFlow'
 import { useChatFlowStore } from '../../stores/useChatFlowStore'
 import { useFilaStore } from '../../stores/useFilaStore'
@@ -275,7 +278,7 @@ import FlowHelp from './help.vue'
 import './index.css'
 import FlowInfo from './info.vue'
 // import './jsplumb' // Carregado via public/jsplumb.js
-import { jsplumbConnectOptions, jsplumbSetting, jsplumbSourceOptions, jsplumbTargetOptions } from './mixins'
+import { jsplumbConnectOptions, jsplumbSetting } from './mixins'
 import flowNode from './node.vue'
 import FlowNodeForm from './node_form.vue'
 
@@ -367,6 +370,16 @@ const addNewLineCondition = (from, to, oldTo) => {
     }
 
     const conn = jsPlumb.value.connect(connParam, jsplumbConnectOptions)
+    
+    // Garantir que a linha seja adicionada à lista de dados para persistência
+    if (!data.lineList.some(line => line.from === from && line.to === to)) {
+      data.lineList.push({
+        from,
+        to,
+        label: targetNode ? `Rotear para ${targetNode.name}` : '',
+        connector: ['Bezier', { curviness: 70 }]
+      })
+    }
 
     try {
       const sourcePos = jsPlumb.value.getOffset(from)
@@ -470,6 +483,10 @@ const jsPlumbInit = () => {
       })
     })
 
+    jsPlumb.value.bind('connectionDetached', info => {
+      data.lineList = data.lineList.filter(line => !(line.from === info.sourceId && line.to === info.targetId))
+    })
+
     jsPlumb.value.setContainer(efContainer.value)
   })
 }
@@ -482,8 +499,7 @@ const loadEasyFlow = () => {
   }
 
   for (const node of data.nodeList) {
-    jsPlumb.value.makeSource(node.id, jsplumbSourceOptions)
-    jsPlumb.value.makeTarget(node.id, jsplumbTargetOptions)
+
 
     if (!node.viewOnly && !['start', 'exception'].includes(node.type)) {
       jsPlumb.value.addEndpoint(node.id, {
@@ -671,14 +687,24 @@ const deleteNode = node => {
 const clickNode = nodeId => {
   const node = data.nodeList.find(n => n.id === nodeId)
   if (node) {
+    // Replicar Vue 2.7: activeElement = node (mesma referência que data.nodeList)
     activeElement.type = 'node'
     activeElement.id = node.id
-    if (nodeForm.value) nodeForm.value.nodeInit(data, nodeId)
+    // Passar a referência do nó explicitamente para o form usar a mesma que data.nodeList
+    if (nodeForm.value) nodeForm.value.nodeInit(data, nodeId, node)
     if (node && !['start', 'exception'].includes(node.type)) {
       nextTick(() => {
         if (nodeForm.value) nodeForm.value.activateSection('conditions')
       })
     }
+  }
+}
+
+/** Re-sincroniza o form com o nó selecionado quando o form monta (ex.: após remount). */
+const onNodeFormMounted = () => {
+  if (activeElement.type === 'node' && activeElement.id && nodeForm.value) {
+    const node = data.nodeList.find(n => n.id === activeElement.id)
+    if (node) nodeForm.value.nodeInit(data, activeElement.id, node)
   }
 }
 
@@ -702,9 +728,40 @@ const addNode = (evt, nodeMenu) => {
 
   data.nodeList.push(newNode)
   nextTick(() => {
-    jsPlumb.value.makeSource(id, jsplumbSourceOptions)
-    jsPlumb.value.makeTarget(id, jsplumbTargetOptions)
-    jsPlumb.value.draggable(id, { containment: 'parent' })
+
+    jsPlumb.value.draggable(id, {
+      containment: 'parent',
+      stop: el => {
+        changeNodeSite({
+          id: id,
+          left: el.el.style.left,
+          top: el.el.style.top
+        })
+      }
+    })
+
+    if (!newNode.viewOnly && !['start', 'exception'].includes(newNode.type)) {
+      jsPlumb.value.addEndpoint(id, {
+        anchor: 'Bottom',
+        isSource: true,
+        isTarget: false,
+        maxConnections: -1,
+        cssClass: 'jtk-source-endpoint primary-endpoint',
+        hoverClass: 'jtk-source-endpoint-hover',
+        connectorStyle: { stroke: '#8db1dd', strokeWidth: 3 },
+        endpoint: ['Dot', { radius: 6 }],
+        connector: ['Bezier', { curviness: 70 }]
+      })
+
+      jsPlumb.value.addEndpoint(id, {
+        anchor: 'Top',
+        isTarget: true,
+        isSource: false,
+        maxConnections: -1,
+        cssClass: 'jtk-target-endpoint',
+        endpoint: ['Dot', { radius: 6 }]
+      })
+    }
   })
 }
 
@@ -724,9 +781,40 @@ const addNodeFromButton = type => {
   }
   data.nodeList.push(newNode)
   nextTick(() => {
-    jsPlumb.value.makeSource(id, jsplumbSourceOptions)
-    jsPlumb.value.makeTarget(id, jsplumbTargetOptions)
-    jsPlumb.value.draggable(id, { containment: 'parent' })
+
+    jsPlumb.value.draggable(id, {
+      containment: 'parent',
+      stop: el => {
+        changeNodeSite({
+          id: id,
+          left: el.el.style.left,
+          top: el.el.style.top
+        })
+      }
+    })
+
+    if (!newNode.viewOnly && !['start', 'exception'].includes(newNode.type)) {
+      jsPlumb.value.addEndpoint(id, {
+        anchor: 'Bottom',
+        isSource: true,
+        isTarget: false,
+        maxConnections: -1,
+        cssClass: 'jtk-source-endpoint primary-endpoint',
+        hoverClass: 'jtk-source-endpoint-hover',
+        connectorStyle: { stroke: '#8db1dd', strokeWidth: 3 },
+        endpoint: ['Dot', { radius: 6 }],
+        connector: ['Bezier', { curviness: 70 }]
+      })
+
+      jsPlumb.value.addEndpoint(id, {
+        anchor: 'Top',
+        isTarget: true,
+        isSource: false,
+        maxConnections: -1,
+        cssClass: 'jtk-target-endpoint',
+        endpoint: ['Dot', { radius: 6 }]
+      })
+    }
   })
 }
 
@@ -753,8 +841,7 @@ const duplicateNode = nodeId => {
   data.nodeList.push(newNode)
 
   nextTick(() => {
-    jsPlumb.value.makeSource(id, jsplumbSourceOptions)
-    jsPlumb.value.makeTarget(id, jsplumbTargetOptions)
+
     jsPlumb.value.draggable(id, {
       containment: 'parent',
       stop: el => {
@@ -811,19 +898,45 @@ const dataReload = newData => {
   })
 }
 
+const savingFlow = ref(false)
 const saveFlow = async () => {
-  Loading.show({ message: 'Salvando...' })
+  savingFlow.value = true
   try {
+    // Alinhado ao Vue 2.7: garantir conector Bezier antes de salvar
+    resetAllConnectionsToBezier()
+
+    // Normalização de nodeList (igual Vue 2.7): id, nodeId, conditions com nextStepId
+    const normalizedNodeList = (data.nodeList || []).map(node => ({
+      ...node,
+      id: node.id || getUUID(),
+      nodeId: node.nodeId || node.id || getUUID(),
+      conditions: (node.conditions || []).map(condition => ({
+        ...condition,
+        id: condition.id || getUUID(),
+        nodeId: condition.nodeId ?? condition.target ?? condition.nextNode ?? condition.nextStepId,
+        nextStepId: condition.nextStepId ?? condition.nextNode ?? condition.target
+      }))
+    }))
+
+    // Normalização de lineList (igual Vue 2.7): from, to, label com fallback
+    const normalizedLineList = (data.lineList || []).map(line => ({
+      ...line,
+      from: line.from || '',
+      to: line.to || '',
+      label: line.label || ''
+    }))
+
+    // Payload como no Vue 2.7: top-level do registro + flow apenas com nodeList e lineList
     const payload = {
       ...cDataFlow.value,
-      flow: cloneDeep(data)
+      flow: { nodeList: normalizedNodeList, lineList: normalizedLineList }
     }
     await UpdateChatFlow(payload)
     $q.notify({ type: 'positive', message: 'Fluxo salvo com sucesso!' })
   } catch (err) {
     $q.notify({ type: 'negative', message: 'Erro ao salvar o fluxo.' })
   } finally {
-    Loading.hide()
+    savingFlow.value = false
   }
 }
 
@@ -904,6 +1017,21 @@ onMounted(async () => {
     jsPlumbInit()
     if (cDataFlow.value?.flow) {
       dataReload(cDataFlow.value.flow)
+    } else {
+      const stored = localStorage.getItem('currentChatFlow')
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          chatFlowStore.setFlowData({
+            flow: parsed,
+            usuarios: chatFlowStore.usuarios,
+            filas: chatFlowStore.filas
+          })
+          dataReload(parsed.flow)
+        } catch (e) {
+          console.error('Erro ao recuperar fluxo do localStorage', e)
+        }
+      }
     }
   } else {
     console.error('jsPlumb não foi carregado corretamente.')
@@ -952,7 +1080,7 @@ defineExpose({
   cursor: crosshair !important;
 }
 .jtk-endpoint-connected {
-  display: none !important;
+  /* display: none !important; */
 }
 .jtk-connector {
   z-index: 99 !important;
