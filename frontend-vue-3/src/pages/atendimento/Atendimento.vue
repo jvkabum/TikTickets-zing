@@ -266,6 +266,7 @@
             <TicketList
               :key="`${tab}-${JSON.stringify(pesquisaTickets)}`"
               :status="tab"
+              :active-tab="selectedTab"
               :search-params="pesquisaTickets"
               :filas="filas"
             />
