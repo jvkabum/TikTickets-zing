@@ -54,6 +54,10 @@ const props = defineProps({
     type: String,
     default: 'open'
   },
+  activeTab: {
+    type: String,
+    default: 'open'
+  },
   searchParams: {
     type: Object,
     required: true
@@ -107,17 +111,18 @@ const onScroll = info => {
   }
 }
 
-// Observar apenas o status local para recarregar se mudar a aba
+// Carregar apenas quando esta aba for a ativa (evita 4 requisições paralelas sobrescrevendo a store)
 watch(
-  () => props.status,
-  () => {
-    consultarTickets()
-  }
+  () => props.activeTab,
+  (activeTab) => {
+    if (activeTab === props.status) {
+      consultarTickets()
+    }
+  },
+  { immediate: true }
 )
 
-onMounted(() => {
-  consultarTickets()
-})
+// Carregamento no mount já é coberto pelo watch(activeTab, { immediate: true })
 
 onUnmounted(() => {
   // Limpeza se necessário
