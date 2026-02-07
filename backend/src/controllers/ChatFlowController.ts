@@ -140,12 +140,13 @@ export const update = async (
   }
   const { tenantId } = req.user;
 
-  // Prepara dados atualizados do fluxo
+  // Prepara dados atualizados do fluxo (frontend envia flow aninhado e isActive)
   const newFlow: ChatFlowData = {
-    flow: { ...req.body },           // Nova estrutura
-    name: req.body.name,             // Novo nome
-    isActive: req.body.isReactive,   // Status atualizado
-    userId: +req.user.id,            // Usuário que atualizou
+    flow: req.body.flow ?? {},       // Estrutura do fluxo (nodeList, lineList, name)
+    name: req.body.name,             // Nome do fluxo
+    isActive: req.body.isActive ?? true, // Status (frontend envia isActive, não isReactive)
+    userId: +(req.body.userId ?? req.user.id),
+    celularTeste: req.body.celularTeste ?? undefined,
     tenantId
   };
 

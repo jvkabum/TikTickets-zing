@@ -37,10 +37,14 @@ const UpdateChatFlowService = async ({
     throw new AppError("ERR_NO_CHAT_FLOW_FOUND", 404);
   }
 
-  for await (const node of flow.flow.nodeList) {
+  // flow pode ser o objeto direto (nodeList, lineList, name) vindo do controller
+  const flowData = flow?.flow ?? flow;
+  const nodeList = flowData?.nodeList || [];
+  for await (const node of nodeList) {
     if (node.type === "node") {
-      for await (const item of node.interactions) {
-        if (item.type === "MediaField" && item.data.media) {
+      const interactions = node.interactions || [];
+      for await (const item of interactions) {
+        if (item.type === "MediaField" && item.data?.media) {
           const newName = `${new Date().getTime()}-${item.data.name}`;
           await writeFileAsync(
             join(__dirname, "..", "..", "..", "public", newName),
@@ -52,7 +56,7 @@ const UpdateChatFlowService = async ({
           item.data.mediaUrl = newName;
         }
         // ajustar para retirar a informação da URL
-        if (item.type === "MediaField" && item.data.mediaUrl) {
+        if (item.type === "MediaField" && item.data?.mediaUrl) {
           const urlSplit = item.data.mediaUrl.split("/");
           item.data.mediaUrl = urlSplit[urlSplit.length - 1];
         }
@@ -62,10 +66,10 @@ const UpdateChatFlowService = async ({
 
   await chatFlow.update({
     name,
-    flow: flow.flow,
+    flow: flowData,
     userId,
-    isActive: flow.isActive,
-    celularTeste: flow.celularTeste
+    isActive: flow?.isActive ?? isActive,
+    celularTeste: flow?.celularTeste ?? celularTeste
   });
 
   await chatFlow.reload({

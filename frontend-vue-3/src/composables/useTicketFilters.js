@@ -1,10 +1,10 @@
-import { reactive, computed } from 'vue'
+import { computed, reactive } from 'vue'
 
 /**
  * Composable para gerenciar filtros de tickets
  * Substitui a lógica duplicada de checkTicketFilter.js
  */
-export function useTicketFilters () {
+export function useTicketFilters() {
     const storage = useAppLocalStorage()
     const config = useConfiguracoes()
     const permissoes = usePermissoes()
@@ -27,14 +27,16 @@ export function useTicketFilters () {
      */
     const carregarFiltros = () => {
         const saved = storage.getFiltrosAtendimento()
-        Object.assign(filtros, saved)
+        if (saved) Object.assign(filtros, saved)
+        filtros.pageNumber = 1 // Sempre resetar para a primeira página ao carregar
     }
 
     /**
      * Salva filtros no localStorage
      */
     const salvarFiltros = () => {
-        storage.setFiltrosAtendimento({ ...filtros })
+        const { pageNumber, ...filtrosSave } = filtros
+        storage.setFiltrosAtendimento(filtrosSave)
     }
 
     /**

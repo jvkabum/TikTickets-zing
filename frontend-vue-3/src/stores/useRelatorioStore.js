@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import {
-    RelatorioContatos,
-    RelatorioResumoAtendimentosUsuarios,
     GetDashTicketsAndTimes,
     GetDashTicketsChannels,
-    GetDashTicketsEvolutionChannels,
     GetDashTicketsEvolutionByPeriod,
+    GetDashTicketsEvolutionChannels,
     GetDashTicketsPerUsersDetail,
-    GetDashTicketsQueue
+    GetDashTicketsQueue,
+    RelatorioContatos,
+    RelatorioResumoAtendimentosUsuarios
 } from 'src/service/estatisticas'
 
 export const useRelatorioStore = defineStore('relatorios', {
@@ -52,6 +52,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.dadosResumo = data
                 return data
             } catch (error) {
+                if (!error) return
                 if (error.name === 'CanceledError' || error.name === 'AbortError') return
                 throw error
             } finally {
@@ -64,6 +65,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 const { data } = await RelatorioContatos(params, this._getSignal())
                 return data
             } catch (error) {
+                if (!error) return
                 if (error.name === 'CanceledError' || error.name === 'AbortError') return
                 throw error
             } finally {
@@ -76,6 +78,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.ticketsAndTimes = data[0] || {}
                 return this.ticketsAndTimes
             } catch (error) {
+                if (!error) return
                 if (error.name === 'CanceledError' || error.name === 'AbortError') return
                 console.error(error)
             }
@@ -86,6 +89,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.ticketsQueue = data
                 return data
             } catch (error) {
+                if (!error) return
                 if (error.name === 'CanceledError' || error.name === 'AbortError') return
                 console.error(error)
             }
@@ -96,6 +100,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.ticketsChannels = data
                 return data
             } catch (error) {
+                if (!error) return
                 if (error.name === 'CanceledError' || error.name === 'AbortError') return
                 console.error(error)
             }
@@ -106,6 +111,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.ticketsEvolutionChannels = data
                 return data
             } catch (error) {
+                if (!error) return
                 if (error.name === 'CanceledError' || error.name === 'AbortError') return
                 console.error(error)
             }
@@ -116,6 +122,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.ticketsEvolutionByPeriod = data
                 return data
             } catch (error) {
+                if (!error) return
                 if (error.name === 'CanceledError' || error.name === 'AbortError') return
                 console.error(error)
             }
@@ -126,6 +133,7 @@ export const useRelatorioStore = defineStore('relatorios', {
                 this.ticketsPerUsersDetail = data
                 return data
             } catch (error) {
+                if (!error) return
                 if (error.name === 'CanceledError' || error.name === 'AbortError') return
                 console.error(error)
             }
