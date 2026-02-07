@@ -265,7 +265,7 @@
 
 <script setup>
 import { cloneDeep } from 'lodash'
-import { uid as getUUID } from 'quasar'
+import { uid as getUUID, Loading } from 'quasar'
 import { UpdateChatFlow } from '../../service/chatFlow'
 import { useChatFlowStore } from '../../stores/useChatFlowStore'
 import { useFilaStore } from '../../stores/useFilaStore'
@@ -812,7 +812,7 @@ const dataReload = newData => {
 }
 
 const saveFlow = async () => {
-  $q.loading.show()
+  Loading.show({ message: 'Salvando...' })
   try {
     const payload = {
       ...cDataFlow.value,
@@ -823,7 +823,7 @@ const saveFlow = async () => {
   } catch (err) {
     $q.notify({ type: 'negative', message: 'Erro ao salvar o fluxo.' })
   } finally {
-    $q.loading.hide()
+    Loading.hide()
   }
 }
 
