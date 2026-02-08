@@ -24,6 +24,7 @@ interface Request {
   tenantId: string | number;
   profile: string;
   tags?: string[];
+  isGroup?: string;
 }
 
 interface Response {
@@ -45,7 +46,8 @@ const ListTicketsService = async ({
   includeNotQueueDefined,
   tenantId,
   profile,
-  tags
+  tags,
+  isGroup
 }: Request): Promise<Response> => {
   // check is admin
   const isAdminShowAll = showAll == "true" && profile === "admin";
@@ -55,6 +57,7 @@ const ListTicketsService = async ({
     isNotAssignedUser && isNotAssignedUser == "true" ? "S" : "N";
   const isShowAll = isAdminShowAll ? "S" : "N";
   const isQueuesIds = queuesIds ? "S" : "N";
+  const filterIsGroup = isGroup === "true" ? "S" : (isGroup === "false" ? "N" : "A"); // S = apenas grupos, N = sem grupos, A = todos
 
   const isSearchParam = searchParam ? "S" : "N";
 
@@ -236,6 +239,7 @@ const ListTicketsService = async ({
     where ct."contactId" = t."contactId" 
     and ct."tagId" in (:tags)
   )` : ''}
+  and ((:filterIsGroup = 'S' and t."isGroup" = true) OR (:filterIsGroup = 'N' and t."isGroup" = false) OR (:filterIsGroup = 'A'))
   group by t.id, c."profilePicUrl", c."name", u."name", q.queue, w.id, w."name"
   order by 
     CASE 
@@ -266,7 +270,8 @@ const ListTicketsService = async ({
       searchParam: `%${searchParam}%`,
       limit,
       offset,
-      tags: tags || []
+      tags: tags || [],
+      filterIsGroup
     },
     type: QueryTypes.SELECT,
     nest: true

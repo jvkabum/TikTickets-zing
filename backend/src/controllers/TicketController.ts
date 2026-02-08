@@ -78,6 +78,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   const queuesIds = (req.query.queuesIds || req.query["queuesIds[]"]) as any;
   // eslint-disable-next-line dot-notation
   const tags = (req.query.tags || req.query["tags[]"]) as any;
+  // eslint-disable-next-line dot-notation
+  const isGroup = req.query.isGroup as string;
 
   const userId = req.user.id;
 
@@ -94,7 +96,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     includeNotQueueDefined,
     tenantId,
     profile,
-    tags
+    tags,
+    isGroup
   });
 
   return res.status(200).json({ tickets, count, hasMore });
