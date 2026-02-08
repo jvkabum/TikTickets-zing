@@ -307,7 +307,7 @@ export const useTicketStore = defineStore('ticket', () => {
 
       // Determinar o tipo de lista a atualizar
       let type = 'search'
-      if (params.isGroup) {
+      if (params.isGroup === 'true' || params.isGroup === true) {
         type = 'groups'
       } else if (params.status && params.status.length === 1) {
         type = params.status[0]
@@ -321,7 +321,7 @@ export const useTicketStore = defineStore('ticket', () => {
       setHasMore(data.hasMore)
 
       // Atualizar contagem global conforme o status pesquisado
-      if (params.isGroup) {
+      if (params.isGroup === 'true' || params.isGroup === true) {
         ticketsCount.value.groups = data.count
       } else if (params.status && params.status.length === 1) {
         const status = params.status[0]
@@ -415,20 +415,20 @@ export const useTicketStore = defineStore('ticket', () => {
     }
 
     try {
-      // Aberto
-      const { data: openData } = await ConsultarTickets({ ...baseParams, status: ['open'] })
+      // Aberto (excluindo grupos)
+      const { data: openData } = await ConsultarTickets({ ...baseParams, status: ['open'], isGroup: 'false' })
       ticketsCount.value.open = openData.count || 0
 
-      // Pendente
-      const { data: pendingData } = await ConsultarTickets({ ...baseParams, status: ['pending'] })
+      // Pendente (excluindo grupos)
+      const { data: pendingData } = await ConsultarTickets({ ...baseParams, status: ['pending'], isGroup: 'false' })
       ticketsCount.value.pending = pendingData.count || 0
 
-      // Fechado
-      const { data: closedData } = await ConsultarTickets({ ...baseParams, status: ['closed'] })
+      // Fechado (excluindo grupos)
+      const { data: closedData } = await ConsultarTickets({ ...baseParams, status: ['closed'], isGroup: 'false' })
       ticketsCount.value.closed = closedData.count || 0
 
       // Grupos
-      const { data: groupsData } = await ConsultarTickets({ ...baseParams, status: ['open', 'pending'], isGroup: true })
+      const { data: groupsData } = await ConsultarTickets({ ...baseParams, status: ['open', 'pending'], isGroup: 'true' })
       ticketsCount.value.groups = groupsData.count || 0
     } catch (error) {
       console.error('Erro ao sincronizar contadores globais', error)

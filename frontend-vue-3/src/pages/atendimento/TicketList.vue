@@ -229,7 +229,7 @@ export default {
       const params = {
         ...this.searchParams,
         status: this.status === 'groups' ? ['open', 'pending'] : [this.status],
-        isGroup: this.status === 'groups'
+        isGroup: this.status === 'groups' ? 'true' : 'false'
       }
 
       if (reset) {
