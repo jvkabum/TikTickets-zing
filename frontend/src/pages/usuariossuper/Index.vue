@@ -143,14 +143,24 @@ export default {
       this.usuarios = [...newObj]
     },
     async listarUsuarios () {
-      this.loading = true
-      const { data } = await AdminListarUsuarios(this.params)
-      this.usuarios = data.users
-      this.LOAD_USUARIOS(data.users)
-      this.params.hasMore = data.hasMore
-      this.pagination.lastIndex = this.usuarios.length - 1
-      this.pagination.rowsNumber = data.count
-      this.loading = false
+      try {
+        this.loading = true
+        const { data } = await AdminListarUsuarios(this.params)
+        this.usuarios = data.users
+        this.LOAD_USUARIOS(data.users)
+        this.params.hasMore = data.hasMore
+        this.pagination.lastIndex = this.usuarios.length - 1
+        this.pagination.rowsNumber = data.count
+      } catch (error) {
+        console.error('Erro ao listar usuários:', error)
+        this.$q.notify({
+          type: 'negative',
+          message: 'Erro ao carregar usuários. Por favor, tente novamente.',
+          position: 'top'
+        })
+      } finally {
+        this.loading = false
+      }
     },
     filtrarUsuario (data) {
       this.usuarios = []
@@ -174,13 +184,17 @@ export default {
     }
   },
   async mounted () {
-    await this.listarUsuarios()
-    this.userProfile = localStorage.getItem('profile')
-    // Ouça o evento 'usuario-editado'
-    this.$root.$on('usuario-editado', () => {
-      // Atualize a página aqui
-      this.listarUsuarios()
-    })
+    try {
+      await this.listarUsuarios()
+      this.userProfile = localStorage.getItem('profile')
+      // Ouça o evento 'usuario-editado'
+      this.$root.$on('usuario-editado', () => {
+        // Atualize a página aqui
+        this.listarUsuarios()
+      })
+    } catch (error) {
+      console.error('Erro ao inicializar componente:', error)
+    }
   }
 }
 </script>
