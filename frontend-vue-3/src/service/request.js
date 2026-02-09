@@ -215,7 +215,7 @@ service.interceptors.response.use(
       handlerError(error)
     }
 
-    return Promise.reject(error.response)
+    return Promise.reject(error.response || error)
   }
 )
 

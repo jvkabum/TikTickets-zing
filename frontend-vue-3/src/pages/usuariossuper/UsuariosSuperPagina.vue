@@ -200,14 +200,18 @@ const editarUsuario = usuario => {
   modalUsuarioEdit.value = true
 }
 
-onMounted(() => {
-  userProfile.value = localStorage.getItem('profile')
-  const usuarioLogado = JSON.parse(localStorage.getItem('usuario'))
-  if (usuarioLogado) {
-    superTenantId.value = usuarioLogado.tenantId
+onMounted(async () => {
+  try {
+    userProfile.value = localStorage.getItem('profile')
+    const usuarioLogado = JSON.parse(localStorage.getItem('usuario'))
+    if (usuarioLogado) {
+      superTenantId.value = usuarioLogado.tenantId
+    }
+    await tenantStore.listarTenants()
+    await listarUsuarios()
+  } catch (error) {
+    console.error('Falha ao carregar dados iniciais:', error)
   }
-  tenantStore.listarTenants()
-  listarUsuarios()
 })
 </script>
 
