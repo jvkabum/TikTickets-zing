@@ -626,6 +626,13 @@
 // Nota: Imports de Vue, Router, Pinia, Quasar, Stores e Composables
 // agora são automáticos via unplugin-auto-import e unplugin-vue-components configurados no quasar.config.js
 
+// Explicit imports for child components to prevent module resolution failures with lazy-loaded parent
+import Chat from './Chat.vue'
+import TicketList from './TicketList.vue'
+import ModalNovoTicket from './ModalNovoTicket.vue'
+import ContatoModal from '../contatos/ContatoModal.vue'
+import ModalUsuario from '../usuarios/ModalUsuario.vue'
+
 const router = useRouter()
 const route = useRoute()
 const $q = useQuasar()
