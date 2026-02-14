@@ -38,19 +38,24 @@ class ChatFlow extends Model<ChatFlow> {
   get flow(): any {
     const flow = this.getDataValue("flow");
     if (flow) {
-      // Processa cada nó do fluxo
-      for (const node of flow.nodeList) {
-        if (node.type === "node") {
-          // Para cada interação do nó
-          for (const item of node.interactions) {
-            // Se for um campo de mídia com URL
-            if (item.type === "MediaField" && item.data.mediaUrl) {
-              const { BACKEND_URL, PROXY_PORT } = process.env;
-              const file = item.data.mediaUrl;
-              // Armazena nome original do arquivo
-              item.data.fileName = file;
-              // Atualiza URL com caminho completo do backend
-              item.data.mediaUrl = `${BACKEND_URL}:${PROXY_PORT}/public/${file}`;
+      // Verifica se nodeList existe e é um array antes de processar
+      const nodeList = flow.nodeList || [];
+      if (Array.isArray(nodeList)) {
+        // Processa cada nó do fluxo
+        for (const node of nodeList) {
+          if (node.type === "node") {
+            // Para cada interação do nó
+            const interactions = node.interactions || [];
+            for (const item of interactions) {
+              // Se for um campo de mídia com URL
+              if (item.type === "MediaField" && item.data?.mediaUrl) {
+                const { BACKEND_URL, PROXY_PORT } = process.env;
+                const file = item.data.mediaUrl;
+                // Armazena nome original do arquivo
+                item.data.fileName = file;
+                // Atualiza URL com caminho completo do backend
+                item.data.mediaUrl = `${BACKEND_URL}:${PROXY_PORT}/public/${file}`;
+              }
             }
           }
         }
