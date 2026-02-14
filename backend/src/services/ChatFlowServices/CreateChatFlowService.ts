@@ -24,10 +24,19 @@ const CreateChatFlowService = async ({
   name,
   isActive
 }: Request): Promise<ChatFlow> => {
-  for await (const node of flow.nodeList) {
+  // Verifica se nodeList existe e é um array antes de processar
+  const nodeList = flow?.nodeList || [];
+  
+  // Garante que flow tenha uma estrutura válida com nodeList
+  if (!flow.nodeList) {
+    flow.nodeList = [];
+  }
+  
+  for await (const node of nodeList) {
     if (node.type === "node") {
-      for await (const item of node.interactions) {
-        if (item.type === "MediaField" && item.data.media) {
+      const interactions = node.interactions || [];
+      for await (const item of interactions) {
+        if (item.type === "MediaField" && item.data?.media) {
           const newName = `${new Date().getTime()}-${item.data.name}`;
           await writeFileAsync(
             join(__dirname, "..", "..", "..", "public", newName),

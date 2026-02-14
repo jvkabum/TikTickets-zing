@@ -40,6 +40,12 @@ const UpdateChatFlowService = async ({
   // flow pode ser o objeto direto (nodeList, lineList, name) vindo do controller
   const flowData = flow?.flow ?? flow;
   const nodeList = flowData?.nodeList || [];
+  
+  // Garante que flowData tenha uma estrutura válida com nodeList
+  if (!flowData.nodeList) {
+    flowData.nodeList = [];
+  }
+  
   for await (const node of nodeList) {
     if (node.type === "node") {
       const interactions = node.interactions || [];
