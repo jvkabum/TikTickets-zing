@@ -8,9 +8,9 @@
 
 ## Fase 1: Reconhecimento 🔍
 
-- [ ] **Scout** — Mapeamento de estrutura de pastas e tecnologias
-- [ ] **Scout** — Análise de dependências e gerenciadores de pacotes
-- [ ] **Scout** — Identificação de entry points, CI/CD e configurações
+- [x] **Scout** — Mapeamento de estrutura de pastas e tecnologias
+- [x] **Scout** — Análise de dependências e gerenciadores de pacotes
+- [x] **Scout** — Identificação de entry points, CI/CD e configurações
 
 ## Decisão de organização das specs 🗂️
 
@@ -18,31 +18,41 @@
 
 ## Fase 2: Escavação 🏗️
 
-> O Reversa preenche esta seção com os módulos reais após o Scout concluir o reconhecimento.
-
-- [ ] **Arqueólogo** — Análise dos módulos identificados pelo Scout
+- [x] **Archaeologist** — Análise do módulo `auth`
+- [x] **Archaeologist** — Análise do módulo `tenants`
+- [x] **Archaeologist** — Análise do módulo `users`
+- [x] **Archaeologist** — Análise do módulo `tickets`
+- [x] **Archaeologist** — Análise do módulo `contacts`
+- [x] **Archaeologist** — Análise do módulo `queues`
+- [x] **Archaeologist** — Análise do módulo `chatflow`
+- [x] **Archaeologist** — Análise do módulo `channels`
+- [x] **Archaeologist** — Análise do módulo `campaigns`
+- [x] **Archaeologist** — Análise do módulo `fast-replies`
+- [x] **Archaeologist** — Análise do módulo `settings`
+- [x] **Archaeologist** — Análise do módulo `statistics`
+- [x] **Archaeologist** — Análise do módulo `api-integration`
 
 ## Fase 3: Interpretação 🧠
 
-- [ ] **Detetive** — Arqueologia Git e ADRs retroativos
-- [ ] **Detetive** — Regras de negócio implícitas e máquinas de estado
-- [ ] **Detetive** — Matriz de permissões (RBAC/ACL)
-- [ ] **Arquiteto** — Diagramas C4 (Contexto, Containers, Componentes)
-- [ ] **Arquiteto** — ERD completo e integrações externas
-- [ ] **Arquiteto** — Spec Impact Matrix
+- [x] **Detetive** — Arqueologia Git e ADRs retroativos
+- [x] **Detetive** — Regras de negócio implícitas e máquinas de estado
+- [x] **Detetive** — Matriz de permissões (RBAC/ACL)
+- [x] **Arquiteto** — Diagramas C4 (Contexto, Containers, Componentes)
+- [x] **Arquiteto** — ERD completo e integrações externas
+- [x] **Arquiteto** — Spec Impact Matrix
 
 ## Fase 4: Geração 📝
 
-- [ ] **Redator** — Specs SDD por componente
-- [ ] **Redator** — OpenAPI (se aplicável)
-- [ ] **Redator** — User Stories (se aplicável)
-- [ ] **Redator** — Code/Spec Matrix
+- [X] **Redator** — Specs SDD por componente
+- [X] **Redator** — OpenAPI (se aplicável)
+- [X] **Redator** — User Stories (se aplicável)
+- [X] **Redator** — Code/Spec Matrix
 
 ## Fase 5: Revisão ✅
 
-- [ ] **Revisor** — Revisão cruzada de specs
-- [ ] **Revisor** — Resolução de lacunas com o usuário
-- [ ] **Revisor** — Relatório de confiança final
+- [X] **Revisor** — Revisão cruzada de specs
+- [X] **Revisor** — Resolução de lacunas com o usuário
+- [X] **Revisor** — Relatório de confiança final
 
 ---
 

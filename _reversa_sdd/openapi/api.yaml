@@ -1,0 +1,68 @@
+openapi: 3.0.0
+info:
+  title: TikTickets API Reversa
+  description: Draft OpenAPI gerado a partir da engenharia reversa do sistema. Contém as principais rotas extraídas dos controllers.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Servidor de Desenvolvimento
+paths:
+  /auth/login:
+    post:
+      summary: Autenticação de Operador/Admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Retorna token JWT e dados do usuário.
+  /tickets:
+    get:
+      summary: Lista tickets do Tenant
+      responses:
+        '200':
+          description: Lista paginada de atendimentos.
+    post:
+      summary: Cria um novo atendimento interno
+      responses:
+        '201':
+          description: Ticket criado.
+  /contacts:
+    get:
+      summary: Lista agenda de contatos
+      responses:
+        '200':
+          description: Contatos e campos customizados.
+  /whatsapp:
+    get:
+      summary: Canais de WhatsApp conectados
+      responses:
+        '200':
+          description: Lista de conexões do tenant.
+  /api/messages/send:
+    post:
+      summary: Envio de mensagem por API Externa (ERP)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                number: { type: string }
+                body: { type: string }
+      responses:
+        '200':
+          description: Mensagem despachada pro WhatsApp.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

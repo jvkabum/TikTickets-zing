@@ -8,16 +8,70 @@
   "doc_level": "completo",
   "output_folder": "_reversa_sdd",
   "forward_folder": "_reversa_forward",
-  "phase": "reconhecimento",
-  "completed": [],
-  "pending": [
+  "phase": "forward_handoff",
+  "completed": [
     "reconhecimento",
     "escavacao",
     "interpretacao",
     "geracao",
     "revisao"
   ],
-  "checkpoints": {},
+  "pending": [],
+  "checkpoints": {
+    "scout": {
+      "completed_at": "2026-07-09T01:19:00Z",
+      "files": [
+        "_reversa_sdd/inventory.md",
+        "_reversa_sdd/dependencies.md",
+        ".reversa/context/surface.json"
+      ]
+    },
+    "archaeologist": {
+      "modules_analyzed": [
+        "auth",
+        "tenants",
+        "users",
+        "tickets",
+        "contacts",
+        "queues",
+        "chatflow",
+        "channels",
+        "campaigns",
+        "fast-replies",
+        "settings",
+        "statistics",
+        "api-integration",
+        "tags",
+        "auto-replies",
+        "messages",
+        "super-admin"
+      ],
+      "modules_pending": []
+    },
+    "detective": {
+      "completed_at": "2026-07-09T15:45:00Z",
+      "files": [
+        "_reversa_sdd/domain.md",
+        "_reversa_sdd/state-machines.md",
+        "_reversa_sdd/permissions.md",
+        "_reversa_sdd/adrs/001-multi-tenant-isolation.md",
+        "_reversa_sdd/adrs/002-bull-redis-background-jobs.md",
+        "_reversa_sdd/adrs/003-postgresql-statistics-offloading.md"
+      ]
+    },
+    "architect": {
+      "completed_at": "2026-07-09T15:46:00Z",
+      "files": [
+        "_reversa_sdd/architecture.md",
+        "_reversa_sdd/c4-context.md",
+        "_reversa_sdd/c4-containers.md",
+        "_reversa_sdd/c4-components.md",
+        "_reversa_sdd/erd-complete.md",
+        "_reversa_sdd/traceability/spec-impact-matrix.md",
+        "_reversa_sdd/deployment.md"
+      ]
+    }
+  },
   "engines": [
     "antigravity"
   ],
@@ -139,5 +193,6 @@
     ".reversa\\plan.md",
     ".reversa\\version",
     ".reversa\\_config\\manifest.yaml"
-  ]
+  ],
+  "redator_progress": 54
 }

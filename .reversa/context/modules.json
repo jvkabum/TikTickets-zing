@@ -1,0 +1,123 @@
+{
+  "modules": [
+    {
+      "name": "auth",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["User"],
+      "key_algorithms": ["Bcrypt Password Hashing", "JWT Token Generation", "Socket.io real-time online status"]
+    },
+    {
+      "name": "tenants",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Tenant"],
+      "key_algorithms": ["Multi-Tenancy Isolation", "Yup JSON Array Validation for HH:mm"]
+    },
+    {
+      "name": "users",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["UsersQueues"],
+      "key_algorithms": ["Tenant Max Users Quota Check", "Open Tickets Safe Deletion Relocation"]
+    },
+    {
+      "name": "tickets",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Ticket", "Protocol", "LogTicket"],
+      "key_algorithms": ["Pupa Dynamic Variable Injection", "Scheduled Message Append", "Real-time Multi-room Sockets"]
+    },
+    {
+      "name": "contacts",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Contact", "ContactCustomField"],
+      "key_algorithms": ["Wbot Profile Pic & Validity Verification", "XLSX Export buffer", "Sanitize Regex"]
+    },
+    {
+      "name": "queues",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Queue"],
+      "key_algorithms": ["Database-level FK Violation Protection", "Yup Strict Role Policy"]
+    },
+    {
+      "name": "chatflow",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["ChatFlow"],
+      "key_algorithms": ["JSON Graph Traversal", "Bot Retries Limit Switch", "Dynamic Media URL Resolve"]
+    },
+    {
+      "name": "channels",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Whatsapp"],
+      "key_algorithms": ["Omnichannel JWT Webhook Binding", "Background Job Event Dispatch", "Quota Limitation"]
+    },
+    {
+      "name": "campaigns",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Campaign", "CampaignContacts"],
+      "key_algorithms": ["A/B Testing Content Rotation", "Business Hours Shift", "Bull MQ Arithmetic Progression"]
+    },
+    {
+      "name": "fast-replies",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["FastReply"],
+      "key_algorithms": ["Multipart Inline Controller", "Sequelize isArrayOfStrings custom JSON parser", "Detached Media Delete"]
+    },
+    {
+      "name": "settings",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Setting"],
+      "key_algorithms": ["Socket.IO Auto UI Reload", "Raw SQL Global Leak (Anomaly)", "Polymorphic Values"]
+    },
+    {
+      "name": "statistics",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": [],
+      "key_algorithms": ["Native Postgres Offloading", "TMA/TME Epoch Extraction", "Multi-Attendant LogTicket Join"]
+    },
+    {
+      "name": "api-integration",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["ApiConfig"],
+      "key_algorithms": ["Redis Queue Background Worker", "Token to Session Validation", "Dynamic Session Wakeup"]
+    },
+    {
+      "name": "tags",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Tags"],
+      "key_algorithms": ["Tenant Isolation"]
+    },
+    {
+      "name": "auto-replies",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["AutoReply", "StepsReply", "StepsReplyAction"],
+      "key_algorithms": ["Steps Relation Routing", "Celular Teste Validation"]
+    },
+    {
+      "name": "messages",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": ["Message"],
+      "key_algorithms": ["mediaUrl Virtual Prefixing", "System Payload Injection", "Polls Data Support"]
+    },
+    {
+      "name": "super-admin",
+      "status": "analyzed",
+      "confidence": "🟢 CONFIRMADO",
+      "entities": [],
+      "key_algorithms": ["Cross-Tenant Administrative Bypass"]
+    }
+  ]
+}

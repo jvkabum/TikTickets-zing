@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-07-09T01:18:00Z",
+  "project_root": "D:/Git Hub/TikTickets-zing",
+  "languages": [
+    { "name": "TypeScript", "extensions": [".ts"], "file_count": 527 },
+    { "name": "Vue", "extensions": [".vue"], "file_count": 202 },
+    { "name": "JavaScript", "extensions": [".js", ".mjs"], "file_count": 170 },
+    { "name": "Python", "extensions": [".py"], "file_count": 5 },
+    { "name": "Shell Script", "extensions": [".sh"], "file_count": 4 },
+    { "name": "PowerShell", "extensions": [".ps1"], "file_count": 3 },
+    { "name": "CSS/SASS", "extensions": [".css", ".sass"], "file_count": 8 }
+  ],
+  "primary_language": "TypeScript",
+  "frameworks": [
+    { "name": "Express", "version": "4.19.2", "source": "backend/package.json" },
+    { "name": "Sequelize", "version": "5.22.5", "source": "backend/package.json" },
+    { "name": "Quasar", "version": "2.17.0", "source": "frontend-vue-3/package.json" },
+    { "name": "Vue", "version": "3.5.0", "source": "frontend-vue-3/package.json" }
+  ],
+  "package_manager": "npm",
+  "entry_points": [
+    { "path": "backend/src/server.ts", "type": "server_entry" },
+    { "path": "frontend-vue-3/src/App.vue", "type": "frontend_entry" },
+    { "path": "frontend-vue-3/server.js", "type": "frontend_server_entry" }
+  ],
+  "config_files": [
+    ".env.example",
+    "backend/.env.example",
+    "frontend-vue-3/.env.example",
+    "backend/tsconfig.json",
+    "frontend-vue-3/quasar.config.js",
+    "backend/jest.config.js",
+    "frontend-vue-3/vitest.config.mjs",
+    "backend/.sequelizerc",
+    "docker-compose.yaml",
+    "docker-compose.yml"
+  ],
+  "ci_cd": [
+    ".github/workflows/docker-backend-image.yml",
+    ".github/workflows/docker-frontend-image.yml"
+  ],
+  "docker": {
+    "dockerfiles": [
+      "backend/Dockerfile",
+      "frontend-vue-3/Dockerfile"
+    ],
+    "compose": "docker-compose.yaml"
+  },
+  "database_hints": [
+    { "path": "backend/src/database/migrations/", "type": "sequelize_migrations" },
+    { "path": "backend/src/database/seeds/", "type": "sequelize_seeds" }
+  ],
+  "test_framework": "Jest (backend), Vitest (frontend)",
+  "test_file_count": 7,
+  "modules": [
+    "auth",
+    "tenants",
+    "users",
+    "tickets",
+    "contacts",
+    "queues",
+    "chatflow",
+    "channels",
+    "campaigns",
+    "fast-replies",
+    "settings",
+    "statistics",
+    "api-integration"
+  ],
+  "total_files": 1448,
+  "organization_suggestion": {
+    "granularity": "module",
+    "rationale": "Os serviços do backend (backend/src/services/) e as páginas do frontend (frontend-vue-3/src/pages/) estão claramente organizados por domínio de negócio/módulo (ex: TicketServices, ContactServices, atendimento/, contatos/, chatFlow/).",
+    "signals": [
+      {
+        "type": "backend_services_domains",
+        "evidence": [
+          "backend/src/services/TicketServices",
+          "backend/src/services/ContactServices",
+          "backend/src/services/UserServices"
+        ]
+      },
+      {
+        "type": "frontend_pages_domains",
+        "evidence": [
+          "frontend-vue-3/src/pages/atendimento",
+          "frontend-vue-3/src/pages/contatos",
+          "frontend-vue-3/src/pages/campanhas"
+        ]
+      }
+    ],
+    "features": []
+  }
+}
