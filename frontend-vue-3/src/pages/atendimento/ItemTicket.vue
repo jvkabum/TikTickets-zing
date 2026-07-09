@@ -30,7 +30,7 @@
       </div>
     </q-item-section>
 
-    <q-item-section>
+    <q-item-section class="overflow-hidden">
       <div class="row items-center no-wrap">
         <div class="text-subtitle2 text-bold ellipsis col">{{ ticket.contact?.name || ticket.name || 'Sem nome' }}</div>
         <q-icon
@@ -230,6 +230,7 @@ watch(
   transition: all 0.22s ease-in-out
   border-radius: 12px !important
   margin: 6px 10px !important
+  width: calc(100% - 20px) !important
   min-height: 85px
   border: 1px solid rgba(0, 0, 0, 0.08)
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02)
