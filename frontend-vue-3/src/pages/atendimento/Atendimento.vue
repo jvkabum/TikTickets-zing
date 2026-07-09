@@ -17,7 +17,7 @@
         :persistent="!$q.screen.lt.md"
         :breakpoint="769"
         bordered
-        :width="$q.screen.lt.md ? $q.screen.width : 350"
+        :width="$q.screen.lt.md ? $q.screen.width : 400"
         :content-class="$q.dark.isActive ? 'bg-transparent border-glass' : 'bg-transparent border-glass'"
       >
         <q-toolbar
