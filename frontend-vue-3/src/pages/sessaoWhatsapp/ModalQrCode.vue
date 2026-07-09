@@ -24,6 +24,7 @@
         <div class="qr-code-container">
         <QrcodeVue
           v-if="cQrcode && props.channel.status !== 'PAIRING'"
+          :key="cQrcode"
           :value="cQrcode"
           :size="300"
           level="H"
@@ -234,7 +235,7 @@ watch(
 
 onMounted(() => {
     bus.on('UPDATE_SESSION', (session) => {
-        if (session.id === props.channel.id && session.qrcode) {
+        if (String(session.id) === String(props.channel.id) && session.qrcode) {
             console.log('ModalQrCode: Recebido UPDATE_SESSION via bus (QR code)', session)
             localQrcode.value = session.qrcode
             timeElapsed.value = 0
@@ -243,7 +244,7 @@ onMounted(() => {
         
         // Se receber PAIRING ou CONNECTED via bus, para o timer IMEDIATAMENTE
         // Isso previne a race condition de o timer expirar enquanto o Vue atualiza as props
-        if (session.id === props.channel.id && ['CONNECTED', 'PAIRING'].includes(session.status)) {
+        if (String(session.id) === String(props.channel.id) && ['CONNECTED', 'PAIRING'].includes(session.status)) {
              console.log(`[DEBUG] ModalQrCode: Recebido status ${session.status} via bus para sessão ${session.id}`)
              stopQrTimer()
              if (session.status === 'CONNECTED') {
