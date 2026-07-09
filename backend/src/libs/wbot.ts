@@ -520,6 +520,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<WbotSession> => {
               args: args,
               defaultViewport: null,
               timeout: 120000,
+              protocolTimeout: 0,
               handleSIGINT: true
             },
             ...(process.env.WEB_VERSION ? { webVersion: process.env.WEB_VERSION } : {}),

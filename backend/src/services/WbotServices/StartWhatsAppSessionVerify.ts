@@ -1,4 +1,4 @@
-import { initWbot } from "../../libs/wbot";
+import { initWbot, removeWbot } from "../../libs/wbot";
 import Whatsapp from "../../models/Whatsapp";
 import { wbotMessageListener } from "./wbotMessageListener";
 import { getIO } from "../../libs/socket";
@@ -103,6 +103,7 @@ export const StartWhatsAppSessionVerify = async (
     await new Promise(resolve => setTimeout(resolve, delay));
     
     // Tenta inicializar a sessão
+    try { await removeWbot(whatsapp.id); } catch(e) { logger.warn(`Falha ao remover wbot: ${e}`); }
     const wbot = await initWbot(whatsapp);
     wbotMessageListener(wbot);
     wbotMonitor(wbot, whatsapp);

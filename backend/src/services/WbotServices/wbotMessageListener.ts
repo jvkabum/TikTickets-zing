@@ -161,7 +161,13 @@ const wbotMessageListener = (wbot: Session): void => {
 
   wbot.on("vote_update", async (vote: PollVote) => {
     try {
-      const msg = await vote.getMessage();
+      // Compatibilidade com v1.34.7: vote tem parentMessage injetado, getMessage não existe
+      let msg = (vote as any).parentMessage;
+      
+      if (!msg && typeof (vote as any).getMessage === 'function') {
+        msg = await (vote as any).getMessage();
+      }
+      
       if (!msg) {
         logger.error("Mensagem de enquete não encontrada para o voto");
         return;
