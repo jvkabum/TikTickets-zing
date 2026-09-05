@@ -7,6 +7,7 @@ import decodeTokenSocket from "./decodeTokenSocket";
 import { logger } from "../utils/logger";
 import User from "../models/User";
 import Chat from "./socketChat/Chat";
+import { getAllowedOrigins } from "../config/allowedOrigins";
 
 let io: SocketIO; // Declara a variável io para armazenar a instância do SocketIO
 
@@ -16,7 +17,7 @@ let io: SocketIO; // Declara a variável io para armazenar a instância do Socke
 export const initIO = (httpServer: Server): SocketIO => {
   io = new SocketIO(httpServer, { // Cria uma nova instância do SocketIO
     cors: {
-      origin: "*" // Permite requisições de qualquer origem
+      origin: getAllowedOrigins(process.env.FRONTEND_URL)
     },
     pingTimeout: 180000, // Tempo limite para pings
     pingInterval: 60000 // Intervalo entre pings

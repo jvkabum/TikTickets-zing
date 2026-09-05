@@ -1,7 +1,5 @@
 import * as Sentry from "@sentry/node";
 import expressInstance, { NextFunction, Request, Response } from "express";
-import { readFileSync } from "fs";
-import moment from "moment";
 import uploadConfig from "../config/upload";
 import AppError from "../errors/AppError";
 import routes from "../routes";
@@ -9,37 +7,20 @@ import { logger } from "../utils/logger";
 
 // Função principal para configuração dos módulos da aplicação
 export default async function modules(app): Promise<void> {
-  // Lê a versão do projeto do package.json
-  const { version } = JSON.parse(readFileSync("./package.json").toString());
-  // Registra o momento de início do servidor
-  const started = new Date();
-  const { env } = process;
-
   // O Sentry já foi inicializado antecipadamente pelo src/instrument.ts
   // para garantir a instrumentação correta do Express e Profiling.
 
   // Rota de verificação de saúde do servidor
   // Retorna informações sobre o estado atual do servidor
-  app.get("/health", async (req, res) => {
-    let checkConnection;
-    try {
-      checkConnection = "Servidor disponível!";
-    } catch (e) {
-      checkConnection = `Servidor indisponível! ${e}`;
-    }
-    // Retorna dados sobre o estado do servidor
-    res.json({
-      started: moment(started).format("DD/MM/YYYY HH:mm:ss"), // Data/hora de início
-      currentVersion: version, // Versão atual
-      uptime: (Date.now() - Number(started)) / 1000, // Tempo de atividade em segundos
-      statusService: checkConnection // Status da conexão
-    });
+  app.get("/health", async (_req, res) => {
+    res.json({ status: "ok" });
   });
 
-  // Rota de teste para o Sentry
-  app.get("/debug-sentry", (req, res) => {
-    throw new Error("My first Sentry error from TikTickets Backend!");
-  });
+  if (process.env.NODE_ENV === "dev") {
+    app.get("/debug-sentry", () => {
+      throw new Error("My first Sentry error from TikTickets Backend!");
+    });
+  }
 
   // Adiciona o handler de requisições do Sentry
   // No Sentry v10+, o requestHandler não é mais obrigatório se usar setupExpressErrorHandler
@@ -71,7 +52,7 @@ export default async function modules(app): Promise<void> {
 
     // Tratamento de erros não esperados
     logger.error(err);
-    return res.status(500).json({ error: `Internal server error: ${err}` });
+    return res.status(500).json({ error: "Internal server error" });
   });
 
   // Log indicando que os módulos foram carregados com sucesso

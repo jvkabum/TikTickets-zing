@@ -4,6 +4,7 @@ import { Application, json, NextFunction, Request, Response, urlencoded } from "
 import "express-async-errors";
 import helmet from "helmet";
 import "reflect-metadata";
+import { getAllowedOrigins } from "../config/allowedOrigins";
 import { logger } from "../utils/logger";
 
 // Função principal de configuração do Express
@@ -15,7 +16,6 @@ export default async function express(app: Application): Promise<void> {
   const blacklist = ["168.138.151.75"];
   app.use((req, res, next) => {
     // Permite profiling JS no navegador para o Sentry
-    res.set("Document-Policy", "js-profiling");
 
     const clientIp = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     if (blacklist.includes(clientIp as string)) {
@@ -25,12 +25,8 @@ export default async function express(app: Application): Promise<void> {
     next();
   });
 
-  app.use(
-    cors({
-      origin: true,
-      credentials: true
-    })
-  );
+  const allowedOrigins = getAllowedOrigins(process.env.FRONTEND_URL);
+  app.use(cors({ origin: allowedOrigins, credentials: true }));
 
   // Aplica configurações de segurança apenas em ambientes de produção
   if (process.env.NODE_ENV !== "dev") {
@@ -50,16 +46,10 @@ export default async function express(app: Application): Promise<void> {
           "object-src": ["'none'"],
           "script-src-attr": ["'none'"],
           "style-src": ["'self'", "https:", "'unsafe-inline'"],
-          "connect-src": ["'self'", "*", "wss:", "ws:"], // Permite conexões websocket/socket.io
+          "connect-src": ["'self'", ...allowedOrigins, "wss:"],
           "upgrade-insecure-requests": [],
-          scriptSrc: [
-            "'self'",
-            `*${process.env.FRONTEND_URL || "localhost:3101"}`
-          ],
-          frameAncestors: [
-            "'self'",
-            `* ${process.env.FRONTEND_URL || "localhost:3101"}`
-          ]
+          scriptSrc: ["'self'"],
+          frameAncestors: ["'none'"]
         }
       })
     );
