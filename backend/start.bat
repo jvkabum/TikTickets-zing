@@ -1,0 +1,3 @@
+@echo off
+echo Iniciando TikTickets Go Backend...
+go run ./cmd/api

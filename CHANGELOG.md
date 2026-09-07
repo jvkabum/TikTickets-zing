@@ -1,3 +1,31 @@
+## [3.3.0] (2026-09-07)
+
+### Destaques e Principais Recursos
+
+* **Reescrita do Backend em Golang (Alta Performance)**:
+  * Migração do core do backend de Node.js/TypeScript para Golang 1.25.
+  * Substituição do Express pelo framework Echo v4 para máxima vazão de requisições.
+  * Integração nativa com WhatsApp via biblioteca de alta velocidade `whatsmeow`.
+  * Camada de persistência otimizada com GORM e PostgreSQL.
+  * Gerenciamento assíncrono de filas e jobs em segundo plano com Redis e Asynq.
+  * Comunicação em tempo real com WebSockets nativos (Gorilla WebSocket).
+
+* **Migração Completa do Frontend para Vue 3 & Vite**:
+  * Atualização da stack do frontend para Vue 3.5, Quasar 2.17 e Vite.
+  * Substituição do Vuex por Pinia para gerenciamento de estado reativo e modular.
+  * Conversão de mixins legados para composables modernos (`useTicketActions`, `useAuth`, `useSocketInitial`, etc.).
+  * Adição de validação declarativa de formulários com Vee-Validate e Zod.
+  * Integração de testes automatizados com Vitest e Happy-DOM.
+  * Unificação definitiva do frontend no diretório `frontend/`.
+
+* **Observabilidade e Telemetria**:
+  * Integração de OpenTelemetry e Sentry para rastreamento de ponta a ponta.
+  * Configuração de métricas e monitoramento contínuo.
+
+* **Melhorias em Atendimento e Chat Flow**:
+  * Correções de reatividade na listagem de tickets e renderização do QR Code.
+  * Estabilização de fluxos de chatbot e gestão de filas por usuário.
+
 ## [2.7.1](https://github.com/ldurans/izing.io/compare/v2.7.0...v2.7.1) (2024-07-01)
 
 

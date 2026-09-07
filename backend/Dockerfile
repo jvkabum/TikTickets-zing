@@ -1,36 +1,27 @@
-FROM node:22-bookworm-slim as global-deps-stage
+# Estágio de Build
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-RUN apt-get update \
-  && apt-get install -y wget gnupg nano ffmpeg build-essential \
-  && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-  && apt-get update \
-  && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
-  --no-install-recommends \
-  && rm -rf /var/lib/apt/lists/* && npm install pm2@latest -g
+# Copia dependências e faz o download
+COPY go.mod go.sum ./
+RUN go mod download
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
-ENV NODE_ENV=dev
-ENV CHROME_BIN=/usr/bin/google-chrome-stable
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
-
-FROM global-deps-stage as develop-stage
-COPY package*.json ./
-RUN npm install --include=dev --no-audit --no-fund
-
-FROM develop-stage as build-stage
+# Copia o código-fonte
 COPY . .
-RUN npm run build
 
-FROM build-stage as development-stage
-ENV NODE_ENV=development
-ENTRYPOINT ["npm", "run", "dev:server"]
+# Compila o binário otimizado
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o backend-go ./cmd/api/main.go
 
-FROM build-stage as production-stage
-ENV NODE_ENV=production
-COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh
-EXPOSE 3000
-ENTRYPOINT ["./docker-entrypoint.sh"]
+# Estágio Final
+FROM alpine:latest
+
+WORKDIR /app
+RUN apk --no-cache add ca-certificates tzdata
+
+COPY --from=builder /app/backend-go .
+
+# Porta padrão
+EXPOSE 8080
+
+CMD ["./backend-go"]
