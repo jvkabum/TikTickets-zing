@@ -10,49 +10,25 @@
             class="flex flex-inline text-left"
             style="width: 40px"
           >
-            <q-btn
-              round
-              flat
-              dense
-            >
-              <q-icon
-                size="2em"
-                name="mdi-emoticon-happy-outline"
-              />
-              <q-tooltip>
-                Emoji
-              </q-tooltip>
-              <q-menu
-                anchor="top right"
-                self="bottom middle"
-                :offset="[5, 40]"
-              >
-                <VEmojiPicker
-                  style="width: 40vw"
-                  :showSearch="false"
-                  :emojisByRow="20"
-                  labelSearch="Localizar..."
-                  lang="pt-BR"
-                  @select="onInsertSelectEmoji"
-                />
-              </q-menu>
-            </q-btn>
+            <EmojiPickerComponent
+              height="450px"
+              @select="onInsertSelectEmoji"
+            />
           </div>
-          <textarea
+          <q-input
             ref="inputEnvioMensagem"
-            style="min-height: 10vh; max-height: 15vh; flex: auto"
-            class="q-pa-sm bg-white"
+            style="min-height: 10vh; flex: auto"
+            class="q-pa-sm rounded-all"
             placeholder="Digite a mensagem"
+            v-model="element.data.message"
             autogrow
-            dense
-            outlined
-            @input="(v) => $attrs.element.data.message = v.target.value"
-            :value="$attrs.element.data.message"
+            type="textarea"
+            filled
           />
         </div>
         <div class="row col q-py-sm q-mb-md">
           <q-select
-            v-model="$attrs.element.data.values"
+            v-model="element.data.values"
             use-input
             outlined
             use-chips
@@ -67,44 +43,30 @@
             dense
             hint="Opções serão tratados como Lista/Botões ou texto simples dependendo do suporte do canal de destino."
           />
-
         </div>
       </q-card-section>
     </q-card>
   </div>
 </template>
 
-<script>
-import { VEmojiPicker } from 'v-emoji-picker'
+<script setup>
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
 
-export default {
-  name: 'MessageField',
-  components: { VEmojiPicker },
-  methods: {
-    onInsertSelectEmoji (emoji) {
-      const self = this
-      var tArea = this.$refs.inputEnvioMensagem
-      // get cursor's position:
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-      // filter:
-      if (!emoji.data) {
-        return
-      }
-      // insert:
-      self.txtContent = this.$attrs.element.data.message
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
-      this.$attrs.element.data.message = self.txtContent
-      // move cursor:
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
-      }, 10)
-    }
+const props = defineProps({
+  element: {
+    type: Object,
+    required: true
   }
+})
+
+const inputEnvioMensagem = ref(null)
+const { insertEmoji } = useEmoji()
+
+const onInsertSelectEmoji = emoji => {
+  insertEmoji(emoji, inputEnvioMensagem.value, props.element.data.message, val => (props.element.data.message = val))
 }
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>
+

@@ -1,7 +1,7 @@
 import request from 'src/service/request'
 
 // Consultar tickets com paginação
-export const ConsultarTickets = async (params) => {
+export const ConsultarTickets = async params => {
   const queryParams = new URLSearchParams()
   // Adicionar apenas parâmetros não nulos
   Object.entries(params).forEach(([key, value]) => {
@@ -38,7 +38,7 @@ export const AtualizarStatusTicket = async (ticketId, status) => {
 }
 
 // Criar novo ticket
-export const CriarTicket = async (data) => {
+export const CriarTicket = async data => {
   return request({
     url: '/tickets',
     method: 'post',
@@ -47,7 +47,7 @@ export const CriarTicket = async (data) => {
 }
 
 // Deletar ticket
-export const DeletarTicket = async (ticketId) => {
+export const DeletarTicket = async ticketId => {
   return request({
     url: `/tickets/${ticketId}`,
     method: 'delete'
@@ -55,14 +55,14 @@ export const DeletarTicket = async (ticketId) => {
 }
 
 // Buscar ticket por ID
-export const BuscarTicketPorId = async (ticketId) => {
+export const BuscarTicketPorId = async ticketId => {
   return request({
     url: `/tickets/${ticketId}`,
     method: 'get'
   })
 }
 
-export function ConsultarDadosTicket (params) {
+export function ConsultarDadosTicket(params) {
   // Parâmetros permitidos e necessários
   const allowedParams = {
     count: params.count,
@@ -95,7 +95,7 @@ export function ConsultarDadosTicket (params) {
   })
 }
 
-export function ConsultarLogsTicket (params) {
+export function ConsultarLogsTicket(params) {
   return request({
     url: `/tickets/${params.ticketId}/logs`,
     method: 'get',
@@ -103,7 +103,7 @@ export function ConsultarLogsTicket (params) {
   })
 }
 
-export function AtualizarTicket (ticketId, data) {
+export function AtualizarTicket(ticketId, data) {
   return request({
     url: `/tickets/${ticketId}`,
     method: 'put',
@@ -111,7 +111,7 @@ export function AtualizarTicket (ticketId, data) {
   })
 }
 
-export function LocalizarMensagens (params) {
+export function LocalizarMensagens(params) {
   const queryParams = new URLSearchParams()
   if (params.ticketId) queryParams.append('ticketId', params.ticketId)
   if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber)
@@ -128,7 +128,7 @@ export function LocalizarMensagens (params) {
   })
 }
 
-export function EnviarMensagemTexto (ticketId, data) {
+export function EnviarMensagemTexto(ticketId, data) {
   return request({
     url: `/messages/${ticketId}`,
     method: 'post',
@@ -140,19 +140,19 @@ export function EnviarMensagemTexto (ticketId, data) {
   })
 }
 
-export function EncaminharMensagem (messages, contato) {
+export function EncaminharMensagem(messages, contato) {
   const data = {
     messages,
     contact: contato
   }
   return request({
-    url: '/forward-messages/',
+    url: '/forward-messages',
     method: 'post',
     data
   })
 }
 
-export function DeletarMensagem (mensagem) {
+export function DeletarMensagem(mensagem) {
   return request({
     url: `/messages/${mensagem.messageId}`,
     method: 'delete',
@@ -160,7 +160,7 @@ export function DeletarMensagem (mensagem) {
   })
 }
 
-export function EditarMensagem (mensagem) {
+export function EditarMensagem(mensagem) {
   return request({
     url: `/messages/edit/${mensagem.messageId}`,
     method: 'post',
@@ -169,9 +169,17 @@ export function EditarMensagem (mensagem) {
 }
 
 // Sincronizar mensagens do ticket
-export const SincronizarMensagensTicket = async (ticketId) => {
+export const SincronizarMensagensTicket = async ticketId => {
   return request({
     url: `/tickets/${ticketId}/sync`,
     method: 'post'
+  })
+}
+
+// Localizar Protocolos do Ticket (Logs)
+export const LocalizarProtocolos = async ticketId => {
+  return request({
+    url: `/protocols/ticket/${ticketId}`,
+    method: 'get'
   })
 }

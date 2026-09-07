@@ -1,52 +1,35 @@
 <template>
-  <div>
-    <div class="timerBox">
-      <span>{{ addZero(timer.minutes)}}:{{addZero(timer.seconds)}}</span>
-    </div>
-  </div>
+  <div class="timerBox">{{ addZero(timer.minutes) }}:{{ addZero(timer.seconds) }}</div>
 </template>
 
-<script>
-export default {
-  name: 'RecordingTimer',
-  data () {
-    return {
-      timer: {
-        minutes: 0,
-        seconds: 0
-      }
+<script setup>
+
+const timer = reactive({
+  minutes: 0,
+  seconds: 0
+})
+
+let intervalId = null
+
+const addZero = n => (n < 10 ? '0' + n : n)
+
+const startInterval = () => {
+  intervalId = setInterval(() => {
+    if (timer.seconds === 59) {
+      timer.minutes++
+      timer.seconds = 0
+    } else {
+      timer.seconds++
     }
-  },
-  methods: {
-    interval () {
-      setInterval(() => {
-        if (this.timer.seconds === 59) {
-          this.timer = {
-            ...this.timer,
-            minutes: this.timer.minutes + 1,
-            seconds: 0
-          }
-        }
-        this.timer = {
-          ...this.timer,
-          seconds: this.timer.seconds + 1
-        }
-      }, 1000)
-    },
-    stopInteval () {
-      clearInterval(this.interval)
-    },
-    addZero (n) {
-      return n < 10 ? '0' + n : n
-    }
-  },
-  mounted () {
-    this.interval()
-  },
-  destroyed () {
-    this.stopInteval()
-  }
+  }, 1000)
 }
+
+const stopInterval = () => {
+  if (intervalId) clearInterval(intervalId)
+}
+
+onMounted(startInterval)
+onUnmounted(stopInterval)
 </script>
 
 <style lang="scss" scoped>

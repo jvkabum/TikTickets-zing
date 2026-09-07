@@ -1,28 +1,35 @@
 <template>
   <q-dialog
-    :value="modalMensagemRapida"
+    :model-value="modalMensagemRapida"
     @hide="fecharModal"
     @show="abrirModal"
     @keyup.esc="fecharModal"
   >
     <q-card
       :style="$q.screen.width < 500 ? 'width: 95vw' : 'min-width: 500px; max-width: 700px'"
-      class="q-pa-lg"
+      class="q-pa-lg glass-premium border-glass no-shadow rounded-all shadow-premium unified-modal-color"
     >
-      <div class="text-h6">{{ mensagemRapida.id ? 'Editar' : 'Criar' }} Mensagem Rápida {{ mensagemRapida.id ? `(ID: ${mensagemRapida.id})` : '' }}</div>
+      <div class="text-h5 text-bold text-primary">
+        {{ mensagemRapida.id ? 'Editar' : 'Criar' }} Mensagem Rápida
+        {{ mensagemRapida.id ? `(ID: ${mensagemRapida.id})` : '' }}
+      </div>
+      <q-separator spaced />
       <q-card-section class="q-pa-none">
         <div class="row q-my-sx">
           <div class="col flex justify-center">
             <div class="column items-center">
               <q-input
-                style="width: 300px;"
+                style="width: 300px"
                 outlined
                 rounded
                 dense
-                v-model="mensagemRapida.key"
+                v-model="key"
+                v-bind="keyProps"
                 label="Chave"
+                :error="!!errors.key"
+                :error-message="errors.key"
               />
-              <p style="font-size: 14px; margin-top: 3px; text-align: center;">
+              <p style="font-size: 14px; margin-top: 3px; text-align: center">
                 chave é o atalho para pesquisa da mensagem.
               </p>
             </div>
@@ -33,33 +40,11 @@
         <div class="row items-center">
           <div class="col-xs-3 col-sm-2 col-md-1">
             <!-- Emoji Icon -->
-            <q-btn
-              round
-              flat
+            <EmojiPickerComponent
               class="q-ml-sm"
-            >
-              <q-icon
-                size="2em"
-                name="mdi-emoticon-happy-outline"
-              />
-              <q-tooltip>
-                Emoji
-              </q-tooltip>
-              <q-menu
-                anchor="top right"
-                self="bottom middle"
-                :offset="[5, 40]"
-              >
-                <VEmojiPicker
-                  style="width: 40vw"
-                  :showSearch="false"
-                  :emojisByRow="20"
-                  labelSearch="Localizar..."
-                  lang="pt-BR"
-                  @select="onInsertSelectEmoji"
-                />
-              </q-menu>
-            </q-btn>
+              height="450px"
+              @select="onInsertSelectEmoji"
+            />
 
             <!-- Variáveis Icon -->
             <q-btn
@@ -71,9 +56,7 @@
                 size="2em"
                 name="mdi-code-braces"
               />
-              <q-tooltip>
-                Variáveis
-              </q-tooltip>
+              <q-tooltip> Variáveis </q-tooltip>
               <q-menu
                 anchor="top right"
                 self="bottom middle"
@@ -96,64 +79,26 @@
           <!-- Textarea for Message -->
           <div class="col-xs-8 col-sm-10 col-md-11 q-pl-sm">
             <label class="text-caption">Mensagem:</label>
-            <textarea
+            <q-input
               ref="inputEnvioMensagem"
-              style="min-height: 15vh; max-height: 25vh;"
-              class="q-pa-sm bg-white full-width rounded-all"
+              style="min-height: 15vh"
+              class="q-pa-sm full-width rounded-all"
               placeholder="Digite a mensagem"
               autogrow
-              dense
-              outlined
-              @input="(v) => mensagemRapida.message = v.target.value"
-              :value="mensagemRapida.message"
+              type="textarea"
+              filled
+              v-model="message"
+              v-bind="messageProps"
             />
           </div>
         </div>
 
-        <!-- Área de Preview -->
-        <div v-if="mensagemRapida.medias && mensagemRapida.medias.length > 0" class="media-preview-container q-mb-sm">
-          <!-- Previews dos Arquivos -->
-          <div v-for="(media, index) in mensagemRapida.medias" :key="index" class="media-preview-item">
-            <q-card class="media-preview-card">
-              <q-img
-                v-if="isImage(media)"
-                :src="getMediaUrl(media)"
-                class="media-preview-image cursor-pointer"
-                fit="contain"
-                @click="visualizarImagem(media)"
-              >
-                <template v-slot:error>
-                  <div class="absolute-full flex flex-center bg-negative text-white">
-                    Erro ao carregar imagem
-                  </div>
-                </template>
-              </q-img>
-              <video
-                v-else-if="isVideo(media)"
-                class="media-preview-video"
-                controls
-                :src="getMediaUrl(media)"
-                :type="getMediaType(media)"
-              >
-                Seu navegador não suporta a reprodução de vídeos.
-              </video>
-              <div v-else class="file-preview-container flex flex-center column">
-                <q-icon :name="getFileIcon(media)" size="64px" color="primary"/>
-                <div class="text-subtitle2 q-mt-sm text-center text-truncate" style="max-width: 90%">
-                  {{ getMediaFileName(media) }}
-                </div>
-              </div>
-              <q-card-actions align="center" class="q-pa-sm bg-grey-2">
-                <q-btn flat dense round icon="remove_red_eye" color="primary" @click="abrirMedia(media)">
-                  <q-tooltip>Visualizar</q-tooltip>
-                </q-btn>
-                <q-btn flat dense round icon="delete" color="negative" @click="confirmarExclusao(media, index)">
-                  <q-tooltip>Excluir</q-tooltip>
-                </q-btn>
-              </q-card-actions>
-            </q-card>
-          </div>
-        </div>
+        <!-- Componente de Preview -->
+        <MediaPreviewList
+          v-if="mensagemRapida.medias && mensagemRapida.medias.length > 0"
+          :medias="mensagemRapida.medias"
+          @delete-media="handleDeleteMedia"
+        />
 
         <input
           type="file"
@@ -166,478 +111,218 @@
       </q-card-section>
 
       <!-- Botões de ação -->
-      <q-card-actions align="right" class="q-mt-md">
+      <q-card-actions
+        align="right"
+        class="q-mt-md"
+      >
         <q-btn
           round
           color="primary"
           icon="attach_file"
           class="q-mr-md"
-          @click="$refs.fileInput.click()"
+          @click="fileInput.click()"
         >
           <q-tooltip>Anexar Arquivo</q-tooltip>
         </q-btn>
-        <q-btn rounded label="Cancelar" color="negative" v-close-popup class="q-mr-md" />
-        <q-btn rounded label="Salvar" color="positive" @click="handleMensagemRapida" />
+        <q-btn
+          rounded
+          label="Cancelar"
+          color="negative"
+          v-close-popup
+          class="q-mr-md"
+        />
+        <q-btn
+          rounded
+          label="Salvar"
+          color="positive"
+          @click="handleMensagemRapida"
+        />
       </q-card-actions>
     </q-card>
-
-    <!-- Modal de confirmação para exclusão -->
-    <q-dialog v-model="confirmDialog" persistent>
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">Confirmação</div>
-          <p>Tem certeza de que deseja excluir esta mídia?</p>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" color="primary" v-close-popup />
-          <q-btn flat label="Excluir" color="negative" @click="excluirMedia(mediaToDelete, indexToDelete)" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Modal de visualização da imagem -->
-    <q-dialog
-      v-model="showImageModal"
-      :maximized="false"
-      transition-show="fade"
-      transition-hide="fade"
-      @keyup.esc="showImageModal = false"
-    >
-      <q-card class="bg-dark text-white" style="min-width: 40vw; min-height: 40vh; max-width: 99vw; max-height: 99vh;">
-        <q-bar class="bg-dark">
-          <q-space />
-          <q-btn dense flat icon="close" v-close-popup>
-            <q-tooltip>Fechar</q-tooltip>
-          </q-btn>
-        </q-bar>
-
-        <q-card-section class="flex flex-center" style="padding: 0;">
-          <q-img
-            :src="selectedImageUrl"
-            fit="scale-down"
-            style="min-width: 40vw; min-height: calc(40vh - 50px); max-width: 99vw; max-height: calc(99vh - 50px);"
-            @load="onImageLoad"
-          />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
   </q-dialog>
 </template>
 
-<script>
-import { CriarMensagemRapida, AlterarMensagemRapida, DeletarImagemMensagemRapida } from 'src/service/mensagensRapidas'
-import { VEmojiPicker } from 'v-emoji-picker'
+<script setup>
+import { toTypedSchema } from '@vee-validate/zod'
+import { nextTick, reactive, ref } from 'vue'
+import MediaPreviewList from 'src/components/mensagensRapidas/MediaPreviewList.vue'
+import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
+import useEmoji from 'src/composables/useEmoji'
+import { z } from 'zod'
 
-export default {
-  name: 'ModalMensagemRapida',
-  components: { VEmojiPicker },
-  props: {
-    modalMensagemRapida: {
-      type: Boolean,
-      default: false
-    },
-    mensagemRapidaEmEdicao: {
-      type: Object,
-      default: () => {
-        return { id: null, key: '', message: '', medias: [] }
-      }
-    }
+const props = defineProps({
+  modalMensagemRapida: {
+    type: Boolean,
+    default: false
   },
-  data () {
-    return {
-      mensagemRapida: {
-        key: null,
-        message: '',
-        medias: null
-      },
-      arquivoCarregado: null,
-      loading: false,
-      confirmDialog: false,
-      mediaToDelete: null,
-      indexToDelete: null,
-      showImageModal: false,
-      selectedImageUrl: '',
-      variaveis: [
-        { label: 'Nome', value: '{{name}}' },
-        { label: 'Saudação', value: '{{greeting}}' },
-        { label: 'Protocolo', value: '{{protocol}}' }
-      ]
+  mensagemRapidaEmEdicao: {
+    type: Object,
+    default: () => ({ id: null, key: '', message: '', medias: [] })
+  }
+})
+
+const emit = defineEmits([
+  'update:modalMensagemRapida',
+  'update:mensagemRapidaEmEdicao',
+  'mensagemRapida:criada',
+  'mensagemRapida:editada'
+])
+
+const $q = useQuasar()
+const mensagemRapidaStore = useMensagemRapidaStore()
+const { criarMensagemRapida, alterarMensagemRapida, deletarImagemMensagemRapida } = mensagemRapidaStore
+
+const loading = ref(false)
+const fileInput = ref(null)
+const inputEnvioMensagem = ref(null)
+
+const validationSchema = toTypedSchema(
+  z.object({
+    key: z.string().min(1, 'A chave é obrigatória'),
+    message: z.string().optional(),
+    medias: z.array(z.any()).optional()
+  })
+)
+
+const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
+  validationSchema,
+  initialValues: {
+    key: '',
+    message: '',
+    medias: []
+  }
+})
+
+const [key, keyProps] = defineField('key')
+const [message, messageProps] = defineField('message')
+
+const mensagemRapida = reactive({
+  id: null,
+  medias: []
+})
+
+const variaveis = [
+  { label: 'Nome', value: '{{name}}' },
+  { label: 'Saudação', value: '{{greeting}}' },
+  { label: 'Protocolo', value: '{{protocol}}' }
+]
+
+const { insertEmoji } = useEmoji()
+
+const onInsertSelectEmoji = emoji => {
+  insertEmoji(emoji, inputEnvioMensagem.value, message.value, val => setValues({ message: val }))
+}
+
+const inserirVariavel = variavel => {
+  setValues({ message: (message.value || '') + ' ' + variavel })
+}
+
+const onFileAdded = files => {
+  mensagemRapida.medias = [...mensagemRapida.medias, ...files]
+}
+
+const onFileInputChange = event => {
+  const files = Array.from(event.target.files)
+  onFileAdded(files)
+  event.target.value = null
+}
+
+const handleDeleteMedia = async ({ media, index }) => {
+  try {
+    if (mensagemRapida.id && typeof media === 'string') {
+      await deletarImagemMensagemRapida(mensagemRapida.id, media)
     }
-  },
-  methods: {
-    onInsertSelectEmoji (emoji) {
-      const self = this
-      var tArea = this.$refs.inputEnvioMensagem
-      var startPos = tArea.selectionStart,
-        endPos = tArea.selectionEnd,
-        cursorPos = startPos,
-        tmpStr = tArea.value
-
-      if (!emoji.data) {
-        return
-      }
-
-      self.txtContent = this.mensagemRapida.message
-      self.txtContent = tmpStr.substring(0, startPos) + emoji.data + tmpStr.substring(endPos, tmpStr.length)
-      this.mensagemRapida.message = self.txtContent
-
-      setTimeout(() => {
-        tArea.selectionStart = tArea.selectionEnd = cursorPos + emoji.data.length
-      }, 10)
-    },
-    inserirVariavel (variavel) {
-      this.mensagemRapida.message += ' ' + variavel
-    },
-    onFileAdded (files) {
-      if (!this.mensagemRapida.medias) {
-        this.mensagemRapida.medias = []
-      }
-      this.mensagemRapida.medias = [...this.mensagemRapida.medias, ...files]
-      this.arquivoCarregado = files
-    },
-    onFileInputChange (event) {
-      const files = Array.from(event.target.files)
-      this.onFileAdded(files)
-      event.target.value = null // Limpa o input para permitir selecionar o mesmo arquivo novamente
-    },
-    abrirMedia (media) {
-      const url = this.getMediaUrl(media)
-      window.open(url, '_blank')
-    },
-    confirmarExclusao (media, index) {
-      this.mediaToDelete = media
-      this.indexToDelete = index
-      this.confirmDialog = true
-    },
-    async excluirMedia (media, index) {
-      try {
-        this.confirmDialog = false
-        await DeletarImagemMensagemRapida(this.mensagemRapida.id, media)
-        this.$q.notify({
-          type: 'positive',
-          message: 'Imagem excluída com sucesso!'
-        })
-        this.mensagemRapida.medias.splice(index, 1)
-      } catch (error) {
-        console.error('Erro ao excluir a imagem:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Erro ao excluir a imagem.'
-        })
-      }
-    },
-    isImage (media) {
-      if (media instanceof File) {
-        return media.type.startsWith('image/')
-      }
-      return media.endsWith('.jpg') || media.endsWith('.jpeg') || media.endsWith('.png')
-    },
-    getMediaUrl (media) {
-      if (media instanceof File) {
-        return URL.createObjectURL(media)
-      }
-      return media
-    },
-    getMediaFileName (media) {
-      if (media instanceof File) {
-        return media.name
-      }
-      return media
-    },
-    getFileIcon (media) {
-      const type = media instanceof File ? media.type : media.toLowerCase()
-      if (type.includes('pdf')) return 'picture_as_pdf'
-      if (type.includes('audio')) return 'audio_file'
-      if (type.includes('video')) return 'video_file'
-      if (type.includes('image')) return 'image'
-      if (type.includes('apk')) return 'android'
-      return 'insert_drive_file'
-    },
-    fecharModal () {
-      this.$emit('update:mensagemRapidaEmEdicao', { id: null })
-      this.$emit('update:modalMensagemRapida', false)
-    },
-    abrirModal () {
-      if (this.mensagemRapidaEmEdicao.id) {
-        this.mensagemRapida = { ...this.mensagemRapidaEmEdicao }
-        console.log('Editando mensagem com ID:', this.mensagemRapida.id)
-      } else {
-        this.mensagemRapida = {
-          key: null,
-          message: '',
-          medias: null
-        }
-      }
-    },
-    async handleMensagemRapida () {
-      const formData = new FormData()
-      formData.append('key', this.mensagemRapida.key)
-      formData.append('message', this.mensagemRapida.message)
-
-      if (this.mensagemRapida.medias) {
-        this.mensagemRapida.medias.forEach((file) => {
-          formData.append('medias', file instanceof File ? file : file)
-        })
-      }
-
-      this.loading = true
-      console.log('Mensagem ID:', this.mensagemRapida.id)
-
-      try {
-        if (this.mensagemRapida.id) {
-          const { data } = await AlterarMensagemRapida(this.mensagemRapida.id, formData)
-          this.$emit('mensagemRapida:editada', { ...this.mensagemRapida, ...data })
-          this.$q.notify({
-            type: 'info',
-            progress: true,
-            position: 'top',
-            textColor: 'black',
-            message: 'Mensagem Rápida editada!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        } else {
-          const { data } = await CriarMensagemRapida(formData)
-          this.$emit('mensagemRapida:criada', data)
-          this.$q.notify({
-            type: 'positive',
-            progress: true,
-            position: 'top',
-            message: 'Mensagem rápida criada!',
-            actions: [{
-              icon: 'close',
-              round: true,
-              color: 'white'
-            }]
-          })
-        }
-        this.fecharModal()
-      } catch (error) {
-        console.error(error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Erro ao salvar a mensagem.'
-        })
-      }
-      this.loading = false
-    },
-    visualizarImagem (media) {
-      this.selectedImageUrl = this.getMediaUrl(media)
-      this.showImageModal = true
-    },
-    onImageLoad (info) {
-      // Ajusta o tamanho do modal baseado no tamanho natural da imagem
-      const img = new Image()
-      img.src = this.selectedImageUrl
-      img.onload = () => {
-        const minWidth = window.innerWidth * 0.4
-        const minHeight = window.innerHeight * 0.4
-        const maxWidth = window.innerWidth * 0.99
-        const maxHeight = window.innerHeight * 0.99
-        // Calcula a proporção mantendo os limites mínimos e máximos
-        let width = img.width
-        let height = img.height
-        const ratio = Math.min(maxWidth / width, maxHeight / height)
-        width = width * ratio
-        height = height * ratio
-        // Garante os tamanhos mínimos
-        width = Math.max(width, minWidth)
-        height = Math.max(height, minHeight)
-        // Atualiza o estilo do card do modal
-        const card = document.querySelector('.q-dialog .q-card')
-        if (card) {
-          card.style.width = `${width}px`
-          card.style.height = `${height + 40}px` // +50px para a barra superior
-        }
-      }
-    },
-    isVideo (media) {
-      if (media instanceof File) {
-        return media.type.startsWith('video/')
-      }
-      return media.endsWith('.mp4') || media.endsWith('.webm') || media.endsWith('.ogg')
-    },
-    getMediaType (media) {
-      if (media instanceof File) {
-        return media.type
-      }
-      if (media.endsWith('.mp4')) return 'video/mp4'
-      if (media.endsWith('.webm')) return 'video/webm'
-      if (media.endsWith('.ogg')) return 'video/ogg'
-      return ''
-    }
-  },
-  watch: {
-    showVideoModal (newValue) {
-      if (!newValue) {
-        // Quando o modal é fechado, pausa todos os vídeos (preview e modal)
-        const allVideos = document.querySelectorAll('.media-preview-video, .video-preview')
-        allVideos.forEach(video => {
-          if (video && !video.paused) {
-            video.pause()
-          }
-        })
-      }
-    }
+    mensagemRapida.medias.splice(index, 1)
+    $q.notify({ type: 'positive', message: 'Mídia excluída com sucesso!' })
+  } catch (error) {
+    console.error('Erro ao excluir a imagem:', error)
+    $q.notify({ type: 'negative', message: 'Erro ao excluir mídia.' })
   }
 }
+
+const resetarModal = () => {
+  resetForm()
+  mensagemRapida.id = null
+  mensagemRapida.medias = []
+  setValues({ key: '', message: '' })
+}
+
+const fecharModal = () => {
+  resetarModal()
+  emit('update:mensagemRapidaEmEdicao', { id: null })
+  emit('update:modalMensagemRapida', false)
+}
+
+const abrirModal = () => {
+  if (props.mensagemRapidaEmEdicao.id) {
+    mensagemRapida.id = props.mensagemRapidaEmEdicao.id
+    mensagemRapida.medias = props.mensagemRapidaEmEdicao.medias || []
+    setValues({
+      key: props.mensagemRapidaEmEdicao.key,
+      message: props.mensagemRapidaEmEdicao.message || ''
+    })
+  } else {
+    resetarModal()
+  }
+}
+
+const handleMensagemRapida = handleSubmit(async values => {
+  const formData = new FormData()
+  formData.append('key', values.key)
+  formData.append('message', values.message || '')
+
+  if (mensagemRapida.medias) {
+    mensagemRapida.medias.forEach(file => {
+      formData.append('medias', file)
+    })
+  }
+
+  loading.value = true
+  try {
+    if (mensagemRapida.id) {
+      const data = await alterarMensagemRapida(mensagemRapida.id, formData)
+      emit('mensagemRapida:editada', { ...data })
+      $q.notify({
+        type: 'info',
+        message: 'Mensagem Rápida editada!',
+        position: 'top'
+      })
+    } else {
+      const data = await criarMensagemRapida(formData)
+      emit('mensagemRapida:criada', data)
+      $q.notify({
+        type: 'positive',
+        message: 'Mensagem rápida criada!',
+        position: 'top'
+      })
+    }
+    fecharModal()
+  } catch (error) {
+    console.error(error)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
-<style scoped>
-/* Estilos Comuns */
-.common-background {
-  background: #f5f5f5;
-}
-
-.common-flex-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.common-responsive {
-  width: 100%;
-  object-fit: contain;
-  margin: 0 auto;
-}
-
-/* Container Principal */
-.media-preview-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center; /* Centraliza horizontalmente */
-  align-items: center; /* Centraliza verticalmente */
-  gap: 16px;
-  padding: 8px;
-  min-height: 350px;
-  max-height: 600px;
-  width: 100%; /* Ocupa toda a largura disponível */
-  margin: 0 auto;
-}
-
-/* Itens de Pré-visualização */
-.media-preview-item,
-.file-preview-container {
-  position: relative;
-  min-height: 350px;
-  max-height: 500px;
-  min-width: 350px;
-  max-width: 800px;
-  display: flex;
-  justify-content: center; /* Centraliza horizontalmente */
-  align-items: center; /* Centraliza verticalmente */
-  background: #f5f5f5;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-/* Cartão de Pré-visualização */
-.media-preview-card {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s ease;
-}
-
-.media-preview-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgb(255, 255, 255);
-  border-color: var(--q-primary);
-}
-
-/* Imagem e Vídeo */
-.media-preview-image,
-.media-preview-video,
-.video-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* Mantém a proporção da mídia */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: inherit;
-}
-
-/* Vídeo */
-.media-preview-video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #000; /* Fundo preto para vídeos */
-  margin: 0 auto;
-  display: block;
-}
-
-/* Container de Arquivo */
-.file-preview-container {
-  padding: 24px;
-  flex-direction: column;
-}
-
-/* Ícone no Preview de Arquivo */
-.file-preview-container .q-icon {
-  font-size: 64px !important;
-}
-
-/* Texto Truncado */
-.text-truncate {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 300px;
-  margin: 0 auto;
-  font-size: 0.9em;
-  text-align: center;
-}
-
-/* Ações do Cartão */
-.q-card-actions {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 8px;
-  background: #f5f5f5;
-  transition: all 0.3s ease;
-}
-
-.media-preview-card:hover .q-card-actions {
-  background: #e0e0e0;
-}
-
-/* Botões de ação no hover */
-.q-card-actions .q-btn {
-  transition: transform 0.2s ease;
-}
-
-.q-card-actions .q-btn:hover {
-  transform: scale(1.1);
-}
-
-/* Diálogo de Vídeo */
-.video-preview-dialog {
-  background: transparent !important;
-}
-
-.video-preview-dialog::v-deep .q-dialog__backdrop {
-  background: black !important;
-  opacity: 0.9 !important;
-}
-
-.video-preview-dialog .q-dialog__inner {
-  background: transparent !important;
-}
-
-.video-preview-dialog video {
-  max-width: 95%;
-  max-height: 95%;
-  margin: 0 auto;
-  display: block;
+<style lang="scss" scoped>
+.glass-input {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: all 0.3s;
+  &:focus {
+    border-color: var(--q-primary);
+    background: rgba(255, 255, 255, 0.8);
+  }
+  body.body--dark & {
+    background: rgba(100, 150, 255, 0.05);
+    border-color: rgba(135, 150, 255, 0.2);
+    color: white;
+    &:focus {
+       background: rgba(100, 150, 255, 0.1);
+       border-color: var(--q-primary);
+    }
+  }
 }
 </style>

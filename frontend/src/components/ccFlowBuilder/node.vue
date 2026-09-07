@@ -11,7 +11,7 @@
       {{ node.name }}
     </q-tooltip>
 
-    <!-- Botão de exclusão de nó que aparece ao passar o mouse -->
+    <!-- Botão de exclusão de nó -->
     <div
       v-if="!['start', 'configurations'].includes(node.type)"
       class="node-delete-btn"
@@ -19,10 +19,21 @@
       title="Remover nó"
     >
       <q-tooltip>Excluir nó</q-tooltip>
-      <i class="mdi mdi-close"></i>
+      <i class="mdi mdi-delete"></i>
     </div>
 
-    <!-- Botão de edição que aparece ao passar o mouse -->
+    <!-- Botão de duplicar nó -->
+    <div
+      v-if="!['start', 'configurations'].includes(node.type)"
+      class="node-duplicate-btn"
+      @click.stop="duplicateNode"
+      title="Duplicar nó"
+    >
+      <q-tooltip>Duplicar nó</q-tooltip>
+      <i class="mdi mdi-content-copy"></i>
+    </div>
+
+    <!-- Botão de edição -->
     <div
       v-if="!['start', 'configurations'].includes(node.type)"
       class="node-edit-btn"
@@ -60,7 +71,12 @@
       />
 
       <!-- Campo editável para o nome do nó -->
-      <div v-if="!isEditing" class="text-truncate node-name">{{node.name}}</div>
+      <div
+        v-if="!isEditing"
+        class="text-truncate node-name"
+      >
+        {{ node.name }}
+      </div>
       <input
         v-else
         ref="nameInput"
@@ -91,189 +107,159 @@
         v-show="node.state === 'running'"
       ></i>
     </div>
-
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    node: Object,
-    activeElement: Object
-  },
+<script setup>
 
-  data () {
-    return {
-      expanded: true,
-      isEditing: false,
-      editingName: ''
+const props = defineProps({
+  node: Object,
+  activeElement: Object
+})
+
+const emit = defineEmits([
+  'clickNode',
+  'changeNodeSite',
+  'nodeRightMenu',
+  'updateNodeName',
+  'nodeAction',
+  'openNodeEditor',
+  'duplicateNode'
+])
+
+const $q = useQuasar()
+const nodeRef = ref(null)
+const nameInput = ref(null)
+const expanded = ref(true)
+const isEditing = ref(false)
+const editingName = ref('')
+
+const nodeContainerClass = computed(() => ({
+  'ef-node-container': true,
+  'border-left-exception': props.node.type === 'exception',
+  'node-color-default': !['start', 'exception'].includes(props.node.type),
+  'node-color-exception': props.node.type === 'exception',
+  'node-color-start': props.node.type === 'start',
+  'ef-node-active shadow-8 bg-blue-3 text-white':
+    props.activeElement.type !== 'line' ? props.activeElement.id === props.node.id : false
+}))
+
+const nodeContainerStyle = computed(() => ({
+  top: props.node.top,
+  left: props.node.left,
+  ...props.node.style
+}))
+
+const nodeIcoClass = computed(() => ({
+  [props.node.ico]: true,
+  'flow-node-drag': !props.node.viewOnly
+}))
+
+const clickNode = () => {
+  if (!isEditing.value) {
+    emit('clickNode', props.node.id)
+  }
+}
+
+const changeNodeSite = () => {
+  if (!nodeRef.value) return 
+  if (props.node.left === nodeRef.value.style.left && props.node.top === nodeRef.value.style.top) {
+    return
+  }
+  emit('changeNodeSite', {
+    id: props.node.id,
+    left: nodeRef.value.style.left,
+    top: nodeRef.value.style.top
+  })
+}
+
+const deleteNode = event => {
+  $q.dialog({
+    title: 'Atenção!!',
+    message: `Deseja realmente excluir o nó "${props.node.name}"?`,
+    cancel: true,
+    persistent: true
+  }).onOk(() => {
+    emit('nodeRightMenu', props.node.id, {
+      action: 'delete',
+      x: event.clientX,
+      y: event.clientY
+    })
+  })
+}
+
+const startEditing = () => {
+  if (['start', 'configurations'].includes(props.node.type)) {
+    $q.notify({
+      message: 'Este nó não pode ser editado',
+      color: 'warning',
+      icon: 'mdi-alert',
+      position: 'top',
+      timeout: 1000
+    })
+    return
+  }
+
+  isEditing.value = true
+  editingName.value = props.node.name
+  nextTick(() => {
+    if (nameInput.value) {
+      nameInput.value.focus()
+      nameInput.value.select()
     }
-  },
-  computed: {
-    nodeContainerClass () {
-      return {
-        'ef-node-container': true,
-        'border-left-exception': this.node.type === 'exception',
-        'node-color-default': !['start', 'exception'].includes(this.node.type),
-        'node-color-exception': this.node.type === 'exception',
-        'node-color-start': this.node.type === 'start',
-        'ef-node-active shadow-8 bg-blue-3 text-white': this.activeElement.type !== 'line' ? this.activeElement.id === this.node.id : false
-      }
-    },
-    nodeContainerStyle () {
-      return {
-        top: this.node.top,
-        left: this.node.left,
-        ...this.node.style
-      }
-    },
-    nodeIcoClass () {
-      var nodeIcoClass = {}
-      nodeIcoClass[this.node.ico] = true
-      nodeIcoClass['flow-node-drag'] = !this.node.viewOnly
-      return nodeIcoClass
-    }
-  },
-  methods: {
-    clickNode () {
-      if (!this.isEditing) {
-        this.$emit('clickNode', this.node.id)
-      }
-    },
-    changeNodeSite () {
-      if (this.node.left == this.$refs.node.style.left && this.node.top == this.$refs.node.style.top) {
-        return
-      }
-      this.$emit('changeNodeSite', {
-        id: this.node.id,
-        left: this.$refs.node.style.left,
-        top: this.$refs.node.style.top
+  })
+}
+
+const saveNodeName = () => {
+  if (editingName.value && editingName.value.trim() !== '') {
+    const oldName = props.node.name
+    const newName = editingName.value.trim()
+
+    if (oldName !== newName) {
+      emit('updateNodeName', {
+        id: props.node.id,
+        name: newName
       })
-    },
-    deleteNode (event) {
-      // Confirmar exclusão com diálogo
-      this.$q.dialog({
-        title: 'Atenção!!',
-        message: `Deseja realmente excluir o nó "${this.node.name}"?`,
-        cancel: {
-          label: 'Não',
-          color: 'primary',
-          push: true
-        },
-        ok: {
-          label: 'Sim',
-          color: 'negative',
-          push: true
-        },
-        persistent: true
-      }).onOk(() => {
-        this.$emit('nodeRightMenu', this.node.id, {
-          action: 'delete',
-          x: event.clientX,
-          y: event.clientY
-        })
-      })
-    },
-    // Métodos para edição in-place do nome do nó
-    startEditing () {
-      // Verificar se é um nó protegido
-      if (['start', 'configurations'].includes(this.node.type)) {
-        this.$q.notify({
-          message: 'Este nó não pode ser editado',
-          color: 'warning',
-          icon: 'mdi-alert',
-          position: 'top',
-          timeout: 1000
-        })
-        return
-      }
-
-      this.isEditing = true
-      this.editingName = this.node.name
-      this.$nextTick(() => {
-        this.$refs.nameInput.focus()
-        this.$refs.nameInput.select()
-
-        // Notificar que o modo de edição foi ativado
-        this.$q.notify({
-          message: 'Editando nome diretamente',
-          color: 'info',
-          icon: 'mdi-pencil',
-          position: 'top',
-          timeout: 1000
-        })
-      })
-    },
-    saveNodeName () {
-      if (this.editingName && this.editingName.trim() !== '') {
-        const oldName = this.node.name
-        const newName = this.editingName.trim()
-
-        // Verificar se o nome realmente mudou
-        if (oldName !== newName) {
-          // Emitir evento para atualizar o nome no componente pai
-          this.$emit('updateNodeName', {
-            id: this.node.id,
-            name: newName
-          })
-
-          // Notificar sobre a alteração
-          this.$q.notify({
-            message: 'Nome atualizado com sucesso',
-            color: 'positive',
-            icon: 'mdi-check',
-            position: 'top',
-            timeout: 1000
-          })
-        }
-      } else {
-        // Se o campo estiver vazio, reverter para o nome original
-        this.editingName = this.node.name
-
-        // Notificar que o nome não foi alterado
-        this.$q.notify({
-          message: 'Nome não alterado (vazio)',
-          color: 'warning',
-          icon: 'mdi-alert',
-          position: 'top',
-          timeout: 1000
-        })
-      }
-      this.isEditing = false
-    },
-    cancelEditing () {
-      this.isEditing = false
-      this.editingName = this.node.name
-    },
-    // Método para abrir o diálogo/configuração correspondente
-    openDialog (type) {
-      // Disparar evento para o componente pai lidar com a ação
-      this.$emit('nodeAction', {
-        nodeId: this.node.id,
-        actionType: type
-      })
-
-      // Selecionar o nó também para manter a consistência
-      this.$emit('clickNode', this.node.id)
-    },
-    // Método para abrir o editor do nó ao fazer duplo clique
-    openNodeEditor () {
-      // Primeiro seleciona o nó
-      this.$emit('clickNode', this.node.id)
-
-      // Notificar que o editor lateral será aberto
-      this.$q.notify({
-        message: 'Abrindo editor do nó',
-        color: 'primary',
-        icon: 'mdi-cog',
+      $q.notify({
+        message: 'Nome atualizado com sucesso',
+        color: 'positive',
+        icon: 'mdi-check',
         position: 'top',
         timeout: 1000
       })
-
-      // Emite um evento para que o painel abra o editor do nó
-      this.$emit('openNodeEditor', this.node.id)
     }
+  } else {
+    editingName.value = props.node.name
+    $q.notify({
+      message: 'Nome não alterado (vazio)',
+      color: 'warning',
+      icon: 'mdi-alert',
+      position: 'top',
+      timeout: 1000
+    })
   }
+  isEditing.value = false
+}
+
+const cancelEditing = () => {
+  isEditing.value = false
+  editingName.value = props.node.name
+}
+
+const openDialog = type => {
+  emit('nodeAction', {
+    nodeId: props.node.id,
+    actionType: type
+  })
+  emit('clickNode', props.node.id)
+}
+
+const openNodeEditor = () => {
+  emit('clickNode', props.node.id)
+  emit('openNodeEditor', props.node.id)
+}
+const duplicateNode = () => {
+  emit('duplicateNode', props.node.id)
 }
 </script>
 
@@ -316,13 +302,13 @@ export default {
   white-space: nowrap;
 }
 
-/* Estilo para o botão de exclusão */
+/* Botões de Ação no Topo do Card */
 .node-delete-btn {
   position: absolute;
   top: 4px;
-  right: 4px;
-  width: 18px;
-  height: 18px;
+  right: 4px; /* Mais à direita */
+  width: 20px;
+  height: 20px;
   background-color: #ff5252;
   border-radius: 50%;
   color: white;
@@ -331,28 +317,18 @@ export default {
   justify-content: center;
   font-size: 12px;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0; /* Aparece no Hover */
   transition: opacity 0.2s, transform 0.2s;
   z-index: 5;
 }
 
-.nodeStyle:hover .node-delete-btn {
-  opacity: 0.8;
-}
-
-.node-delete-btn:hover {
-  opacity: 1 !important;
-  transform: scale(1.2);
-}
-
-/* Estilo para o botão de edição */
-.node-edit-btn {
+.node-duplicate-btn {
   position: absolute;
   top: 4px;
-  right: 28px;
-  width: 18px;
-  height: 18px;
-  background-color: #1976D2;
+  right: 28px; /* Ao lado do delete */
+  width: 20px;
+  height: 20px;
+  background-color: #ff9800; /* Laranja para duplicar */
   border-radius: 50%;
   color: white;
   display: flex;
@@ -365,19 +341,63 @@ export default {
   z-index: 5;
 }
 
-.nodeStyle:hover .node-edit-btn {
-  opacity: 0.8;
+.node-config-btn {
+  position: absolute;
+  top: 4px;
+  right: 52px; /* Ao lado do duplicate */
+  width: 20px;
+  height: 20px;
+  background-color: #009688;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 5;
 }
 
+.node-edit-btn {
+  position: absolute;
+  top: 4px;
+  right: 76px; /* Ao lado do config */
+  width: 20px;
+  height: 20px;
+  background-color: #1976d2;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 5;
+}
+
+.nodeStyle:hover .node-delete-btn,
+.nodeStyle:hover .node-duplicate-btn,
+.nodeStyle:hover .node-config-btn,
+.nodeStyle:hover .node-edit-btn {
+  opacity: 0.9;
+}
+
+.node-delete-btn:hover,
+.node-duplicate-btn:hover,
+.node-config-btn:hover,
 .node-edit-btn:hover {
   opacity: 1 !important;
-  transform: scale(1.2);
+  transform: scale(1.15);
 }
 
 /* Estilo para o campo de edição do nome */
 .node-name-input {
   width: 100%;
-  border: 1px solid #1976D2;
+  border: 1px solid #1976d2;
   border-radius: 3px;
   padding: 2px 5px;
   outline: none;
@@ -401,7 +421,7 @@ export default {
 }
 
 .node-name::after {
-  content: "✏️";
+  content: '✏️';
   font-size: 10px;
   margin-left: 4px;
   opacity: 0;
@@ -526,7 +546,9 @@ export default {
   font-size: 12px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
   z-index: 5;
 }
 

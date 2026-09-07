@@ -1,7 +1,7 @@
 import request from 'src/service/request'
 import { Notify } from 'quasar'
 
-const handleAuthError = (error) => {
+const handleAuthError = error => {
   const message = error?.response?.data?.error || 'Erro de autenticação'
   Notify.create({
     type: 'negative',
@@ -19,21 +19,24 @@ const setTokens = (token, refreshToken) => {
   }
 }
 
-export function RealizarLogin (user) {
+export function RealizarLogin(user) {
   return request({
-    url: '/auth/login/',
+    url: '/auth/login',
     method: 'post',
     data: user
-  }).then(response => {
-    if (response.data?.token) {
-      setTokens(response.data.token, response.data.refreshToken)
-      return response
-    }
-    throw new Error('Token não recebido do servidor')
-  }).catch(handleAuthError)
+  })
+    .then(response => {
+      if (response.data?.token) {
+        setTokens(response.data.token, response.data.refreshToken)
+        return response
+      }
+      throw new Error('Token não recebido do servidor')
+    })
+    .catch(handleAuthError)
 }
 
-export function RealizarLogout (user) {
+export function RealizarLogout() {
+  const userId = localStorage.getItem('userId')
   const clearData = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
@@ -46,15 +49,15 @@ export function RealizarLogout (user) {
   }
 
   return request({
-    url: '/auth/logout/',
+    url: '/auth/logout',
     method: 'post',
-    data: user
+    data: { userId }
   })
     .finally(clearData)
     .catch(handleAuthError)
 }
 
-export function RefreshToken () {
+export function RefreshToken() {
   const refreshToken = localStorage.getItem('refreshToken')
   if (!refreshToken) {
     return Promise.reject(new Error('Refresh token não disponível'))

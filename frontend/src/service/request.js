@@ -1,12 +1,47 @@
 import axios from 'axios'
-import Router from '../router/index'
-import loading from 'src/utils/loading'
 import { Notify } from 'quasar'
+import loading from 'src/utils/loading'
+import { RouterInstance as Router } from '../router/index'
 import backendErrors from './erros'
 import { RefreshToken } from './login'
 
+export const getBaseURL = () => {
+  const envUrl = process.env.VUE_URL_API
+  if (envUrl && envUrl !== 'undefined' && envUrl !== 'http://localhost:8082') {
+    console.info('getBaseURL: Usando VUE_URL_API da env:', envUrl)
+    return envUrl
+  }
+
+  // Fallback dinâmico genérico:
+  if (typeof window !== 'undefined') {
+    const { hostname, protocol, port } = window.location
+
+    // Se estiver em localhost mas a env não foi setada corretamente
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8082'
+    }
+
+    const parts = hostname.split('.')
+    if (parts.length > 2) {
+      // Tenta substituir o primeiro prefixo por 'backend' ou 'api'
+      // Ex: app.autotick.com.br -> backend.autotick.com.br
+      const backendHostname = ['backend', ...parts.slice(1)].join('.')
+      const url = `${protocol}//${backendHostname}`
+      console.info('getBaseURL: Fallback dinâmico para subdomínio backend:', url)
+      return url
+    }
+
+    // Se não tiver subdomínio, tenta usar a mesma URL mas na porta 8082 (fallback legacy)
+    const fallbackUrl = `${protocol}//${hostname}${port ? `:${port}` : ''}`
+    console.warn('getBaseURL: Nenhum padrão de subdomínio encontrado. Usando hostname atual como base:', fallbackUrl)
+    return fallbackUrl
+  }
+
+  return 'http://localhost:8082'
+}
+
 const service = axios.create({
-  baseURL: process.env.VUE_URL_API,
+  baseURL: getBaseURL(),
   timeout: 20000
 })
 
@@ -56,7 +91,7 @@ const clearAuthData = () => {
 
 const redirectToLogin = () => {
   clearAuthData()
-  if (Router.currentRoute.name !== 'login') {
+  if (Router.currentRoute.value.name !== 'login') {
     Router.push({ name: 'login' })
   }
 }
@@ -116,11 +151,16 @@ service.interceptors.response.use(
     const status = error?.response?.status
 
     // Verifica erros específicos de sessão
-    const sessionErrors = ['ERR_SESSION_EXPIRED', 'Invalid token', 'JWT must be provided', 'Token was not provided', 'Invalid token or not Admin']
+    const sessionErrors = [
+      'ERR_SESSION_EXPIRED',
+      'Invalid token',
+      'JWT must be provided',
+      'Token was not provided',
+      'Invalid token or not Admin'
+    ]
     const isSessionError = sessionErrors.includes(errorMessage)
 
-    if ((status === 403 || status === 401 || isSessionError) &&
-        !originalRequest.url.includes('/auth/login')) {
+    if ((status === 403 || status === 401 || isSessionError) && !originalRequest.url.includes('/auth/login')) {
       // Se for erro no refresh token, vai direto para login
       if (originalRequest.url.includes('/auth/refresh_token')) {
         redirectToLogin()
@@ -175,7 +215,7 @@ service.interceptors.response.use(
       handlerError(error)
     }
 
-    return Promise.reject(error.response)
+    return Promise.reject(error.response || error)
   }
 )
 

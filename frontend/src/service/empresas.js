@@ -1,44 +1,44 @@
 import request from 'src/service/request'
 
-export function MostrarHorariosAtendiemento () {
+export function MostrarHorariosAtendiemento() {
   return request({
-    url: '/tenants/business-hours/',
+    url: '/tenants/business-hours',
     method: 'get'
   })
 }
 
-export function AtualizarHorariosAtendiemento (data) {
+export function AtualizarHorariosAtendiemento(data) {
   return request({
-    url: '/tenants/business-hours/',
+    url: '/tenants/business-hours',
     method: 'put',
     data
   })
 }
 
-export function AtualizarMensagemHorariosAtendiemento (data) {
+export function AtualizarMensagemHorariosAtendiemento(data) {
   return request({
-    url: '/tenants/message-business-hours/',
+    url: '/tenants/message-business-hours',
     method: 'put',
     data
   })
 }
 
-export function AdminListarEmpresas () {
+export function AdminListarEmpresas() {
   return request({
-    url: '/admin/tenants/',
+    url: '/admin/tenants',
     method: 'get'
   })
 }
 
-export function CriarTenant (data) {
+export function CriarTenant(data) {
   return request({
-    url: '/admin/tenants/',
+    url: '/admin/tenants',
     method: 'post',
     data
   })
 }
 
-export function AlterarTenant (data) {
+export function AlterarTenant(data) {
   return request({
     url: `/admin/tenantsUpdate/${data.id}`,
     method: 'put',
@@ -46,14 +46,14 @@ export function AlterarTenant (data) {
   })
 }
 
-export function ListarTenants () {
+export function ListarTenants() {
   return request({
-    url: '/admin/tenants/',
+    url: '/admin/tenants',
     method: 'get'
   })
 }
 
-export function DeletarTenant (data) {
+export function DeletarTenant(data) {
   return request({
     url: `/admin/tenants/${data.id}`,
     method: 'delete'

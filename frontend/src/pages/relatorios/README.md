@@ -26,7 +26,9 @@ Módulo responsável pela geração, visualização e exportação de relatório
 - `ccListaRelatorios.vue` - Lista de relatórios disponíveis
 - `ccPrintModelLandscape.vue` - Template de impressão paisagem
 - `ccPrintModelLandscape.css` - Estilos de impressão
-- `PrintMixin.js` - Lógica de impressão
+- `RelatorioResumoAtendimentosUsuarios.vue` - Relatório de resumo de atendimentos
+- `useRelatorios.js` - Lógica de relatórios e exportação (Composable)
+- `usePrint.js` - Lógica de impressão (Composable)
 - `RelatorioResumoAtendimentosUsuarios.vue` - Relatório de atendimentos
 - `RelatorioContatosEtiquetas.vue` - Relatório de contatos por etiquetas
 - `RelatorioContatosGeral.vue` - Relatório geral de contatos

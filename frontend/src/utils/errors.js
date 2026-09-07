@@ -27,7 +27,8 @@ const errors = [
   {
     error: 'ERR_CONTACT_TICKETS_REGISTERED',
     description: 'O contato não pode ser apagado.',
-    detail: 'O contato possui atendimentos registrados e não pode ser excluso para garantir a integridade da informação.'
+    detail:
+      'O contato possui atendimentos registrados e não pode ser excluso para garantir a integridade da informação.'
   },
   {
     error: 'ERR_CREATING_MESSAGE',
@@ -37,7 +38,8 @@ const errors = [
   {
     error: 'ERR_NO_TICKET_FOUND',
     description: 'Atendimento não localizado.',
-    detail: 'Não localizamos o atendimento informado. Atualize a página (F5) e tente novamente. Consulte o suporte caso o erro persista'
+    detail:
+      'Não localizamos o atendimento informado. Atualize a página (F5) e tente novamente. Consulte o suporte caso o erro persista'
   },
   {
     error: 'ERR_AUTO_REPLY_RELATIONED_TICKET',
@@ -147,7 +149,8 @@ const errors = [
   {
     error: 'ERR_INVALID_CREDENTIALS',
     description: 'Usuário e/ou senha inválidos.',
-    detail: 'Os dados de login são inválidos. Caso o problmea persista, procure um administrador do sistema para redefinição das crendenciais.'
+    detail:
+      'Os dados de login são inválidos. Caso o problmea persista, procure um administrador do sistema para redefinição das crendenciais.'
   },
   {
     error: 'ERR_NO_USER_FOUND',
@@ -162,22 +165,26 @@ const errors = [
   {
     error: 'ERR_WAPP_CHECK_CONTACT',
     description: 'Ocorreu um erro ao válidar o contato pelo whatsapp.',
-    detail: 'Verifique se a conexão com o whatsapp está ativa. Se necessário, atualize a página e tente novamente em alguns instantes.'
+    detail:
+      'Verifique se a conexão com o whatsapp está ativa. Se necessário, atualize a página e tente novamente em alguns instantes.'
   },
   {
     error: 'ERR_DELETE_WAPP_MSG',
     description: 'O Whatsapp não permitiu apagar a mensagem.',
-    detail: 'Não é possível apagar mensagens antigas. Se a mensagem for das últimas 24h, verifique se a conexão com o whatsapp está ativa. Se necessário, atualize a página e tente novamente em alguns instantes.'
+    detail:
+      'Não é possível apagar mensagens antigas. Se a mensagem for das últimas 24h, verifique se a conexão com o whatsapp está ativa. Se necessário, atualize a página e tente novamente em alguns instantes.'
   },
   {
     error: 'ERR_SENDING_WAPP_MSG',
     description: 'Mensagem não enviada pelo Whatsapp.',
-    detail: 'Verifique se a conexão com o whatsapp está ativa. Se necessário, atualize a página e tente novamente em alguns instantes.'
+    detail:
+      'Verifique se a conexão com o whatsapp está ativa. Se necessário, atualize a página e tente novamente em alguns instantes.'
   },
   {
     error: 'ERR_WAPP_NOT_INITIALIZED',
     description: 'Sessão com o Whatsapp não inicializada',
-    detail: 'Verifique o status da conexão com o whatsapp do sistema. Necessário que a conexão seja estabelecida com sucesso.'
+    detail:
+      'Verifique o status da conexão com o whatsapp do sistema. Necessário que a conexão seja estabelecida com sucesso.'
   },
   {
     error: 'ERR_CONTACTS_NOT_EXISTS_WHATSAPP',
@@ -219,7 +226,6 @@ const errors = [
     description: 'Usuário sem permissão.',
     detail: 'Seu usuário não possui permissão para executar a ação.'
   }
-
 ]
 
 export default errors

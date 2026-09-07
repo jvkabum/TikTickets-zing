@@ -1,32 +1,43 @@
 import { io } from 'socket.io-client'
+import { getBaseURL } from 'src/service/request'
+
+let socketInstance = null
 
 export const socketIO = () => {
-  return io(process.env.VUE_URL_API, {
+  if (socketInstance) return socketInstance
+
+  const url = getBaseURL()
+  console.info('socketIO: Inicializando conexão com:', url)
+
+  socketInstance = io(url, {
     reconnection: true,
     autoConnect: true,
-    transports: ['websocket'],
-    auth: (cb) => {
+    transports: ['websocket', 'polling'], // Fallback para polling se websocket falhar
+    auth: cb => {
       const tokenItem = localStorage.getItem('token')
       const token = tokenItem ? JSON.parse(tokenItem) : null
-      // eslint-disable-next-line standard/no-callback-literal
       cb({ token })
     }
   })
+
+  socketInstance.on('connect', () => {
+    console.info('socketIO: Conectado com sucesso!', socketInstance.id)
+  })
+
+  socketInstance.io.on('error', error => {
+    console.error('socketIO: Erro na conexão (manager):', error)
+  })
+
+  socketInstance.on('connect_error', error => {
+    console.error('socketIO: Erro na conexão (socket):', error)
+  })
+
+  socketInstance.on('disconnect', reason => {
+    console.info('socketIO: Desconectado. Motivo:', reason)
+  })
+
+  return socketInstance
 }
 
 const socket = socketIO()
-
-socket.io.on('error', (error) => {
-  // ...
-  console.error('socket error', error)
-})
-
-socket.on('disconnect', (reason) => {
-  console.info('socket disconnect', reason)
-
-  // if (reason === "io server disconnect") {
-  //   // the disconnection was initiated by the server, you need to reconnect manually
-  //   socket.connect();
-  // }
-  // else the socket will automatically try to reconnect
-})
+export default socket

@@ -1,4 +1,3 @@
-
 export const estadoPorDdd = {
   11: 'SP',
   12: 'SP',
@@ -127,7 +126,6 @@ export const estadosBR = [
   { nome: 'São Paulo', sigla: 'SP' },
   { nome: 'Sergipe', sigla: 'SE' },
   { nome: 'Tocantins', sigla: 'TO' }
-
 ]
 
 export const messagesLog = {

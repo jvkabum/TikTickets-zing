@@ -14,42 +14,33 @@
     </el-alert>
     <br />
     <!--一个高亮显示的插件-->
-    <codemirror
-      :value="flowJsonData"
-      :options="options"
+    <Codemirror
+      v-model="flowJsonData"
+      :extensions="extensions"
+      :style="{ height: '400px' }"
       class="code"
-    ></codemirror>
+    />
   </q-dialog>
 </template>
 
-<script>
-import 'codemirror/lib/codemirror.css'
-import { codemirror } from 'vue-codemirror'
+<script setup>
+import { json } from '@codemirror/lang-json'
+import { Codemirror } from 'vue-codemirror'
 
-require('codemirror/mode/javascript/javascript.js')
+const props = defineProps({
+  data: Object
+})
 
-export default {
-  props: {
-    data: Object
-  },
-  data () {
-    return {
-      dialogVisible: false,
-      flowJsonData: {},
-      options: {
-        mode: { name: 'javascript', json: true },
-        lineNumbers: true
-      }
-    }
-  },
-  components: {
-    codemirror
-  },
-  methods: {
-    init () {
-      this.dialogVisible = true
-      this.flowJsonData = JSON.stringify(this.data, null, 4).toString()
-    }
-  }
+const dialogVisible = ref(false)
+const flowJsonData = ref('')
+const extensions = shallowRef([json()])
+
+const init = () => {
+  dialogVisible.value = true
+  flowJsonData.value = JSON.stringify(props.data, null, 4)
 }
+
+defineExpose({
+  init
+})
 </script>

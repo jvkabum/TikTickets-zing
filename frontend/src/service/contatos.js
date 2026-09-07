@@ -1,21 +1,21 @@
 import request from 'src/service/request'
 
-export function ListarContatos (params) {
+export function ListarContatos(params) {
   return request({
-    url: '/contacts/',
+    url: '/contacts',
     method: 'get',
     params
   })
 }
 
-export function ObterContato (contactId) {
+export function ObterContato(contactId) {
   return request({
     url: `/contacts/${contactId}`,
     method: 'get'
   })
 }
 
-export function CriarContato (data) {
+export function CriarContato(data) {
   return request({
     url: '/contacts',
     method: 'post',
@@ -23,7 +23,7 @@ export function CriarContato (data) {
   })
 }
 
-export function ImportarArquivoContato (data) {
+export function ImportarArquivoContato(data) {
   return request({
     url: '/contacts/upload',
     method: 'post',
@@ -32,7 +32,7 @@ export function ImportarArquivoContato (data) {
   })
 }
 
-export function ExportarArquivoContato (data) {
+export function ExportarArquivoContato(data) {
   return request({
     url: '/contacts/export',
     method: 'post',
@@ -41,14 +41,14 @@ export function ExportarArquivoContato (data) {
   })
 }
 
-export function SyncronizarContatos () {
+export function SyncronizarContatos() {
   return request({
     url: '/contacts/sync',
     method: 'post'
   })
 }
 
-export function EditarContato (contactId, data) {
+export function EditarContato(contactId, data) {
   return request({
     url: `/contacts/${contactId}`,
     method: 'put',
@@ -56,14 +56,14 @@ export function EditarContato (contactId, data) {
   })
 }
 
-export function DeletarContato (contactId) {
+export function DeletarContato(contactId) {
   return request({
     url: `/contacts/${contactId}`,
     method: 'delete'
   })
 }
 
-export function EditarEtiquetasContato (contactId, tags) {
+export function EditarEtiquetasContato(contactId, tags) {
   const data = {
     tags
   }
@@ -74,7 +74,7 @@ export function EditarEtiquetasContato (contactId, tags) {
   })
 }
 
-export function EditarCarteiraContato (contactId, wallets) {
+export function EditarCarteiraContato(contactId, wallets) {
   const data = {
     wallets
   }
