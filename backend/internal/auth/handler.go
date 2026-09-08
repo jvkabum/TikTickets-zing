@@ -59,9 +59,14 @@ func (h *Handler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
 
-	user, err := h.service.Authenticate(c.Request().Context(), req.Email, req.Password)
+	user, t, err := h.service.Authenticate(c.Request().Context(), req.Email, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+	}
+
+	isDemo := false
+	if t != nil {
+		isDemo = t.IsDemo
 	}
 
 	// Gerar JWT
@@ -69,6 +74,7 @@ func (h *Handler) Login(c echo.Context) error {
 		"userId":   user.ID,
 		"tenantId": user.TenantID,
 		"profile":  user.Profile,
+		"isDemo":   isDemo,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(), // BR-MIGRAR-001 (Access/Refresh Tokens expiram em 24h)
 	})
 
@@ -84,6 +90,7 @@ func (h *Handler) Login(c echo.Context) error {
 		"email":    user.Email,
 		"profile":  user.Profile,
 		"tenantId": user.TenantID,
+		"isDemo":   isDemo,
 		"queues":   []string{}, // TODO: popular filas se existirem
 	})
 }

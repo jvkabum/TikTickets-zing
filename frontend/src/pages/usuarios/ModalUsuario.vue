@@ -11,6 +11,17 @@
         <q-separator spaced />
       </q-card-section>
       <q-card-section class="q-col-gutter-sm">
+        <q-banner
+          v-if="isDemoAdmin"
+          rounded
+          dense
+          class="bg-amber-1 text-orange-10 q-mb-sm rounded-borders"
+        >
+          <template v-slot:avatar>
+            <q-icon name="mdi-shield-lock" color="orange-9" />
+          </template>
+          <b>Modo Demonstração:</b> O login e a senha do administrador são protegidos e não podem ser alterados nesta empresa demo.
+        </q-banner>
         <div class="row q-col-gutter-sm">
           <div class="col-12">
             <q-input
@@ -26,6 +37,8 @@
               outlined
               v-model="email"
               label="E-mail"
+              :disable="isDemoAdmin"
+              :hint="isDemoAdmin ? 'E-mail protegido em modo demonstração' : ''"
               :error="!!errors.email"
               :error-message="errors.email"
             />
@@ -38,15 +51,16 @@
               v-model="password"
               :type="isPwd ? 'password' : 'text'"
               label="Nova Senha"
-              hint="Deixe em branco para não alterar"
+              :disable="isDemoAdmin"
+              :hint="isDemoAdmin ? 'Senha protegida em modo demonstração' : 'Deixe em branco para não alterar'"
               :error="!!errors.password"
               :error-message="errors.password"
             >
               <template v-slot:append>
                 <q-icon
                   :name="isPwd ? 'visibility_off' : 'visibility'"
-                  class="cursor-pointer"
-                  @click="isPwd = !isPwd"
+                  :class="isDemoAdmin ? '' : 'cursor-pointer'"
+                  @click="!isDemoAdmin && (isPwd = !isPwd)"
                 />
               </template>
             </q-input>
@@ -57,21 +71,22 @@
               v-model="confirmPassword"
               :type="isPwd ? 'password' : 'text'"
               label="Confirme Nova Senha"
+              :disable="isDemoAdmin"
               :error="!!errors.confirmPassword"
               :error-message="errors.confirmPassword"
             >
               <template v-slot:append>
                 <q-icon
                   :name="isPwd ? 'visibility_off' : 'visibility'"
-                  class="cursor-pointer"
-                  @click="isPwd = !isPwd"
+                  :class="isDemoAdmin ? '' : 'cursor-pointer'"
+                  @click="!isDemoAdmin && (isPwd = !isPwd)"
                 />
               </template>
             </q-input>
           </div>
           <div class="col-12">
             <q-select
-              :disable="isProfile"
+              :disable="isProfile || isDemoAdmin"
               outlined
               rounded
               dense
@@ -196,6 +211,14 @@ const { value: email } = useField('email')
 const { value: password } = useField('password')
 const { value: confirmPassword } = useField('confirmPassword')
 const { value: profile } = useField('profile')
+
+const isDemoAdmin = computed(() => {
+  const isSuper = localStorage.getItem('profile') === 'super' || authStore.profile === 'super'
+  if (isSuper) return false
+  const userIsDemo = authStore.isDemo || authStore.user?.isDemo
+  const targetProfile = props.usuarioEdicao?.profile || profile.value
+  return !!userIsDemo && targetProfile === 'admin'
+})
 
 const abrirModal = () => {
   if (props.usuarioEdicao.id) {

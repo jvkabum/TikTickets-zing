@@ -13,12 +13,21 @@
         <div class="text-h6">{{ tenantEdicao.id ? 'Editar' : 'Criar' }} Tenant</div>
       </q-card-section>
       <q-card-section>
-        <q-toggle
-          v-model="toggleStatus"
-          :label="toggleStatus ? 'Ativo' : 'Inativo'"
-          color="primary"
-          class="q-mb-md"
-        />
+        <div class="row items-center justify-between q-mb-sm">
+          <q-toggle
+            v-model="toggleStatus"
+            :label="toggleStatus ? 'Ativo' : 'Inativo'"
+            color="primary"
+          />
+          <q-toggle
+            v-model="toggleDemo"
+            label="Modo Demonstração (Demo)"
+            color="warning"
+          />
+        </div>
+        <div v-if="toggleDemo" class="text-caption text-warning q-mb-md bg-amber-1 q-pa-xs rounded-borders">
+          ⚠️ <b>Modo Demo:</b> Usuários desta empresa não poderão excluir nada e o login/senha do administrador estarão bloqueados contra alterações.
+        </div>
         <q-input
           class="row col q-mb-sm"
           square
@@ -94,13 +103,15 @@ const $q = useQuasar()
 const tenantStore = useTenantStore()
 
 const toggleStatus = ref(true)
+const toggleDemo = ref(false)
 
 const validationSchema = toTypedSchema(
   zod.object({
     name: zod.string().min(3, 'Mínimo de 3 caracteres').max(100, 'Máximo de 100 caracteres'),
     maxUsers: zod.coerce.number({ invalid_type_error: 'Informe um número' }).min(1, 'Mínimo de 1'),
     maxConnections: zod.coerce.number({ invalid_type_error: 'Informe um número' }).min(1, 'Mínimo de 1'),
-    status: zod.string()
+    status: zod.string(),
+    isDemo: zod.boolean().optional()
   })
 )
 
@@ -110,7 +121,8 @@ const { handleSubmit, errors, resetForm, setValues } = useForm({
     name: '',
     maxUsers: 1,
     maxConnections: 1,
-    status: 'active'
+    status: 'active',
+    isDemo: false
   }
 })
 
@@ -118,9 +130,14 @@ const { value: name } = useField('name')
 const { value: maxUsers } = useField('maxUsers')
 const { value: maxConnections } = useField('maxConnections')
 const { value: status } = useField('status')
+const { value: isDemo } = useField('isDemo')
 
 watch(toggleStatus, val => {
   status.value = val ? 'active' : 'inactive'
+})
+
+watch(toggleDemo, val => {
+  isDemo.value = !!val
 })
 
 const abrirModal = () => {
@@ -129,13 +146,17 @@ const abrirModal = () => {
       name: props.tenantEdicao.name,
       maxUsers: Number(props.tenantEdicao.maxUsers),
       maxConnections: Number(props.tenantEdicao.maxConnections),
-      status: props.tenantEdicao.status
+      status: props.tenantEdicao.status,
+      isDemo: !!props.tenantEdicao.isDemo
     })
     toggleStatus.value = props.tenantEdicao.status === 'active'
+    toggleDemo.value = !!props.tenantEdicao.isDemo
   } else {
     resetForm()
     toggleStatus.value = true
+    toggleDemo.value = false
     status.value = 'active'
+    isDemo.value = false
   }
 }
 

@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => profile.value === 'admin')
+  const isDemo = computed(() => !!user.value?.isDemo)
   const userId = computed(() => user.value?.id || localStorage.getItem('userId'))
 
   function login(userData, userToken) {
@@ -56,6 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
         status: data.status,
         id: data.userId,
         tenantId: data.tenantId,
+        isDemo: !!data.isDemo,
         queues: data.queues
       }
       login(userData, data.token)
@@ -103,6 +105,7 @@ export const useAuthStore = defineStore('auth', () => {
     profile,
     isAuthenticated,
     isAdmin,
+    isDemo,
     userId,
     login,
     handleLogin,

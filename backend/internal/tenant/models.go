@@ -13,6 +13,7 @@ type Tenant struct {
 	MessageBusinessHours string         `gorm:"column:messageBusinessHours" json:"messageBusinessHours"`
 	MaxUsers             *int           `gorm:"column:maxUsers" json:"maxUsers"`
 	MaxConnections       *int           `gorm:"column:maxConnections" json:"maxConnections"`
+	IsDemo               bool           `gorm:"column:isDemo;default:false" json:"isDemo"`
 	CreatedAt            time.Time      `gorm:"column:createdAt" json:"createdAt"`
 	UpdatedAt            time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
 }

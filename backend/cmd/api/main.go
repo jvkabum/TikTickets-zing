@@ -84,7 +84,7 @@ func main() {
 	// Auth & Users
 	authRepo := auth.NewRepository(db)
 	authSvc := auth.NewAuthService(authRepo, tenantRepo)
-	userSvc := auth.NewUserService(authRepo)
+	userSvc := auth.NewUserService(authRepo, tenantRepo)
 	authHandler := auth.NewHandler(authRepo, authSvc, userSvc, cfg.JWTSecret)
 
 	// Contacts
@@ -185,6 +185,7 @@ func main() {
 	protected := e.Group("/api/v1")
 	protected.Use(customMiddleware.JWTAuth([]byte(cfg.JWTSecret)))
 	protected.Use(customMiddleware.TenantContext)
+	protected.Use(customMiddleware.DemoGuard(tenantRepo))
 
 	authHandler.RegisterRoutes(public, protected)
 	authHandler.RegisterRoutes(rootPublic, nil) // Suporte a /auth/login direto sem prefixo

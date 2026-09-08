@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/tiktickets/backend-go/internal/settings"
 	"github.com/tiktickets/backend-go/internal/tenant"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -18,8 +19,23 @@ type mockUserRepository struct {
 func (m *mockUserRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	return m.user, m.err
 }
+func (m *mockUserRepository) GetByID(ctx context.Context, tenantID uint, id uint) (*User, error) {
+	return m.user, m.err
+}
+func (m *mockUserRepository) ListByTenant(ctx context.Context, tenantID uint, limit int, offset int) ([]User, error) {
+	if m.user != nil {
+		return []User{*m.user}, nil
+	}
+	return []User{}, nil
+}
+func (m *mockUserRepository) CountAdminsByTenant(ctx context.Context, tenantID uint) (int64, error) {
+	return 2, nil
+}
 func (m *mockUserRepository) Create(ctx context.Context, user *User) error { return nil }
-func (m *mockUserRepository) Update(ctx context.Context, user *User) error { return nil }
+func (m *mockUserRepository) Update(ctx context.Context, user *User) error { 
+	m.user = user
+	return nil 
+}
 func (m *mockUserRepository) Delete(ctx context.Context, id uint) error    { return nil }
 
 // MockTenantRepository
@@ -35,6 +51,7 @@ func (m *mockTenantRepository) GetByID(ctx context.Context, id uint) (*tenant.Te
 func (m *mockTenantRepository) List(ctx context.Context) ([]tenant.Tenant, error) { return nil, nil }
 func (m *mockTenantRepository) Update(ctx context.Context, t *tenant.Tenant) error { return nil }
 func (m *mockTenantRepository) Delete(ctx context.Context, id uint) error          { return nil }
+func (m *mockTenantRepository) CreateSetting(ctx context.Context, s *settings.Setting) error { return nil }
 
 func TestAuthenticate_Success(t *testing.T) {
 	password := "123456"
@@ -57,7 +74,7 @@ func TestAuthenticate_Success(t *testing.T) {
 	}
 
 	service := NewAuthService(userRepo, tenantRepo)
-	user, err := service.Authenticate(context.Background(), "admin@test.com", "123456")
+	user, _, err := service.Authenticate(context.Background(), "admin@test.com", "123456")
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -88,7 +105,7 @@ func TestAuthenticate_InactiveTenant(t *testing.T) {
 	}
 
 	service := NewAuthService(userRepo, tenantRepo)
-	user, err := service.Authenticate(context.Background(), "admin@test.com", "123456")
+	user, _, err := service.Authenticate(context.Background(), "admin@test.com", "123456")
 
 	if err == nil || err.Error() != "tenant is inactive" {
 		t.Fatalf("expected 'tenant is inactive' error, got %v", err)
@@ -116,7 +133,7 @@ func TestAuthenticate_WrongPassword(t *testing.T) {
 	}
 
 	service := NewAuthService(userRepo, tenantRepo)
-	user, err := service.Authenticate(context.Background(), "admin@test.com", "wrongpass")
+	user, _, err := service.Authenticate(context.Background(), "admin@test.com", "wrongpass")
 
 	if err == nil || errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		t.Fatalf("expected invalid credentials error, got %v", err)
@@ -125,3 +142,101 @@ func TestAuthenticate_WrongPassword(t *testing.T) {
 		t.Fatalf("expected nil user, got %v", user)
 	}
 }
+
+func TestUserService_UpdateAdmin_DemoBlocked(t *testing.T) {
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:       1,
+			Email:    "admin@demo.com",
+			Profile:  "admin",
+			TenantID: 10,
+		},
+	}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{
+			ID:     10,
+			Status: "active",
+			IsDemo: true, // Tenant em modo demonstração
+		},
+	}
+
+	svc := NewUserService(userRepo, tenantRepo)
+
+	// 1. Tentar alterar o e-mail do admin em tenant demo -> deve falhar
+	newEmail := "hacker@demo.com"
+	_, err := svc.Update(context.Background(), 10, 1, "admin", 1, UpdateUserDTO{Email: &newEmail})
+	if err == nil || err.Error() != "ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED" {
+		t.Fatalf("esperava ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED ao tentar alterar email, recebeu: %v", err)
+	}
+
+	// 2. Tentar alterar a senha do admin em tenant demo -> deve falhar
+	newPassword := "novaSenha123"
+	_, err = svc.Update(context.Background(), 10, 1, "admin", 1, UpdateUserDTO{Password: &newPassword})
+	if err == nil || err.Error() != "ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED" {
+		t.Fatalf("esperava ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED ao tentar alterar senha, recebeu: %v", err)
+	}
+
+	// 3. Tentar alterar o perfil do admin para 'user' em tenant demo -> deve falhar
+	newProfile := "user"
+	_, err = svc.Update(context.Background(), 10, 1, "admin", 1, UpdateUserDTO{Profile: &newProfile})
+	if err == nil || err.Error() != "ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED" {
+		t.Fatalf("esperava ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED ao tentar alterar profile, recebeu: %v", err)
+	}
+}
+
+func TestUserService_UpdateAdmin_SuperAllowed(t *testing.T) {
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:       1,
+			Email:    "admin@demo.com",
+			Profile:  "admin",
+			TenantID: 10,
+		},
+	}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{
+			ID:     10,
+			Status: "active",
+			IsDemo: true,
+		},
+	}
+
+	svc := NewUserService(userRepo, tenantRepo)
+
+	// Super Admin pode alterar dados de qualquer empresa, inclusive demo
+	newEmail := "novo_admin@demo.com"
+	updated, err := svc.Update(context.Background(), 10, 999, "super", 1, UpdateUserDTO{Email: &newEmail})
+	if err != nil {
+		t.Fatalf("super admin deveria poder alterar admin de tenant demo, erro: %v", err)
+	}
+	if updated.Email != "novo_admin@demo.com" {
+		t.Fatalf("email deveria ter sido atualizado para super admin")
+	}
+}
+
+func TestUserService_Delete_DemoBlocked(t *testing.T) {
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:       2,
+			Email:    "user@demo.com",
+			Profile:  "user",
+			TenantID: 10,
+		},
+	}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{
+			ID:     10,
+			Status: "active",
+			IsDemo: true,
+		},
+	}
+
+	svc := NewUserService(userRepo, tenantRepo)
+
+	// Admin da demo tentando deletar usuário da demo -> deve falhar
+	err := svc.Delete(context.Background(), 10, "admin", 2, false)
+	if err == nil || err.Error() != "ERR_DEMO_MODE_DELETE_NOT_ALLOWED" {
+		t.Fatalf("esperava ERR_DEMO_MODE_DELETE_NOT_ALLOWED ao tentar deletar em empresa demo, recebeu: %v", err)
+	}
+}
+

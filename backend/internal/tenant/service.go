@@ -74,6 +74,7 @@ func (s *TenantService) CreateTenant(ctx context.Context, req Tenant) (*Tenant, 
 		Name:                 req.Name,
 		MaxUsers:             req.MaxUsers,
 		MaxConnections:       req.MaxConnections,
+		IsDemo:               req.IsDemo,
 		BusinessHours:        businessHours,
 		MessageBusinessHours: messageBusinessHours,
 	}
@@ -114,6 +115,7 @@ func (s *TenantService) UpdateTenant(ctx context.Context, id uint, req Tenant) (
 	tenant.Name = req.Name
 	tenant.MaxUsers = req.MaxUsers
 	tenant.MaxConnections = req.MaxConnections
+	tenant.IsDemo = req.IsDemo
 
 	if err := s.repo.Update(ctx, tenant); err != nil {
 		return nil, err

@@ -281,7 +281,21 @@ func AutoMigrate() {
 					EXECUTE format('UPDATE %I SET "updatedAt" = updated_at WHERE "updatedAt" IS NULL', tbl);
 				END IF;
 
-				-- 6. Garantia universal de deleted_at para soft-delete do GORM
+				-- 6. Sincronização is_demo <-> "isDemo" (específico para Tenants)
+				IF tbl = 'Tenants' THEN
+					IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = tbl AND column_name = 'isDemo') AND
+					   NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = tbl AND column_name = 'is_demo') THEN
+						EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS is_demo boolean DEFAULT false', tbl);
+						EXECUTE format('UPDATE %I SET is_demo = COALESCE("isDemo", false)', tbl);
+					END IF;
+					IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = tbl AND column_name = 'is_demo') AND
+					   NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = tbl AND column_name = 'isDemo') THEN
+						EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS "isDemo" boolean DEFAULT false', tbl);
+						EXECUTE format('UPDATE %I SET "isDemo" = COALESCE(is_demo, false)', tbl);
+					END IF;
+				END IF;
+
+				-- 7. Garantia universal de deleted_at para soft-delete do GORM
 				IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = tbl AND column_name = 'deleted_at') THEN
 					EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS deleted_at timestamp with time zone', tbl);
 				END IF;
