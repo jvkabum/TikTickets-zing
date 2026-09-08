@@ -361,12 +361,12 @@ const clearCache = () => {
 @media (max-width: 768px) {
   .card {
     max-width: 90%;
-    margin: 20px;
+    margin: 20px auto;
   }
 
   .logo-img {
-    height: 60px;
-    max-width: 140px;
+    height: 42px;
+    max-width: 190px;
   }
 
   .btn-modern {
@@ -377,13 +377,13 @@ const clearCache = () => {
 @media (max-width: 480px) {
   .card {
     max-width: 95%;
-    margin: 15px;
+    margin: 15px auto;
     padding: 16px !important;
   }
 
   .logo-img {
-    height: 50px;
-    max-width: 120px;
+    height: 38px;
+    max-width: 170px;
   }
 
   .text-h5 {
