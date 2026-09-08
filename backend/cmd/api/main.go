@@ -55,7 +55,23 @@ func main() {
 	e.Use(echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization, "Cache-Control", "Pragma", "If-None-Match", "X-Priority", "expires"},
+		AllowHeaders: []string{
+			"*",
+			echo.HeaderOrigin,
+			echo.HeaderContentType,
+			echo.HeaderAccept,
+			echo.HeaderAuthorization,
+			"Cache-Control",
+			"Pragma",
+			"If-None-Match",
+			"X-Priority",
+			"expires",
+			"traceparent",
+			"tracestate",
+			"sentry-trace",
+			"baggage",
+			"X-Requested-With",
+		},
 	}))
 
 	// 5. Inicialização de Repositórios e Services
