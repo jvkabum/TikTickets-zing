@@ -7,16 +7,17 @@
 // https://quasar.dev/quasar-cli/quasar-conf-js
 
 /* eslint-env node */
-import 'dotenv/config'
 import path from 'path'
+import { config as dotenvConfig } from 'dotenv'
+
+// __dirname e fileURLToPath já são injetados automaticamente pelo Quasar CLI
+dotenvConfig({ path: path.resolve(__dirname, '.env') })
+
 import { configure } from 'quasar/wrappers'
 import AutoImport from 'unplugin-auto-import/vite'
 import { QuasarResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
-import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 export default configure(function (ctx) {
   return {
@@ -63,7 +64,9 @@ export default configure(function (ctx) {
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
       env: {
-        VUE_URL_API: process.env.VUE_URL_API || 'http://localhost:8082',
+        // VUE_URL_API é obrigatória. Defina no .env do frontend:
+        // VUE_URL_API=http://localhost:8082
+        VUE_URL_API: process.env.VUE_URL_API,
         VUE_FACEBOOK_APP_ID: process.env.VUE_FACEBOOK_APP_ID,
         VUE_SENTRY_DSN: process.env.VUE_SENTRY_DSN
       },

@@ -27,7 +27,23 @@ export function RealizarLogin(user) {
   })
     .then(response => {
       if (response.data?.token) {
-        setTokens(response.data.token, response.data.refreshToken)
+        const { token, refreshToken } = response.data
+        setTokens(token, refreshToken)
+
+        // Salva os dados do usuário no localStorage
+        // Suporta tanto o backend Go (campos planos no response.data) quanto Node legado (aninhado em response.data.user)
+        const userData = response.data.user || response.data
+        if (userData) {
+          const profile = userData.profile || ''
+          const userId = userData.id || userData.userId || ''
+          const username = userData.name || userData.username || userData.email || ''
+
+          localStorage.setItem('profile', profile)
+          localStorage.setItem('userId', String(userId))
+          localStorage.setItem('username', username)
+          localStorage.setItem('usuario', JSON.stringify(userData))
+        }
+
         return response
       }
       throw new Error('Token não recebido do servidor')

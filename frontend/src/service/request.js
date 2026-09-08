@@ -7,37 +7,30 @@ import { RefreshToken } from './login'
 
 export const getBaseURL = () => {
   const envUrl = process.env.VUE_URL_API
-  if (envUrl && envUrl !== 'undefined' && envUrl !== 'http://localhost:8082') {
-    console.info('getBaseURL: Usando VUE_URL_API da env:', envUrl)
-    return envUrl
+  if (envUrl && envUrl !== 'undefined') {
+    // Garante que termina com /api/v1
+    const base = envUrl.replace(/\/api\/v1\/?$/, '')
+    return `${base}/api/v1`
   }
 
-  // Fallback dinâmico genérico:
+  // Em produção/staging: tenta inferir o backend pelo subdomínio
   if (typeof window !== 'undefined') {
-    const { hostname, protocol, port } = window.location
-
-    // Se estiver em localhost mas a env não foi setada corretamente
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8082'
-    }
-
+    const { hostname, protocol } = window.location
     const parts = hostname.split('.')
     if (parts.length > 2) {
-      // Tenta substituir o primeiro prefixo por 'backend' ou 'api'
-      // Ex: app.autotick.com.br -> backend.autotick.com.br
       const backendHostname = ['backend', ...parts.slice(1)].join('.')
-      const url = `${protocol}//${backendHostname}`
-      console.info('getBaseURL: Fallback dinâmico para subdomínio backend:', url)
+      const url = `${protocol}//${backendHostname}/api/v1`
+      console.info('getBaseURL: Inferindo URL do backend via subdomínio:', url)
       return url
     }
-
-    // Se não tiver subdomínio, tenta usar a mesma URL mas na porta 8082 (fallback legacy)
-    const fallbackUrl = `${protocol}//${hostname}${port ? `:${port}` : ''}`
-    console.warn('getBaseURL: Nenhum padrão de subdomínio encontrado. Usando hostname atual como base:', fallbackUrl)
-    return fallbackUrl
   }
 
-  return 'http://localhost:8082'
+  // Se VUE_URL_API não estiver definida, lança erro visível para forçar correção
+  console.error(
+    '[ERRO] VUE_URL_API não está definida no .env do frontend!\n' +
+    'Adicione: VUE_URL_API=http://localhost:8082'
+  )
+  return ''
 }
 
 const service = axios.create({
