@@ -1,4 +1,4 @@
-﻿# TikTickets-zing v3.3.0 🚀
+# TikTickets-zing v3.3.0 🚀
 [![Grupo do WhatsApp](https://img.shields.io/badge/Grupo_Whatsapp-TikTickets-blue)](https://chat.whatsapp.com/GHNJVQRoLzrGuO1lmCr7vR)
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
@@ -7,6 +7,77 @@
 [![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 
 Um ecossistema **SaaS Multi-tenant** avançado para gestão de atendimento multicanais centralizado, com **backend de alta performance reescrito em Golang** e frontend moderno em **Vue 3**, sob a marca **TikTickets**.
+
+---
+
+## 📸 Demonstração Visual
+
+<div align="center">
+  <img src="screenshots/tiktickets-demo.gif" alt="TikTickets Demonstração" width="100%" />
+</div>
+
+<details>
+  <summary><b>🔍 Clique para expandir as capturas de tela detalhadas</b></summary>
+
+  ### 🔐 1. Tela de Login Moderna
+  ![Tela de Login](screenshots/01_login.png)
+
+  ### 📊 2. Dashboard Operacional (Métricas & Estatísticas)
+  ![Dashboard](screenshots/02_dashboard.png)
+
+  ### 💬 3. Central de Atendimento e Chats Multicanal
+  ![Central de Atendimento](screenshots/03_atendimento.png)
+
+  ### 👥 4. Gestão de Contatos
+  ![Contatos](screenshots/04_contatos.png)
+
+  ### 📱 5. Conexões e Canais (WhatsApp / Telegram / Instagram)
+  ![Canais e Conexões](screenshots/05_conexoes.png)
+
+  ### 📲 6. Pareamento via QR Code WhatsApp em Tempo Real
+  <div align="center">
+    <img src="screenshots/08_qrcode_whatsapp.png" alt="Conexão WhatsApp via QR Code" width="420" />
+  </div>
+
+  ### 📈 7. Painel Geral de Atendimentos & Filas
+  ![Painel de Atendimentos](screenshots/06_painel_atendimentos.png)
+
+  ### 📑 8. Relatórios Operacionais e Estatísticas
+  ![Relatórios](screenshots/07_relatorios.png)
+
+  ### 👤 9. Gestão de Usuários e Operadores
+  ![Usuários](screenshots/08_usuarios.png)
+
+  ### 🗂️ 10. Filas de Atendimento e Triagem Inteligente
+  ![Filas de Atendimento](screenshots/09_filas.png)
+
+  ### ⚡ 11. Mensagens Rápidas (Atalhos de Resposta)
+  ![Mensagens Rápidas](screenshots/10_mensagens_rapidas.png)
+
+  ### 🤖 12. Chatbot & ChatFlow (Lista de Fluxos)
+  ![Lista ChatFlow](screenshots/11_chatflow.png)
+
+  ### 🛠️ 13. Construtor Visual do Chatbot (ChatFlow Builder)
+  <div align="center">
+    <img src="screenshots/chatflow-builder.gif" alt="TikTickets ChatFlow Builder Animado" width="850" />
+  </div>
+
+  ### 🏷️ 14. Gestão de Etiquetas (Tags)
+  ![Etiquetas](screenshots/13_etiquetas.png)
+
+  ### ⏰ 15. Horários de Atendimento & Expediente
+  ![Horários de Atendimento](screenshots/14_horario_atendimento.png)
+
+  ### ⚙️ 16. Configurações Globais do Sistema
+  ![Configurações](screenshots/15_configuracoes.png)
+
+  ### 📢 17. Campanhas de Disparo em Massa
+  ![Campanhas](screenshots/16_campanhas.png)
+
+  ### 🔌 18. API & Integrações de Webhook
+  ![API e Integrações](screenshots/17_api_service.png)
+
+</details>
 
 ---
 
