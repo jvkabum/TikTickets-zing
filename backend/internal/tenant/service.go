@@ -79,6 +79,10 @@ func (s *TenantService) CreateTenant(ctx context.Context, req Tenant) (*Tenant, 
 		MessageBusinessHours: messageBusinessHours,
 	}
 
+	if req.OwnerID != nil && *req.OwnerID > 0 {
+		tenant.OwnerID = req.OwnerID
+	}
+
 	if err := s.repo.Create(ctx, &tenant); err != nil {
 		return nil, err
 	}
@@ -116,6 +120,10 @@ func (s *TenantService) UpdateTenant(ctx context.Context, id uint, req Tenant) (
 	tenant.MaxUsers = req.MaxUsers
 	tenant.MaxConnections = req.MaxConnections
 	tenant.IsDemo = req.IsDemo
+
+	if req.OwnerID != nil && *req.OwnerID > 0 {
+		tenant.OwnerID = req.OwnerID
+	}
 
 	if err := s.repo.Update(ctx, tenant); err != nil {
 		return nil, err

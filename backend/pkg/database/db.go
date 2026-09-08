@@ -390,7 +390,7 @@ func Seed(cfg *config.Config) {
 	}
 
 	// Atualiza o OwnerID do tenant com o ID do admin
-	t.OwnerID = admin.ID
+	t.OwnerID = &admin.ID
 	DB.Save(&t)
 
 	// ── 4. SETTINGS ───────────────────────────────────────────────────────────
