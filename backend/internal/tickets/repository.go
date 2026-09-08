@@ -33,7 +33,7 @@ func (r *ticketRepository) Create(ctx context.Context, ticket *Ticket) error {
 
 func (r *ticketRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*Ticket, error) {
 	var ticket Ticket
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&ticket).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).First(&ticket).Error; err != nil {
 		return nil, err
 	}
 	return &ticket, nil
@@ -41,7 +41,7 @@ func (r *ticketRepository) GetByID(ctx context.Context, id uint, tenantID uint) 
 
 func (r *ticketRepository) ListOpen(ctx context.Context, tenantID uint) ([]Ticket, error) {
 	var tickets []Ticket
-	if err := r.db.WithContext(ctx).Where("status = ? AND tenant_id = ?", "open", tenantID).Find(&tickets).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("status = ? AND (\"tenantId\" = ? OR tenant_id = ?)", "open", tenantID, tenantID).Find(&tickets).Error; err != nil {
 		return nil, err
 	}
 	return tickets, nil
@@ -54,7 +54,7 @@ func (r *ticketRepository) Update(ctx context.Context, ticket *Ticket) error {
 func (r *ticketRepository) AcceptTicket(ctx context.Context, ticketID uint, userID uint, tenantID uint) error {
 	result := r.db.WithContext(ctx).
 		Model(&Ticket{}).
-		Where("id = ? AND tenant_id = ? AND status = ?", ticketID, tenantID, "pending").
+		Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?) AND status = ?", ticketID, tenantID, tenantID, "pending").
 		Updates(map[string]interface{}{
 			"status":  "open",
 			"user_id": userID,

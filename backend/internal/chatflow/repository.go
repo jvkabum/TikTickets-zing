@@ -27,7 +27,7 @@ func (r *chatFlowRepository) Create(ctx context.Context, flow *ChatFlow) error {
 
 func (r *chatFlowRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*ChatFlow, error) {
 	var flow ChatFlow
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&flow).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).First(&flow).Error; err != nil {
 		return nil, err
 	}
 	return &flow, nil
@@ -35,7 +35,7 @@ func (r *chatFlowRepository) GetByID(ctx context.Context, id uint, tenantID uint
 
 func (r *chatFlowRepository) ListByTenant(ctx context.Context, tenantID uint) ([]ChatFlow, error) {
 	var flows []ChatFlow
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&flows).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Find(&flows).Error; err != nil {
 		return nil, err
 	}
 	return flows, nil
@@ -46,5 +46,5 @@ func (r *chatFlowRepository) Update(ctx context.Context, flow *ChatFlow) error {
 }
 
 func (r *chatFlowRepository) Delete(ctx context.Context, id uint, tenantID uint) error {
-	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&ChatFlow{}).Error
+	return r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).Delete(&ChatFlow{}).Error
 }

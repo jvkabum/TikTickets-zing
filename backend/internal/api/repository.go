@@ -29,7 +29,7 @@ func (r *apiRepository) Create(ctx context.Context, apiConfig *ApiConfig) error 
 
 func (r *apiRepository) GetByID(ctx context.Context, id string, tenantID uint) (*ApiConfig, error) {
 	var apiConfig ApiConfig
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&apiConfig).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).First(&apiConfig).Error; err != nil {
 		return nil, err
 	}
 	return &apiConfig, nil
@@ -45,7 +45,7 @@ func (r *apiRepository) GetByToken(ctx context.Context, token string) (*ApiConfi
 
 func (r *apiRepository) List(ctx context.Context, tenantID uint) ([]ApiConfig, error) {
 	var configs []ApiConfig
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&configs).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Find(&configs).Error; err != nil {
 		return nil, err
 	}
 	return configs, nil
@@ -56,5 +56,5 @@ func (r *apiRepository) Update(ctx context.Context, apiConfig *ApiConfig) error 
 }
 
 func (r *apiRepository) Delete(ctx context.Context, id string, tenantID uint) error {
-	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&ApiConfig{}).Error
+	return r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).Delete(&ApiConfig{}).Error
 }

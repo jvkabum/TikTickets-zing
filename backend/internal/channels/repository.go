@@ -27,7 +27,7 @@ func (r *whatsappRepository) Create(ctx context.Context, channel *Whatsapp) erro
 
 func (r *whatsappRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*Whatsapp, error) {
 	var channel Whatsapp
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&channel).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).First(&channel).Error; err != nil {
 		return nil, err
 	}
 	if channel.Type == "" {
@@ -38,7 +38,7 @@ func (r *whatsappRepository) GetByID(ctx context.Context, id uint, tenantID uint
 
 func (r *whatsappRepository) ListByTenant(ctx context.Context, tenantID uint) ([]Whatsapp, error) {
 	var channels []Whatsapp
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&channels).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Find(&channels).Error; err != nil {
 		return nil, err
 	}
 	for i := range channels {
@@ -54,5 +54,5 @@ func (r *whatsappRepository) Update(ctx context.Context, channel *Whatsapp) erro
 }
 
 func (r *whatsappRepository) Delete(ctx context.Context, id uint, tenantID uint) error {
-	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&Whatsapp{}).Error
+	return r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).Delete(&Whatsapp{}).Error
 }

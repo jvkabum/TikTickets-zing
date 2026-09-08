@@ -26,19 +26,19 @@ func (s *StatisticsService) GetDashboardData(ctx context.Context, tenantID uint)
 	db := s.db.WithContext(ctx)
 
 	// Count total tickets
-	if err := db.Table("Tickets").Where("tenant_id = ?", tenantID).Count(&data.TotalTickets).Error; err != nil {
+	if err := db.Table("Tickets").Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Count(&data.TotalTickets).Error; err != nil {
 		return nil, err
 	}
 	// Count open
-	if err := db.Table("Tickets").Where("tenant_id = ? AND status = ?", tenantID, "open").Count(&data.OpenTickets).Error; err != nil {
+	if err := db.Table("Tickets").Where("(\"tenantId\" = ? OR tenant_id = ?) AND status = ?", tenantID, tenantID, "open").Count(&data.OpenTickets).Error; err != nil {
 		return nil, err
 	}
 	// Count pending
-	if err := db.Table("Tickets").Where("tenant_id = ? AND status = ?", tenantID, "pending").Count(&data.PendingTickets).Error; err != nil {
+	if err := db.Table("Tickets").Where("(\"tenantId\" = ? OR tenant_id = ?) AND status = ?", tenantID, tenantID, "pending").Count(&data.PendingTickets).Error; err != nil {
 		return nil, err
 	}
 	// Count closed
-	if err := db.Table("Tickets").Where("tenant_id = ? AND status = ?", tenantID, "closed").Count(&data.ClosedTickets).Error; err != nil {
+	if err := db.Table("Tickets").Where("(\"tenantId\" = ? OR tenant_id = ?) AND status = ?", tenantID, tenantID, "closed").Count(&data.ClosedTickets).Error; err != nil {
 		return nil, err
 	}
 

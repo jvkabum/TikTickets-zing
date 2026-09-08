@@ -44,17 +44,17 @@ type Config struct {
 func Load() *Config {
 	cfg := &Config{
 		// Servidor
-		Port:        requireEnv("PORT"),
+		Port:        getEnv("PORT", "3000"),
 		BackendURL:  getEnv("BACKEND_URL", ""),
 		FrontendURL: getEnv("FRONTEND_URL", ""),
-		NodeEnv:     getEnv("NODE_ENV", "dev"),
+		NodeEnv:     getEnv("NODE_ENV", "production"),
 
 		// Banco de dados — aceita POSTGRES_* (Node) ou DB_* (Go)
 		DBHost:     requireEnvFallback("DB_HOST", "POSTGRES_HOST"),
 		DBUser:     requireEnvFallback("DB_USER", "POSTGRES_USER"),
 		DBPassword: getEnvFallback("DB_PASSWORD", "POSTGRES_PASSWORD"),
 		DBName:     requireEnvFallback("DB_NAME", "POSTGRES_DB"),
-		DBPort:     requireEnv("DB_PORT"),
+		DBPort:     getEnvFallbackDefault("5432", "DB_PORT", "POSTGRES_PORT"),
 
 		// JWT
 		JWTSecret:        requireEnv("JWT_SECRET"),
@@ -113,3 +113,14 @@ func getEnvFallback(keys ...string) string {
 	}
 	return ""
 }
+
+// getEnvFallbackDefault retorna o valor da primeira chave encontrada ou um valor padrão caso nenhuma exista.
+func getEnvFallbackDefault(defaultValue string, keys ...string) string {
+	for _, k := range keys {
+		if v := os.Getenv(k); v != "" {
+			return v
+		}
+	}
+	return defaultValue
+}
+

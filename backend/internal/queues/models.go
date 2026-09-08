@@ -11,9 +11,9 @@ type Queue struct {
 	Name      string         `gorm:"not null" json:"name"`
 	Color     string         `gorm:"not null" json:"color"`
 	Greeting  string         `json:"greeting"`
-	TenantID  uint           `gorm:"not null" json:"tenantId"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
+	TenantID  uint           `gorm:"column:tenantId;default:1" json:"tenantId"`
+	CreatedAt time.Time      `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }
 

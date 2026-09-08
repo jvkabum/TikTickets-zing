@@ -9,13 +9,13 @@ type ChatFlow struct {
 	ID           uint           `gorm:"primaryKey" json:"id"`
 	Name         string         `json:"name"`
 	Flow         string         `gorm:"type:json" json:"flow"`
-	IsActive     bool           `json:"isActive"`
-	IsDeleted    bool           `json:"isDeleted"`
-	CelularTeste string         `json:"celularTeste"`
-	UserID       uint           `json:"userId"`
-	TenantID     uint           `gorm:"not null" json:"tenantId"`
-	CreatedAt    time.Time      `json:"createdAt"`
-	UpdatedAt    time.Time      `json:"updatedAt"`
+	IsActive     bool           `gorm:"column:isActive" json:"isActive"`
+	IsDeleted    bool           `gorm:"column:isDeleted" json:"isDeleted"`
+	CelularTeste string         `gorm:"column:celularTeste" json:"celularTeste"`
+	UserID       uint           `gorm:"column:userId" json:"userId"`
+	TenantID     uint           `gorm:"column:tenantId;default:1" json:"tenantId"`
+	CreatedAt    time.Time      `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt    time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }
 
@@ -24,14 +24,14 @@ func (ChatFlow) TableName() string {
 }
 
 type AutoReply struct {
-	ID           uint           `gorm:"primaryKey"`
-	Name         string
-	CelularTeste string
-	Action       int
-	TenantID     uint           `gorm:"not null"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	ID           uint           `gorm:"primaryKey" json:"id"`
+	Name         string         `json:"name"`
+	CelularTeste string         `gorm:"column:celularTeste" json:"celularTeste"`
+	Action       int            `json:"action"`
+	TenantID     uint           `gorm:"column:tenantId;default:1" json:"tenantId"`
+	CreatedAt    time.Time      `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt    time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }
 
 func (AutoReply) TableName() string {
@@ -39,13 +39,13 @@ func (AutoReply) TableName() string {
 }
 
 type StepsReply struct {
-	ID          uint           `gorm:"primaryKey"`
-	Reply       string
-	InitialStep bool
-	AutoReplyID uint
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	ID          uint           `gorm:"primaryKey" json:"id"`
+	Reply       string         `json:"reply"`
+	InitialStep bool           `gorm:"column:initialStep" json:"initialStep"`
+	AutoReplyID uint           `gorm:"column:autoReplyId" json:"autoReplyId"`
+	CreatedAt   time.Time      `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt   time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }
 
 func (StepsReply) TableName() string {

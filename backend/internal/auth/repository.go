@@ -33,7 +33,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, e
 
 func (r *userRepository) GetByID(ctx context.Context, tenantID uint, id uint) (*User, error) {
 	var user User
-	if err := r.db.WithContext(ctx).Where("tenant_id = ? AND id = ?", tenantID, id).First(&user).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? AND id = ?", tenantID, id).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -41,7 +41,7 @@ func (r *userRepository) GetByID(ctx context.Context, tenantID uint, id uint) (*
 
 func (r *userRepository) ListByTenant(ctx context.Context, tenantID uint, limit int, offset int) ([]User, error) {
 	var users []User
-	query := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID)
+	query := r.db.WithContext(ctx).Where("\"tenantId\" = ?", tenantID)
 	
 	if limit > 0 {
 		query = query.Limit(limit).Offset(offset)
@@ -55,7 +55,7 @@ func (r *userRepository) ListByTenant(ctx context.Context, tenantID uint, limit 
 
 func (r *userRepository) CountAdminsByTenant(ctx context.Context, tenantID uint) (int64, error) {
 	var count int64
-	err := r.db.WithContext(ctx).Model(&User{}).Where("tenant_id = ? AND profile = ?", tenantID, "admin").Count(&count).Error
+	err := r.db.WithContext(ctx).Model(&User{}).Where("\"tenantId\" = ? AND profile = ?", tenantID, "admin").Count(&count).Error
 	return count, err
 }
 

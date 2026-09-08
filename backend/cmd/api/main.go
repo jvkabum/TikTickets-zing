@@ -168,6 +168,7 @@ func main() {
 
 	// 6. Registro de Rotas (Públicas)
 	public := e.Group("/api/v1")
+	rootPublic := e.Group("") // Suporte a requisições diretas em /auth/login
 	
 	// Health Check
 	e.GET("/health", func(c echo.Context) error {
@@ -186,6 +187,7 @@ func main() {
 	protected.Use(customMiddleware.TenantContext)
 
 	authHandler.RegisterRoutes(public, protected)
+	authHandler.RegisterRoutes(rootPublic, nil) // Suporte a /auth/login direto sem prefixo
 	tenantHandler.RegisterRoutes(protected)
 	contactHandler.RegisterRoutes(protected)
 	ticketHandler.RegisterRoutes(protected)

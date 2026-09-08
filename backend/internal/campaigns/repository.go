@@ -27,7 +27,7 @@ func (r *campaignRepository) Create(ctx context.Context, campaign *Campaign) err
 
 func (r *campaignRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*Campaign, error) {
 	var campaign Campaign
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&campaign).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).First(&campaign).Error; err != nil {
 		return nil, err
 	}
 	return &campaign, nil
@@ -35,7 +35,7 @@ func (r *campaignRepository) GetByID(ctx context.Context, id uint, tenantID uint
 
 func (r *campaignRepository) ListByTenant(ctx context.Context, tenantID uint) ([]Campaign, error) {
 	var campaigns []Campaign
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&campaigns).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Find(&campaigns).Error; err != nil {
 		return nil, err
 	}
 	return campaigns, nil
@@ -46,5 +46,5 @@ func (r *campaignRepository) Update(ctx context.Context, campaign *Campaign) err
 }
 
 func (r *campaignRepository) Delete(ctx context.Context, id uint, tenantID uint) error {
-	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&Campaign{}).Error
+	return r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).Delete(&Campaign{}).Error
 }

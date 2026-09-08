@@ -28,7 +28,7 @@ func (r *tagRepository) Create(ctx context.Context, tag *Tag) error {
 
 func (r *tagRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*Tag, error) {
 	var tag Tag
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&tag).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).First(&tag).Error; err != nil {
 		return nil, err
 	}
 	return &tag, nil
@@ -36,7 +36,7 @@ func (r *tagRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*T
 
 func (r *tagRepository) List(ctx context.Context, tenantID uint) ([]Tag, error) {
 	var tags []Tag
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&tags).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Find(&tags).Error; err != nil {
 		return nil, err
 	}
 	return tags, nil
@@ -47,5 +47,5 @@ func (r *tagRepository) Update(ctx context.Context, tag *Tag) error {
 }
 
 func (r *tagRepository) Delete(ctx context.Context, id uint, tenantID uint) error {
-	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&Tag{}).Error
+	return r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).Delete(&Tag{}).Error
 }

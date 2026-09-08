@@ -2,18 +2,15 @@ package settings
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Setting struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	Key       string         `gorm:"not null" json:"key"`
 	Value     string         `gorm:"not null" json:"value"`
-	TenantID  uint           `gorm:"not null" json:"tenantId"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
+	TenantID  uint           `gorm:"column:tenantId;default:1" json:"tenantId"`
+	CreatedAt time.Time      `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (Setting) TableName() string {

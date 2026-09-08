@@ -28,7 +28,7 @@ func (r *settingRepository) Create(ctx context.Context, setting *Setting) error 
 
 func (r *settingRepository) GetByKey(ctx context.Context, key string, tenantID uint) (*Setting, error) {
 	var setting Setting
-	if err := r.db.WithContext(ctx).Where("key = ? AND tenant_id = ?", key, tenantID).First(&setting).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("key = ? AND (\"tenantId\" = ? OR tenant_id = ?)", key, tenantID, tenantID).First(&setting).Error; err != nil {
 		return nil, err
 	}
 	return &setting, nil
@@ -36,7 +36,7 @@ func (r *settingRepository) GetByKey(ctx context.Context, key string, tenantID u
 
 func (r *settingRepository) List(ctx context.Context, tenantID uint) ([]Setting, error) {
 	var settings []Setting
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&settings).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Find(&settings).Error; err != nil {
 		return nil, err
 	}
 	return settings, nil
@@ -47,5 +47,5 @@ func (r *settingRepository) Update(ctx context.Context, setting *Setting) error 
 }
 
 func (r *settingRepository) Delete(ctx context.Context, id uint, tenantID uint) error {
-	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&Setting{}).Error
+	return r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).Delete(&Setting{}).Error
 }

@@ -119,11 +119,11 @@ func checkIsFirstRun(db *gorm.DB) bool {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		// Primeira vez: registra a inicialização no banco
 		_ = db.Table("Settings").Create(map[string]interface{}{
-			"key":        "system_instance_initialized",
-			"value":      time.Now().UTC().Format(time.RFC3339),
-			"tenant_id":  1,
-			"created_at": time.Now(),
-			"updated_at": time.Now(),
+			"key":       "system_instance_initialized",
+			"value":     time.Now().UTC().Format(time.RFC3339),
+			"tenantId":  1,
+			"createdAt": time.Now(),
+			"updatedAt": time.Now(),
 		})
 		return true
 	}

@@ -28,7 +28,7 @@ func (r *contactRepository) Create(ctx context.Context, contact *Contact) error 
 
 func (r *contactRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*Contact, error) {
 	var contact Contact
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&contact).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).First(&contact).Error; err != nil {
 		return nil, err
 	}
 	return &contact, nil
@@ -36,7 +36,7 @@ func (r *contactRepository) GetByID(ctx context.Context, id uint, tenantID uint)
 
 func (r *contactRepository) GetByNumber(ctx context.Context, number string, tenantID uint) (*Contact, error) {
 	var contact Contact
-	if err := r.db.WithContext(ctx).Where("number = ? AND tenant_id = ?", number, tenantID).First(&contact).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("number = ? AND (\"tenantId\" = ? OR tenant_id = ?)", number, tenantID, tenantID).First(&contact).Error; err != nil {
 		return nil, err
 	}
 	return &contact, nil
@@ -44,7 +44,7 @@ func (r *contactRepository) GetByNumber(ctx context.Context, number string, tena
 
 func (r *contactRepository) ListByTenant(ctx context.Context, tenantID uint) ([]Contact, error) {
 	var contacts []Contact
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&contacts).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Find(&contacts).Error; err != nil {
 		return nil, err
 	}
 	return contacts, nil
@@ -55,5 +55,5 @@ func (r *contactRepository) Update(ctx context.Context, contact *Contact) error 
 }
 
 func (r *contactRepository) Delete(ctx context.Context, id uint, tenantID uint) error {
-	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&Contact{}).Error
+	return r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).Delete(&Contact{}).Error
 }

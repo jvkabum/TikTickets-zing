@@ -12,11 +12,11 @@ type Campaign struct {
 	Message1  string         `json:"message1"`
 	Message2  string         `json:"message2"`
 	Message3  string         `json:"message3"`
-	MediaUrl  string         `json:"mediaUrl"`
+	MediaUrl  string         `gorm:"column:mediaUrl" json:"mediaUrl"`
 	Delay     int            `json:"delay"`
-	TenantID  uint           `gorm:"not null" json:"tenantId"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
+	TenantID  uint           `gorm:"column:tenantId;default:1" json:"tenantId"`
+	CreatedAt time.Time      `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }
 
@@ -27,11 +27,11 @@ func (Campaign) TableName() string {
 type CampaignContact struct {
 	ID            uint           `gorm:"primaryKey" json:"id"`
 	Ack           int            `json:"ack"`
-	MessageRandom string         `json:"messageRandom"`
-	CampaignID    uint           `json:"campaignId"`
-	ContactID     uint           `json:"contactId"`
-	CreatedAt     time.Time      `json:"createdAt"`
-	UpdatedAt     time.Time      `json:"updatedAt"`
+	MessageRandom string         `gorm:"column:messageRandom" json:"messageRandom"`
+	CampaignID    uint           `gorm:"column:campaignId" json:"campaignId"`
+	ContactID     uint           `gorm:"column:contactId" json:"contactId"`
+	CreatedAt     time.Time      `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt     time.Time      `gorm:"column:updatedAt" json:"updatedAt"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }
 

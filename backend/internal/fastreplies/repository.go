@@ -28,7 +28,7 @@ func (r *fastReplyRepository) Create(ctx context.Context, reply *FastReply) erro
 
 func (r *fastReplyRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*FastReply, error) {
 	var reply FastReply
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&reply).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).First(&reply).Error; err != nil {
 		return nil, err
 	}
 	return &reply, nil
@@ -36,7 +36,7 @@ func (r *fastReplyRepository) GetByID(ctx context.Context, id uint, tenantID uin
 
 func (r *fastReplyRepository) List(ctx context.Context, tenantID uint) ([]FastReply, error) {
 	var replies []FastReply
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&replies).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("\"tenantId\" = ? OR tenant_id = ?", tenantID, tenantID).Find(&replies).Error; err != nil {
 		return nil, err
 	}
 	return replies, nil
@@ -47,5 +47,5 @@ func (r *fastReplyRepository) Update(ctx context.Context, reply *FastReply) erro
 }
 
 func (r *fastReplyRepository) Delete(ctx context.Context, id uint, tenantID uint) error {
-	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).Delete(&FastReply{}).Error
+	return r.db.WithContext(ctx).Where("id = ? AND (\"tenantId\" = ? OR tenant_id = ?)", id, tenantID, tenantID).Delete(&FastReply{}).Error
 }

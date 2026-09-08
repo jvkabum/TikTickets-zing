@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/tiktickets/backend-go/internal/tenant"
 	"golang.org/x/crypto/bcrypt"
@@ -25,25 +26,30 @@ func (s *AuthService) Authenticate(ctx context.Context, email, password string) 
 	// Buscar usuário no repo
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
+		log.Printf("[Auth Error] Usuário não encontrado para email '%s': %v", email, err)
 		return nil, errors.New("credenciais inválidas")
 	}
 
 	// Checar hash da senha
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
+		log.Printf("[Auth Error] Senha incorreta para o email '%s' (hash len: %d)", email, len(user.PasswordHash))
 		return nil, errors.New("credenciais inválidas")
 	}
 
 	// Checar Tenant
 	t, err := s.tenantRepo.GetByID(ctx, user.TenantID)
 	if err != nil {
+		log.Printf("[Auth Error] Erro ao buscar tenant ID %d para usuário '%s': %v", user.TenantID, email, err)
 		return nil, errors.New("erro ao verificar tenant")
 	}
 
 	if t.Status != "active" {
+		log.Printf("[Auth Error] Tenant ID %d não está ativo (status: %s)", user.TenantID, t.Status)
 		return nil, errors.New("tenant is inactive")
 	}
 
+	log.Printf("[Auth Success] Login realizado com sucesso para '%s' (Tenant %d)", email, user.TenantID)
 	return user, nil
 }
 
