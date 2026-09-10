@@ -14,8 +14,11 @@ func NewFastReplyService(repo Repository) *FastReplyService {
 }
 
 func (s *FastReplyService) Create(ctx context.Context, reply *FastReply) error {
-	if reply.Key == "" || reply.Message == "" || reply.TenantID == 0 {
-		return errors.New("key, message, and tenant_id are required")
+	if reply.TenantID == 0 {
+		reply.TenantID = 1
+	}
+	if reply.Key == "" {
+		return errors.New("key is required")
 	}
 	return s.repo.Create(ctx, reply)
 }

@@ -89,6 +89,8 @@
               filled
               v-model="message"
               v-bind="messageProps"
+              :error="!!errors.message"
+              :error-message="errors.message"
             />
           </div>
         </div>
@@ -176,11 +178,26 @@ const loading = ref(false)
 const fileInput = ref(null)
 const inputEnvioMensagem = ref(null)
 
+const mensagemRapida = reactive({
+  id: null,
+  medias: []
+})
+
 const validationSchema = toTypedSchema(
   z.object({
     key: z.string().min(1, 'A chave é obrigatória'),
     message: z.string().optional(),
     medias: z.array(z.any()).optional()
+  }).superRefine((data, ctx) => {
+    const hasMedias = mensagemRapida.medias && mensagemRapida.medias.length > 0
+    const hasMessage = data.message && data.message.trim().length > 0
+    if (!hasMedias && !hasMessage) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['message'],
+        message: 'A mensagem é obrigatória quando não há arquivos anexados'
+      })
+    }
   })
 )
 
@@ -195,11 +212,6 @@ const { handleSubmit, errors, defineField, setValues, resetForm } = useForm({
 
 const [key, keyProps] = defineField('key')
 const [message, messageProps] = defineField('message')
-
-const mensagemRapida = reactive({
-  id: null,
-  medias: []
-})
 
 const variaveis = [
   { label: 'Nome', value: '{{name}}' },
