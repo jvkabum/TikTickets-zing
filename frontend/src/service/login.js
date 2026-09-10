@@ -27,7 +27,18 @@ export function RealizarLogin(user) {
   })
     .then(response => {
       if (response.data?.token) {
-        setTokens(response.data.token, response.data.refreshToken)
+        const { token, refreshToken, user: userData } = response.data
+        setTokens(token, refreshToken)
+
+        // Salva os dados do usuário no localStorage
+        // O sidebar e várias páginas dependem de 'profile', 'userId' e 'username'
+        if (userData) {
+          localStorage.setItem('profile', userData.profile || '')
+          localStorage.setItem('userId', userData.id || '')
+          localStorage.setItem('username', userData.name || userData.email || '')
+          localStorage.setItem('usuario', JSON.stringify(userData))
+        }
+
         return response
       }
       throw new Error('Token não recebido do servidor')

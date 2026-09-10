@@ -31,6 +31,7 @@ func (r *queueRepository) GetByID(ctx context.Context, id uint, tenantID uint) (
 	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&queue).Error; err != nil {
 		return nil, err
 	}
+	queue.Queue = queue.Name
 	return &queue, nil
 }
 
@@ -38,6 +39,9 @@ func (r *queueRepository) List(ctx context.Context, tenantID uint) ([]Queue, err
 	var queues []Queue
 	if err := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID).Find(&queues).Error; err != nil {
 		return nil, err
+	}
+	for i := range queues {
+		queues[i].Queue = queues[i].Name
 	}
 	return queues, nil
 }

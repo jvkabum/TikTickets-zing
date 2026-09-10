@@ -167,7 +167,7 @@ func main() {
 	facebookHandler := facebook.NewHandler()
 
 	// 6. Registro de Rotas (Públicas)
-	public := e.Group("/api/v1")
+	public := e.Group("")
 	
 	// Health Check
 	e.GET("/health", func(c echo.Context) error {
@@ -181,7 +181,7 @@ func main() {
 	})
 
 	// Registro de Rotas (Protegidas) — JWT injetado via config, sem nenhum hardcode
-	protected := e.Group("/api/v1")
+	protected := e.Group("")
 	protected.Use(customMiddleware.JWTAuth([]byte(cfg.JWTSecret)))
 	protected.Use(customMiddleware.TenantContext)
 	protected.Use(customMiddleware.DemoGuard(tenantRepo))

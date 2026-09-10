@@ -2,6 +2,8 @@ package auth
 
 import (
 	"time"
+
+	"github.com/tiktickets/backend-go/internal/queues"
 	"gorm.io/gorm"
 )
 
@@ -19,6 +21,7 @@ type User struct {
 	LastLogout   *time.Time     `json:"lastLogout"`
 	IsOnline     bool           `json:"isOnline"`
 	Configs      string         `gorm:"type:json" json:"configs"`
+	Queues       []queues.Queue `gorm:"-" json:"queues"`
 	CreatedAt    time.Time      `json:"createdAt"`
 	UpdatedAt    time.Time      `json:"updatedAt"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
@@ -26,4 +29,14 @@ type User struct {
 
 func (User) TableName() string {
 	return "Users"
+}
+
+type UserQueue struct {
+	ID      uint `gorm:"primaryKey" json:"id"`
+	UserID  uint `gorm:"not null" json:"userId"`
+	QueueID uint `gorm:"not null" json:"queueId"`
+}
+
+func (UserQueue) TableName() string {
+	return "UsersQueues"
 }

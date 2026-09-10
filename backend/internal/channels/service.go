@@ -24,8 +24,14 @@ func (s *ChannelService) Show(ctx context.Context, tenantID uint, id uint) (*Wha
 }
 
 type CreateWhatsappDTO struct {
-	Name      string `json:"name"`
-	IsDefault bool   `json:"isDefault"`
+	Name            string `json:"name"`
+	Type            string `json:"type"`
+	IsDefault       bool   `json:"isDefault"`
+	TokenTelegram   string `json:"tokenTelegram"`
+	InstagramUser   string `json:"instagramUser"`
+	InstagramKey    string `json:"instagramKey"`
+	FarewellMessage string `json:"farewellMessage"`
+	ChatFlowID      *uint  `json:"chatFlowId"`
 }
 
 func (s *ChannelService) Create(ctx context.Context, tenantID uint, dto CreateWhatsappDTO) (*Whatsapp, error) {
@@ -49,12 +55,22 @@ func (s *ChannelService) Create(ctx context.Context, tenantID uint, dto CreateWh
 		return nil, errors.New("ERR_NO_PERMISSION_CONNECTIONS_LIMIT")
 	}
 
+	channelType := dto.Type
+	if channelType == "" {
+		channelType = "whatsapp"
+	}
+
 	whatsapp := &Whatsapp{
-		Name:      dto.Name,
-		IsDefault: dto.IsDefault,
-		Status:    "DISCONNECTED",
-		Type:      "whatsapp",
-		TenantID:  tenantID,
+		Name:            dto.Name,
+		IsDefault:       dto.IsDefault,
+		Status:          "DISCONNECTED",
+		Type:            channelType,
+		TokenTelegram:   dto.TokenTelegram,
+		InstagramUser:   dto.InstagramUser,
+		InstagramKey:    dto.InstagramKey,
+		FarewellMessage: dto.FarewellMessage,
+		ChatFlowID:      dto.ChatFlowID,
+		TenantID:        tenantID,
 	}
 
 	if err := s.repo.Create(ctx, whatsapp); err != nil {
@@ -65,8 +81,14 @@ func (s *ChannelService) Create(ctx context.Context, tenantID uint, dto CreateWh
 }
 
 type UpdateWhatsappDTO struct {
-	Name      *string `json:"name"`
-	IsDefault *bool   `json:"isDefault"`
+	Name            *string `json:"name"`
+	Type            *string `json:"type"`
+	IsDefault       *bool   `json:"isDefault"`
+	TokenTelegram   *string `json:"tokenTelegram"`
+	InstagramUser   *string `json:"instagramUser"`
+	InstagramKey    *string `json:"instagramKey"`
+	FarewellMessage *string `json:"farewellMessage"`
+	ChatFlowID      *uint   `json:"chatFlowId"`
 }
 
 func (s *ChannelService) Update(ctx context.Context, tenantID uint, id uint, dto UpdateWhatsappDTO) (*Whatsapp, error) {
@@ -78,9 +100,25 @@ func (s *ChannelService) Update(ctx context.Context, tenantID uint, id uint, dto
 	if dto.Name != nil {
 		whatsapp.Name = *dto.Name
 	}
+	if dto.Type != nil && *dto.Type != "" {
+		whatsapp.Type = *dto.Type
+	}
 	if dto.IsDefault != nil {
 		whatsapp.IsDefault = *dto.IsDefault
 	}
+	if dto.TokenTelegram != nil {
+		whatsapp.TokenTelegram = *dto.TokenTelegram
+	}
+	if dto.InstagramUser != nil {
+		whatsapp.InstagramUser = *dto.InstagramUser
+	}
+	if dto.InstagramKey != nil {
+		whatsapp.InstagramKey = *dto.InstagramKey
+	}
+	if dto.FarewellMessage != nil {
+		whatsapp.FarewellMessage = *dto.FarewellMessage
+	}
+	whatsapp.ChatFlowID = dto.ChatFlowID
 
 	if err := s.repo.Update(ctx, whatsapp); err != nil {
 		return nil, err

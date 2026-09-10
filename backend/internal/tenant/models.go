@@ -14,7 +14,7 @@ type Tenant struct {
 	MessageBusinessHours string         `json:"messageBusinessHours"`
 	MaxUsers             *int           `json:"maxUsers"`
 	MaxConnections       *int           `json:"maxConnections"`
-	IsDemo               bool           `gorm:"column:isDemo;default:false" json:"isDemo"`
+	IsDemo               bool           `gorm:"default:false" json:"isDemo"`
 	CreatedAt            time.Time      `json:"createdAt"`
 	UpdatedAt            time.Time      `json:"updatedAt"`
 	DeletedAt            gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`

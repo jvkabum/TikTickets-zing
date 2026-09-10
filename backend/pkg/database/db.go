@@ -70,6 +70,7 @@ func AutoMigrate() {
 		&tenant.Tenant{},
 		&settings.Setting{},
 		&auth.User{},
+		&auth.UserQueue{},
 		&contacts.Contact{},
 		&contacts.ContactCustomField{},
 		&tickets.Ticket{},

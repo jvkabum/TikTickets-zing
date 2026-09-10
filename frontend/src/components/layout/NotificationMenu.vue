@@ -89,7 +89,7 @@ const { notifications, notificationsP } = storeToRefs(ticketStore)
 const router = useRouter()
 
 const totalNotifications = computed(() => {
-  return (parseInt(notifications.value.count) || 0) + (parseInt(notificationsP.value.count) || 0)
+  return (parseInt(notifications.value?.count) || 0) + (parseInt(notificationsP.value?.count) || 0)
 })
 
 const irParaAtendimento = () => {

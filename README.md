@@ -1,4 +1,4 @@
-# TikTickets-zing v3.3.0 🚀
+# TikTickets-zing v3.3.1 🚀
 [![Grupo do WhatsApp](https://img.shields.io/badge/Grupo_Whatsapp-TikTickets-blue)](https://chat.whatsapp.com/GHNJVQRoLzrGuO1lmCr7vR)
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)

@@ -177,15 +177,12 @@ const handleAddUsuario = () => {
   modalUsuario.value = true
 }
 
-const onUsuarioCriado = usuario => {
-  // A store já lida com a adição, mas o evento pode ser útil para outras ações na UI
-  // No caso atual, a store já fez o push em criarUsuario se chamado por lá,
-  // mas o modal pode estar chamando o serviço diretamente ainda.
-  // Vou garantir que a lista reflita a mudança.
+const onUsuarioCriado = async usuario => {
+  await listarUsuarios()
 }
 
-const onUsuarioEditado = usuario => {
-  // Mesma lógica da criação
+const onUsuarioEditado = async usuario => {
+  await listarUsuarios()
 }
 
 const editarUsuario = usuario => {

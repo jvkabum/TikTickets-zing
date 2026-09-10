@@ -82,7 +82,7 @@ const filasUsuario = ref([])
 
 const abrirModal = () => {
   if (props.usuarioSelecionado.id) {
-    filasUsuario.value = props.usuarioSelecionado.queues?.map(f => f.id) || []
+    filasUsuario.value = props.usuarioSelecionado.queues?.map(f => (typeof f === 'object' && f !== null ? f.id : f)) || []
   }
 }
 

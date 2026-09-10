@@ -67,6 +67,7 @@ type CreateUserDTO struct {
 	Email    string
 	Password string
 	Profile  string
+	QueueIDs []uint
 }
 
 func (s *UserService) Create(ctx context.Context, tenantID uint, actorProfile string, dto CreateUserDTO) (*User, error) {
@@ -91,6 +92,12 @@ func (s *UserService) Create(ctx context.Context, tenantID uint, actorProfile st
 	if err := s.repo.Create(ctx, user); err != nil {
 		return nil, err
 	}
+
+	if len(dto.QueueIDs) > 0 {
+		_ = s.repo.SetUserQueues(ctx, user.ID, dto.QueueIDs)
+		user.Queues, _ = s.repo.GetUserQueues(ctx, user.ID)
+	}
+
 	return user, nil
 }
 
@@ -103,10 +110,11 @@ func (s *UserService) GetByID(ctx context.Context, tenantID uint, id uint) (*Use
 }
 
 type UpdateUserDTO struct {
-	Name    *string
-	Email   *string
-	Profile *string
+	Name     *string
+	Email    *string
+	Profile  *string
 	Password *string
+	QueueIDs *[]uint
 }
 
 func (s *UserService) Update(ctx context.Context, tenantID uint, actorID uint, actorProfile string, targetID uint, dto UpdateUserDTO) (*User, error) {
@@ -156,6 +164,12 @@ func (s *UserService) Update(ctx context.Context, tenantID uint, actorID uint, a
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, err
 	}
+
+	if dto.QueueIDs != nil {
+		_ = s.repo.SetUserQueues(ctx, user.ID, *dto.QueueIDs)
+		user.Queues, _ = s.repo.GetUserQueues(ctx, user.ID)
+	}
+
 	return user, nil
 }
 

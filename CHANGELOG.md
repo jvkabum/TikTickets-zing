@@ -1,3 +1,39 @@
+## [3.3.1] (2026-09-10)
+
+### Destaques e Novidades
+
+* **Modo Empresa Demonstração (Demo Tenant)**:
+  * Suporte a criação e edição de empresas em modo demonstração pelo SuperAdmin.
+  * Middleware `DemoGuard` no backend Go para bloqueio automático de operações de exclusão (`DELETE`) em empresas demo.
+  * Proteção do administrador demo: bloqueio de alteração de e-mail, senha e permissões do admin da empresa demo.
+  * Interface adaptada no frontend com badges visuais, alertas e desativação segura de ações destrutivas.
+
+* **Correções em Conexões & Bots (ChatFlow)**:
+  * Correção no DTO e Service do backend Go para permitir selecionar, salvar e desvincular o Bot (`chatFlowId`) em cada conexão de canal.
+  * Mapeamento de colunas explícitas no GORM (`tokenTelegram`, `instagramUser`, `farewellMessage`, etc.) para compatibilidade com o banco de dados.
+
+* **Gestão de Filas por Usuário (`UsersQueues`)**:
+  * Implementação da tabela pivô `UsersQueues` e métodos de persistência/carregamento no repositório de usuários.
+  * Correção no `UserService` e `Handler` para aceitar `queueIds` e retornar o array `queues` completo no JSON.
+  * Atualização da reatividade no frontend (`ModalFilaUsuario.vue` e `Usuarios.vue`) para sincronizar e exibir as filas imediatamente na tabela.
+
+* **Tempo Real & WebSocket Nativo**:
+  * Substituição do cliente `socket.io` por emulador nativo de WebSocket (`NativeSocketIOEmulator`) conectando diretamente ao endpoint `/ws` do backend Go (sem prefixo `/api/v1`, padronizando todas as rotas diretamente na raiz).
+  * Reconexão automática resiliente e transmissão de mensagens com autenticação via token JWT.
+  * Testes unitários para o WebSocket nativo (`socket.test.js`).
+
+* **Sessão do Usuário & Navegação**:
+  * Persistência explícita de `profile`, `userId`, `username` e objeto completo de usuário no `localStorage` após o login.
+  * Proteção contra quebras por dados indefinidos com optional chaining em `NotificationMenu.vue`.
+
+* **Otimizações no Backend & Docker**:
+  * Adição de `.dockerignore` e aprimoramento da compilação multi-stage no Dockerfile do backend Go.
+  * Redução do tempo de build e do tamanho da imagem final.
+
+* **Ajustes de UI & Experiência Visual**:
+  * Refinamento visual da tela de Login com proporção correta de logo, centralização do mascote e preview responsivo.
+  * Adição de documentação visual com capturas de tela e demonstração animada do produto no README.
+
 ## [3.3.0] (2026-09-07)
 
 ### Destaques e Principais Recursos

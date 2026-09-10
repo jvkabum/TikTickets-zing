@@ -28,7 +28,7 @@ func (m *mockTenantRepositoryForMiddleware) CreateSetting(ctx context.Context, s
 
 func TestDemoGuard_BlocksDeleteForDemoTenant(t *testing.T) {
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/contacts/1", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/contacts/1", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.Set("tenantId", uint(10))
@@ -60,7 +60,7 @@ func TestDemoGuard_BlocksDeleteForDemoTenant(t *testing.T) {
 
 func TestDemoGuard_AllowsGetForDemoTenant(t *testing.T) {
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/contacts", nil)
+	req := httptest.NewRequest(http.MethodGet, "/contacts", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.Set("tenantId", uint(10))
@@ -92,7 +92,7 @@ func TestDemoGuard_AllowsGetForDemoTenant(t *testing.T) {
 
 func TestDemoGuard_AllowsDeleteForSuperAdmin(t *testing.T) {
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/admin/tenants/10", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/admin/tenants/10", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.Set("tenantId", uint(10))

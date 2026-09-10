@@ -83,6 +83,18 @@ func (h *Handler) Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate token"})
 	}
 
+	userQueues := make([]map[string]interface{}, 0)
+	for _, q := range user.Queues {
+		userQueues = append(userQueues, map[string]interface{}{
+			"id":       q.ID,
+			"name":     q.Name,
+			"queue":    q.Name,
+			"color":    q.Color,
+			"greeting": q.Greeting,
+			"isActive": q.IsActive,
+		})
+	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"token":    tokenString,
 		"userId":   user.ID,
@@ -91,7 +103,7 @@ func (h *Handler) Login(c echo.Context) error {
 		"profile":  user.Profile,
 		"tenantId": user.TenantID,
 		"isDemo":   isDemo,
-		"queues":   []string{}, // TODO: popular filas se existirem
+		"queues":   userQueues,
 	})
 }
 
@@ -149,6 +161,84 @@ func getClaims(c echo.Context) (tenantID uint, userID uint, profile string) {
 	return
 }
 
+type CreateUserRequest struct {
+	Name     string        `json:"name"`
+	Email    string        `json:"email"`
+	Password string        `json:"password"`
+	Profile  string        `json:"profile"`
+	Queues   []interface{} `json:"queues"`
+	QueueIDs []uint        `json:"queueIds"`
+}
+
+type UpdateUserRequest struct {
+	Name     *string       `json:"name"`
+	Email    *string       `json:"email"`
+	Profile  *string       `json:"profile"`
+	Password *string       `json:"password"`
+	Queues   []interface{} `json:"queues"`
+	QueueIDs []uint        `json:"queueIds"`
+}
+
+func parseQueueIDs(queuesRaw []interface{}, queueIDs []uint) *[]uint {
+	if queuesRaw == nil && queueIDs == nil {
+		return nil
+	}
+	result := make([]uint, 0)
+	for _, id := range queueIDs {
+		if id > 0 {
+			result = append(result, id)
+		}
+	}
+	for _, item := range queuesRaw {
+		switch v := item.(type) {
+		case float64:
+			if uint(v) > 0 {
+				result = append(result, uint(v))
+			}
+		case int:
+			if uint(v) > 0 {
+				result = append(result, uint(v))
+			}
+		case string:
+			var id uint
+			if _, err := fmt.Sscanf(v, "%d", &id); err == nil && id > 0 {
+				result = append(result, id)
+			}
+		case map[string]interface{}:
+			if idVal, ok := v["id"]; ok {
+				if f, ok := idVal.(float64); ok && uint(f) > 0 {
+					result = append(result, uint(f))
+				}
+			}
+		}
+	}
+	return &result
+}
+
+func formatUserResponse(u *User) map[string]interface{} {
+	queuesRes := make([]map[string]interface{}, 0)
+	for _, q := range u.Queues {
+		queuesRes = append(queuesRes, map[string]interface{}{
+			"id":       q.ID,
+			"name":     q.Name,
+			"queue":    q.Name,
+			"color":    q.Color,
+			"greeting": q.Greeting,
+			"isActive": q.IsActive,
+		})
+	}
+	return map[string]interface{}{
+		"id":           u.ID,
+		"name":         u.Name,
+		"email":        u.Email,
+		"profile":      u.Profile,
+		"status":       u.Status,
+		"isOnline":     u.IsOnline,
+		"tokenVersion": u.TokenVersion,
+		"queues":       queuesRes,
+	}
+}
+
 func (h *Handler) ListUsers(c echo.Context) error {
 	tenantID, _, _ := getClaims(c)
 	users, err := h.userSvc.List(c.Request().Context(), tenantID, 0, 0)
@@ -156,12 +246,9 @@ func (h *Handler) ListUsers(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
-	// Omit password hash — inicializa como slice vazio (nunca nil/null no JSON)
 	res := make([]map[string]interface{}, 0)
 	for _, u := range users {
-		res = append(res, map[string]interface{}{
-			"id": u.ID, "name": u.Name, "email": u.Email, "profile": u.Profile,
-		})
+		res = append(res, formatUserResponse(&u))
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"users":   res,
@@ -172,34 +259,38 @@ func (h *Handler) ListUsers(c echo.Context) error {
 
 func (h *Handler) CreateUser(c echo.Context) error {
 	tenantID, _, profile := getClaims(c)
-	var req CreateUserDTO
+	var req CreateUserRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
 
-	user, err := h.userSvc.Create(c.Request().Context(), tenantID, profile, req)
+	dto := CreateUserDTO{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+		Profile:  req.Profile,
+	}
+	if parsed := parseQueueIDs(req.Queues, req.QueueIDs); parsed != nil {
+		dto.QueueIDs = *parsed
+	}
+
+	user, err := h.userSvc.Create(c.Request().Context(), tenantID, profile, dto)
 	if err != nil {
 		return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"id": user.ID, "name": user.Name, "email": user.Email, "profile": user.Profile,
-	})
+	return c.JSON(http.StatusCreated, formatUserResponse(user))
 }
 
 func (h *Handler) ShowUser(c echo.Context) error {
 	tenantID, _, _ := getClaims(c)
-	// Parse ID param... omitted error handling for brevity
 	id := uint(0)
-	// mock param parsing
 	fmt.Sscanf(c.Param("id"), "%d", &id) 
 	
 	user, err := h.userSvc.GetByID(c.Request().Context(), tenantID, id)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
 	}
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"id": user.ID, "name": user.Name, "email": user.Email, "profile": user.Profile,
-	})
+	return c.JSON(http.StatusOK, formatUserResponse(user))
 }
 
 func (h *Handler) UpdateUser(c echo.Context) error {
@@ -207,18 +298,24 @@ func (h *Handler) UpdateUser(c echo.Context) error {
 	id := uint(0)
 	fmt.Sscanf(c.Param("id"), "%d", &id) 
 	
-	var req UpdateUserDTO
+	var req UpdateUserRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
 
-	user, err := h.userSvc.Update(c.Request().Context(), tenantID, actorID, profile, id, req)
+	dto := UpdateUserDTO{
+		Name:     req.Name,
+		Email:    req.Email,
+		Profile:  req.Profile,
+		Password: req.Password,
+		QueueIDs: parseQueueIDs(req.Queues, req.QueueIDs),
+	}
+
+	user, err := h.userSvc.Update(c.Request().Context(), tenantID, actorID, profile, id, dto)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"id": user.ID, "name": user.Name, "email": user.Email, "profile": user.Profile,
-	})
+	return c.JSON(http.StatusOK, formatUserResponse(user))
 }
 
 func (h *Handler) UpdateConfigs(c echo.Context) error {

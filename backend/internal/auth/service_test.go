@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/tiktickets/backend-go/internal/queues"
 	"github.com/tiktickets/backend-go/internal/settings"
 	"github.com/tiktickets/backend-go/internal/tenant"
 	"golang.org/x/crypto/bcrypt"
@@ -37,6 +38,21 @@ func (m *mockUserRepository) Update(ctx context.Context, user *User) error {
 	return nil 
 }
 func (m *mockUserRepository) Delete(ctx context.Context, id uint) error    { return nil }
+func (m *mockUserRepository) GetUserQueues(ctx context.Context, userID uint) ([]queues.Queue, error) {
+	if m.user != nil {
+		return m.user.Queues, nil
+	}
+	return []queues.Queue{}, nil
+}
+func (m *mockUserRepository) SetUserQueues(ctx context.Context, userID uint, queueIDs []uint) error {
+	if m.user != nil {
+		m.user.Queues = make([]queues.Queue, 0)
+		for _, qID := range queueIDs {
+			m.user.Queues = append(m.user.Queues, queues.Queue{ID: qID, Name: "Fila", Queue: "Fila"})
+		}
+	}
+	return nil
+}
 
 // MockTenantRepository
 type mockTenantRepository struct {
@@ -237,6 +253,35 @@ func TestUserService_Delete_DemoBlocked(t *testing.T) {
 	err := svc.Delete(context.Background(), 10, "admin", 2, false)
 	if err == nil || err.Error() != "ERR_DEMO_MODE_DELETE_NOT_ALLOWED" {
 		t.Fatalf("esperava ERR_DEMO_MODE_DELETE_NOT_ALLOWED ao tentar deletar em empresa demo, recebeu: %v", err)
+	}
+}
+
+func TestUserService_UpdateQueues(t *testing.T) {
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:       1,
+			Email:    "admin@test.com",
+			Profile:  "admin",
+			TenantID: 1,
+			Queues:   []queues.Queue{},
+		},
+	}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{ID: 1, Status: "active"},
+	}
+
+	svc := NewUserService(userRepo, tenantRepo)
+
+	queueIDs := []uint{5, 10}
+	updated, err := svc.Update(context.Background(), 1, 1, "admin", 1, UpdateUserDTO{
+		QueueIDs: &queueIDs,
+	})
+	if err != nil {
+		t.Fatalf("erro inesperado ao atualizar filas do usuário: %v", err)
+	}
+
+	if len(updated.Queues) != 2 {
+		t.Fatalf("esperava 2 filas vinculadas, recebeu %d", len(updated.Queues))
 	}
 }
 
