@@ -33,6 +33,14 @@ func (h *Handler) CreateQueue(c echo.Context) error {
 	}
 	queue.TenantID = tenantID
 
+	// O frontend envia o campo como "queue", enquanto o modelo usa "name"
+	if queue.Name == "" && queue.Queue != "" {
+		queue.Name = queue.Queue
+	}
+	if queue.Color == "" {
+		queue.Color = "#000000"
+	}
+
 	if err := h.svc.Create(c.Request().Context(), &queue); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
@@ -66,6 +74,10 @@ func (h *Handler) UpdateQueue(c echo.Context) error {
 	var updates Queue
 	if err := c.Bind(&updates); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload"})
+	}
+
+	if updates.Name == "" && updates.Queue != "" {
+		updates.Name = updates.Queue
 	}
 
 	if err := h.svc.Update(c.Request().Context(), uint(queueID), tenantID, &updates); err != nil {

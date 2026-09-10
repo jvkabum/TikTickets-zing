@@ -9,7 +9,7 @@ type Tenant struct {
 	ID                   uint           `gorm:"primaryKey" json:"id"`
 	Status               string         `gorm:"default:'active'" json:"status"`
 	Name                 string         `gorm:"not null" json:"name"`
-	OwnerID              uint           `gorm:"not null" json:"ownerId"`
+	OwnerID              *uint          `json:"ownerId"`
 	BusinessHours        string         `gorm:"type:jsonb" json:"businessHours"`
 	MessageBusinessHours string         `json:"messageBusinessHours"`
 	MaxUsers             *int           `json:"maxUsers"`

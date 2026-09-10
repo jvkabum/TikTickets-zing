@@ -94,121 +94,173 @@ func AutoMigrate() {
 }
 
 func Seed(cfg *config.Config) {
-	var count int64
-	DB.Model(&tenant.Tenant{}).Count(&count)
-	if count > 0 {
-		return // já foi semeado
+	log.Println("Verificando integridade dos dados padrão (Seeds)...")
+
+	// Hash oficial do Sequelize/Node para a senha '123456'
+	// $2a$08$/wEAiCcLkfGcnzxCQprgYeFryP7MCOIbjcpRlWTPY/EQ/ON.gI0qS
+	const defaultBcryptHash = "$2a$08$/wEAiCcLkfGcnzxCQprgYeFryP7MCOIbjcpRlWTPY/EQ/ON.gI0qS"
+
+	// ── 1. TENANT (Replica: 20200904070001-create-default-tenant.ts) ───────────
+	var defaultTenant tenant.Tenant
+	err := DB.Where("name = ?", "Empresa 01").First(&defaultTenant).Error
+	if err != nil {
+		businessHours := `[{"day": 0, "hr1": "08:00", "hr2": "12:00", "hr3": "14:00", "hr4": "18:00", "type": "O", "label": "Domingo"}, {"day": 1, "hr1": "08:00", "hr2": "12:00", "hr3": "14:00", "hr4": "18:00", "type": "O", "label": "Segunda-Feira"}, {"day": 2, "hr1": "08:00", "hr2": "12:00", "hr3": "14:00", "hr4": "18:00", "type": "O", "label": "Terça-Feira"}, {"day": 3, "hr1": "08:00", "hr2": "12:00", "hr3": "14:00", "hr4": "18:00", "type": "O", "label": "Quarta-Feira"}, {"day": 4, "hr1": "08:00", "hr2": "12:00", "hr3": "14:00", "hr4": "18:00", "type": "O", "label": "Quinta-Feira"}, {"day": 5, "hr1": "08:00", "hr2": "12:00", "hr3": "14:00", "hr4": "18:00", "type": "O", "label": "Sexta-Feira"}, {"day": 6, "hr1": "08:00", "hr2": "12:00", "hr3": "14:00", "hr4": "18:00", "type": "O", "label": "Sábado"}]`
+		messageBusinessHours := "Olá! Fantástico receber seu contato! No momento estamos ausentes e não poderemos lhe atender, mas vamos priorizar seu atendimento e retornaremos logo mais. Agradecemos muito o contato."
+		maxUsers := 99
+		maxConns := 99
+		defaultTenant = tenant.Tenant{
+			Name:                 "Empresa 01",
+			Status:               "active",
+			BusinessHours:        businessHours,
+			MessageBusinessHours: messageBusinessHours,
+			MaxUsers:             &maxUsers,
+			MaxConnections:       &maxConns,
+		}
+		if err := DB.Create(&defaultTenant).Error; err != nil {
+			log.Printf("Seed: erro ao criar Tenant padrão: %v", err)
+		} else {
+			log.Printf("Seed: Tenant 'Empresa 01' (ID %d) criado com sucesso.", defaultTenant.ID)
+		}
 	}
 
-	log.Println("Seed: banco vazio detectado, iniciando criação dos dados padrão...")
-
-	// ── 1. TENANT ──────────────────────────────────────────────────────────────
-	// Replica: 20200904070001-create-default-tenant.ts
-	businessHours := `[{"day":0,"hr1":"08:00","hr2":"12:00","hr3":"14:00","hr4":"18:00","type":"O","label":"Domingo"},{"day":1,"hr1":"08:00","hr2":"12:00","hr3":"14:00","hr4":"18:00","type":"O","label":"Segunda-Feira"},{"day":2,"hr1":"08:00","hr2":"12:00","hr3":"14:00","hr4":"18:00","type":"O","label":"Terça-Feira"},{"day":3,"hr1":"08:00","hr2":"12:00","hr3":"14:00","hr4":"18:00","type":"O","label":"Quarta-Feira"},{"day":4,"hr1":"08:00","hr2":"12:00","hr3":"14:00","hr4":"18:00","type":"O","label":"Quinta-Feira"},{"day":5,"hr1":"08:00","hr2":"12:00","hr3":"14:00","hr4":"18:00","type":"O","label":"Sexta-Feira"},{"day":6,"hr1":"08:00","hr2":"12:00","hr3":"14:00","hr4":"18:00","type":"O","label":"Sábado"}]`
-	messageBusinessHours := "Olá! Fantástico receber seu contato! No momento estamos ausentes e não poderemos lhe atender, mas vamos priorizar seu atendimento e retornaremos logo mais. Agradecemos muito o contato."
-
-	maxUsers := 99
-	maxConns := 99
-	t := tenant.Tenant{
-		Name:                 "Empresa 01",
-		Status:               "active",
-		BusinessHours:        businessHours,
-		MessageBusinessHours: messageBusinessHours,
-		MaxUsers:             &maxUsers,
-		MaxConnections:       &maxConns,
-	}
-	if err := DB.Create(&t).Error; err != nil {
-		log.Fatalf("Seed: falha ao criar Tenant padrão: %v", err)
-	}
-
-	// ── 2. USUÁRIO ADMIN ───────────────────────────────────────────────────────
-	// Replica: 20200904070005-create-default-users.ts
-	adminPassword := os.Getenv("SEED_ADMIN_PASSWORD")
-	if adminPassword == "" {
-		log.Fatal("ERRO FATAL: SEED_ADMIN_PASSWORD não definida no .env")
-	}
-	adminEmail := os.Getenv("SEED_ADMIN_EMAIL")
-	if adminEmail == "" {
-		log.Fatal("ERRO FATAL: SEED_ADMIN_EMAIL não definida no .env")
-	}
+	// ── 2. USUÁRIO ADMIN (Replica: 20200904070005-create-default-users.ts) ─────
 	adminConfigs := `{"filtrosAtendimento":{"searchParam":"","pageNumber":1,"status":["open","pending","closed"],"showAll":true,"count":null,"queuesIds":[],"withUnreadMessages":false,"isNotAssignedUser":false,"includeNotQueueDefined":true},"isDark":false}`
-
-	adminHash, _ := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
-	admin := auth.User{
-		Name:         "Administrador",
-		Email:        adminEmail,
-		PasswordHash: string(adminHash),
-		Profile:      "admin",
-		TenantID:     t.ID,
-		Status:       "active",
-		Configs:      adminConfigs,
-		IsOnline:     false,
+	var adminCount int64
+	DB.Model(&auth.User{}).Where("email = ?", "admin@izing.io").Count(&adminCount)
+	if adminCount == 0 {
+		admin := auth.User{
+			Name:         "Administrador",
+			Email:        "admin@izing.io",
+			PasswordHash: defaultBcryptHash,
+			Profile:      "admin",
+			TenantID:     defaultTenant.ID,
+			Status:       "active",
+			Configs:      adminConfigs,
+			IsOnline:     false,
+		}
+		if err := DB.Create(&admin).Error; err != nil {
+			log.Printf("Seed: erro ao criar admin@izing.io: %v", err)
+		} else {
+			log.Printf("Seed: Usuário Administrador (admin@izing.io) criado com sucesso.")
+			// Atualiza o OwnerID do tenant
+			defaultTenant.OwnerID = &admin.ID
+			DB.Save(&defaultTenant)
+		}
 	}
-	if err := DB.Create(&admin).Error; err != nil {
-		log.Fatalf("Seed: falha ao criar usuário admin: %v", err)
+
+	// Se houver SEED_ADMIN_EMAIL configurado diferente no .env, garante também a existência dele
+	customAdminEmail := os.Getenv("SEED_ADMIN_EMAIL")
+	if customAdminEmail != "" && customAdminEmail != "admin@izing.io" {
+		var customAdminCount int64
+		DB.Model(&auth.User{}).Where("email = ?", customAdminEmail).Count(&customAdminCount)
+		if customAdminCount == 0 {
+			customPassword := os.Getenv("SEED_ADMIN_PASSWORD")
+			var hashToUse string
+			if customPassword != "" {
+				h, _ := bcrypt.GenerateFromPassword([]byte(customPassword), bcrypt.DefaultCost)
+				hashToUse = string(h)
+			} else {
+				hashToUse = defaultBcryptHash
+			}
+			customAdmin := auth.User{
+				Name:         "Administrador Custom",
+				Email:        customAdminEmail,
+				PasswordHash: hashToUse,
+				Profile:      "admin",
+				TenantID:     defaultTenant.ID,
+				Status:       "active",
+				Configs:      adminConfigs,
+				IsOnline:     false,
+			}
+			DB.Create(&customAdmin)
+			log.Printf("Seed: Usuário admin customizado (%s) criado com sucesso.", customAdminEmail)
+		}
 	}
 
-	// ── 3. USUÁRIO SUPER ───────────────────────────────────────────────────────
-	// Replica: 20240517000001-create-default-super.ts
-	superPassword := os.Getenv("SEED_SUPER_PASSWORD")
-	superEmail := os.Getenv("SEED_SUPER_EMAIL")
-	if superEmail != "" && superPassword != "" {
-		superConfigs := `{"filtrosAtendimento":{"searchParam":"","pageNumber":1,"status":["open","pending"],"showAll":true,"count":null,"queuesIds":[],"withUnreadMessages":false,"isNotAssignedUser":false,"includeNotQueueDefined":true},"isDark":false}`
-		superHash, _ := bcrypt.GenerateFromPassword([]byte(superPassword), bcrypt.DefaultCost)
+	// ── 3. USUÁRIO SUPER (Replica: 20240517000001-create-default-super.ts) ─────
+	superConfigs := `{"filtrosAtendimento":{"searchParam":"","pageNumber":1,"status":["open","pending"],"showAll":true,"count":null,"queuesIds":[],"withUnreadMessages":false,"isNotAssignedUser":false,"includeNotQueueDefined":true},"isDark":false}`
+	var superCount int64
+	DB.Model(&auth.User{}).Where("email = ?", "super@izing.io").Count(&superCount)
+	if superCount == 0 {
 		superUser := auth.User{
 			Name:         "Super",
-			Email:        superEmail,
-			PasswordHash: string(superHash),
+			Email:        "super@izing.io",
+			PasswordHash: defaultBcryptHash,
 			Profile:      "super",
-			TenantID:     t.ID,
+			TenantID:     defaultTenant.ID,
 			Status:       "active",
 			Configs:      superConfigs,
 			IsOnline:     false,
 		}
 		if err := DB.Create(&superUser).Error; err != nil {
-			log.Printf("Seed: aviso - falha ao criar usuário super: %v", err)
+			log.Printf("Seed: erro ao criar super@izing.io: %v", err)
 		} else {
-			log.Printf("Seed: usuário super criado (%s)", superEmail)
+			log.Printf("Seed: Usuário Super (super@izing.io) criado com sucesso.")
 		}
-	} else {
-		log.Println("Seed: SEED_SUPER_EMAIL/SEED_SUPER_PASSWORD não definidos, usuário super ignorado.")
 	}
 
-	// Atualiza o OwnerID do tenant com o ID do admin
-	t.OwnerID = admin.ID
-	DB.Save(&t)
+	// Se houver SEED_SUPER_EMAIL configurado diferente no .env, garante também a existência dele
+	customSuperEmail := os.Getenv("SEED_SUPER_EMAIL")
+	if customSuperEmail != "" && customSuperEmail != "super@izing.io" {
+		var customSuperCount int64
+		DB.Model(&auth.User{}).Where("email = ?", customSuperEmail).Count(&customSuperCount)
+		if customSuperCount == 0 {
+			customSuperPassword := os.Getenv("SEED_SUPER_PASSWORD")
+			var hashToUse string
+			if customSuperPassword != "" {
+				h, _ := bcrypt.GenerateFromPassword([]byte(customSuperPassword), bcrypt.DefaultCost)
+				hashToUse = string(h)
+			} else {
+				hashToUse = defaultBcryptHash
+			}
+			customSuper := auth.User{
+				Name:         "Super Custom",
+				Email:        customSuperEmail,
+				PasswordHash: hashToUse,
+				Profile:      "super",
+				TenantID:     defaultTenant.ID,
+				Status:       "active",
+				Configs:      superConfigs,
+				IsOnline:     false,
+			}
+			DB.Create(&customSuper)
+			log.Printf("Seed: Usuário super customizado (%s) criado com sucesso.", customSuperEmail)
+		}
+	}
 
-	// ── 4. SETTINGS ───────────────────────────────────────────────────────────
-	// Replica: 20200904070004-create-default-settings.ts
+	// ── 4. SETTINGS (Replica: 20200904070004-create-default-settings.ts) ────────
 	defaultSettings := []settings.Setting{
-		{Key: "userCreation", Value: "disabled", TenantID: t.ID},
-		{Key: "NotViewTicketsQueueUndefined", Value: "disabled", TenantID: t.ID},
-		{Key: "NotViewTicketsChatBot", Value: "disabled", TenantID: t.ID},
-		{Key: "DirectTicketsToWallets", Value: "disabled", TenantID: t.ID},
-		{Key: "botTicketActive", Value: "3", TenantID: t.ID},
-		{Key: "NotViewAssignedTickets", Value: "disabled", TenantID: t.ID},
-		{Key: "ignoreGroupMsg", Value: "enabled", TenantID: t.ID},
-		{Key: "rejectCalls", Value: "disabled", TenantID: t.ID},
-		{Key: "callRejectMessage", Value: "As chamadas de voz e vídeo estão desabilitas para esse WhatsApp, favor enviar uma mensagem de texto.", TenantID: t.ID},
+		{Key: "userCreation", Value: "disabled", TenantID: defaultTenant.ID},
+		{Key: "NotViewTicketsQueueUndefined", Value: "disabled", TenantID: defaultTenant.ID},
+		{Key: "NotViewTicketsChatBot", Value: "disabled", TenantID: defaultTenant.ID},
+		{Key: "DirectTicketsToWallets", Value: "disabled", TenantID: defaultTenant.ID},
+		{Key: "botTicketActive", Value: "3", TenantID: defaultTenant.ID},
+		{Key: "NotViewAssignedTickets", Value: "disabled", TenantID: defaultTenant.ID},
+		{Key: "ignoreGroupMsg", Value: "enabled", TenantID: defaultTenant.ID},
+		{Key: "rejectCalls", Value: "disabled", TenantID: defaultTenant.ID},
+		{Key: "callRejectMessage", Value: "As chamadas de voz e vídeo estão desabilitas para esse WhatsApp, favor enviar uma mensagem de texto.", TenantID: defaultTenant.ID},
 	}
 	for _, s := range defaultSettings {
-		if err := DB.Create(&s).Error; err != nil {
-			log.Printf("Seed: aviso - falha ao criar setting '%s': %v", s.Key, err)
+		var settingCount int64
+		DB.Model(&settings.Setting{}).Where("key = ? AND tenant_id = ?", s.Key, defaultTenant.ID).Count(&settingCount)
+		if settingCount == 0 {
+			DB.Create(&s)
 		}
 	}
 
-	// ── 5. CANAIS PADRÃO ──────────────────────────────────────────────────────
-	// Replica: 20200904070006-create-default-chanells.ts
+	// ── 5. CANAIS PADRÃO (Replica: 20200904070006-create-default-chanells.ts) ───
 	defaultChannels := []channels.Whatsapp{
-		{Name: "Whatsapp 01", Status: "DISCONNECTED", Type: "whatsapp", IsDefault: true, TenantID: t.ID, Session: "", Qrcode: "", TokenHook: ""},
-		{Name: "Instagram 01", Status: "DISCONNECTED", Type: "instagram", IsDefault: false, TenantID: t.ID, Session: "", Qrcode: "", TokenHook: ""},
-		{Name: "Telegram 01", Status: "DISCONNECTED", Type: "telegram", IsDefault: false, TenantID: t.ID, Session: "", Qrcode: "", TokenHook: ""},
+		{Name: "Whatsapp 01", Status: "DISCONNECTED", Type: "whatsapp", IsDefault: true, TenantID: defaultTenant.ID, Battery: "20"},
+		{Name: "Instagram 01", Status: "DISCONNECTED", Type: "instagram", IsDefault: false, TenantID: defaultTenant.ID, Battery: "20"},
+		{Name: "Telegram 01", Status: "DISCONNECTED", Type: "telegram", IsDefault: false, TenantID: defaultTenant.ID, Battery: "20"},
 	}
 	for _, ch := range defaultChannels {
-		if err := DB.Create(&ch).Error; err != nil {
-			log.Printf("Seed: aviso - falha ao criar canal '%s': %v", ch.Name, err)
+		var channelCount int64
+		DB.Model(&channels.Whatsapp{}).Where("name = ? AND tenant_id = ?", ch.Name, defaultTenant.ID).Count(&channelCount)
+		if channelCount == 0 {
+			DB.Create(&ch)
 		}
 	}
 
-	log.Println("✅ Seed finalizado: Tenant, Admin, Super, Settings e Canais padrão criados com sucesso.")
+	log.Println("✅ Seed concluído: Tenants, Usuários (Admin/Super), Settings e Canais verificados e garantidos.")
 }

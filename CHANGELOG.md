@@ -1,3 +1,19 @@
+## [3.3.2] (2026-09-10)
+
+### ⚠️ AVISO IMPORTANTE: BANCO DE DADOS LIMPO OBRIGATÓRIO
+* **Novo Padrão Nativo PostgreSQL (`snake_case`)**:
+  * A partir desta versão, o backend em Go adota **100% o padrão nativo de banco de dados relacional** (`tenant_id`, `password_hash`, `created_at`, etc.).
+  * **Requisito Obrigatório**: É **imprescindível rodar esta versão em um banco de dados novo/limpo (zerado)**. Bancos legados que contenham colunas antigas em camelCase do Sequelize (`"tenantId"`, `"passwordHash"`) causarão conflito de restrição de não-nulidade (`violates not-null constraint`).
+  * Para novas instalações ou migração, crie um banco de dados PostgreSQL vazio e deixe o backend Go executar o `AutoMigrate()` e o `Seed()` automaticamente.
+
+### Destaques e Novidades
+
+* **Auto-Seed Automático & Resiliência de Credenciais**:
+  * Replicação integral e modular das migrações de seed (`Tenants`, `Users` Admin/Super, `Settings` e Canais padrões `Whatsapps`).
+  * Defaults automáticos via código Go para o usuário Administrador (`admin@izing.io` / `123456`) e Super (`super@izing.io` / `123456`).
+  * Correção na criação inicial do Tenant padrão permitindo `OwnerID` nulo (`NULL`), evitando falhas de chave estrangeira antes da criação do administrador.
+  * Preservação total de dados existentes (idempotência): se o usuário já existir no banco, suas informações e senha nunca são sobrescritas.
+
 ## [3.3.1] (2026-09-10)
 
 ### Destaques e Novidades

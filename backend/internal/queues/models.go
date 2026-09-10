@@ -10,7 +10,7 @@ type Queue struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	Name      string         `gorm:"not null" json:"name"`
 	Queue     string         `gorm:"-" json:"queue"`
-	Color     string         `gorm:"not null" json:"color"`
+	Color     string         `gorm:"default:'#000000'" json:"color"`
 	Greeting  string         `json:"greeting"`
 	IsActive  bool           `gorm:"default:true" json:"isActive"`
 	TenantID  uint           `gorm:"not null" json:"tenantId"`
