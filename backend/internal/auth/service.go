@@ -63,15 +63,49 @@ func NewUserService(repo Repository, tenantRepo tenant.Repository) *UserService 
 }
 
 type CreateUserDTO struct {
-	Name     string
-	Email    string
-	Password string
-	Profile  string
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Profile  string `json:"profile"`
 }
 
 func (s *UserService) Create(ctx context.Context, tenantID uint, actorProfile string, dto CreateUserDTO) (*User, error) {
 	if actorProfile != "admin" && actorProfile != "super" {
 		return nil, errors.New("forbidden: only admins or supers can create users")
+	}
+
+	if dto.Name == "" || dto.Email == "" || dto.Password == "" {
+		return nil, errors.New("name, email and password are required")
+	}
+
+	if dto.Profile == "" {
+		dto.Profile = "user"
+	}
+
+	if tenantID == 0 {
+		tenantID = 1
+	}
+
+	// Checar limites do tenant
+	if s.tenantRepo != nil {
+		t, err := s.tenantRepo.GetByID(ctx, tenantID)
+		if err == nil && t != nil {
+			if t.Status != "active" {
+				return nil, errors.New("ERR_COMPANY_NOT_ACTIVE")
+			}
+			if t.MaxUsers != nil && *t.MaxUsers > 0 {
+				users, err := s.repo.ListByTenant(ctx, tenantID, 0, 0)
+				if err == nil && len(users) >= *t.MaxUsers {
+					return nil, errors.New("ERR_USER_LIMIT_USER_CREATION")
+				}
+			}
+		}
+	}
+
+	// Checar se email já existe
+	existing, _ := s.repo.GetByEmail(ctx, dto.Email)
+	if existing != nil && existing.ID > 0 {
+		return nil, errors.New("ERR_USER_EMAIL_EXISTS")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
@@ -86,6 +120,8 @@ func (s *UserService) Create(ctx context.Context, tenantID uint, actorProfile st
 		Profile:      dto.Profile,
 		TenantID:     tenantID,
 		Status:       "active",
+		TokenVersion: 0,
+		IsOnline:     false,
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
@@ -103,10 +139,10 @@ func (s *UserService) GetByID(ctx context.Context, tenantID uint, id uint) (*Use
 }
 
 type UpdateUserDTO struct {
-	Name    *string
-	Email   *string
-	Profile *string
-	Password *string
+	Name     *string `json:"name"`
+	Email    *string `json:"email"`
+	Profile  *string `json:"profile"`
+	Password *string `json:"password"`
 }
 
 func (s *UserService) Update(ctx context.Context, tenantID uint, actorID uint, actorProfile string, targetID uint, dto UpdateUserDTO) (*User, error) {

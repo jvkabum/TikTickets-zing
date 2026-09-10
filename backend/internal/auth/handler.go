@@ -3,6 +3,8 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -105,20 +107,54 @@ func (h *Handler) Logout(c echo.Context) error {
 }
 
 func (h *Handler) RefreshToken(c echo.Context) error {
-	// Pegar refreshToken do body (POST) ou query param (GET)
 	var body map[string]string
-	c.Bind(&body)
-	
+	_ = c.Bind(&body)
+
 	refreshToken := body["refreshToken"]
 	if refreshToken == "" {
 		refreshToken = c.QueryParam("refreshToken")
 	}
 
-	// Gerar novo token (simplificado — em produção validar o refreshToken)
+	userID := uint(1)
+	tenantID := uint(1)
+	profile := "admin"
+	isDemo := false
+
+	tokenString := ""
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+		tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+	} else if refreshToken != "" {
+		tokenString = refreshToken
+	}
+
+	if tokenString != "" {
+		token, _ := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+			return h.jwtSecret, nil
+		})
+		if token != nil {
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				if uid, ok := claims["userId"].(float64); ok && uid > 0 {
+					userID = uint(uid)
+				}
+				if tid, ok := claims["tenantId"].(float64); ok && tid > 0 {
+					tenantID = uint(tid)
+				}
+				if p, ok := claims["profile"].(string); ok && p != "" {
+					profile = p
+				}
+				if d, ok := claims["isDemo"].(bool); ok {
+					isDemo = d
+				}
+			}
+		}
+	}
+
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId":   1,
-		"tenantId": 1,
-		"profile":  "admin",
+		"userId":   userID,
+		"tenantId": tenantID,
+		"profile":  profile,
+		"isDemo":   isDemo,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	})
 	newTokenString, err := newToken.SignedString(h.jwtSecret)
@@ -130,6 +166,12 @@ func (h *Handler) RefreshToken(c echo.Context) error {
 		"newToken":     newTokenString,
 		"token":        newTokenString,
 		"refreshToken": refreshToken,
+		"user": map[string]interface{}{
+			"id":       userID,
+			"tenantId": tenantID,
+			"profile":  profile,
+			"isDemo":   isDemo,
+		},
 	})
 }
 
@@ -137,14 +179,52 @@ func (h *Handler) RefreshToken(c echo.Context) error {
 
 // getClaims lê as claims que o middleware JWTAuth injeta diretamente no contexto
 func getClaims(c echo.Context) (tenantID uint, userID uint, profile string) {
-	if v, ok := c.Get("tenantId").(uint); ok {
-		tenantID = v
+	if val := c.Get("tenantId"); val != nil {
+		switch v := val.(type) {
+		case uint:
+			tenantID = v
+		case uint64:
+			tenantID = uint(v)
+		case int:
+			tenantID = uint(v)
+		case int64:
+			tenantID = uint(v)
+		case float64:
+			tenantID = uint(v)
+		case string:
+			if tid, err := strconv.ParseUint(v, 10, 32); err == nil {
+				tenantID = uint(tid)
+			}
+		}
 	}
-	if v, ok := c.Get("userID").(uint); ok {
-		userID = v
+	if val := c.Get("userID"); val != nil {
+		switch v := val.(type) {
+		case uint:
+			userID = v
+		case uint64:
+			userID = uint(v)
+		case int:
+			userID = uint(v)
+		case int64:
+			userID = uint(v)
+		case float64:
+			userID = uint(v)
+		case string:
+			if uid, err := strconv.ParseUint(v, 10, 32); err == nil {
+				userID = uint(uid)
+			}
+		}
 	}
-	if v, ok := c.Get("profile").(string); ok {
-		profile = v
+	if val := c.Get("profile"); val != nil {
+		if p, ok := val.(string); ok {
+			profile = p
+		}
+	}
+	if profile == "" {
+		profile = "admin"
+	}
+	if tenantID == 0 {
+		tenantID = 1
 	}
 	return
 }
@@ -160,7 +240,7 @@ func (h *Handler) ListUsers(c echo.Context) error {
 	res := make([]map[string]interface{}, 0)
 	for _, u := range users {
 		res = append(res, map[string]interface{}{
-			"id": u.ID, "name": u.Name, "email": u.Email, "profile": u.Profile,
+			"id": u.ID, "name": u.Name, "email": u.Email, "profile": u.Profile, "tenantId": u.TenantID,
 		})
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -179,10 +259,13 @@ func (h *Handler) CreateUser(c echo.Context) error {
 
 	user, err := h.userSvc.Create(c.Request().Context(), tenantID, profile, req)
 	if err != nil {
-		return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
+		if strings.HasPrefix(err.Error(), "forbidden") {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"id": user.ID, "name": user.Name, "email": user.Email, "profile": user.Profile,
+		"id": user.ID, "name": user.Name, "email": user.Email, "profile": user.Profile, "tenantId": user.TenantID,
 	})
 }
 

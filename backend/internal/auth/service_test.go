@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/tiktickets/backend-go/internal/settings"
@@ -237,6 +238,96 @@ func TestUserService_Delete_DemoBlocked(t *testing.T) {
 	err := svc.Delete(context.Background(), 10, "admin", 2, false)
 	if err == nil || err.Error() != "ERR_DEMO_MODE_DELETE_NOT_ALLOWED" {
 		t.Fatalf("esperava ERR_DEMO_MODE_DELETE_NOT_ALLOWED ao tentar deletar em empresa demo, recebeu: %v", err)
+	}
+}
+
+func TestUserService_Create_Success(t *testing.T) {
+	userRepo := &mockUserRepository{}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{
+			ID:     1,
+			Status: "active",
+		},
+	}
+
+	svc := NewUserService(userRepo, tenantRepo)
+
+	created, err := svc.Create(context.Background(), 1, "admin", CreateUserDTO{
+		Name:     "Novo Atendente",
+		Email:    "novo@empresa.com",
+		Password: "senha123",
+		Profile:  "user",
+	})
+	if err != nil {
+		t.Fatalf("esperava criar usuário com sucesso, obteve erro: %v", err)
+	}
+	if created.Name != "Novo Atendente" || created.Email != "novo@empresa.com" {
+		t.Errorf("dados do usuário criado incorretos: %+v", created)
+	}
+}
+
+func TestUserService_Create_ForbiddenNonAdmin(t *testing.T) {
+	userRepo := &mockUserRepository{}
+	svc := NewUserService(userRepo, nil)
+
+	_, err := svc.Create(context.Background(), 1, "user", CreateUserDTO{
+		Name:     "Tentativa",
+		Email:    "tentativa@empresa.com",
+		Password: "senha123",
+		Profile:  "user",
+	})
+	if err == nil || !strings.Contains(err.Error(), "forbidden") {
+		t.Fatalf("esperava erro forbidden para usuário comum, obteve: %v", err)
+	}
+}
+
+func TestUserService_Create_DuplicateEmail(t *testing.T) {
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:    5,
+			Email: "jaexiste@empresa.com",
+		},
+	}
+	svc := NewUserService(userRepo, nil)
+
+	_, err := svc.Create(context.Background(), 1, "admin", CreateUserDTO{
+		Name:     "Duplicado",
+		Email:    "jaexiste@empresa.com",
+		Password: "senha123",
+		Profile:  "user",
+	})
+	if err == nil || err.Error() != "ERR_USER_EMAIL_EXISTS" {
+		t.Fatalf("esperava erro ERR_USER_EMAIL_EXISTS para e-mail duplicado, obteve: %v", err)
+	}
+}
+
+func TestUserService_Create_QuotaLimit(t *testing.T) {
+	maxUsers := 1
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:       1,
+			Email:    "admin@empresa.com",
+			TenantID: 1,
+		},
+	}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{
+			ID:       1,
+			Status:   "active",
+			MaxUsers: &maxUsers,
+		},
+	}
+
+	svc := NewUserService(userRepo, tenantRepo)
+
+	_, err := svc.Create(context.Background(), 1, "admin", CreateUserDTO{
+		Name:     "Excedente",
+		Email:    "excedente@empresa.com",
+		Password: "senha123",
+		Profile:  "user",
+	})
+	if err == nil || err.Error() != "ERR_USER_LIMIT_USER_CREATION" {
+		t.Fatalf("esperava erro ERR_USER_LIMIT_USER_CREATION ao estourar cota, obteve: %v", err)
 	}
 }
 

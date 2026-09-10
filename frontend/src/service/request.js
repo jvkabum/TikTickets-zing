@@ -158,7 +158,8 @@ service.interceptors.response.use(
       errorMessage === 'ERR_DEMO_MODE_DELETE_NOT_ALLOWED' ||
       errorMessage === 'ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED'
 
-    if (!isDemoError && (status === 403 || status === 401 || isSessionError) && !originalRequest.url.includes('/auth/login')) {
+    // Apenas status 401 ou erros explícitos de sessão devem tentar refresh/logout
+    if (!isDemoError && (status === 401 || isSessionError) && !originalRequest.url.includes('/auth/login')) {
       // Se for erro no refresh token, vai direto para login
       if (originalRequest.url.includes('/auth/refresh_token')) {
         redirectToLogin()
