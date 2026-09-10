@@ -131,6 +131,8 @@ const handleFila = handleSubmit(async values => {
   try {
     const filaData = {
       ...values,
+      name: values.queue,
+      queue: values.queue,
       id: filaState.id
     }
 
@@ -153,8 +155,7 @@ const handleFila = handleSubmit(async values => {
     }
     fecharModal()
   } catch (error) {
-    console.error(error)
-    notificarErro('Ocorreu um erro!', error)
+    console.error('Erro ao salvar fila:', error)
   } finally {
     loading.value = false
   }

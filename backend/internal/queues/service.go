@@ -14,6 +14,15 @@ func NewQueueService(repo Repository) *QueueService {
 }
 
 func (s *QueueService) Create(ctx context.Context, queue *Queue) error {
+	if queue.Name == "" && queue.Queue != "" {
+		queue.Name = queue.Queue
+	}
+	if queue.Queue == "" && queue.Name != "" {
+		queue.Queue = queue.Name
+	}
+	if queue.Color == "" {
+		queue.Color = "#2576d2"
+	}
 	if queue.Name == "" || queue.TenantID == 0 {
 		return errors.New("name and tenant_id are required")
 	}
@@ -28,13 +37,18 @@ func (s *QueueService) Update(ctx context.Context, id uint, tenantID uint, updat
 
 	if updates.Name != "" {
 		existing.Name = updates.Name
+	} else if updates.Queue != "" {
+		existing.Name = updates.Queue
 	}
+	existing.Queue = existing.Name
+
 	if updates.Color != "" {
 		existing.Color = updates.Color
 	}
 	if updates.Greeting != "" {
 		existing.Greeting = updates.Greeting
 	}
+	existing.IsActive = updates.IsActive
 
 	return s.repo.Update(ctx, existing)
 }
