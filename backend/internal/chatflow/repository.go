@@ -27,7 +27,11 @@ func (r *chatFlowRepository) Create(ctx context.Context, flow *ChatFlow) error {
 
 func (r *chatFlowRepository) GetByID(ctx context.Context, id uint, tenantID uint) (*ChatFlow, error) {
 	var flow ChatFlow
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, tenantID).First(&flow).Error; err != nil {
+	query := r.db.WithContext(ctx).Where("id = ?", id)
+	if tenantID > 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if err := query.First(&flow).Error; err != nil {
 		return nil, err
 	}
 	return &flow, nil

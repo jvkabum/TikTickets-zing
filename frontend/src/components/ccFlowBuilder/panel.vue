@@ -269,7 +269,7 @@
 <script setup>
 import { cloneDeep } from 'lodash'
 import { uid as getUUID } from 'quasar'
-import { UpdateChatFlow } from '../../service/chatFlow'
+import { ObterChatFlow, UpdateChatFlow } from '../../service/chatFlow'
 import { useChatFlowStore } from '../../stores/useChatFlowStore'
 import { useFilaStore } from '../../stores/useFilaStore'
 import { useUsuarioStore } from '../../stores/useUsuarioStore'
@@ -954,13 +954,37 @@ const saveFlow = async () => {
     }))
 
     // Payload como no Vue 2.7: top-level do registro + flow apenas com nodeList e lineList
+    const flowData = { nodeList: normalizedNodeList, lineList: normalizedLineList }
     const payload = {
       ...cDataFlow.value,
-      flow: { nodeList: normalizedNodeList, lineList: normalizedLineList }
+      flow: flowData
     }
-    await UpdateChatFlow(payload)
+
+    // Se payload.id estiver ausente, tenta recuperar do localStorage
+    if (!payload.id) {
+      const stored = localStorage.getItem('currentChatFlow')
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          if (parsed.id) payload.id = parsed.id
+        } catch (e) {}
+      }
+    }
+
+    const { data: updatedFlow } = await UpdateChatFlow(payload)
+    const savedRecord = (updatedFlow && updatedFlow.id) ? updatedFlow : payload
+
+    // Sincroniza store e localStorage imediatamente para garantir persistência após F5
+    chatFlowStore.setFlowData({
+      flow: savedRecord,
+      usuarios: chatFlowStore.usuarios,
+      filas: chatFlowStore.filas
+    })
+    localStorage.setItem('currentChatFlow', JSON.stringify(savedRecord))
+
     $q.notify({ type: 'positive', message: 'Fluxo salvo com sucesso!' })
   } catch (err) {
+    console.error('Erro ao salvar fluxo:', err)
     $q.notify({ type: 'negative', message: 'Erro ao salvar o fluxo.' })
   } finally {
     savingFlow.value = false
@@ -1058,6 +1082,32 @@ onMounted(async () => {
         } catch (e) {
           console.error('Erro ao recuperar fluxo do localStorage', e)
         }
+      }
+    }
+
+    // Se temos um ID válido, busca o fluxo fresco diretamente do backend para garantir sincronia pós-F5
+    const activeFlowId = cDataFlow.value?.id || (() => {
+      try {
+        return JSON.parse(localStorage.getItem('currentChatFlow') || '{}').id
+      } catch (e) {
+        return null
+      }
+    })()
+
+    if (activeFlowId) {
+      try {
+        const { data: freshFlow } = await ObterChatFlow(activeFlowId)
+        if (freshFlow && freshFlow.id) {
+          chatFlowStore.setFlowData({
+            flow: freshFlow,
+            usuarios: chatFlowStore.usuarios,
+            filas: chatFlowStore.filas
+          })
+          localStorage.setItem('currentChatFlow', JSON.stringify(freshFlow))
+          initialFlow = freshFlow.flow || freshFlow
+        }
+      } catch (e) {
+        console.warn('Falha ao sincronizar fluxo atualizado do backend, utilizando estado em cache local:', e)
       }
     }
 

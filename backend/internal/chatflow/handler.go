@@ -119,7 +119,17 @@ func (h *Handler) AdminListChatFlows(c echo.Context) error {
 }
 
 func (h *Handler) GetChatFlow(c echo.Context) error {
-	tenantID := c.Get("tenantId").(uint)
+	tenantID := uint(0)
+	if tid, ok := c.Get("tenantId").(uint); ok {
+		tenantID = tid
+	} else if tid, ok := c.Get("tenant_id").(uint); ok {
+		tenantID = tid
+	}
+	profile, _ := c.Get("profile").(string)
+	if profile == "super" {
+		tenantID = 0
+	}
+
 	id := uint(0)
 	fmt.Sscanf(c.Param("id"), "%d", &id) 
 
@@ -131,7 +141,17 @@ func (h *Handler) GetChatFlow(c echo.Context) error {
 }
 
 func (h *Handler) UpdateChatFlow(c echo.Context) error {
-	tenantID := c.Get("tenantId").(uint)
+	tenantID := uint(0)
+	if tid, ok := c.Get("tenantId").(uint); ok {
+		tenantID = tid
+	} else if tid, ok := c.Get("tenant_id").(uint); ok {
+		tenantID = tid
+	}
+	profile, _ := c.Get("profile").(string)
+	if profile == "super" {
+		tenantID = 0
+	}
+
 	id := uint(0)
 	fmt.Sscanf(c.Param("id"), "%d", &id) 
 
@@ -159,10 +179,11 @@ func (h *Handler) UpdateChatFlow(c echo.Context) error {
 		req.Flow = JSONField(bodyBytes)
 	}
 
-	if err := h.svc.Update(c.Request().Context(), id, tenantID, &req); err != nil {
+	updated, err := h.svc.Update(c.Request().Context(), id, tenantID, &req)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, map[string]string{"status": "updated"})
+	return c.JSON(http.StatusOK, updated)
 }
 
 func (h *Handler) TriggerFlow(c echo.Context) error {
@@ -175,7 +196,7 @@ func (h *Handler) TriggerFlow(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload"})
 	}
 
-	if err := h.svc.Update(c.Request().Context(), id, tenantID, &req); err != nil {
+	if _, err := h.svc.Update(c.Request().Context(), id, tenantID, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"status": "flow triggered"})

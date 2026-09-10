@@ -16,6 +16,13 @@ export function ListarChatFlow (params) {
   })
 }
 
+export function ObterChatFlow (id) {
+  return request({
+    url: `/chat-flow/${id}`,
+    method: 'get'
+  })
+}
+
 export function UpdateChatFlow (data) {
   return request({
     url: `/chat-flow/${data.id}`,

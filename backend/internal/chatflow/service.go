@@ -28,10 +28,20 @@ func (s *ChatFlowService) GetByID(ctx context.Context, id uint, tenantID uint) (
 	return s.repo.GetByID(ctx, id, tenantID)
 }
 
-func (s *ChatFlowService) Update(ctx context.Context, id uint, tenantID uint, updates *ChatFlow) error {
-	existing, err := s.repo.GetByID(ctx, id, tenantID)
+func (s *ChatFlowService) Update(ctx context.Context, id uint, tenantID uint, updates *ChatFlow) (*ChatFlow, error) {
+	var existing *ChatFlow
+	var err error
+	if tenantID == 0 {
+		existing, err = s.repo.GetByID(ctx, id, 0)
+	} else {
+		existing, err = s.repo.GetByID(ctx, id, tenantID)
+		if err != nil {
+			// Fallback: se não encontrar com o tenantID do token, tenta sem restrição de tenant (ex.: superadmin)
+			existing, err = s.repo.GetByID(ctx, id, 0)
+		}
+	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if updates.Name != "" {
@@ -41,8 +51,14 @@ func (s *ChatFlowService) Update(ctx context.Context, id uint, tenantID uint, up
 		existing.Flow = updates.Flow
 	}
 	existing.IsActive = updates.IsActive
+	if updates.CelularTeste != "" {
+		existing.CelularTeste = updates.CelularTeste
+	}
 
-	return s.repo.Update(ctx, existing)
+	if err := s.repo.Update(ctx, existing); err != nil {
+		return nil, err
+	}
+	return existing, nil
 }
 
 func (s *ChatFlowService) Delete(ctx context.Context, id uint, tenantID uint) error {

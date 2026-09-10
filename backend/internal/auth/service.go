@@ -75,6 +75,23 @@ func (s *UserService) Create(ctx context.Context, tenantID uint, actorProfile st
 		return nil, errors.New("forbidden: only admins or supers can create users")
 	}
 
+	// Validação de e-mail duplicado
+	existing, _ := s.repo.GetByEmail(ctx, dto.Email)
+	if existing != nil {
+		return nil, errors.New("ERR_EMAIL_ALREADY_REGISTERED")
+	}
+
+	// Validação de limite de usuários do Tenant
+	if s.tenantRepo != nil {
+		t, err := s.tenantRepo.GetByID(ctx, tenantID)
+		if err == nil && t != nil && t.MaxUsers != nil && *t.MaxUsers > 0 {
+			total, err := s.repo.CountByTenant(ctx, tenantID)
+			if err == nil && int(total) >= *t.MaxUsers {
+				return nil, errors.New("ERR_USER_LIMIT_USER_CREATION")
+			}
+		}
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -87,6 +104,7 @@ func (s *UserService) Create(ctx context.Context, tenantID uint, actorProfile st
 		Profile:      dto.Profile,
 		TenantID:     tenantID,
 		Status:       "active",
+		Configs:      "{}",
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
@@ -96,6 +114,10 @@ func (s *UserService) Create(ctx context.Context, tenantID uint, actorProfile st
 	if len(dto.QueueIDs) > 0 {
 		_ = s.repo.SetUserQueues(ctx, user.ID, dto.QueueIDs)
 		user.Queues, _ = s.repo.GetUserQueues(ctx, user.ID)
+	}
+
+	if s.tenantRepo != nil {
+		user.Tenant, _ = s.tenantRepo.GetByID(ctx, tenantID)
 	}
 
 	return user, nil
@@ -213,3 +235,74 @@ func (s *UserService) Delete(ctx context.Context, tenantID uint, actorProfile st
 
 	return s.repo.Delete(ctx, targetID)
 }
+
+func (s *UserService) AdminList(ctx context.Context, tenantID uint, searchParam string, limit, offset int) ([]User, int64, error) {
+	return s.repo.AdminList(ctx, tenantID, searchParam, limit, offset)
+}
+
+func (s *UserService) AdminUpdate(ctx context.Context, actorProfile string, targetID uint, dto UpdateUserDTO) (*User, error) {
+	if actorProfile != "admin" && actorProfile != "super" {
+		return nil, errors.New("forbidden: only admins or supers can update users")
+	}
+
+	user, err := s.repo.GetByIDGlobal(ctx, targetID)
+	if err != nil {
+		return nil, err
+	}
+
+	if dto.Name != nil && *dto.Name != "" {
+		user.Name = *dto.Name
+	}
+	if dto.Email != nil && *dto.Email != "" && *dto.Email != user.Email {
+		existing, _ := s.repo.GetByEmail(ctx, *dto.Email)
+		if existing != nil && existing.ID != user.ID {
+			return nil, errors.New("ERR_EMAIL_ALREADY_REGISTERED")
+		}
+		user.Email = *dto.Email
+	}
+	if dto.Profile != nil && *dto.Profile != "" {
+		user.Profile = *dto.Profile
+	}
+	if dto.Password != nil && *dto.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(*dto.Password), bcrypt.DefaultCost)
+		if err == nil {
+			user.PasswordHash = string(hash)
+		}
+	}
+
+	if err := s.repo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+
+	if dto.QueueIDs != nil {
+		_ = s.repo.SetUserQueues(ctx, user.ID, *dto.QueueIDs)
+		user.Queues, _ = s.repo.GetUserQueues(ctx, user.ID)
+	}
+
+	if s.tenantRepo != nil {
+		user.Tenant, _ = s.tenantRepo.GetByID(ctx, user.TenantID)
+	}
+
+	return user, nil
+}
+
+func (s *UserService) AdminDelete(ctx context.Context, actorProfile string, targetID uint) error {
+	if actorProfile != "super" {
+		return errors.New("forbidden: only super can delete users globally")
+	}
+
+	user, err := s.repo.GetByIDGlobal(ctx, targetID)
+	if err != nil {
+		return err
+	}
+
+	if user.Profile == "admin" {
+		count, _ := s.repo.CountAdminsByTenant(ctx, user.TenantID)
+		if count <= 1 {
+			return errors.New("cannot delete the last admin of the tenant")
+		}
+	}
+
+	return s.repo.Delete(ctx, targetID)
+}
+

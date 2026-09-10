@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"strings"
 
 	"github.com/tiktickets/backend-go/internal/queues"
 	"gorm.io/gorm"
@@ -10,7 +11,10 @@ import (
 type Repository interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, tenantID uint, id uint) (*User, error)
+	GetByIDGlobal(ctx context.Context, id uint) (*User, error)
 	ListByTenant(ctx context.Context, tenantID uint, limit int, offset int) ([]User, error)
+	AdminList(ctx context.Context, tenantID uint, searchParam string, limit int, offset int) ([]User, int64, error)
+	CountByTenant(ctx context.Context, tenantID uint) (int64, error)
 	CountAdminsByTenant(ctx context.Context, tenantID uint) (int64, error)
 	Create(ctx context.Context, user *User) error
 	Update(ctx context.Context, user *User) error
@@ -29,7 +33,7 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
-	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Tenant").Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
 	user.Queues, _ = r.GetUserQueues(ctx, user.ID)
@@ -38,7 +42,16 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, e
 
 func (r *userRepository) GetByID(ctx context.Context, tenantID uint, id uint) (*User, error) {
 	var user User
-	if err := r.db.WithContext(ctx).Where("tenant_id = ? AND id = ?", tenantID, id).First(&user).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Tenant").Where("tenant_id = ? AND id = ?", tenantID, id).First(&user).Error; err != nil {
+		return nil, err
+	}
+	user.Queues, _ = r.GetUserQueues(ctx, user.ID)
+	return &user, nil
+}
+
+func (r *userRepository) GetByIDGlobal(ctx context.Context, id uint) (*User, error) {
+	var user User
+	if err := r.db.WithContext(ctx).Preload("Tenant").Where("id = ?", id).First(&user).Error; err != nil {
 		return nil, err
 	}
 	user.Queues, _ = r.GetUserQueues(ctx, user.ID)
@@ -47,7 +60,7 @@ func (r *userRepository) GetByID(ctx context.Context, tenantID uint, id uint) (*
 
 func (r *userRepository) ListByTenant(ctx context.Context, tenantID uint, limit int, offset int) ([]User, error) {
 	var users []User
-	query := r.db.WithContext(ctx).Where("tenant_id = ?", tenantID)
+	query := r.db.WithContext(ctx).Preload("Tenant").Where("tenant_id = ?", tenantID)
 	
 	if limit > 0 {
 		query = query.Limit(limit).Offset(offset)
@@ -60,6 +73,48 @@ func (r *userRepository) ListByTenant(ctx context.Context, tenantID uint, limit 
 		users[i].Queues, _ = r.GetUserQueues(ctx, users[i].ID)
 	}
 	return users, nil
+}
+
+func (r *userRepository) AdminList(ctx context.Context, tenantID uint, searchParam string, limit int, offset int) ([]User, int64, error) {
+	var users []User
+	var total int64
+
+	query := r.db.WithContext(ctx).Model(&User{})
+
+	if tenantID > 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+
+	searchParam = strings.TrimSpace(searchParam)
+	if searchParam != "" {
+		s := "%" + strings.ToLower(searchParam) + "%"
+		query = query.Where("LOWER(name) LIKE ? OR LOWER(email) LIKE ?", s, s)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	query = query.Preload("Tenant").Order("name ASC")
+	if limit > 0 {
+		query = query.Limit(limit).Offset(offset)
+	}
+
+	if err := query.Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	for i := range users {
+		users[i].Queues, _ = r.GetUserQueues(ctx, users[i].ID)
+	}
+
+	return users, total, nil
+}
+
+func (r *userRepository) CountByTenant(ctx context.Context, tenantID uint) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&User{}).Where("tenant_id = ?", tenantID).Count(&count).Error
+	return count, err
 }
 
 func (r *userRepository) CountAdminsByTenant(ctx context.Context, tenantID uint) (int64, error) {

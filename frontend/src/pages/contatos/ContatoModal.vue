@@ -280,10 +280,11 @@ const removeExtraInfo = index => {
 
 const onSubmit = handleSubmit(async values => {
   try {
+    const cleanNumber = String(values.number || '').replace(/\D/g, '')
     const payload = {
       ...values,
       extraInfo: extraInfo.value,
-      number: '' + values.number
+      number: cleanNumber
     }
 
     if (props.contactId) {

@@ -32,11 +32,16 @@ func (h *Handler) RegisterRoutes(e *echo.Group) {
 }
 
 func (h *Handler) CreateContact(c echo.Context) error {
-	tenantID := c.Get("tenantId").(uint) // Extract from JWT context middleware
+	tenantID := uint(0)
+	if tid, ok := c.Get("tenantId").(uint); ok {
+		tenantID = tid
+	} else if tid, ok := c.Get("tenant_id").(uint); ok {
+		tenantID = tid
+	}
 	
 	var req ContactDTO
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request: " + err.Error()})
 	}
 
 	contact, err := h.service.Create(c.Request().Context(), tenantID, req)
@@ -48,7 +53,12 @@ func (h *Handler) CreateContact(c echo.Context) error {
 }
 
 func (h *Handler) ListContacts(c echo.Context) error {
-	tenantID := c.Get("tenantId").(uint)
+	tenantID := uint(0)
+	if tid, ok := c.Get("tenantId").(uint); ok {
+		tenantID = tid
+	} else if tid, ok := c.Get("tenant_id").(uint); ok {
+		tenantID = tid
+	}
 	contacts, err := h.service.List(c.Request().Context(), tenantID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
@@ -57,8 +67,12 @@ func (h *Handler) ListContacts(c echo.Context) error {
 }
 
 func (h *Handler) GetContact(c echo.Context) error {
-	tenantID := c.Get("tenantId").(uint)
-	// Mock string to int parsing
+	tenantID := uint(0)
+	if tid, ok := c.Get("tenantId").(uint); ok {
+		tenantID = tid
+	} else if tid, ok := c.Get("tenant_id").(uint); ok {
+		tenantID = tid
+	}
 	id := uint(0)
 	fmt.Sscanf(c.Param("id"), "%d", &id) 
 
@@ -70,13 +84,18 @@ func (h *Handler) GetContact(c echo.Context) error {
 }
 
 func (h *Handler) UpdateContact(c echo.Context) error {
-	tenantID := c.Get("tenantId").(uint)
+	tenantID := uint(0)
+	if tid, ok := c.Get("tenantId").(uint); ok {
+		tenantID = tid
+	} else if tid, ok := c.Get("tenant_id").(uint); ok {
+		tenantID = tid
+	}
 	id := uint(0)
 	fmt.Sscanf(c.Param("id"), "%d", &id) 
 
 	var req ContactDTO
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request: " + err.Error()})
 	}
 
 	contact, err := h.service.Update(c.Request().Context(), tenantID, id, req)

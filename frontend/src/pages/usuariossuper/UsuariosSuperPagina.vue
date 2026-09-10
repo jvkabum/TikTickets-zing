@@ -3,7 +3,7 @@
     <q-table
       class="my-sticky-dynamic q-ma-lg"
       title="Usuarios"
-      :rows="usuarioStore.usuarios.filter(u => u.profile !== 'super' && u.tenantId !== superTenantId)"
+      :rows="usuarioStore.usuarios"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -110,12 +110,7 @@ const filter = ref(null)
 const loading = ref(false)
 const tenantId = ref(null)
 
-const tenantOptions = computed(() => {
-  if (superTenantId.value) {
-    return tenants.value.filter(t => t.id !== superTenantId.value)
-  }
-  return tenants.value
-})
+const tenantOptions = computed(() => tenants.value)
 
 const superTenantId = ref(null)
 

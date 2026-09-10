@@ -132,16 +132,16 @@ const DefaultFlowJSON = `{
 
 type ChatFlow struct {
 	ID           uint           `gorm:"primaryKey" json:"id"`
-	Name         string         `json:"name"`
-	Flow         JSONField      `gorm:"type:jsonb" json:"flow"`
-	IsActive     bool           `json:"isActive"`
-	IsDeleted    bool           `json:"isDeleted"`
-	CelularTeste string         `json:"celularTeste"`
-	UserID       uint           `json:"userId"`
-	TenantID     uint           `gorm:"not null" json:"tenantId"`
-	CreatedAt    time.Time      `json:"createdAt"`
-	UpdatedAt    time.Time      `json:"updatedAt"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
+	Name         string         `gorm:"column:name" json:"name"`
+	Flow         JSONField      `gorm:"type:jsonb;column:flow" json:"flow"`
+	IsActive     bool           `gorm:"column:is_active" json:"isActive"`
+	IsDeleted    bool           `gorm:"column:is_deleted" json:"isDeleted"`
+	CelularTeste string         `gorm:"column:celular_teste" json:"celularTeste"`
+	UserID       uint           `gorm:"column:user_id" json:"userId"`
+	TenantID     uint           `gorm:"not null;column:tenant_id" json:"tenantId"`
+	CreatedAt    time.Time      `gorm:"column:created_at" json:"createdAt"`
+	UpdatedAt    time.Time      `gorm:"column:updated_at" json:"updatedAt"`
+	DeletedAt    gorm.DeletedAt `gorm:"index;column:deleted_at" json:"deletedAt,omitempty"`
 }
 
 func (ChatFlow) TableName() string {

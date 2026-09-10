@@ -23,11 +23,26 @@ func (m *mockUserRepository) GetByEmail(ctx context.Context, email string) (*Use
 func (m *mockUserRepository) GetByID(ctx context.Context, tenantID uint, id uint) (*User, error) {
 	return m.user, m.err
 }
+func (m *mockUserRepository) GetByIDGlobal(ctx context.Context, id uint) (*User, error) {
+	return m.user, m.err
+}
 func (m *mockUserRepository) ListByTenant(ctx context.Context, tenantID uint, limit int, offset int) ([]User, error) {
 	if m.user != nil {
 		return []User{*m.user}, nil
 	}
 	return []User{}, nil
+}
+func (m *mockUserRepository) AdminList(ctx context.Context, tenantID uint, searchParam string, limit int, offset int) ([]User, int64, error) {
+	if m.user != nil {
+		return []User{*m.user}, 1, nil
+	}
+	return []User{}, 0, nil
+}
+func (m *mockUserRepository) CountByTenant(ctx context.Context, tenantID uint) (int64, error) {
+	if m.user != nil {
+		return 1, nil
+	}
+	return 0, nil
 }
 func (m *mockUserRepository) CountAdminsByTenant(ctx context.Context, tenantID uint) (int64, error) {
 	return 2, nil
@@ -284,4 +299,104 @@ func TestUserService_UpdateQueues(t *testing.T) {
 		t.Fatalf("esperava 2 filas vinculadas, recebeu %d", len(updated.Queues))
 	}
 }
+
+func TestUserService_AdminCreateUserTenant_Success(t *testing.T) {
+	userRepo := &mockUserRepository{}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{ID: 2, Name: "Empresa 2", Status: "active"},
+	}
+
+	svc := NewUserService(userRepo, tenantRepo)
+
+	created, err := svc.Create(context.Background(), 2, "super", CreateUserDTO{
+		Name:     "Novo Admin Empresa 2",
+		Email:    "admin2@empresa2.com",
+		Password: "password123",
+		Profile:  "admin",
+	})
+	if err != nil {
+		t.Fatalf("esperava sucesso ao criar usuário para tenant 2 pelo super admin, erro: %v", err)
+	}
+
+	if created.TenantID != 2 {
+		t.Fatalf("esperava tenantId 2, recebeu %d", created.TenantID)
+	}
+	if created.Tenant == nil || created.Tenant.Name != "Empresa 2" {
+		t.Fatalf("esperava tenant populado com Empresa 2, recebeu %v", created.Tenant)
+	}
+}
+
+func TestUserService_Create_EmailDuplicate(t *testing.T) {
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:       1,
+			Email:    "existente@test.com",
+			TenantID: 1,
+		},
+	}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{ID: 2, Status: "active"},
+	}
+
+	svc := NewUserService(userRepo, tenantRepo)
+
+	_, err := svc.Create(context.Background(), 2, "super", CreateUserDTO{
+		Name:     "Outro Usuario",
+		Email:    "existente@test.com",
+		Password: "password123",
+		Profile:  "user",
+	})
+	if err == nil || err.Error() != "ERR_EMAIL_ALREADY_REGISTERED" {
+		t.Fatalf("esperava erro ERR_EMAIL_ALREADY_REGISTERED, recebeu: %v", err)
+	}
+}
+
+func TestUserService_AdminListUsers(t *testing.T) {
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:       10,
+			Name:     "Usuario Empresa 2",
+			Email:    "user2@teste.com",
+			TenantID: 2,
+		},
+	}
+	tenantRepo := &mockTenantRepository{}
+	svc := NewUserService(userRepo, tenantRepo)
+
+	users, total, err := svc.AdminList(context.Background(), 2, "", 40, 0)
+	if err != nil {
+		t.Fatalf("erro ao listar usuários admin: %v", err)
+	}
+	if total != 1 || len(users) != 1 {
+		t.Fatalf("esperava 1 usuário, total=%d, len=%d", total, len(users))
+	}
+}
+
+func TestUserService_AdminUpdateUser(t *testing.T) {
+	userRepo := &mockUserRepository{
+		user: &User{
+			ID:       10,
+			Name:     "Nome Antigo",
+			Email:    "user@teste.com",
+			Profile:  "user",
+			TenantID: 2,
+		},
+	}
+	tenantRepo := &mockTenantRepository{
+		tenant: &tenant.Tenant{ID: 2, Name: "Empresa 2"},
+	}
+	svc := NewUserService(userRepo, tenantRepo)
+
+	newName := "Nome Atualizado"
+	updated, err := svc.AdminUpdate(context.Background(), "super", 10, UpdateUserDTO{
+		Name: &newName,
+	})
+	if err != nil {
+		t.Fatalf("erro ao atualizar usuário como super admin: %v", err)
+	}
+	if updated.Name != "Nome Atualizado" {
+		t.Fatalf("esperava Nome Atualizado, recebeu %s", updated.Name)
+	}
+}
+
 

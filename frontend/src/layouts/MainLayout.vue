@@ -17,20 +17,18 @@
           <q-tooltip>Menu</q-tooltip>
         </q-btn>
 
-        <q-btn
-          flat
-          no-caps
-          no-wrap
-          dense
-          class="q-ml-sm"
+        <div
+          class="q-ml-sm row items-center cursor-pointer"
           v-if="$q.screen.gt.xs"
+          @click="$router.push('/')"
         >
           <q-img
             src="/logo.png"
+            fit="contain"
             spinner-color="primary"
-            style="height: 40px; width: 120px"
+            style="height: 42px; width: 180px; max-width: 200px"
           />
-        </q-btn>
+        </div>
 
         <q-space />
 
@@ -289,7 +287,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.q-img__image {
-  background-size: contain;
+:deep(.q-img__image) {
+  background-size: contain !important;
 }
 </style>

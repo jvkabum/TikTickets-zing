@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,10 +40,10 @@ func (h *Handler) RegisterRoutes(public *echo.Group, protected *echo.Group) {
 		users.PUT("/:id/configs", h.UpdateConfigs)
 		
 		adminUsers := protected.Group("/admin/users")
-		adminUsers.GET("", h.ListUsers)
+		adminUsers.GET("", h.AdminListUsers)
 		adminUsers.GET("/:id", h.ShowUser)
-		adminUsers.PUT("/:id", h.UpdateUser)
-		adminUsers.DELETE("/:id", h.DeleteUser)
+		adminUsers.PUT("/:id", h.AdminUpdateUser)
+		adminUsers.DELETE("/:id", h.AdminDeleteUser)
 
 		protected.GET("/admin/userTenants", h.ListUserTenants)
 		protected.POST("/admin/userTenants", h.AdminCreateUserTenant)
@@ -292,7 +293,7 @@ func formatUserResponse(u *User) map[string]interface{} {
 			"isActive": q.IsActive,
 		})
 	}
-	return map[string]interface{}{
+	resp := map[string]interface{}{
 		"id":           u.ID,
 		"name":         u.Name,
 		"email":        u.Email,
@@ -300,8 +301,21 @@ func formatUserResponse(u *User) map[string]interface{} {
 		"status":       u.Status,
 		"isOnline":     u.IsOnline,
 		"tokenVersion": u.TokenVersion,
+		"tenantId":     u.TenantID,
 		"queues":       queuesRes,
 	}
+	if u.Tenant != nil {
+		resp["tenant"] = map[string]interface{}{
+			"id":   u.Tenant.ID,
+			"name": u.Tenant.Name,
+		}
+	} else if u.TenantID > 0 {
+		resp["tenant"] = map[string]interface{}{
+			"id":   u.TenantID,
+			"name": "",
+		}
+	}
+	return resp
 }
 
 func (h *Handler) ListUsers(c echo.Context) error {
@@ -341,6 +355,9 @@ func (h *Handler) CreateUser(c echo.Context) error {
 
 	user, err := h.userSvc.Create(c.Request().Context(), tenantID, profile, dto)
 	if err != nil {
+		if err.Error() == "ERR_EMAIL_ALREADY_REGISTERED" || err.Error() == "ERR_USER_LIMIT_USER_CREATION" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
 		return c.JSON(http.StatusForbidden, map[string]string{"error": err.Error()})
 	}
 	return c.JSON(http.StatusCreated, formatUserResponse(user))
@@ -416,10 +433,160 @@ func (h *Handler) DeleteUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": "user deleted successfully"})
 }
 
+type AdminCreateUserTenantRequest struct {
+	TenantID interface{}   `json:"tenantId"`
+	Name     string        `json:"name"`
+	Email    string        `json:"email"`
+	Password string        `json:"password"`
+	Profile  string        `json:"profile"`
+	Queues   []interface{} `json:"queues"`
+	QueueIDs []uint        `json:"queueIds"`
+}
+
 func (h *Handler) ListUserTenants(c echo.Context) error {
 	return c.JSON(http.StatusOK, []interface{}{})
 }
 
 func (h *Handler) AdminCreateUserTenant(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{"status": "created"})
+	_, _, actorProfile := getClaims(c)
+	if actorProfile != "super" && actorProfile != "admin" {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "access denied"})
+	}
+
+	var req AdminCreateUserTenantRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
+
+	tenantID := uint(0)
+	switch v := req.TenantID.(type) {
+	case float64:
+		tenantID = uint(v)
+	case int:
+		tenantID = uint(v)
+	case string:
+		if id, err := strconv.Atoi(v); err == nil {
+			tenantID = uint(id)
+		}
+	}
+
+	if tenantID == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "tenantId is required"})
+	}
+
+	if req.Profile == "" {
+		req.Profile = "user"
+	}
+
+	dto := CreateUserDTO{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+		Profile:  req.Profile,
+	}
+	if parsed := parseQueueIDs(req.Queues, req.QueueIDs); parsed != nil {
+		dto.QueueIDs = *parsed
+	}
+
+	user, err := h.userSvc.Create(c.Request().Context(), tenantID, actorProfile, dto)
+	if err != nil {
+		if err.Error() == "ERR_EMAIL_ALREADY_REGISTERED" || err.Error() == "ERR_USER_LIMIT_USER_CREATION" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, formatUserResponse(user))
+}
+
+func (h *Handler) AdminListUsers(c echo.Context) error {
+	_, _, actorProfile := getClaims(c)
+	if actorProfile != "super" && actorProfile != "admin" {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "access denied"})
+	}
+
+	searchParam := c.QueryParam("searchParam")
+	pageNumberStr := c.QueryParam("pageNumber")
+	tenantIDStr := c.QueryParam("tenantId")
+
+	pageNumber := 1
+	if p, err := strconv.Atoi(pageNumberStr); err == nil && p > 0 {
+		pageNumber = p
+	}
+
+	tenantID := uint(0)
+	if t, err := strconv.Atoi(tenantIDStr); err == nil && t > 0 {
+		tenantID = uint(t)
+	}
+
+	limit := 40
+	offset := (pageNumber - 1) * limit
+
+	users, total, err := h.userSvc.AdminList(c.Request().Context(), tenantID, searchParam, limit, offset)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	res := make([]map[string]interface{}, 0)
+	for _, u := range users {
+		res = append(res, formatUserResponse(&u))
+	}
+
+	hasMore := total > int64(offset+len(users))
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"users":   res,
+		"count":   total,
+		"hasMore": hasMore,
+	})
+}
+
+func (h *Handler) AdminUpdateUser(c echo.Context) error {
+	_, _, actorProfile := getClaims(c)
+	if actorProfile != "super" && actorProfile != "admin" {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "access denied"})
+	}
+
+	id := uint(0)
+	fmt.Sscanf(c.Param("id"), "%d", &id)
+	if id == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+	}
+
+	var req UpdateUserRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
+
+	dto := UpdateUserDTO{
+		Name:     req.Name,
+		Email:    req.Email,
+		Profile:  req.Profile,
+		Password: req.Password,
+		QueueIDs: parseQueueIDs(req.Queues, req.QueueIDs),
+	}
+
+	user, err := h.userSvc.AdminUpdate(c.Request().Context(), actorProfile, id, dto)
+	if err != nil {
+		if err.Error() == "ERR_EMAIL_ALREADY_REGISTERED" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, formatUserResponse(user))
+}
+
+func (h *Handler) AdminDeleteUser(c echo.Context) error {
+	_, _, actorProfile := getClaims(c)
+	id := uint(0)
+	fmt.Sscanf(c.Param("id"), "%d", &id)
+	if id == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+	}
+
+	if err := h.userSvc.AdminDelete(c.Request().Context(), actorProfile, id); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, map[string]string{"message": "user deleted successfully"})
 }

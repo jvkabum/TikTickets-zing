@@ -7,7 +7,7 @@
       hide-bottom
       class="my-sticky-dynamic q-ma-lg"
       title="Empresas"
-      :rows="tenantStore.tenants.filter(tenant => tenant.id !== 1)"
+      :rows="tenantStore.tenants"
       :columns="columns"
       :loading="loading"
       row-key="id"
@@ -56,6 +56,7 @@
             @click="editarTenant(props.row)"
           />
           <q-btn
+            v-if="props.row.id !== 1"
             flat
             round
             icon="delete"
@@ -170,6 +171,14 @@ const editarTenant = tenant => {
 }
 
 const deletarTenant = tenant => {
+  if (tenant.id === 1) {
+    $q.notify({
+      type: 'warning',
+      position: 'top',
+      message: 'A Empresa Principal (ID 1) não pode ser excluída do sistema!'
+    })
+    return
+  }
   $q.dialog({
     title: 'Atenção!!',
     message: `Deseja realmente deletar a Empresa "${tenant.id}"?`,
