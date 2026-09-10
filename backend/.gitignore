@@ -1,35 +1,15 @@
-node_modules
-.cache
-public/*
-dist
-!public/.gitkeep
+# Binários
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Diretórios temporários
+tmp/
+bin/
+
+# Variáveis de ambiente
 .env
-.env.test
-.cache
-logs/
-WWebJS/
-
-
-yarn.lock
-yarn-error.log
-
-/src/config/sentry.js
-
-# Ignore test-related files
-/coverage.data
-/coverage/
-
-.wwebjs_auth/
-.wwebjs_auth/*
-*/.wwebjs_auth/
-./.wwebjs_auth/*
-
-WWebJS/
-.wwebjs_auth/
-
-backend/newrelic_agent.log
-newrelic_agent.log
-
-.data/
-reports/report.json
-reports/report.html

@@ -63,8 +63,11 @@
               flat
               round
               icon="mdi-delete"
+              :disable="authStore.isDemo"
               @click="deletarUsuario(props.row)"
-            />
+            >
+              <q-tooltip v-if="authStore.isDemo">Exclusões desativadas em Modo Demonstração</q-tooltip>
+            </q-btn>
           </div>
         </q-td>
       </template>
@@ -96,6 +99,7 @@ import ModalUsuario from './ModalUsuario.vue'
 const $q = useQuasar()
 const usuarioStore = useUsuarioStore()
 const filaStore = useFilaStore()
+const authStore = useAuthStore()
 const { filas } = storeToRefs(filaStore)
 
 const userProfile = ref('user')

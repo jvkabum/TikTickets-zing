@@ -160,7 +160,12 @@ service.interceptors.response.use(
     ]
     const isSessionError = sessionErrors.includes(errorMessage)
 
-    if ((status === 403 || status === 401 || isSessionError) && !originalRequest.url.includes('/auth/login')) {
+    // Verifica erros de negócio do Modo Demonstração (não devem disparar refresh nem logout)
+    const isDemoError =
+      errorMessage === 'ERR_DEMO_MODE_DELETE_NOT_ALLOWED' ||
+      errorMessage === 'ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED'
+
+    if (!isDemoError && (status === 403 || status === 401 || isSessionError) && !originalRequest.url.includes('/auth/login')) {
       // Se for erro no refresh token, vai direto para login
       if (originalRequest.url.includes('/auth/refresh_token')) {
         redirectToLogin()

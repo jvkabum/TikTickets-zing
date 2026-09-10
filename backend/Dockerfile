@@ -1,36 +1,36 @@
-FROM node:22-bookworm-slim as global-deps-stage
+# Estágio de Build
+FROM golang:alpine AS builder
 
 WORKDIR /app
 
-RUN apt-get update \
-  && apt-get install -y wget gnupg nano ffmpeg build-essential \
-  && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-  && apt-get update \
-  && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
-  --no-install-recommends \
-  && rm -rf /var/lib/apt/lists/* && npm install pm2@latest -g
+# Instala certificados e ferramentas de build
+RUN apk add --no-cache git ca-certificates tzdata
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
-ENV NODE_ENV=dev
-ENV CHROME_BIN=/usr/bin/google-chrome-stable
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+# Copia dependências e faz o download em cache
+COPY go.mod go.sum ./
+RUN go mod download
 
-FROM global-deps-stage as develop-stage
-COPY package*.json ./
-RUN npm install --include=dev --no-audit --no-fund
-
-FROM develop-stage as build-stage
+# Copia todo o código-fonte do backend
 COPY . .
-RUN npm run build
 
-FROM build-stage as development-stage
-ENV NODE_ENV=development
-ENTRYPOINT ["npm", "run", "dev:server"]
+# Compila o binário estático e otimizado para produção
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o backend-go ./cmd/api
 
-FROM build-stage as production-stage
+# Estágio Final (Imagem ultra-leve e segura)
+FROM alpine:latest
+
+WORKDIR /app
+RUN apk --no-cache add ca-certificates tzdata
+
+# Copia o binário compilado
+COPY --from=builder /app/backend-go .
+
+# Configurações padrão de ambiente
+ENV PORT=3000
 ENV NODE_ENV=production
-COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh
+ENV TZ=America/Sao_Paulo
+
+# Expõe a porta 3000 (compatível com a configuração padrão do Coolify)
 EXPOSE 3000
-ENTRYPOINT ["./docker-entrypoint.sh"]
+
+CMD ["./backend-go"]

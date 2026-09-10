@@ -87,7 +87,7 @@ Antes de criar o Backend, você **precisa** criar os serviços de dados no Cooli
 
     > **Nota:** O "Source Path" é o nome do volume no Docker (pode ser qualquer nome, ex: `/.wwebjs_auth`). O importante é o **Destination Path** estar exato conforme a tabela acima.
 
-    ![Configuração Exata dos Volumes](coolify-volumes-config.png)
+    ![Configuração Exata dos Volumes](screenshots/coolify-volumes-config.png)
 
 5.  **Deploy**:
     *   Clique em **Deploy**.

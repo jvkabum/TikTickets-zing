@@ -22,7 +22,9 @@ const backendErrors = {
   ERR_CREATING_MESSAGE: 'Erro ao criar mensagem no banco de dados.',
   ERR_CREATING_TICKET: 'Erro ao criar Ticket no banco de dados.',
   ERR_COMPANY_NOT_ACTIVE: 'Não foi possivel fazer login empresa Inativa.',
-  ERR_FETCH_WAPP_MSG: 'Erro ao buscar a mensagem no WhatsApp, talvez ela seja muito antiga.'
+  ERR_FETCH_WAPP_MSG: 'Erro ao buscar a mensagem no WhatsApp, talvez ela seja muito antiga.',
+  ERR_DEMO_MODE_DELETE_NOT_ALLOWED: 'Modo Demonstração: Não é permitido excluir dados em uma empresa de demonstração.',
+  ERR_DEMO_MODE_ADMIN_CHANGE_NOT_ALLOWED: 'Modo Demonstração: Não é permitido alterar login ou senha do administrador da empresa demo.'
 }
 
 export default backendErrors

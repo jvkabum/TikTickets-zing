@@ -63,6 +63,22 @@
           />
         </q-td>
       </template>
+      <template v-slot:body-cell-isDemo="props">
+        <q-td class="text-center">
+          <q-chip
+            v-if="props.row.isDemo"
+            color="amber-2"
+            text-color="orange-10"
+            icon="mdi-shield-lock-outline"
+            dense
+            class="text-weight-bold"
+            label="DEMO"
+          >
+            <q-tooltip>Empresa em Modo Demonstração (bloqueio de exclusões e credenciais de admin protegidas)</q-tooltip>
+          </q-chip>
+          <span v-else class="text-grey-6 text-caption">Padrão</span>
+        </q-td>
+      </template>
       <template v-slot:body-cell-status="props">
         <q-td :class="getColClass(props.row)">
           {{ formatStatus(props.row.status) }}
@@ -105,6 +121,7 @@ const columns = [
     format: val => formatStatus(val)
   },
   { name: 'name', label: 'Nome', field: 'name', align: 'center' },
+  { name: 'isDemo', label: 'Modo', field: 'isDemo', align: 'center' },
   {
     name: 'maxUsers',
     label: 'Limite de Usuário',

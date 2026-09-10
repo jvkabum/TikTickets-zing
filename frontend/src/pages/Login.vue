@@ -29,6 +29,7 @@
             <q-card-section class="text-center q-pb-none">
               <q-img
                 src="/logo.png"
+                fit="contain"
                 spinner-color="primary"
                 class="logo-img q-mb-md"
               />
@@ -246,9 +247,9 @@ const clearCache = () => {
 /* === Card Styling with Animation === */
 .card {
   width: 100%;
-  max-width: 400px;
-  min-width: 320px;
-  margin-right: 100px; /* Espaço da borda direita */
+  max-width: 380px;
+  min-width: 300px;
+  margin-right: max(40px, 6vw); /* Espaço responsivo da borda direita */
   z-index: 3;
   animation: slideIn 0.6s ease-out;
 }
@@ -276,8 +277,11 @@ const clearCache = () => {
 
 /* === Logo === */
 .logo-img {
-  height: 80px;
-  max-width: 180px;
+  height: 48px;
+  max-width: 220px;
+  width: 100%;
+  margin: 0 auto;
+  display: block;
 }
 
 /* === Modern Input Styling - Override Quasar Outlined === */
@@ -357,12 +361,12 @@ const clearCache = () => {
 @media (max-width: 768px) {
   .card {
     max-width: 90%;
-    margin: 20px;
+    margin: 20px auto;
   }
 
   .logo-img {
-    height: 60px;
-    max-width: 140px;
+    height: 42px;
+    max-width: 190px;
   }
 
   .btn-modern {
@@ -373,13 +377,13 @@ const clearCache = () => {
 @media (max-width: 480px) {
   .card {
     max-width: 95%;
-    margin: 15px;
+    margin: 15px auto;
     padding: 16px !important;
   }
 
   .logo-img {
-    height: 50px;
-    max-width: 120px;
+    height: 38px;
+    max-width: 170px;
   }
 
   .text-h5 {
