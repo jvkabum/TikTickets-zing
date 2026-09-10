@@ -37,7 +37,7 @@ func (s *ChatFlowService) Update(ctx context.Context, id uint, tenantID uint, up
 	if updates.Name != "" {
 		existing.Name = updates.Name
 	}
-	if updates.Flow != "" {
+	if len(updates.Flow) > 0 {
 		existing.Flow = updates.Flow
 	}
 	existing.IsActive = updates.IsActive

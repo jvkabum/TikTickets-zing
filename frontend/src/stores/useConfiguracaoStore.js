@@ -43,7 +43,7 @@ export const useConfiguracaoStore = defineStore('configuracao', {
       const newValue = (value !== undefined && value !== null) ? value : this.settings[key]
       const params = {
         key,
-        value: newValue
+        value: String(newValue ?? '')
       }
       try {
         await AlterarConfiguracao(params)
@@ -52,7 +52,7 @@ export const useConfiguracaoStore = defineStore('configuracao', {
       } catch (error) {
         console.error('Erro ao alterar configuração:', error)
         if (error && error.response && error.response.data) {
-          notificarErro('Erro ao alterar configuração', error.response.data.message)
+          notificarErro('Erro ao alterar configuração', error.response.data.error || error.response.data.message)
         } else {
           notificarErro('Erro desconhecido', 'Ocorreu um erro ao tentar alterar a configuração')
         }

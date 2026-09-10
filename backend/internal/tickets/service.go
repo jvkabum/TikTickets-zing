@@ -3,6 +3,7 @@ package tickets
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -41,9 +42,20 @@ func (s *TicketService) AcceptTicket(ctx context.Context, ticketID uint, userID 
 		return err
 	}
 	
-	// Aqui dispararia Webhook ou Websocket de Broadcast para notificar 
-	// aos demais usuários que o ticket sumiu da fila de 'pending'.
+	// Notifica via WebSocket no formato esperado pelo frontend Vue 3
 	if s.wsNotifier != nil {
+		s.wsNotifier.Broadcast(fmt.Sprintf("tenant:%d:ticket", tenantID), map[string]interface{}{
+			"action": "update",
+			"ticket": map[string]interface{}{
+				"id":       ticketID,
+				"status":   "open",
+				"userId":   userID,
+				"tenantId": tenantID,
+			},
+		})
+		s.wsNotifier.Broadcast(fmt.Sprintf("%d:ticketList", tenantID), map[string]interface{}{
+			"type": "chat:update",
+		})
 		s.wsNotifier.Broadcast("TICKET_ACCEPTED", map[string]interface{}{
 			"ticketId": ticketID,
 			"userId":   userID,
@@ -65,11 +77,23 @@ func (s *TicketService) Close(ctx context.Context, ticketID uint, tenantID uint)
 	}
 
 	ticket.Status = "closed"
-	// ticket.ClosedAt = time.Now() // Depende da Struct
+	now := time.Now()
+	ticket.ClosedAt = &now
 
 	err = s.repo.Update(ctx, ticket)
 	if err != nil {
 		return err
+	}
+
+	// Notifica encerramento no formato do frontend
+	if s.wsNotifier != nil {
+		s.wsNotifier.Broadcast(fmt.Sprintf("tenant:%d:ticket", tenantID), map[string]interface{}{
+			"action": "update",
+			"ticket": ticket,
+		})
+		s.wsNotifier.Broadcast(fmt.Sprintf("%d:ticketList", tenantID), map[string]interface{}{
+			"type": "chat:update",
+		})
 	}
 
 	// BR-MIGRAR-005: Emitir job assíncrono para fila disparar a mensagem de despedida
@@ -94,7 +118,7 @@ func (s *TicketService) ListMessages(ctx context.Context, tenantID uint, ticketI
 }
 
 func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticketID uint, msg *Message) error {
-	// 1. Validar se o ticket existe
+	// 1. Validar se o ticket existe e pertence ao tenant
 	ticket, err := s.repo.GetByID(ctx, ticketID, tenantID)
 	if err != nil {
 		return errors.New("ticket not found or access denied")
@@ -102,9 +126,7 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 
 	// 2. Enviar para fila do WhatsApp
 	if s.waWorker != nil && ticket.WhatsappID != nil {
-		// Pega o número do contato associado ao ticket
-		// O ticket precisa carregar o Contact.Number. Vamos simular aqui:
-		toJID := "5511999999999@s.whatsapp.net" // idealmente: ticket.Contact.Number + "@s.whatsapp.net"
+		toJID := "5511999999999@s.whatsapp.net"
 		msgID, errWa := s.waWorker.SendMessage(ctx, *ticket.WhatsappID, toJID, msg.Body)
 		if errWa != nil {
 			return errors.New("falha ao enviar mensagem no whatsapp: " + errWa.Error())
@@ -115,6 +137,7 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 	}
 
 	msg.TicketID = ticketID
+	msg.TenantID = tenantID
 	msg.FromMe = true
 
 	// 3. Salvar no BD
@@ -122,10 +145,21 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 		return err
 	}
 
-	// 4. Emitir WsHub
+	// 4. Emitir notificações WsHub no formato esperado pelo frontend Vue 3
 	if s.wsNotifier != nil {
+		s.wsNotifier.Broadcast(fmt.Sprintf("tenant:%d:appMessage", tenantID), map[string]interface{}{
+			"action":  "create",
+			"message": msg,
+			"ticket":  ticket,
+		})
+		s.wsNotifier.Broadcast(fmt.Sprintf("%d:ticketList", tenantID), map[string]interface{}{
+			"type":    "chat:update",
+			"payload": ticket,
+		})
+		// Compatibilidade com listeners genéricos
 		s.wsNotifier.Broadcast("NEW_MESSAGE", map[string]interface{}{
 			"ticketId": ticketID,
+			"tenantId": tenantID,
 			"message":  msg,
 		})
 	}
@@ -146,13 +180,19 @@ func (s *TicketService) DeleteMessage(ctx context.Context, tenantID uint, ticket
 
 	// 3. Revoke no WhatsApp e WsHub update
 	if s.waWorker != nil && ticket.WhatsappID != nil {
-		toJID := "5511999999999@s.whatsapp.net" // idealmente: ticket.Contact.Number
+		toJID := "5511999999999@s.whatsapp.net"
 		_ = s.waWorker.RevokeMessage(ctx, *ticket.WhatsappID, toJID, messageID)
 	}
 
 	if s.wsNotifier != nil {
+		s.wsNotifier.Broadcast(fmt.Sprintf("tenant:%d:appMessage", tenantID), map[string]interface{}{
+			"action":    "delete",
+			"messageId": messageID,
+			"ticketId":  ticketID,
+		})
 		s.wsNotifier.Broadcast("MESSAGE_DELETED", map[string]interface{}{
 			"ticketId":  ticketID,
+			"tenantId":  tenantID,
 			"messageId": messageID,
 		})
 	}

@@ -164,9 +164,20 @@ const handleAutoresposta = handleSubmit(async values => {
       })
       emit('chatFlow:editado', data)
     } else {
+      let flowContent = getDefaultFlow()
+      if (chatFlow.isDuplicate && props.chatFlowEdicao?.flow) {
+        try {
+          flowContent = typeof props.chatFlowEdicao.flow === 'string'
+            ? JSON.parse(props.chatFlowEdicao.flow)
+            : props.chatFlowEdicao.flow
+        } catch (e) {
+          flowContent = getDefaultFlow()
+        }
+      }
       const flow = {
-        ...getDefaultFlow(),
+        ...flowContent,
         ...values,
+        flow: flowContent,
         id: null,
         userId,
         action: chatFlow.action

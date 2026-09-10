@@ -11,12 +11,23 @@ import (
 func TenantContext(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Puxa o tenantId injetado pelo JWTAuth
-		tenantID := c.Get("tenantId")
+		var tenantID uint
+		if v, ok := c.Get("tenantId").(uint); ok && v > 0 {
+			tenantID = v
+		} else if v, ok := c.Get("tenant_id").(uint); ok && v > 0 {
+			tenantID = v
+		} else if v, ok := c.Get("tenantID").(uint); ok && v > 0 {
+			tenantID = v
+		}
 		
-		if tenantID == nil {
-			// Bloqueio severo: impossível navegar sem pertencer a um tenant
+		if tenantID == 0 {
+			// Bloqueio severo: impossível navegar sem pertencer a um tenant válido
 			return echo.NewHTTPError(http.StatusForbidden, "Tenant context missing")
 		}
+
+		// Garante que ambos estejam setados para os handlers subsequentes
+		c.Set("tenantId", tenantID)
+		c.Set("tenant_id", tenantID)
 
 		// Apenas valida e segue
 		return next(c)

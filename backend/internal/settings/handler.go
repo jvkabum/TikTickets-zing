@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -19,7 +20,9 @@ func (h *Handler) RegisterRoutes(g *echo.Group) {
 	settings := g.Group("/settings")
 	settings.GET("", h.ListSettings)
 	settings.GET("/:settingKey", h.GetSetting)
+	settings.GET("/:settingKey/", h.GetSetting)
 	settings.PUT("/:settingKey", h.UpdateSetting)
+	settings.PUT("/:settingKey/", h.UpdateSetting)
 	
 	g.PUT("/admin/settings/:tenantId", h.AdminUpdateSettings)
 }
@@ -49,13 +52,35 @@ func (h *Handler) UpdateSetting(c echo.Context) error {
 	key := c.Param("settingKey")
 
 	var payload struct {
-		Value string `json:"value"`
+		Value interface{} `json:"value"`
 	}
 	if err := c.Bind(&payload); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid payload"})
 	}
 
-	if err := h.svc.UpdateOrCreate(c.Request().Context(), tenantID, key, payload.Value); err != nil {
+	strVal := ""
+	if payload.Value != nil {
+		switch v := payload.Value.(type) {
+		case string:
+			strVal = v
+		case float64:
+			if v == float64(int64(v)) {
+				strVal = fmt.Sprintf("%d", int64(v))
+			} else {
+				strVal = fmt.Sprintf("%v", v)
+			}
+		case int:
+			strVal = fmt.Sprintf("%d", v)
+		case int64:
+			strVal = fmt.Sprintf("%d", v)
+		case bool:
+			strVal = fmt.Sprintf("%t", v)
+		default:
+			strVal = fmt.Sprintf("%v", v)
+		}
+	}
+
+	if err := h.svc.UpdateOrCreate(c.Request().Context(), tenantID, key, strVal); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"status": "updated"})

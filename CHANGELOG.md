@@ -1,3 +1,42 @@
+## [3.3.3] (2026-09-10)
+
+### Destaques e Correções
+
+* **Migração Automática de Bases Legadas (`RunLegacyMigrations`)**:
+  * **Fim da necessidade de banco zerado**: O backend Go agora detecta e migra bases de dados legadas do Node.js (Sequelize) automaticamente no boot.
+  * Renomeação transparente de tabelas singulares para plurais (`ChatFlow` ➔ `ChatFlows`, `AutoReply` ➔ `AutoReplies`, etc.).
+  * Conversão automática de colunas legadas em camelCase (`tenantId`, `passwordHash`, `contactId`, etc.) para o padrão nativo `snake_case` com sincronização e preservação total de dados.
+  * Criação automática de índices únicos multi-tenant (`Contacts`, `Tags`).
+
+* **Segurança no Refresh Token (`auth/handler.go`)**:
+  * Eliminação de claims mockadas estáticas. O refresh de token agora valida o token recebido (body, header ou query), confere a existência e status ativo do usuário real no banco e emite novo JWT preservando tenantId e permissões legítimas.
+
+* **Isolamento Multi-Tenant Real no WebSocket (`channels/websocket.go`)**:
+  * Cada conexão WebSocket é agora vinculada com segurança ao seu respectivo `tenantId`.
+  * `BroadcastToTenant`: Garante que notificações e mensagens em tempo real não vazem entre empresas diferentes.
+  * Proteção de concorrência com `sync.RWMutex` prevenindo travamentos ou concorrência desordenada.
+
+* **Atualização em Tempo Real no Atendimento (`tickets/service.go`)**:
+  * Emissão de eventos de socket alinhados ao frontend Vue 3 (`tenant:%d:ticket`, `tenant:%d:appMessage`, `%d:ticketList`) para aceite de tickets, encerramento, envio e exclusão de mensagens.
+
+* **Mapeamento Explícito de Colunas no GORM**:
+  * Adicionadas tags `gorm:"column:..."` explícitas em `User`, `UserQueue`, `Contact`, `ContactCustomField`, `Ticket` e `Message`.
+
+* **Admin ChatFlows (`chatflow/handler.go`)**:
+  * Implementação da listagem de fluxos reais no endpoint `AdminListChatFlows`.
+
+* **Correção no FlowBuilder / ChatFlow (Nós Padrão)**:
+  * **Nós Padrão Automáticos**: Novos fluxos agora nascem automaticamente com a árvore de nós padrão oficial (`start` - Início, `configurations` - Configurações, `nodeC` - Boas-vindas e a conexão inicial).
+  * **Serialização e Tipo `JSONField` no Backend Go**: Substituição do campo `Flow string` por `JSONField` com suporte a `json.RawMessage`, `sql.Scanner` e `driver.Valuer`, garantindo que o backend armazene e retorne objetos JSON nativos sem caracteres de escape (`\"`).
+  * **Tratamento Defensivo no Frontend (`panel.vue`)**: A função `dataReload` agora trata dados vindos tanto em formato string quanto objeto, extrai payloads aninhados e implementa fallback automático para `getDefaultFlow()` quando nenhum nó estiver presente.
+  * **Salvar Fluxo (`UpdateChatFlow`)**: Correção no unmarshal do backend para suportar a árvore de nós e linhas enviada pelo botão Salvar do FlowBuilder.
+  * **Duplicação de Fluxo (`ModalChatFlow.vue`)**: Fluxos duplicados agora preservam e copiam os nós e conexões do fluxo de origem.
+
+* **Correção nas Configurações do Sistema (`settings`)**:
+  * **Tipagem Flexível no Backend Go**: Atualizado o handler `PUT /settings/:settingKey` para aceitar valores de múltiplos tipos (`interface{}` / `any`), convertendo números (ex.: ID do fluxo selecionado `botTicketActive`, `daysToClose`), booleanos e strings sem erro 400 (`invalid payload`).
+  * **Suporte a Trailing Slash**: Mapeamento das rotas com e sem barra final (`/settings/:settingKey` e `/settings/:settingKey/`).
+  * **Sanitização no Frontend**: A store `useConfiguracaoStore` agora assegura o envio seguro de valores como string e aprimora a exibição de mensagens de erro detalhadas.
+
 ## [3.3.2] (2026-09-10)
 
 ### ⚠️ AVISO IMPORTANTE: BANCO DE DADOS LIMPO OBRIGATÓRIO

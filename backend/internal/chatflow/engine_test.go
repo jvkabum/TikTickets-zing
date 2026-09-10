@@ -1,6 +1,7 @@
 package chatflow
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -86,5 +87,57 @@ func TestProcessMessage_TransferQueue(t *testing.T) {
 	}
 	if action != "transfer" {
 		t.Fatalf("expected action transfer, got %s", action)
+	}
+}
+
+func TestChatFlow_JSONField(t *testing.T) {
+	// 1. Unmarshal com payload do frontend com flow aninhado como objeto
+	payloadNested := []byte(`{
+		"id": 1,
+		"name": "Fluxo Teste",
+		"flow": {
+			"nodeList": [{"id": "start", "name": "Início"}],
+			"lineList": []
+		}
+	}`)
+
+	var cf ChatFlow
+	if err := json.Unmarshal(payloadNested, &cf); err != nil {
+		t.Fatalf("expected unmarshal to succeed with nested object flow, got %v", err)
+	}
+
+	if len(cf.Flow) == 0 {
+		t.Fatalf("expected flow to not be empty")
+	}
+
+	// 2. Marshal deve serializar flow como objeto e não como string com escape
+	marshaled, err := json.Marshal(cf)
+	if err != nil {
+		t.Fatalf("failed to marshal ChatFlow: %v", err)
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal(marshaled, &parsed); err != nil {
+		t.Fatalf("failed to unmarshal marshaled ChatFlow: %v", err)
+	}
+
+	flowMap, ok := parsed["flow"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected parsed['flow'] to be a map[string]interface{}, got %T", parsed["flow"])
+	}
+
+	nodeList, ok := flowMap["nodeList"].([]interface{})
+	if !ok || len(nodeList) != 1 {
+		t.Fatalf("expected nodeList to have 1 item, got %v", flowMap["nodeList"])
+	}
+
+	// 3. Scan com string escapada (compatibilidade legado)
+	var jf JSONField
+	escapedStr := `"{\"name\":\"Fluxo Legado\"}"`
+	if err := jf.Scan(escapedStr); err != nil {
+		t.Fatalf("scan failed: %v", err)
+	}
+	if string(jf) != `{"name":"Fluxo Legado"}` {
+		t.Fatalf("expected unquoted string, got %s", string(jf))
 	}
 }

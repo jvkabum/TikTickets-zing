@@ -9,17 +9,17 @@ type Contact struct {
 	ID            uint           `gorm:"primaryKey" json:"id"`
 	Name          string         `json:"name"`
 	Number        string         `json:"number"`
-	ProfilePicUrl string         `json:"profilePicUrl"`
+	ProfilePicUrl string         `gorm:"column:profile_pic_url" json:"profilePicUrl"`
 	Pushname      string         `json:"pushname"`
 	Email         string         `json:"email"`
-	ExtraInfo     string         `json:"extraInfo"`
-	TelegramID    string         `json:"telegramId"`
-	InstagramPK   *uint          `json:"instagramPk"`
-	IsGroup       bool           `json:"isGroup"`
-	TenantID      uint           `gorm:"not null" json:"tenantId"`
-	CreatedAt     time.Time      `json:"createdAt"`
-	UpdatedAt     time.Time      `json:"updatedAt"`
-	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
+	ExtraInfo     string         `gorm:"column:extra_info" json:"extraInfo"`
+	TelegramID    string         `gorm:"column:telegram_id" json:"telegramId"`
+	InstagramPK   *uint          `gorm:"column:instagram_pk" json:"instagramPk"`
+	IsGroup       bool           `gorm:"column:is_group" json:"isGroup"`
+	TenantID      uint           `gorm:"column:tenant_id;not null" json:"tenantId"`
+	CreatedAt     time.Time      `gorm:"column:created_at" json:"createdAt"`
+	UpdatedAt     time.Time      `gorm:"column:updated_at" json:"updatedAt"`
+	DeletedAt     gorm.DeletedAt `gorm:"index;column:deleted_at" json:"deletedAt,omitempty"`
 }
 
 func (Contact) TableName() string {
@@ -30,10 +30,10 @@ type ContactCustomField struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	Name      string         `json:"name"`
 	Value     string         `json:"value"`
-	ContactID uint           `json:"contactId"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
+	ContactID uint           `gorm:"column:contact_id;not null" json:"contactId"`
+	CreatedAt time.Time      `gorm:"column:created_at" json:"createdAt"`
+	UpdatedAt time.Time      `gorm:"column:updated_at" json:"updatedAt"`
+	DeletedAt gorm.DeletedAt `gorm:"index;column:deleted_at" json:"deletedAt,omitempty"`
 }
 
 func (ContactCustomField) TableName() string {

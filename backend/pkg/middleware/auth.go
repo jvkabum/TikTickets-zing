@@ -39,12 +39,52 @@ func JWTAuth(jwtSecret []byte) echo.MiddlewareFunc {
 
 			// Extrai as claims e injeta no contexto para uso nos handlers
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
-				if userID, ok := claims["userId"].(float64); ok {
-					c.Set("userID", uint(userID))
+				// Extrai User ID (userId ou user_id)
+				var uid uint
+				if val, exists := claims["userId"]; exists {
+					switch v := val.(type) {
+					case float64:
+						uid = uint(v)
+					case int:
+						uid = uint(v)
+					}
+				} else if val, exists := claims["user_id"]; exists {
+					switch v := val.(type) {
+					case float64:
+						uid = uint(v)
+					case int:
+						uid = uint(v)
+					}
 				}
-				if tenantID, ok := claims["tenantId"].(float64); ok {
-					c.Set("tenantId", uint(tenantID))
+				if uid > 0 {
+					c.Set("userID", uid)
+					c.Set("userId", uid)
+					c.Set("user_id", uid)
 				}
+
+				// Extrai Tenant ID (tenantId ou tenant_id)
+				var tid uint
+				if val, exists := claims["tenantId"]; exists {
+					switch v := val.(type) {
+					case float64:
+						tid = uint(v)
+					case int:
+						tid = uint(v)
+					}
+				} else if val, exists := claims["tenant_id"]; exists {
+					switch v := val.(type) {
+					case float64:
+						tid = uint(v)
+					case int:
+						tid = uint(v)
+					}
+				}
+				if tid > 0 {
+					c.Set("tenantId", tid)
+					c.Set("tenant_id", tid)
+					c.Set("tenantID", tid)
+				}
+
 				if profile, ok := claims["profile"].(string); ok {
 					c.Set("profile", profile)
 				}

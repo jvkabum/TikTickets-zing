@@ -281,6 +281,7 @@ import FlowInfo from './info.vue'
 import { jsplumbConnectOptions, jsplumbSetting } from './mixins'
 import flowNode from './node.vue'
 import FlowNodeForm from './node_form.vue'
+import { getDefaultFlow } from './defaultFlow'
 
 const $q = useQuasar()
 const chatFlowStore = useChatFlowStore()
@@ -885,7 +886,33 @@ const dataReload = newData => {
   data.nodeList = []
   data.lineList = []
   nextTick(() => {
-    const cloned = cloneDeep(newData)
+    let flowObj = newData
+    if (typeof flowObj === 'string') {
+      try {
+        flowObj = JSON.parse(flowObj)
+      } catch (e) {
+        console.error('Erro ao fazer parse do flow:', e)
+        flowObj = {}
+      }
+    }
+    // Se os dados estiverem aninhados em .flow (ex.: payload completo da API)
+    if (flowObj && flowObj.flow) {
+      if (typeof flowObj.flow === 'string') {
+        try {
+          flowObj = JSON.parse(flowObj.flow)
+        } catch (e) {
+          flowObj = flowObj.flow
+        }
+      } else {
+        flowObj = flowObj.flow
+      }
+    }
+    // Fallback: se não tiver nodeList ou se nodeList estiver vazio, usa os nós padrão
+    if (!flowObj || !flowObj.nodeList || flowObj.nodeList.length === 0) {
+      flowObj = getDefaultFlow()
+    }
+
+    const cloned = cloneDeep(flowObj)
     Object.assign(data, cloned)
     easyFlowVisible.value = true
     nextTick(() => {
@@ -1015,9 +1042,9 @@ onMounted(async () => {
   if (window.jsPlumb) {
     jsPlumb.value = window.jsPlumb.getInstance()
     jsPlumbInit()
-    if (cDataFlow.value?.flow) {
-      dataReload(cDataFlow.value.flow)
-    } else {
+
+    let initialFlow = cDataFlow.value?.flow || cDataFlow.value
+    if (!initialFlow || (typeof initialFlow === 'object' && Object.keys(initialFlow).length === 0)) {
       const stored = localStorage.getItem('currentChatFlow')
       if (stored) {
         try {
@@ -1027,12 +1054,14 @@ onMounted(async () => {
             usuarios: chatFlowStore.usuarios,
             filas: chatFlowStore.filas
           })
-          dataReload(parsed.flow)
+          initialFlow = parsed.flow || parsed
         } catch (e) {
           console.error('Erro ao recuperar fluxo do localStorage', e)
         }
       }
     }
+
+    dataReload(initialFlow || getDefaultFlow())
   } else {
     console.error('jsPlumb não foi carregado corretamente.')
   }

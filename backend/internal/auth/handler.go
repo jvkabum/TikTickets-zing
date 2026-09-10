@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -117,20 +118,76 @@ func (h *Handler) Logout(c echo.Context) error {
 }
 
 func (h *Handler) RefreshToken(c echo.Context) error {
-	// Pegar refreshToken do body (POST) ou query param (GET)
+	// Pegar refreshToken do body (POST), header Authorization ou query param (GET)
 	var body map[string]string
-	c.Bind(&body)
+	_ = c.Bind(&body)
 	
-	refreshToken := body["refreshToken"]
-	if refreshToken == "" {
-		refreshToken = c.QueryParam("refreshToken")
+	rawToken := body["refreshToken"]
+	if rawToken == "" {
+		rawToken = body["token"]
+	}
+	if rawToken == "" {
+		rawToken = c.QueryParam("refreshToken")
+	}
+	if rawToken == "" {
+		rawToken = c.QueryParam("token")
+	}
+	if rawToken == "" {
+		authHeader := c.Request().Header.Get("Authorization")
+		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+			rawToken = strings.TrimPrefix(authHeader, "Bearer ")
+		}
 	}
 
-	// Gerar novo token (simplificado — em produção validar o refreshToken)
+	if rawToken == "" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Missing token for refresh"})
+	}
+
+	// Parse do token para recuperar as claims originais
+	parser := jwt.NewParser()
+	claims := jwt.MapClaims{}
+	_, _, err := parser.ParseUnverified(rawToken, claims)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token format"})
+	}
+
+	var userID uint
+	if uid, ok := claims["userId"].(float64); ok {
+		userID = uint(uid)
+	} else if uid, ok := claims["user_id"].(float64); ok {
+		userID = uint(uid)
+	}
+
+	var tenantID uint
+	if tid, ok := claims["tenantId"].(float64); ok {
+		tenantID = uint(tid)
+	} else if tid, ok := claims["tenant_id"].(float64); ok {
+		tenantID = uint(tid)
+	}
+
+	profile, _ := claims["profile"].(string)
+	isDemo, _ := claims["isDemo"].(bool)
+
+	if userID == 0 || tenantID == 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token claims"})
+	}
+
+	// Consulta o usuário real no banco para confirmar que ainda está ativo
+	user, err := h.userSvc.GetByID(c.Request().Context(), tenantID, userID)
+	if err != nil || user == nil || user.Status != "active" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User inactive or not found"})
+	}
+
+	if user.Profile != "" {
+		profile = user.Profile
+	}
+
+	// Gerar novo JWT com os dados legítimos do usuário e do seu tenant
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId":   1,
-		"tenantId": 1,
-		"profile":  "admin",
+		"userId":   user.ID,
+		"tenantId": user.TenantID,
+		"profile":  profile,
+		"isDemo":   isDemo,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	})
 	newTokenString, err := newToken.SignedString(h.jwtSecret)
@@ -141,7 +198,9 @@ func (h *Handler) RefreshToken(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"newToken":     newTokenString,
 		"token":        newTokenString,
-		"refreshToken": refreshToken,
+		"refreshToken": rawToken,
+		"userId":       user.ID,
+		"tenantId":     user.TenantID,
 	})
 }
 
@@ -149,10 +208,16 @@ func (h *Handler) RefreshToken(c echo.Context) error {
 
 // getClaims lê as claims que o middleware JWTAuth injeta diretamente no contexto
 func getClaims(c echo.Context) (tenantID uint, userID uint, profile string) {
-	if v, ok := c.Get("tenantId").(uint); ok {
+	if v, ok := c.Get("tenantId").(uint); ok && v > 0 {
+		tenantID = v
+	} else if v, ok := c.Get("tenant_id").(uint); ok && v > 0 {
 		tenantID = v
 	}
-	if v, ok := c.Get("userID").(uint); ok {
+	if v, ok := c.Get("userID").(uint); ok && v > 0 {
+		userID = v
+	} else if v, ok := c.Get("userId").(uint); ok && v > 0 {
+		userID = v
+	} else if v, ok := c.Get("user_id").(uint); ok && v > 0 {
 		userID = v
 	}
 	if v, ok := c.Get("profile").(string); ok {
