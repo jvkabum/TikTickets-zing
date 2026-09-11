@@ -127,6 +127,10 @@ export function useTicketSockets() {
           store.updateMensagem(data.payload)
         }
 
+        if (data.type === 'contact:update') {
+          store.updateTicketContact(data.payload)
+        }
+
         if (data.type === 'ticket:update') {
           store.updateTicket(data.payload)
         }

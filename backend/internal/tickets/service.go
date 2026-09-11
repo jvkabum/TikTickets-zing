@@ -2,10 +2,12 @@ package tickets
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -15,6 +17,7 @@ type TaskQueue interface {
 
 type WhatsAppWorker interface {
 	SendMessage(ctx context.Context, channelID uint, toJID string, text string) (string, error)
+	SendPoll(ctx context.Context, channelID uint, toJID string, question string, options []string, maxSelections int) (string, error)
 	RevokeMessage(ctx context.Context, channelID uint, toJID string, msgID string) error
 }
 
@@ -125,13 +128,61 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 	}
 
 	// 2. Enviar para fila do WhatsApp
-	if s.waWorker != nil && ticket.WhatsappID != nil {
-		toJID := "5511999999999@s.whatsapp.net"
-		msgID, errWa := s.waWorker.SendMessage(ctx, *ticket.WhatsappID, toJID, msg.Body)
-		if errWa != nil {
-			return errors.New("falha ao enviar mensagem no whatsapp: " + errWa.Error())
+	if s.waWorker != nil {
+		channelID := uint(0)
+		if ticket.WhatsappID != nil {
+			channelID = *ticket.WhatsappID
 		}
-		msg.MessageID = msgID
+
+		toJID := ""
+		if ticket.Contact != nil {
+			if ticket.Contact.Number != "" {
+				if ticket.IsGroup || ticket.Contact.IsGroup {
+					toJID = fmt.Sprintf("%s@g.us", ticket.Contact.Number)
+				} else {
+					toJID = fmt.Sprintf("%s@s.whatsapp.net", ticket.Contact.Number)
+				}
+			} else if ticket.Contact.LID != "" {
+				toJID = fmt.Sprintf("%s@lid", ticket.Contact.LID)
+			}
+		}
+
+		if toJID != "" {
+			var msgID string
+			var errWa error
+
+			if msg.SendType == "poll_creation" || (msg.MediaType != nil && *msg.MediaType == "poll_creation") {
+				var pollData struct {
+					Name    string `json:"name"`
+					Options []struct {
+						Name string `json:"name"`
+					} `json:"options"`
+				}
+				if len(msg.PollData) > 0 {
+					_ = json.Unmarshal(msg.PollData, &pollData)
+				}
+				options := make([]string, 0, len(pollData.Options))
+				for _, o := range pollData.Options {
+					if o.Name != "" {
+						options = append(options, o.Name)
+					}
+				}
+				if len(options) >= 2 {
+					msgID, errWa = s.waWorker.SendPoll(ctx, channelID, toJID, pollData.Name, options, 1)
+				} else {
+					msgID, errWa = s.waWorker.SendMessage(ctx, channelID, toJID, msg.Body)
+				}
+			} else {
+				msgID, errWa = s.waWorker.SendMessage(ctx, channelID, toJID, msg.Body)
+			}
+
+			if errWa != nil {
+				return errors.New("falha ao enviar mensagem no whatsapp: " + errWa.Error())
+			}
+			msg.MessageID = msgID
+		} else {
+			msg.MessageID = "mock-uuid"
+		}
 	} else {
 		msg.MessageID = "mock-uuid"
 	}
@@ -140,12 +191,37 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 	msg.TenantID = tenantID
 	msg.FromMe = true
 
+	if msg.ID == "" {
+		msg.ID = uuid.New().String()
+	}
+	if msg.Status == "" {
+		msg.Status = "sended"
+	}
+	if msg.SendType == "" {
+		msg.SendType = "chat"
+	}
+	if msg.Ack == 0 {
+		msg.Ack = 1
+	}
+	now := time.Now()
+	if msg.CreatedAt.IsZero() {
+		msg.CreatedAt = now
+	}
+	if msg.UpdatedAt.IsZero() {
+		msg.UpdatedAt = now
+	}
+
 	// 3. Salvar no BD
 	if err := s.repo.CreateMessage(ctx, msg); err != nil {
 		return err
 	}
 
-	// 4. Emitir notificações WsHub no formato esperado pelo frontend Vue 3
+	// 4. Atualizar última mensagem do ticket
+	ticket.LastMessage = msg.Body
+	ticket.UpdatedAt = time.Now()
+	_ = s.repo.Update(ctx, ticket)
+
+	// 5. Emitir notificações WsHub no formato esperado pelo frontend Vue 3
 	if s.wsNotifier != nil {
 		s.wsNotifier.Broadcast(fmt.Sprintf("tenant:%d:appMessage", tenantID), map[string]interface{}{
 			"action":  "create",
@@ -153,7 +229,25 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 			"ticket":  ticket,
 		})
 		s.wsNotifier.Broadcast(fmt.Sprintf("%d:ticketList", tenantID), map[string]interface{}{
-			"type":    "chat:update",
+			"type": "chat:create",
+			"payload": map[string]interface{}{
+				"id":        msg.ID,
+				"messageId": msg.MessageID,
+				"body":      msg.Body,
+				"ack":       msg.Ack,
+				"status":    msg.Status,
+				"fromMe":    true,
+				"read":      true,
+				"sendType":  msg.SendType,
+				"ticketId":  ticketID,
+				"tenantId":  tenantID,
+				"createdAt": msg.CreatedAt,
+				"ticket":    ticket,
+				"contact":   ticket.Contact,
+			},
+		})
+		s.wsNotifier.Broadcast(fmt.Sprintf("%d:ticketList", tenantID), map[string]interface{}{
+			"type":    "ticket:update",
 			"payload": ticket,
 		})
 		// Compatibilidade com listeners genéricos

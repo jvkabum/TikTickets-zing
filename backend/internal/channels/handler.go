@@ -1,8 +1,10 @@
 package channels
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -161,6 +163,12 @@ func (h *Handler) SyncContacts(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "channel not found"})
 	}
-	// Sync de contatos é uma tarefa background - retorna ok
+
+	if h.waWorker != nil {
+		go func() {
+			_, _ = h.waWorker.SyncContacts(context.Background(), tenantID)
+		}()
+	}
+
 	return c.JSON(http.StatusOK, map[string]string{"status": "sync_started"})
 }

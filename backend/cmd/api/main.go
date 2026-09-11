@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -105,10 +106,12 @@ func main() {
 		)
 	}
 	wsHub := channels.NewWsHub()
-	channelsWorker, err := channels.NewWhatsmeowWorker(channelsRepo, whatsmeowURL, wsHub)
+	channelsWorker, err := channels.NewWhatsmeowWorker(channelsRepo, whatsmeowURL, wsHub, db)
 	if err != nil {
 		log.Fatalf("Falha ao iniciar o WhatsmeowWorker: %v", err)
 	}
+	// Reconecta automaticamente as sessões do WhatsApp salvas no banco
+	channelsWorker.AutoStartSessions(context.Background())
 	channelHandler := channels.NewHandler(channelSvc, channelsWorker)
 
 	// Tickets

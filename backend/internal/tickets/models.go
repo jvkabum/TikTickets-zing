@@ -1,8 +1,15 @@
 package tickets
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
+
 	"gorm.io/gorm"
+
+	"github.com/tiktickets/backend-go/internal/auth"
+	"github.com/tiktickets/backend-go/internal/contacts"
 )
 
 type Ticket struct {
@@ -24,6 +31,9 @@ type Ticket struct {
 	CreatedAt           time.Time      `gorm:"column:created_at" json:"createdAt"`
 	UpdatedAt           time.Time      `gorm:"column:updated_at" json:"updatedAt"`
 	DeletedAt           gorm.DeletedAt `gorm:"index;column:deleted_at" json:"deletedAt,omitempty"`
+
+	Contact *contacts.Contact `gorm:"foreignKey:ContactID" json:"contact,omitempty"`
+	User    *auth.User        `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
 
 func (Ticket) TableName() string {
@@ -57,6 +67,78 @@ func (LogTicket) TableName() string {
 	return "LogTickets"
 }
 
+// JSONRaw gerencia dados em formato JSON/JSONB no PostgreSQL e serialização HTTP/JSON
+type JSONRaw []byte
+
+// Value converte JSONRaw para valor do banco de dados (NULL se vazio)
+func (j JSONRaw) Value() (driver.Value, error) {
+	if len(j) == 0 || string(j) == "null" || string(j) == `""` {
+		return nil, nil
+	}
+	return string(j), nil
+}
+
+// Scan lê do PostgreSQL para JSONRaw
+func (j *JSONRaw) Scan(value interface{}) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+	var bytes []byte
+	switch v := value.(type) {
+	case []byte:
+		bytes = v
+	case string:
+		bytes = []byte(v)
+	default:
+		return errors.New("cannot scan type into JSONRaw")
+	}
+
+	if len(bytes) == 0 {
+		*j = nil
+		return nil
+	}
+
+	// Se for uma string JSON duplamente codificada
+	if len(bytes) > 1 && bytes[0] == '"' && bytes[len(bytes)-1] == '"' {
+		var unquoted string
+		if err := json.Unmarshal(bytes, &unquoted); err == nil {
+			bytes = []byte(unquoted)
+		}
+	}
+
+	*j = append((*j)[0:0], bytes...)
+	return nil
+}
+
+// MarshalJSON serializa para JSON (retorna null se vazio)
+func (j JSONRaw) MarshalJSON() ([]byte, error) {
+	if len(j) == 0 || string(j) == "null" {
+		return []byte("null"), nil
+	}
+	return j, nil
+}
+
+// UnmarshalJSON deserializa de JSON
+func (j *JSONRaw) UnmarshalJSON(data []byte) error {
+	if j == nil {
+		return errors.New("JSONRaw: UnmarshalJSON on nil pointer")
+	}
+	if len(data) == 0 || string(data) == "null" {
+		*j = nil
+		return nil
+	}
+	if len(data) > 1 && data[0] == '"' && data[len(data)-1] == '"' {
+		var unquoted string
+		if err := json.Unmarshal(data, &unquoted); err == nil {
+			*j = append((*j)[0:0], []byte(unquoted)...)
+			return nil
+		}
+	}
+	*j = append((*j)[0:0], data...)
+	return nil
+}
+
 type Message struct {
 	ID          string         `gorm:"type:uuid;primaryKey" json:"id"`
 	MessageID   string         `gorm:"column:message_id" json:"messageId"`
@@ -66,7 +148,7 @@ type Message struct {
 	FromMe      bool           `gorm:"column:from_me" json:"fromMe"`
 	Body        string         `json:"body"`
 	SendType    string         `gorm:"column:send_type" json:"sendType"`
-	PollData    string         `gorm:"type:jsonb;column:poll_data" json:"pollData"`
+	PollData    JSONRaw        `gorm:"type:jsonb;column:poll_data" json:"pollData"`
 	MediaUrl    *string        `gorm:"column:media_url" json:"mediaUrl"`
 	MediaName   *string        `gorm:"column:media_name" json:"mediaName"`
 	MediaType   *string        `gorm:"column:media_type" json:"mediaType"`

@@ -9,6 +9,7 @@ type Contact struct {
 	ID            uint           `gorm:"primaryKey" json:"id"`
 	Name          string         `json:"name"`
 	Number        string         `json:"number"`
+	LID           string         `gorm:"column:lid;index" json:"lid"`
 	ProfilePicUrl string         `gorm:"column:profile_pic_url" json:"profilePicUrl"`
 	Pushname      string         `json:"pushname"`
 	Email         string         `json:"email"`

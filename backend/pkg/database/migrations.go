@@ -1,4 +1,4 @@
-﻿package database
+package database
 
 import (
 	"log"
@@ -19,9 +19,6 @@ import (
 
 // AutoMigrate executa as migrações automáticas de esquemas no banco de dados via GORM.
 func AutoMigrate() {
-	// Executa migrações de compatibilidade legada antes do AutoMigrate do GORM
-	RunLegacyMigrations(DB)
-
 	err := DB.AutoMigrate(
 		&tenant.Tenant{},
 		&settings.Setting{},
@@ -47,4 +44,9 @@ func AutoMigrate() {
 	if err != nil {
 		log.Fatal("Failed to auto-migrate:", err)
 	}
+
+	// Índices essenciais de unicidade e desempenho multi-tenant
+	_ = DB.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_contacts_number_tenant_id ON "Contacts" (number, tenant_id)`).Error
+	_ = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_contacts_lid_tenant ON "Contacts" (lid, tenant_id)`).Error
+	_ = DB.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_tags_tag_tenant_id ON "Tags" (tag, tenant_id)`).Error
 }

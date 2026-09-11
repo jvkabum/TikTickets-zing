@@ -41,9 +41,31 @@ func (h *Handler) RegisterRoutes(e *echo.Group) {
 
 func (h *Handler) ListTickets(c echo.Context) error {
 	tenantID := c.Get("tenantId").(uint)
-	tickets, err := h.repo.ListOpen(c.Request().Context(), tenantID)
+
+	// Ler status[] ou status dos query params
+	statuses := c.QueryParams()["status[]"]
+	if len(statuses) == 0 {
+		statuses = c.QueryParams()["status"]
+	}
+	if len(statuses) == 0 && c.QueryParam("status") != "" {
+		statuses = []string{c.QueryParam("status")}
+	}
+
+	searchParam := c.QueryParam("searchParam")
+
+	var isGroupPtr *bool
+	isGroupParam := c.QueryParam("isGroup")
+	if isGroupParam == "true" {
+		val := true
+		isGroupPtr = &val
+	} else if isGroupParam == "false" {
+		val := false
+		isGroupPtr = &val
+	}
+
+	tickets, err := h.repo.ListWithFilters(c.Request().Context(), tenantID, statuses, searchParam, isGroupPtr)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Falha ao listar tickets"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Falha ao listar tickets: " + err.Error()})
 	}
 	if tickets == nil {
 		tickets = []Ticket{}
@@ -188,14 +210,25 @@ func (h *Handler) CreateMessage(c echo.Context) error {
 	tenantID := c.Get("tenantId").(uint)
 	ticketID, _ := strconv.Atoi(c.Param("id"))
 
-	// Handling multipart/form-data for Media
+	// Handling multipart/form-data ou json
 	var msg Message
 	msg.Body = c.FormValue("body")
-	msg.SendType = "text" // default
+	msg.SendType = "chat"
 
-	file, err := c.FormFile("media")
+	if msg.Body == "" {
+		_ = c.Bind(&msg)
+	}
+
+	formID := c.FormValue("id")
+	if formID != "" {
+		msg.ID = formID
+	}
+
+	file, err := c.FormFile("medias")
+	if err != nil {
+		file, err = c.FormFile("media")
+	}
 	if err == nil {
-		// Mock file saving logic
 		mediaUrl := "/public/uploads/" + file.Filename
 		msg.MediaUrl = &mediaUrl
 		msg.MediaName = &file.Filename

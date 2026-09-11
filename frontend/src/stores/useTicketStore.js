@@ -242,16 +242,20 @@ export const useTicketStore = defineStore('ticket', () => {
   }
 
   function updateMensagem(msg) {
-    const idx = mensagens.value.findIndex(m => m.id === msg.id)
+    const idx = mensagens.value.findIndex(m => m.id === msg.id || (msg.messageId && m.messageId === msg.messageId))
     if (idx !== -1) {
       mensagens.value[idx] = { ...mensagens.value[idx], ...msg }
     }
   }
 
   function updateMessageStatus(msg) {
-    const idx = mensagens.value.findIndex(m => m.id === msg.id)
+    const idx = mensagens.value.findIndex(m => m.id === msg.id || (msg.messageId && m.messageId === msg.messageId))
     if (idx !== -1) {
-      mensagens.value[idx].ack = msg.ack
+      mensagens.value[idx] = {
+        ...mensagens.value[idx],
+        ack: msg.ack,
+        ...(msg.status ? { status: msg.status } : {})
+      }
     }
   }
 
@@ -266,16 +270,17 @@ export const useTicketStore = defineStore('ticket', () => {
   }
 
   function updateTicketContact(contact) {
+    if (!contact || !contact.id) return
     Object.keys(tickets).forEach(key => {
       tickets[key].forEach(t => {
         if (t.contactId === contact.id) {
-          t.contact = contact
+          t.contact = { ...t.contact, ...contact }
         }
       })
     })
 
-    if (ticketFocado.value.contactId === contact.id) {
-      ticketFocado.value.contact = contact
+    if (ticketFocado.value && ticketFocado.value.contactId === contact.id) {
+      ticketFocado.value.contact = { ...ticketFocado.value.contact, ...contact }
     }
   }
 
