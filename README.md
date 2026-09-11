@@ -139,9 +139,26 @@ Um ecossistema **SaaS Multi-tenant** avançado para gestão de atendimento multi
 - **Mídias Completas**: Suporte a áudio gravado nativamente em MP3, imagens, vídeos e documentos.
 - **Gestão de Equipe**: Filas de atendimento, horários de funcionamento e controle de permissões.
 
+## 🚀 Instalação Automática em VPS Ubuntu (Recomendado)
+
+Você pode instalar todo o ecossistema (PostgreSQL, Backend Go, Frontend Vue 3 e Traefik com SSL Let's Encrypt automático) com **um único comando** em uma VPS Ubuntu zerada (Ubuntu 22.04 ou 24.04):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/jvkabum/TikTickets-zing/state/install.sh)
+```
+
+O instalador interativo irá:
+1. Configurar **4GB de Swap** para garantir estabilidade no build do Vite.
+2. Configurar o **Firewall (UFW)** liberando as portas necessárias.
+3. Instalar o **Docker** e o ecossistema **Coolify** automaticamente.
+4. Solicitar seus domínios (ex: `app.meudominio.com` e `api.meudominio.com`).
+5. Provisionar o **PostgreSQL**, compilar a **API Go** e o **Frontend Vue 3**.
+6. Emitir certificados **SSL HTTPS gratuitos** via Traefik automaticamente.
+7. Disponibilizar o utilitário CLI `tiktickets` no terminal para gerenciar, reiniciar ou atualizar a stack (`tiktickets restart`, `tiktickets logs`, `tiktickets update`).
+
 ---
 
-## ⚙️ Instalação e Setup
+## ⚙️ Instalação Manual e Setup Local
 
 ### 1. Pré-requisitos
 - **Go 1.25+**

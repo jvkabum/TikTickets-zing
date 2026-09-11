@@ -172,9 +172,30 @@ func main() {
 	// 6. Registro de Rotas (Públicas)
 	public := e.Group("")
 	
-	// Health Check
+	// Health Check (Liveness)
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+
+	// Readiness Check (Verifica se o PostgreSQL está conectado e operante)
+	e.GET("/ready", func(c echo.Context) error {
+		if database.DB == nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{
+				"status":   "unavailable",
+				"database": "uninitialized",
+			})
+		}
+		sqlDB, err := database.DB.DB()
+		if err != nil || sqlDB.Ping() != nil {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{
+				"status":   "unavailable",
+				"database": "disconnected",
+			})
+		}
+		return c.JSON(http.StatusOK, map[string]string{
+			"status":   "ready",
+			"database": "connected",
+		})
 	})
 	
 	// Proxy Telemetria OTel

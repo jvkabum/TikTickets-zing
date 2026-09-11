@@ -1,0 +1,101 @@
+# ==============================================================================
+# TikTickets-zing - Stack Docker Compose para Coolify
+# Repositório: https://github.com/jvkabum/TikTickets-zing (Branch: state)
+# ==============================================================================
+# Como usar no Coolify:
+# 1. No Coolify, vá em: Projects -> Production -> + New Resource -> Docker Compose
+# 2. Cole o conteúdo deste arquivo.
+# 3. Na aba Environment Variables do Coolify, defina seus domínios e senhas.
+# 4. Clique em Deploy!
+# ==============================================================================
+
+version: '3.8'
+
+networks:
+  coolify:
+    external: true
+
+volumes:
+  postgres_data:
+    name: tiktickets_postgres_data
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Banco de Dados PostgreSQL 17 (17.7 Alpine)
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    container_name: tiktickets-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tiktickets}
+      POSTGRES_USER: ${POSTGRES_USER:-tiktickets_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-troque_esta_senha_forte}
+      TZ: America/Sao_Paulo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - coolify
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tiktickets_user} -d ${POSTGRES_DB:-tiktickets}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ----------------------------------------------------------------------------
+  # 2. Backend Go API (Whatsmeow + Echo)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: https://github.com/jvkabum/TikTickets-zing.git#state:backend
+      dockerfile: Dockerfile
+    container_name: tiktickets-backend
+    restart: always
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      TZ: America/Sao_Paulo
+      BACKEND_URL: ${BACKEND_URL:-https://api.seudominio.com}
+      FRONTEND_URL: ${FRONTEND_URL:-https://app.seudominio.com}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-tiktickets_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-troque_esta_senha_forte}
+      DB_NAME: ${POSTGRES_DB:-tiktickets}
+      JWT_SECRET: ${JWT_SECRET:-chave_jwt_secreta_longa_aqui}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-chave_jwt_refresh_longa_aqui}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tiktickets-api.rule=Host(`${BACKEND_DOMAIN:-api.seudominio.com}`)"
+      - "traefik.http.routers.tiktickets-api.entrypoints=websecure"
+      - "traefik.http.routers.tiktickets-api.tls=true"
+      - "traefik.http.routers.tiktickets-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.tiktickets-api.loadbalancer.server.port=3000"
+
+  # ----------------------------------------------------------------------------
+  # 3. Frontend Vue 3 / Vite (Quasar + Pinia + Nginx)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: https://github.com/jvkabum/TikTickets-zing.git#state:frontend
+      dockerfile: Dockerfile
+      args:
+        VUE_URL_API: ${BACKEND_URL:-https://api.seudominio.com}
+    container_name: tiktickets-frontend
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tiktickets-app.rule=Host(`${FRONTEND_DOMAIN:-app.seudominio.com}`)"
+      - "traefik.http.routers.tiktickets-app.entrypoints=websecure"
+      - "traefik.http.routers.tiktickets-app.tls=true"
+      - "traefik.http.routers.tiktickets-app.tls.certresolver=letsencrypt"
+      - "traefik.http.services.tiktickets-app.loadbalancer.server.port=80"
