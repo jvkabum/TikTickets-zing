@@ -469,6 +469,8 @@ networks:
 volumes:
   tiktickets_postgres_data:
     name: tiktickets_postgres_data
+  tiktickets_uploads_data:
+    name: tiktickets_uploads_data
 
 services:
 EOF
@@ -544,6 +546,8 @@ cat <<'EOF' >> "${APP_DIR}/docker-compose.prod.yml"
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - tiktickets_uploads_data:/app/public/uploads
     networks:
       - coolify
       - internal

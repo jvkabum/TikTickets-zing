@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -31,6 +32,9 @@ import (
 	customMiddleware "github.com/tiktickets/backend-go/pkg/middleware"
 )
 
+// AppVersion define a versão oficial da aplicação (padrão centralizado no Go)
+const AppVersion = "3.4.3"
+
 func main() {
 	// 1. Carregar .env antes de tudo
 	if err := godotenv.Load(); err != nil {
@@ -47,7 +51,7 @@ func main() {
 	db := database.DB
 
 	// Envia notificação para o Discord em segundo plano (detecta primeira instalação vs atualização)
-	go telemetry.SendDiscordPing(db, cfg.DiscordWebhookURL, cfg.FrontendURL)
+	go telemetry.SendDiscordPing(db, cfg.DiscordWebhookURL, cfg.FrontendURL, AppVersion)
 
 	// 4. Iniciar Echo
 	e := echo.New()
@@ -172,6 +176,19 @@ func main() {
 	// 6. Registro de Rotas (Públicas)
 	public := e.Group("")
 	
+	// Arquivos estáticos de upload (/public/uploads)
+	_ = os.MkdirAll("public/uploads", 0755)
+	e.Static("/public", "public")
+
+	// Version Check (padrão público idêntico ao gesttik)
+	versionHandler := func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
+			"version": AppVersion,
+		})
+	}
+	e.GET("/api/version", versionHandler)
+	e.GET("/version", versionHandler)
+
 	// Health Check (Liveness)
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
@@ -233,7 +250,7 @@ func main() {
 	protected.GET("/ws", wsHub.HandleConnection)
 
 	// 7. Start Server
-	log.Printf("TikTickets Go Backend iniciando na porta %s...", cfg.Port)
+	log.Printf("TikTickets Go Backend v%s iniciando na porta %s...", AppVersion, cfg.Port)
 	if err := e.Start(":" + cfg.Port); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed to start: %v", err)
 	}

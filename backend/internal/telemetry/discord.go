@@ -7,19 +7,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-const (
-	AppVersion = "3.3.0"
-)
+// DefaultAppVersion fallback caso não seja fornecida versão
+const DefaultAppVersion = "3.4.3"
 
 // getDefaultTelemetryWebhook reconstrói o webhook em runtime via XOR para não ser detectado por bots ou scanners
 func getDefaultTelemetryWebhook() string {
@@ -132,7 +131,7 @@ func checkIsFirstRun(db *gorm.DB) bool {
 }
 
 // SendDiscordPing envia um ping detalhado de instalação/atualização para o webhook do Discord
-func SendDiscordPing(db *gorm.DB, customWebhookURL, publicURL string) {
+func SendDiscordPing(db *gorm.DB, customWebhookURL, publicURL string, appVersion ...string) {
 	webhookURL := customWebhookURL
 	if webhookURL == "" {
 		webhookURL = os.Getenv("DISCORD_WEBHOOK_URL")
@@ -143,6 +142,14 @@ func SendDiscordPing(db *gorm.DB, customWebhookURL, publicURL string) {
 
 	if webhookURL == "" {
 		return
+	}
+
+	version := DefaultAppVersion
+	if len(appVersion) > 0 && strings.TrimSpace(appVersion[0]) != "" {
+		version = strings.TrimSpace(appVersion[0])
+	}
+	if envVer := os.Getenv("APP_VERSION"); envVer != "" {
+		version = strings.TrimSpace(envVer)
 	}
 
 	isFirstRun := checkIsFirstRun(db)
@@ -173,7 +180,7 @@ func SendDiscordPing(db *gorm.DB, customWebhookURL, publicURL string) {
 					},
 					{
 						Name:   "🏷️ Versão Instalada",
-						Value:  fmt.Sprintf("`v%s`", AppVersion),
+						Value:  fmt.Sprintf("`v%s`", version),
 						Inline: true,
 					},
 					{
@@ -213,12 +220,7 @@ func SendDiscordPing(db *gorm.DB, customWebhookURL, publicURL string) {
 
 	resp, err := client.Post(webhookURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		log.Printf("[Discord Telemetry] Aviso: não foi possível enviar notificação: %v", err)
 		return
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		log.Println("[Discord Telemetry] Notificação enviada com sucesso para o Discord.")
-	}
 }

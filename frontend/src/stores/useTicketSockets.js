@@ -2,10 +2,23 @@ import { format } from 'date-fns'
 import { ConsultarTickets } from 'src/service/tickets'
 import checkTicketFilter from 'src/utils/checkTicketFilter'
 import { socketIO } from 'src/utils/socket'
+import alertSound from 'src/assets/sound.mp3'
 import { useTicketStore } from './useTicketStore'
 import { useAuthStore } from './useAuthStore'
 import { storeToRefs } from 'pinia'
 import { watch } from 'vue'
+
+let audioAlert = null
+function playAlertSound() {
+  try {
+    if (!audioAlert) {
+      audioAlert = new Audio(alertSound)
+    }
+    audioAlert.currentTime = 0
+    audioAlert.volume = 0.6
+    audioAlert.play().catch(() => {})
+  } catch (_) {}
+}
 
 export function useTicketSockets() {
   const store = useTicketStore()
@@ -45,19 +58,23 @@ export function useTicketSockets() {
 
       console.log('[Socket] Configurando sockets para Tenant:', usuario.tenantId)
 
+      socket.removeAllListeners('connect')
       socket.removeAllListeners(`${usuario.tenantId}:ticketList`)
       socket.removeAllListeners(`${usuario.tenantId}:contactList`)
       socket.removeAllListeners(`${usuario.tenantId}:ticket`)
 
       socket.on('connect', () => {
-        console.log('[Socket] Conectado! Emitindo joinNotification...')
+        console.log('[Socket] Conectado! Emitindo joinNotification e joinTickets...')
         socket.emit(`${usuario.tenantId}:joinNotification`)
+        socket.emit(`${usuario.tenantId}:joinTickets`)
         socket.emit(`${usuario.tenantId}:setUserActive`)
       })
 
-      // Se já estiver conectado, emite o join
+      // Se já estiver conectado, emite os joins
       if (socket.connected) {
         socket.emit(`${usuario.tenantId}:joinNotification`)
+        socket.emit(`${usuario.tenantId}:joinTickets`)
+        socket.emit(`${usuario.tenantId}:setUserActive`)
       }
 
       socket.on(`${usuario.tenantId}:ticketList`, async data => {
@@ -78,6 +95,15 @@ export function useTicketSockets() {
           else if (!isMe && !hasValidContact && data.payload.ticket && data.payload.ticket.contact) {
             console.log('[Socket] Injetando dados do TICKET no contato da mensagem')
             data.payload.contact = data.payload.ticket.contact
+          }
+
+          // Tocar som de notificação se a mensagem for do cliente e não estiver no chat focado em primeiro plano
+          if (!data.payload.fromMe) {
+            const isDifferentTicket = String(data.payload.ticket?.id) !== String(store.ticketFocado.id)
+            const isTabHidden = typeof document !== 'undefined' && document.hidden
+            if (isDifferentTicket || isTabHidden) {
+              playAlertSound()
+            }
           }
 
           // Verifica se é para mim ou se é do cliente (não enviado por mim)
@@ -170,8 +196,9 @@ export function useTicketSockets() {
       })
 
       socket.on(`${usuario.tenantId}:ticket`, data => {
-        if (data.action === 'update' && data.ticket.userId === userId) {
-          if (data.ticket.status === 'open' && !data.ticket.isTransference) {
+        if (data.action === 'update' && data.ticket) {
+          store.updateTicket(data.ticket)
+          if (data.ticket.userId === userId && data.ticket.status === 'open' && !data.ticket.isTransference) {
             store.setTicketFocado(data.ticket)
           }
         }
@@ -180,6 +207,21 @@ export function useTicketSockets() {
 
     // Inicializa
     connect()
+
+    // Atualiza o título da aba com o contador de tickets/mensagens pendentes e abertos
+    watch(
+      () => [store.ticketsCount.open, store.ticketsCount.pending],
+      ([open, pending]) => {
+        if (typeof document === 'undefined') return
+        const total = (open || 0) + (pending || 0)
+        if (total > 0) {
+          document.title = `(${total}) TikTickets Atendimento`
+        } else {
+          document.title = 'TikTickets Atendimento'
+        }
+      },
+      { immediate: true }
+    )
 
     // Reage a mudanças no usuário
     watch(user, (newUser) => {

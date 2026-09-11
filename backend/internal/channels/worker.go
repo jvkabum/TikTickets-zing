@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,6 +30,9 @@ type Worker interface {
 	StartSession(ctx context.Context, channelID uint, tenantID uint) error
 	StopSession(channelID uint) error
 	SendMessage(ctx context.Context, channelID uint, toJID string, text string) (string, error)
+	SendMessageReply(ctx context.Context, channelID uint, toJID string, text string, quotedID, quotedParticipant, quotedText string) (string, error)
+	SendMedia(ctx context.Context, channelID uint, toJID string, data []byte, filename string, mimeType string, mediaType string, caption string) (string, error)
+	SendMediaReply(ctx context.Context, channelID uint, toJID string, data []byte, filename string, mimeType string, mediaType string, caption string, quotedID, quotedParticipant, quotedText string) (string, error)
 	SendPoll(ctx context.Context, channelID uint, toJID string, question string, options []string, maxSelections int) (string, error)
 	RevokeMessage(ctx context.Context, channelID uint, toJID string, msgID string) error
 	SyncContacts(ctx context.Context, tenantID uint) (int64, error)
@@ -37,6 +43,8 @@ type WhatsmeowWorker struct {
 	repo           Repository
 	clients        map[uint]*whatsmeow.Client
 	clientsMutex   sync.RWMutex
+	channelLocks   sync.Map // Mutex granular por channelID para evitar contenção global em chamadas I/O
+	ticketLocks    sync.Map // Mutex granular por tenantID:contactID para evitar condição de corrida de tickets
 	storeContainer *sqlstore.Container
 	wsHub          *WsHub
 	db             *gorm.DB
@@ -62,10 +70,17 @@ func NewWhatsmeowWorker(repo Repository, dbURI string, wsHub *WsHub, db *gorm.DB
 }
 
 func (w *WhatsmeowWorker) StartSession(ctx context.Context, channelID uint, tenantID uint) error {
-	w.clientsMutex.Lock()
-	defer w.clientsMutex.Unlock()
+	// 1. Lock granular específico para o canal, permitindo que outros canais conectem/desconectem em paralelo
+	actualLock, _ := w.channelLocks.LoadOrStore(channelID, &sync.Mutex{})
+	chLock := actualLock.(*sync.Mutex)
+	chLock.Lock()
+	defer chLock.Unlock()
 
-	if client, exists := w.clients[channelID]; exists && client != nil {
+	w.clientsMutex.RLock()
+	client, exists := w.clients[channelID]
+	w.clientsMutex.RUnlock()
+
+	if exists && client != nil {
 		if !client.IsConnected() {
 			_ = client.Connect()
 		}
@@ -79,60 +94,37 @@ func (w *WhatsmeowWorker) StartSession(ctx context.Context, channelID uint, tena
 
 	var deviceStore *store.Device
 
-	// 1. Tentar obter pelo JID gravado na session
+	// 2. Tentar obter pelo JID gravado exclusivamente na session deste canal
 	if channel.Session != "" {
 		jid, parseErr := types.ParseJID(channel.Session)
 		if parseErr == nil {
 			deviceStore, err = w.storeContainer.GetDevice(context.Background(), jid)
 			if err != nil {
-				log.Printf("Erro ao obter device para JID %s: %v", jid, err)
+				log.Printf("Erro ao obter device para JID %s do canal %d: %v", jid, channelID, err)
 			}
 		}
 	}
 
-	// 2. Se não encontrou por Session, tentar reutilizar algum device pareado existente no container
+	// 3. SEGURANÇA MULTI-TENANT: Nunca varrer ou sequestrar devices órfãos de outros tenants.
+	// Se não possui sessão cadastrada, cria um novo device isolado exclusivamente para este canal.
 	if deviceStore == nil || deviceStore.ID == nil {
-		devices, _ := w.storeContainer.GetAllDevices(context.Background())
-		for _, dev := range devices {
-			if dev != nil && dev.ID != nil {
-				// Verifica se esse device já está em uso por outro canal
-				inUse := false
-				for chID, cl := range w.clients {
-					if chID != channelID && cl != nil && cl.Store != nil && cl.Store.ID != nil && cl.Store.ID.String() == dev.ID.String() {
-						inUse = true
-						break
-					}
-				}
-				if !inUse {
-					deviceStore = dev
-					channel.Session = dev.ID.String()
-					channel.Number = dev.ID.User
-					log.Printf("Associando device existente %s ao canal %d", dev.ID.String(), channelID)
-					_ = w.repo.Update(ctx, channel)
-					break
-				}
-			}
-		}
-	}
-
-	if deviceStore == nil {
-		log.Printf("Criando novo device para o canal %d", channelID)
+		log.Printf("Criando novo device dedicado para o canal %d (tenant %d)", channelID, tenantID)
 		deviceStore = w.storeContainer.NewDevice()
 	} else {
-		log.Printf("Reutilizando device %s para o canal %d", deviceStore.ID, channelID)
+		log.Printf("Reutilizando device %s associado à sessão do canal %d", deviceStore.ID, channelID)
 	}
 
 	clientLog := waLog.Stdout(fmt.Sprintf("Client-%d", channelID), "INFO", true)
-	client := whatsmeow.NewClient(deviceStore, clientLog)
+	newClient := whatsmeow.NewClient(deviceStore, clientLog)
 
-	client.AddEventHandler(func(evt interface{}) {
+	newClient.AddEventHandler(func(evt interface{}) {
 		w.eventHandler(channel, evt)
 	})
 
-	if client.Store.ID == nil {
+	if newClient.Store.ID == nil {
 		// Device não pareado, solicitando QR Code
-		qrChan, _ := client.GetQRChannel(context.Background())
-		err = client.Connect()
+		qrChan, _ := newClient.GetQRChannel(context.Background())
+		err = newClient.Connect()
 		if err != nil {
 			return err
 		}
@@ -144,7 +136,7 @@ func (w *WhatsmeowWorker) StartSession(ctx context.Context, channelID uint, tena
 
 					channel.Qrcode = evt.Code
 					channel.Status = "qrcode"
-					_ = w.repo.Update(ctx, channel)
+					_ = w.repo.Update(context.Background(), channel)
 
 					payload := map[string]interface{}{
 						"action":  "update",
@@ -156,16 +148,16 @@ func (w *WhatsmeowWorker) StartSession(ctx context.Context, channelID uint, tena
 					log.Printf("QR Code lido com sucesso [Canal %d]! Conectado.", channelID)
 					channel.Status = "CONNECTED"
 
-					if client.Store.ID != nil {
-						channel.Number = client.Store.ID.User
-						channel.Session = client.Store.ID.String()
-						picInfo, err := client.GetProfilePictureInfo(ctx, client.Store.ID.ToNonAD(), &whatsmeow.GetProfilePictureParams{})
+					if newClient.Store.ID != nil {
+						channel.Number = newClient.Store.ID.User
+						channel.Session = newClient.Store.ID.String()
+						picInfo, err := newClient.GetProfilePictureInfo(ctx, newClient.Store.ID.ToNonAD(), &whatsmeow.GetProfilePictureParams{})
 						if err == nil && picInfo != nil {
 							channel.ProfilePicUrl = picInfo.URL
 						}
 					}
 
-					_ = w.repo.Update(ctx, channel)
+					_ = w.repo.Update(context.Background(), channel)
 
 					w.wsHub.Broadcast(fmt.Sprintf("%d:whatsappSession", tenantID), map[string]interface{}{
 						"action":  "update",
@@ -177,7 +169,7 @@ func (w *WhatsmeowWorker) StartSession(ctx context.Context, channelID uint, tena
 				} else if evt.Event == "timeout" {
 					log.Printf("QR Code expirado [Canal %d]", channelID)
 					channel.Status = "DISCONNECTED"
-					_ = w.repo.Update(ctx, channel)
+					_ = w.repo.Update(context.Background(), channel)
 
 					w.wsHub.Broadcast(fmt.Sprintf("%d:whatsappSession", tenantID), map[string]interface{}{
 						"action":  "update",
@@ -189,38 +181,43 @@ func (w *WhatsmeowWorker) StartSession(ctx context.Context, channelID uint, tena
 			}
 		}()
 	} else {
-		// Sessão já existe, apenas reconecta silenciosamente
-		err = client.Connect()
+		// Sessão já existe, apenas reconecta silenciosamente sem travar o worker
+		err = newClient.Connect()
 		if err != nil {
 			return err
 		}
-		log.Printf("Sessão Whatsmeow auto-reconectada para o canal %d (Número: %s)", channelID, client.Store.ID.User)
+		log.Printf("Sessão Whatsmeow auto-reconectada para o canal %d (Número: %s)", channelID, newClient.Store.ID.User)
 		channel.Status = "CONNECTED"
-		if client.Store.ID != nil {
-			channel.Session = client.Store.ID.String()
-			channel.Number = client.Store.ID.User
+		if newClient.Store.ID != nil {
+			channel.Session = newClient.Store.ID.String()
+			channel.Number = newClient.Store.ID.User
 		}
-		_ = w.repo.Update(ctx, channel)
+		_ = w.repo.Update(context.Background(), channel)
 
 		// Sincroniza contatos com reforço
 		w.scheduleContactSync(tenantID)
 	}
 
-	w.clients[channelID] = client
+	w.clientsMutex.Lock()
+	w.clients[channelID] = newClient
+	w.clientsMutex.Unlock()
 	return nil
 }
 
 func (w *WhatsmeowWorker) StopSession(channelID uint) error {
+	actualLock, _ := w.channelLocks.LoadOrStore(channelID, &sync.Mutex{})
+	chLock := actualLock.(*sync.Mutex)
+	chLock.Lock()
+	defer chLock.Unlock()
+
 	w.clientsMutex.Lock()
-	defer w.clientsMutex.Unlock()
-
 	client, exists := w.clients[channelID]
-	if !exists {
-		return nil
-	}
-
-	client.Disconnect()
 	delete(w.clients, channelID)
+	w.clientsMutex.Unlock()
+
+	if exists && client != nil {
+		client.Disconnect()
+	}
 	log.Printf("Sessão Whatsmeow parada graciosamente para o canal %d", channelID)
 	return nil
 }
@@ -292,6 +289,13 @@ func (w *WhatsmeowWorker) eventHandler(channel *Whatsapp, evt interface{}) {
 			ackLevel = 3
 			statusStr = "received"
 		default:
+			ackLevel = 2
+			statusStr = "delivered"
+		}
+
+		// Em grupos do WhatsApp, a leitura por um participante individual não deve marcar como "lida por todos"
+		isGroupChat := v.Chat.Server == types.GroupServer || strings.HasSuffix(v.Chat.String(), "@g.us")
+		if isGroupChat && ackLevel == 3 {
 			ackLevel = 2
 			statusStr = "delivered"
 		}
@@ -420,6 +424,8 @@ func extractMessageBody(msg *waE2E.Message) (body string, mediaType string) {
 		title := "📄 Documento"
 		if msg.DocumentMessage.Title != nil && *msg.DocumentMessage.Title != "" {
 			title = "📄 " + *msg.DocumentMessage.Title
+		} else if msg.DocumentMessage.FileName != nil && *msg.DocumentMessage.FileName != "" {
+			title = "📄 " + *msg.DocumentMessage.FileName
 		}
 		return title, "document"
 	}
@@ -433,15 +439,155 @@ func extractMessageBody(msg *waE2E.Message) (body string, mediaType string) {
 		}
 		return name, "contact"
 	}
-	return "", "chat"
+	if msg.ContactsArrayMessage != nil {
+		return fmt.Sprintf("👥 %d contatos compartilhados", len(msg.ContactsArrayMessage.Contacts)), "contact"
+	}
+	if msg.LocationMessage != nil {
+		locName := msg.LocationMessage.GetName()
+		if locName != "" {
+			return "📍 Localização: " + locName, "location"
+		}
+		return fmt.Sprintf("📍 Localização (%.6f, %.6f)", msg.LocationMessage.GetDegreesLatitude(), msg.LocationMessage.GetDegreesLongitude()), "location"
+	}
+	if msg.LiveLocationMessage != nil {
+		return "📍 Localização em tempo real", "location"
+	}
+	if msg.ProtocolMessage != nil && msg.ProtocolMessage.Type != nil {
+		if msg.ProtocolMessage.GetType() == waE2E.ProtocolMessage_REVOKE {
+			return "🚫 Mensagem apagada", "revoked"
+		}
+	}
+	if msg.ReactionMessage != nil && msg.ReactionMessage.Text != nil {
+		return "Reação: " + *msg.ReactionMessage.Text, "reaction"
+	}
+
+	// Não descarta silenciosamente tipos não mapeados
+	log.Printf("[extractMessageBody] Mensagem recebida em formato não tratado nativamente")
+	return "ℹ️ [Mensagem em formato especial]", "unsupported"
+}
+
+// extractContextInfo extrai ContextInfo de qualquer tipo de mensagem recebida
+func extractContextInfo(msg *waE2E.Message) *waE2E.ContextInfo {
+	if msg == nil {
+		return nil
+	}
+	if msg.ExtendedTextMessage != nil && msg.ExtendedTextMessage.ContextInfo != nil {
+		return msg.ExtendedTextMessage.ContextInfo
+	}
+	if msg.ImageMessage != nil && msg.ImageMessage.ContextInfo != nil {
+		return msg.ImageMessage.ContextInfo
+	}
+	if msg.VideoMessage != nil && msg.VideoMessage.ContextInfo != nil {
+		return msg.VideoMessage.ContextInfo
+	}
+	if msg.AudioMessage != nil && msg.AudioMessage.ContextInfo != nil {
+		return msg.AudioMessage.ContextInfo
+	}
+	if msg.DocumentMessage != nil && msg.DocumentMessage.ContextInfo != nil {
+		return msg.DocumentMessage.ContextInfo
+	}
+	if msg.StickerMessage != nil && msg.StickerMessage.ContextInfo != nil {
+		return msg.StickerMessage.ContextInfo
+	}
+	return nil
+}
+
+// downloadMediaAndSave realiza o download real da mídia recebida via Whatsmeow e salva em disco
+func (w *WhatsmeowWorker) downloadMediaAndSave(ctx context.Context, client *whatsmeow.Client, msg *waE2E.Message, mediaType string, tenantID uint) (*string, *string, error) {
+	if client == nil || msg == nil {
+		return nil, nil, fmt.Errorf("cliente whatsmeow ou mensagem nula")
+	}
+
+	var data []byte
+	var err error
+	var filename string
+	var ext string
+
+	switch mediaType {
+	case "image":
+		if img := msg.GetImageMessage(); img != nil {
+			data, err = client.Download(ctx, img)
+			ext = ".jpg"
+			if strings.Contains(img.GetMimetype(), "png") {
+				ext = ".png"
+			} else if strings.Contains(img.GetMimetype(), "webp") {
+				ext = ".webp"
+			}
+			filename = fmt.Sprintf("img_%d_%s%s", time.Now().Unix(), uuid.New().String()[:8], ext)
+		}
+	case "audio":
+		if aud := msg.GetAudioMessage(); aud != nil {
+			data, err = client.Download(ctx, aud)
+			ext = ".ogg"
+			if strings.Contains(aud.GetMimetype(), "mp3") || strings.Contains(aud.GetMimetype(), "mpeg") {
+				ext = ".mp3"
+			} else if strings.Contains(aud.GetMimetype(), "mp4") || strings.Contains(aud.GetMimetype(), "m4a") {
+				ext = ".m4a"
+			}
+			filename = fmt.Sprintf("aud_%d_%s%s", time.Now().Unix(), uuid.New().String()[:8], ext)
+		}
+	case "video":
+		if vid := msg.GetVideoMessage(); vid != nil {
+			data, err = client.Download(ctx, vid)
+			ext = ".mp4"
+			filename = fmt.Sprintf("vid_%d_%s%s", time.Now().Unix(), uuid.New().String()[:8], ext)
+		}
+	case "document":
+		if doc := msg.GetDocumentMessage(); doc != nil {
+			data, err = client.Download(ctx, doc)
+			origName := doc.GetFileName()
+			if origName != "" {
+				ext = filepath.Ext(origName)
+				cleanName := strings.TrimSuffix(filepath.Base(origName), ext)
+				filename = fmt.Sprintf("doc_%d_%s_%s%s", time.Now().Unix(), uuid.New().String()[:8], cleanName, ext)
+			} else {
+				ext = ".bin"
+				filename = fmt.Sprintf("doc_%d_%s%s", time.Now().Unix(), uuid.New().String()[:8], ext)
+			}
+		}
+	case "sticker":
+		if stk := msg.GetStickerMessage(); stk != nil {
+			data, err = client.Download(ctx, stk)
+			ext = ".webp"
+			filename = fmt.Sprintf("stk_%d_%s%s", time.Now().Unix(), uuid.New().String()[:8], ext)
+		}
+	default:
+		return nil, nil, nil
+	}
+
+	if err != nil {
+		log.Printf("[WhatsmeowWorker] Erro ao baixar mídia do WhatsApp (%s): %v", mediaType, err)
+		return nil, nil, err
+	}
+
+	if len(data) == 0 {
+		return nil, nil, fmt.Errorf("dados de mídia vazios")
+	}
+
+	uploadDir := filepath.Join("public", "uploads", "whatsapp", fmt.Sprintf("%d", tenantID))
+	if errMk := os.MkdirAll(uploadDir, 0755); errMk != nil {
+		log.Printf("[WhatsmeowWorker] Falha ao criar diretório de uploads: %v", errMk)
+		return nil, nil, errMk
+	}
+
+	destPath := filepath.Join(uploadDir, filename)
+	if errWrite := os.WriteFile(destPath, data, 0644); errWrite != nil {
+		log.Printf("[WhatsmeowWorker] Falha ao gravar mídia em disco: %v", errWrite)
+		return nil, nil, errWrite
+	}
+
+	urlPath := fmt.Sprintf("/public/uploads/whatsapp/%d/%s", tenantID, filename)
+	return &urlPath, &filename, nil
 }
 
 // handleIncomingMessage processa integralmente a mensagem recebida pelo Whatsmeow:
 // 1. Identifica remetente e chat
-// 2. Cria ou atualiza o Contato no banco
-// 3. Busca ou cria o Ticket em aberto
-// 4. Salva o registro da Mensagem
-// 5. Emite os broadcasts WebSocket para o frontend atualizar chat e lista em tempo real
+// 2. Garante deduplicação por MessageID e TenantID
+// 3. Cria ou atualiza o Contato no banco
+// 4. Busca ou cria o Ticket em aberto com lock de concorrência por contato
+// 5. Baixa o binário de mídias e preenche MediaUrl
+// 6. Salva o registro da Mensagem
+// 7. Emite os broadcasts WebSocket para o frontend atualizar chat e lista em tempo real
 func (w *WhatsmeowWorker) handleIncomingMessage(channel *Whatsapp, evt *events.Message) {
 	if w.db == nil {
 		log.Printf("[Canal %d] Banco de dados não configurado no WhatsmeowWorker", channel.ID)
@@ -459,6 +605,18 @@ func (w *WhatsmeowWorker) handleIncomingMessage(channel *Whatsapp, evt *events.M
 			}
 		}
 		return
+	}
+
+	// Deduplicação: ignora se a mensagem já foi processada anteriormente neste tenant
+	msgID := evt.Info.ID
+	if msgID != "" {
+		var count int64
+		if errCheck := w.db.Model(&tickets.Message{}).Where("message_id = ? AND tenant_id = ?", msgID, channel.TenantID).Count(&count).Error; errCheck == nil && count > 0 {
+			log.Printf("[Canal %d] Mensagem duplicada ignorada: %s", channel.ID, msgID)
+			return
+		}
+	} else {
+		msgID = uuid.New().String()
 	}
 
 	body, mediaType := extractMessageBody(evt.Message)
@@ -516,9 +674,26 @@ func (w *WhatsmeowWorker) handleIncomingMessage(channel *Whatsapp, evt *events.M
 	log.Printf("[Canal %d / %s] Mensagem Recebida: %s (fromMe: %v, Contato ID: %d, LID: %s)",
 		channel.ID, contact.Number, body, fromMe, contact.ID, contact.LID)
 
+	// Download automático de mídias recebidas
+	var mediaUrl *string
+	var mediaName *string
+	if mediaType != "chat" && mediaType != "poll_creation" && client != nil {
+		mUrl, mName, errDl := w.downloadMediaAndSave(context.Background(), client, evt.Message, mediaType, channel.TenantID)
+		if errDl == nil && mUrl != nil {
+			mediaUrl = mUrl
+			mediaName = mName
+		}
+	}
+
 	now := time.Now()
 
-	// 2. Buscar ou criar o Ticket aberto/pendente
+	// 2. Lock de concorrência por contato para garantir que apenas um ticket seja aberto
+	contactKey := fmt.Sprintf("%d:%d", channel.TenantID, contact.ID)
+	actualTicketLock, _ := w.ticketLocks.LoadOrStore(contactKey, &sync.Mutex{})
+	ticketLock := actualTicketLock.(*sync.Mutex)
+	ticketLock.Lock()
+	defer ticketLock.Unlock()
+
 	var ticket tickets.Ticket
 	errTicket := w.db.Where("contact_id = ? AND tenant_id = ? AND status IN ('open', 'pending')", contact.ID, channel.TenantID).
 		Order("created_at DESC").
@@ -571,11 +746,6 @@ func (w *WhatsmeowWorker) handleIncomingMessage(channel *Whatsapp, evt *events.M
 	ticket.Contact = contact
 
 	// 3. Salvar a Mensagem em Messages
-	msgID := evt.Info.ID
-	if msgID == "" {
-		msgID = uuid.New().String()
-	}
-
 	statusMsg := "received"
 	if fromMe {
 		statusMsg = "sended"
@@ -595,21 +765,36 @@ func (w *WhatsmeowWorker) handleIncomingMessage(channel *Whatsapp, evt *events.M
 		mediaTypePtr = &mediaType
 	}
 
+	var quotedMsg *tickets.Message
+	var quotedMsgID *string
+	if ctxInfo := extractContextInfo(evt.Message); ctxInfo != nil && ctxInfo.GetStanzaID() != "" {
+		stanzaID := ctxInfo.GetStanzaID()
+		var qMsg tickets.Message
+		if errFindQ := w.db.Where("message_id = ? AND tenant_id = ?", stanzaID, channel.TenantID).First(&qMsg).Error; errFindQ == nil {
+			quotedMsg = &qMsg
+			quotedMsgID = &qMsg.ID
+		}
+	}
+
 	msgRecord := tickets.Message{
-		ID:        uuid.New().String(),
-		MessageID: msgID,
-		TicketID:  ticket.ID,
-		TenantID:  channel.TenantID,
-		Body:      body,
-		PollData:  pollDataJSON,
-		MediaType: mediaTypePtr,
-		FromMe:    fromMe,
-		Read:      fromMe,
-		SendType:  mediaType,
-		Status:    statusMsg,
-		Ack:       1,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:          uuid.New().String(),
+		MessageID:   msgID,
+		TicketID:    ticket.ID,
+		TenantID:    channel.TenantID,
+		Body:        body,
+		PollData:    pollDataJSON,
+		MediaType:   mediaTypePtr,
+		MediaUrl:    mediaUrl,
+		MediaName:   mediaName,
+		FromMe:      fromMe,
+		Read:        fromMe,
+		SendType:    mediaType,
+		Status:      statusMsg,
+		Ack:         1,
+		QuotedMsgID: quotedMsgID,
+		QuotedMsg:   quotedMsg,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	if errSaveMsg := w.db.Create(&msgRecord).Error; errSaveMsg != nil {
@@ -630,21 +815,25 @@ func (w *WhatsmeowWorker) handleIncomingMessage(channel *Whatsapp, evt *events.M
 		w.wsHub.Broadcast(fmt.Sprintf("%d:ticketList", channel.TenantID), map[string]interface{}{
 			"type": "chat:create",
 			"payload": map[string]interface{}{
-				"id":        msgRecord.ID,
-				"messageId": msgRecord.MessageID,
-				"body":      msgRecord.Body,
-				"ack":       msgRecord.Ack,
-				"status":    msgRecord.Status,
-				"pollData":  msgRecord.PollData,
-				"mediaType": msgRecord.MediaType,
-				"fromMe":    msgRecord.FromMe,
-				"read":      msgRecord.Read,
-				"sendType":  msgRecord.SendType,
-				"ticketId":  ticket.ID,
-				"tenantId":  channel.TenantID,
-				"createdAt": msgRecord.CreatedAt,
-				"ticket":    ticket,
-				"contact":   contact,
+				"id":          msgRecord.ID,
+				"messageId":   msgRecord.MessageID,
+				"body":        msgRecord.Body,
+				"ack":         msgRecord.Ack,
+				"status":      msgRecord.Status,
+				"pollData":    msgRecord.PollData,
+				"mediaType":   msgRecord.MediaType,
+				"mediaUrl":    msgRecord.MediaUrl,
+				"mediaName":   msgRecord.MediaName,
+				"fromMe":      msgRecord.FromMe,
+				"read":        msgRecord.Read,
+				"sendType":    msgRecord.SendType,
+				"ticketId":    ticket.ID,
+				"tenantId":    channel.TenantID,
+				"createdAt":   msgRecord.CreatedAt,
+				"quotedMsg":   msgRecord.QuotedMsg,
+				"quotedMsgId": msgRecord.QuotedMsgID,
+				"ticket":      ticket,
+				"contact":     contact,
 			},
 		})
 
@@ -803,68 +992,93 @@ func (w *WhatsmeowWorker) scheduleContactSync(tenantID uint) {
 	}()
 }
 
-func (w *WhatsmeowWorker) getOrConnectClient(ctx context.Context, channelID uint) (*whatsmeow.Client, error) {
-	w.clientsMutex.RLock()
-	client, exists := w.clients[channelID]
-	w.clientsMutex.RUnlock()
-
-	if exists && client != nil {
-		if !client.IsConnected() {
-			_ = client.Connect()
-		}
-		return client, nil
+func (w *WhatsmeowWorker) getOrConnectClient(ctx context.Context, channelID uint, tenantIDs ...uint) (*whatsmeow.Client, error) {
+	var tid uint
+	if len(tenantIDs) > 0 {
+		tid = tenantIDs[0]
 	}
 
-	// 1. Tentar auto-iniciar a sessão do canal solicitado se existir no banco
-	if w.db != nil && channelID > 0 {
+	// Se tid não foi fornecido e channelID > 0, busca o tenant_id real deste canal no banco
+	if tid == 0 && channelID > 0 && w.db != nil {
 		var ch Whatsapp
-		if err := w.db.WithContext(ctx).First(&ch, "id = ?", channelID).Error; err == nil {
-			log.Printf("[WhatsmeowWorker] Canal %d não estava em memória, auto-iniciando sessão...", channelID)
-			if errStart := w.StartSession(ctx, channelID, ch.TenantID); errStart == nil {
-				w.clientsMutex.RLock()
-				client = w.clients[channelID]
-				w.clientsMutex.RUnlock()
-				if client != nil {
-					if !client.IsConnected() {
-						_ = client.Connect()
+		if err := w.db.WithContext(ctx).Select("tenant_id").First(&ch, "id = ?", channelID).Error; err == nil {
+			tid = ch.TenantID
+		}
+	}
+
+	// 1. Se channelID > 0, tentar obter ou conectar o canal solicitado
+	if channelID > 0 {
+		w.clientsMutex.RLock()
+		client, exists := w.clients[channelID]
+		w.clientsMutex.RUnlock()
+
+		if exists && client != nil {
+			if !client.IsConnected() {
+				_ = client.Connect()
+			}
+			return client, nil
+		}
+
+		if w.db != nil {
+			var ch Whatsapp
+			query := w.db.WithContext(ctx).Where("id = ?", channelID)
+			if tid > 0 {
+				query = query.Where("tenant_id = ?", tid)
+			}
+			if err := query.First(&ch).Error; err == nil {
+				log.Printf("[WhatsmeowWorker] Canal %d não estava em memória, auto-iniciando sessão...", channelID)
+				if errStart := w.StartSession(ctx, channelID, ch.TenantID); errStart == nil {
+					w.clientsMutex.RLock()
+					client = w.clients[channelID]
+					w.clientsMutex.RUnlock()
+					if client != nil {
+						if !client.IsConnected() {
+							_ = client.Connect()
+						}
+						return client, nil
 					}
-					return client, nil
 				}
 			}
 		}
 	}
 
-	// 2. Fallback: procurar qualquer outro canal já conectado no pool
-	w.clientsMutex.RLock()
-	for _, c := range w.clients {
-		if c != nil && c.IsConnected() {
-			client = c
-			break
-		}
-	}
-	w.clientsMutex.RUnlock()
-
-	if client != nil {
-		return client, nil
+	// SEGURANÇA MULTI-TENANT CRÍTICA:
+	// Se não conseguimos determinar o tenant da operação, NUNCA emprestar canais de outro tenant!
+	if tid == 0 {
+		return nil, fmt.Errorf("canal %d não encontrado ou tenant não identificado", channelID)
 	}
 
-	// 3. Fallback: se nenhum cliente ativo em memória, tentar auto-iniciar o primeiro canal com sessão no banco
+	// 2. Fallback ESTRITAMENTE dentro do mesmo tenant:
+	// Procurar outro canal conectado que pertença comprovadamente a este tenant
 	if w.db != nil {
+		var tenantChannelIDs []uint
+		if errPluck := w.db.WithContext(ctx).Model(&Whatsapp{}).Where("tenant_id = ?", tid).Pluck("id", &tenantChannelIDs).Error; errPluck == nil && len(tenantChannelIDs) > 0 {
+			w.clientsMutex.RLock()
+			for _, chID := range tenantChannelIDs {
+				if c, ok := w.clients[chID]; ok && c != nil && c.IsConnected() {
+					w.clientsMutex.RUnlock()
+					return c, nil
+				}
+			}
+			w.clientsMutex.RUnlock()
+		}
+
+		// 3. Fallback: tentar auto-iniciar canal ativo deste mesmo tenant no banco
 		var activeCh Whatsapp
-		if err := w.db.WithContext(ctx).Where("status = 'CONNECTED' OR session != ''").Order("is_default DESC, id ASC").First(&activeCh).Error; err == nil {
-			log.Printf("[WhatsmeowWorker] Auto-iniciando canal ativo de fallback %d (%s)...", activeCh.ID, activeCh.Name)
-			if errStart := w.StartSession(ctx, activeCh.ID, activeCh.TenantID); errStart == nil {
+		if err := w.db.WithContext(ctx).Where("tenant_id = ? AND (status = 'CONNECTED' OR session != '')", tid).Order("is_default DESC, id ASC").First(&activeCh).Error; err == nil {
+			log.Printf("[WhatsmeowWorker] Auto-iniciando canal de fallback %d para o tenant %d...", activeCh.ID, tid)
+			if errStart := w.StartSession(ctx, activeCh.ID, tid); errStart == nil {
 				w.clientsMutex.RLock()
-				client = w.clients[activeCh.ID]
+				fallbackClient := w.clients[activeCh.ID]
 				w.clientsMutex.RUnlock()
-				if client != nil {
-					return client, nil
+				if fallbackClient != nil {
+					return fallbackClient, nil
 				}
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("whatsapp não conectado. Verifique o status da conexão em Canais")
+	return nil, fmt.Errorf("whatsapp não conectado para o tenant %d. Verifique o status da conexão em Canais", tid)
 }
 
 func (w *WhatsmeowWorker) AutoStartSessions(ctx context.Context) {
@@ -891,6 +1105,10 @@ func (w *WhatsmeowWorker) AutoStartSessions(ctx context.Context) {
 }
 
 func (w *WhatsmeowWorker) SendMessage(ctx context.Context, channelID uint, toJID string, text string) (string, error) {
+	return w.SendMessageReply(ctx, channelID, toJID, text, "", "", "")
+}
+
+func (w *WhatsmeowWorker) SendMessageReply(ctx context.Context, channelID uint, toJID string, text string, quotedID, quotedParticipant, quotedText string) (string, error) {
 	client, err := w.getOrConnectClient(ctx, channelID)
 	if err != nil {
 		return "", err
@@ -901,11 +1119,168 @@ func (w *WhatsmeowWorker) SendMessage(ctx context.Context, channelID uint, toJID
 		return "", err
 	}
 
-	resp, err := client.SendMessage(ctx, parsedJID, &waE2E.Message{
-		Conversation: proto.String(text),
-	})
+	var msg *waE2E.Message
+	if quotedID != "" {
+		ctxInfo := &waE2E.ContextInfo{
+			StanzaID: proto.String(quotedID),
+		}
+		if quotedParticipant != "" {
+			ctxInfo.Participant = proto.String(quotedParticipant)
+		}
+		if quotedText != "" {
+			ctxInfo.QuotedMessage = &waE2E.Message{
+				Conversation: proto.String(quotedText),
+			}
+		}
+		msg = &waE2E.Message{
+			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
+				Text:        proto.String(text),
+				ContextInfo: ctxInfo,
+			},
+		}
+	} else {
+		msg = &waE2E.Message{
+			Conversation: proto.String(text),
+		}
+	}
+
+	resp, err := client.SendMessage(ctx, parsedJID, msg)
 	if err != nil {
 		return "", err
+	}
+	return resp.ID, nil
+}
+
+func (w *WhatsmeowWorker) SendMedia(ctx context.Context, channelID uint, toJID string, data []byte, filename string, mimeType string, mediaType string, caption string) (string, error) {
+	return w.SendMediaReply(ctx, channelID, toJID, data, filename, mimeType, mediaType, caption, "", "", "")
+}
+
+func (w *WhatsmeowWorker) SendMediaReply(ctx context.Context, channelID uint, toJID string, data []byte, filename string, mimeType string, mediaType string, caption string, quotedID, quotedParticipant, quotedText string) (string, error) {
+	client, err := w.getOrConnectClient(ctx, channelID)
+	if err != nil {
+		return "", err
+	}
+
+	parsedJID, err := types.ParseJID(toJID)
+	if err != nil {
+		return "", err
+	}
+
+	var appType whatsmeow.MediaType
+	switch mediaType {
+	case "image":
+		appType = whatsmeow.MediaImage
+	case "video":
+		appType = whatsmeow.MediaVideo
+	case "audio":
+		appType = whatsmeow.MediaAudio
+	default:
+		appType = whatsmeow.MediaDocument
+	}
+
+	uploaded, err := client.Upload(ctx, data, appType)
+	if err != nil {
+		return "", fmt.Errorf("falha ao enviar mídia para o WhatsApp: %w", err)
+	}
+
+	var captionPtr *string
+	if caption != "" {
+		captionPtr = proto.String(caption)
+	}
+
+	var ctxInfo *waE2E.ContextInfo
+	if quotedID != "" {
+		ctxInfo = &waE2E.ContextInfo{
+			StanzaID: proto.String(quotedID),
+		}
+		if quotedParticipant != "" {
+			ctxInfo.Participant = proto.String(quotedParticipant)
+		}
+		if quotedText != "" {
+			ctxInfo.QuotedMessage = &waE2E.Message{
+				Conversation: proto.String(quotedText),
+			}
+		}
+	}
+
+	var msg *waE2E.Message
+	switch mediaType {
+	case "image":
+		if mimeType == "" {
+			mimeType = "image/jpeg"
+		}
+		msg = &waE2E.Message{
+			ImageMessage: &waE2E.ImageMessage{
+				URL:           proto.String(uploaded.URL),
+				DirectPath:    proto.String(uploaded.DirectPath),
+				MediaKey:      uploaded.MediaKey,
+				Mimetype:      proto.String(mimeType),
+				FileEncSHA256: uploaded.FileEncSHA256,
+				FileSHA256:    uploaded.FileSHA256,
+				FileLength:    proto.Uint64(uint64(len(data))),
+				Caption:       captionPtr,
+				ContextInfo:   ctxInfo,
+			},
+		}
+	case "video":
+		if mimeType == "" {
+			mimeType = "video/mp4"
+		}
+		msg = &waE2E.Message{
+			VideoMessage: &waE2E.VideoMessage{
+				URL:           proto.String(uploaded.URL),
+				DirectPath:    proto.String(uploaded.DirectPath),
+				MediaKey:      uploaded.MediaKey,
+				Mimetype:      proto.String(mimeType),
+				FileEncSHA256: uploaded.FileEncSHA256,
+				FileSHA256:    uploaded.FileSHA256,
+				FileLength:    proto.Uint64(uint64(len(data))),
+				Caption:       captionPtr,
+				ContextInfo:   ctxInfo,
+			},
+		}
+	case "audio":
+		if mimeType == "" {
+			mimeType = "audio/ogg; codecs=opus"
+		}
+		isPTT := strings.Contains(mimeType, "ogg") || strings.Contains(mimeType, "opus")
+		msg = &waE2E.Message{
+			AudioMessage: &waE2E.AudioMessage{
+				URL:           proto.String(uploaded.URL),
+				DirectPath:    proto.String(uploaded.DirectPath),
+				MediaKey:      uploaded.MediaKey,
+				Mimetype:      proto.String(mimeType),
+				FileEncSHA256: uploaded.FileEncSHA256,
+				FileSHA256:    uploaded.FileSHA256,
+				FileLength:    proto.Uint64(uint64(len(data))),
+				PTT:           proto.Bool(isPTT),
+				ContextInfo:   ctxInfo,
+			},
+		}
+	default:
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+		msg = &waE2E.Message{
+			DocumentMessage: &waE2E.DocumentMessage{
+				URL:           proto.String(uploaded.URL),
+				DirectPath:    proto.String(uploaded.DirectPath),
+				MediaKey:      uploaded.MediaKey,
+				Mimetype:      proto.String(mimeType),
+				FileEncSHA256: uploaded.FileEncSHA256,
+				FileSHA256:    uploaded.FileSHA256,
+				FileLength:    proto.Uint64(uint64(len(data))),
+				Title:         proto.String(filename),
+				FileName:      proto.String(filename),
+				Caption:       captionPtr,
+				ContextInfo:   ctxInfo,
+			},
+		}
+	}
+
+	resp, err := client.SendMessage(ctx, parsedJID, msg)
+	if err != nil {
+		return "", fmt.Errorf("falha ao despachar mensagem de mídia no WhatsApp: %w", err)
 	}
 	return resp.ID, nil
 }

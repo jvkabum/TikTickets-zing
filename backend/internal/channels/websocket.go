@@ -2,18 +2,34 @@ package channels
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 )
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Permite origens durante a fase de transição
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
+		}
+		u, err := url.Parse(origin)
+		if err != nil {
+			return false
+		}
+		// Valida mesma origem, mesmo hostname ou ambiente local
+		reqHost := strings.Split(r.Host, ":")[0]
+		originHost := strings.Split(u.Host, ":")[0]
+		if strings.EqualFold(reqHost, originHost) ||
+			strings.HasPrefix(originHost, "localhost") ||
+			strings.HasPrefix(originHost, "127.0.0.1") {
+			return true
+		}
+		return false
 	},
 }
 
@@ -36,34 +52,28 @@ func NewWsHub() *WsHub {
 
 // HandleConnection lida com o upgrade do websocket e a vinculação da conexão ao tenant correspondente
 func (hub *WsHub) HandleConnection(c echo.Context) error {
+	// 1. Obter tenantID validado criptograficamente pelo middleware JWTAuth
+	tenantIDVal := c.Get("tenantId")
+	var tenantID uint
+	if tid, ok := tenantIDVal.(uint); ok {
+		tenantID = tid
+	} else if tidFloat, ok := tenantIDVal.(float64); ok {
+		tenantID = uint(tidFloat)
+	}
+
+	// Rejeição estrita se o tenant não foi autenticado pelo token JWT assinado
+	if tenantID == 0 {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Não autorizado: tenant não autenticado")
+	}
+
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		return err
 	}
 	defer ws.Close()
 
-	// Tenta extrair tenantId a partir do token na query param
-	var initialTenantID uint
-	tokenStr := c.QueryParam("token")
-	if tokenStr != "" {
-		parser := jwt.NewParser()
-		claims := jwt.MapClaims{}
-		if _, _, err := parser.ParseUnverified(tokenStr, claims); err == nil {
-			if tid, ok := claims["tenantId"].(float64); ok {
-				initialTenantID = uint(tid)
-			} else if tid, ok := claims["tenant_id"].(float64); ok {
-				initialTenantID = uint(tid)
-			}
-		}
-	}
-	if initialTenantID == 0 {
-		if tid, ok := c.Get("tenantId").(uint); ok {
-			initialTenantID = tid
-		}
-	}
-
 	hub.mu.Lock()
-	hub.clients[ws] = initialTenantID
+	hub.clients[ws] = tenantID
 	hub.mu.Unlock()
 
 	defer func() {
@@ -79,44 +89,25 @@ func (hub *WsHub) HandleConnection(c echo.Context) error {
 			break
 		}
 
-		// Ao receber comandos de inscrição com prefixo de tenant (ex: "1:joinNotification" ou "tenant:1:joinTickets")
-		// vincula o tenantID à conexão caso ainda não esteja associado
-		if msg.Type != "" {
-			var parsedTenantID uint
-			if strings.HasPrefix(msg.Type, "tenant:") {
-				parts := strings.Split(msg.Type, ":")
-				if len(parts) >= 2 {
-					if id, err := strconv.Atoi(parts[1]); err == nil && id > 0 {
-						parsedTenantID = uint(id)
-					}
-				}
-			} else if strings.Contains(msg.Type, ":") {
-				parts := strings.Split(msg.Type, ":")
-				if id, err := strconv.Atoi(parts[0]); err == nil && id > 0 {
-					parsedTenantID = uint(id)
-				}
-			}
-
-			if parsedTenantID > 0 {
-				hub.mu.Lock()
-				hub.clients[ws] = parsedTenantID
-				hub.mu.Unlock()
-			}
-		}
+		// SEGURANÇA: O tenantID da conexão é IMUTÁVEL e vinculado estritamente ao token assinado.
+		// Mensagens enviadas pelo cliente NÃO podem alterar o tenantID associado à conexão.
 	}
 	return nil
 }
 
 // BroadcastToTenant envia mensagem estritamente aos clientes de um tenant específico (Isolamento Multi-Tenant)
 func (hub *WsHub) BroadcastToTenant(tenantID uint, msgType string, payload interface{}) {
+	if tenantID == 0 {
+		return
+	}
 	msg := WsMessage{Type: msgType, Payload: payload}
 
 	hub.mu.RLock()
 	defer hub.mu.RUnlock()
 
 	for client, clientTenantID := range hub.clients {
-		// Entrega se a conexão pertencer ao tenant alvo ou se ainda não tiver tenant definido (broadcast inicial)
-		if tenantID == 0 || clientTenantID == tenantID || clientTenantID == 0 {
+		// Entrega estritamente se a conexão pertencer ao tenant alvo
+		if clientTenantID == tenantID {
 			if err := client.WriteJSON(msg); err != nil {
 				client.Close()
 			}
@@ -124,7 +115,7 @@ func (hub *WsHub) BroadcastToTenant(tenantID uint, msgType string, payload inter
 	}
 }
 
-// Broadcast analisa se a mensagem tem prefixo de tenant ou dispara broadcast geral mantendo isolamento
+// Broadcast analisa se a mensagem tem prefixo de tenant e dispara broadcast isolado por tenant
 func (hub *WsHub) Broadcast(msgType string, payload interface{}) {
 	// Se o nome do evento contiver o tenant (ex: "tenant:1:ticket" ou "1:whatsappSession"), extrai para segregar
 	var targetTenant uint
@@ -148,7 +139,7 @@ func (hub *WsHub) Broadcast(msgType string, payload interface{}) {
 		return
 	}
 
-	// Fallback para eventos globais
+	// Eventos globais sem tenant específico são emitidos a todos os clientes conectados
 	msg := WsMessage{Type: msgType, Payload: payload}
 
 	hub.mu.RLock()

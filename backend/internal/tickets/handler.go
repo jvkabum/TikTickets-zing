@@ -1,8 +1,17 @@
 package tickets
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -131,7 +140,7 @@ func (h *Handler) UpdateTicket(c echo.Context) error {
 		ticket.WhatsappID = updates.WhatsappID
 	}
 
-	if err := h.repo.Update(c.Request().Context(), ticket); err != nil {
+	if err := h.service.Update(c.Request().Context(), ticket); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Falha ao atualizar ticket"})
 	}
 	return c.JSON(http.StatusOK, ticket)
@@ -224,15 +233,103 @@ func (h *Handler) CreateMessage(c echo.Context) error {
 		msg.ID = formID
 	}
 
+	quotedMsgStr := c.FormValue("quotedMsg")
+	if quotedMsgStr != "" {
+		var qMsg Message
+		if errJSON := json.Unmarshal([]byte(quotedMsgStr), &qMsg); errJSON == nil {
+			if qMsg.ID != "" {
+				msg.QuotedMsgID = &qMsg.ID
+			}
+			msg.QuotedMsg = &qMsg
+		}
+	}
+
 	file, err := c.FormFile("medias")
 	if err != nil {
 		file, err = c.FormFile("media")
 	}
-	if err == nil {
-		mediaUrl := "/public/uploads/" + file.Filename
-		msg.MediaUrl = &mediaUrl
-		msg.MediaName = &file.Filename
-		msg.SendType = "media"
+	if err == nil && file != nil {
+		// Validação de segurança: limite de 50MB
+		const maxUploadSize = 50 * 1024 * 1024 // 50MB
+		if file.Size > maxUploadSize {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "arquivo excede o limite máximo permitido de 50MB"})
+		}
+
+		// Validação de segurança: bloquear extensões executáveis / scripts
+		ext := strings.ToLower(filepath.Ext(file.Filename))
+		blockedExtensions := map[string]bool{
+			".exe": true, ".bat": true, ".cmd": true, ".sh": true,
+			".php": true, ".phtml": true, ".pl": true, ".py": true,
+			".vbs": true, ".msi": true, ".dll": true, ".com": true,
+			".scr": true, ".jar": true, ".cgi": true,
+		}
+		if blockedExtensions[ext] {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "tipo de arquivo bloqueado por segurança"})
+		}
+
+		src, errOpen := file.Open()
+		if errOpen == nil {
+			defer src.Close()
+			data, errRead := io.ReadAll(src)
+			if errRead == nil && len(data) > 0 {
+				if int64(len(data)) > maxUploadSize {
+					return c.JSON(http.StatusBadRequest, map[string]string{"error": "arquivo excede o limite máximo permitido de 50MB"})
+				}
+
+				// Isolamento por tenant no sistema de arquivos
+				uploadDir := filepath.Join("public", "uploads", fmt.Sprintf("%d", tenantID))
+				_ = os.MkdirAll(uploadDir, 0755)
+
+				uniqueName := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), uuid.New().String()[:8], ext)
+				destPath := filepath.Join(uploadDir, uniqueName)
+				_ = os.WriteFile(destPath, data, 0644)
+
+				mediaUrl := fmt.Sprintf("/public/uploads/%d/%s", tenantID, uniqueName)
+				msg.MediaUrl = &mediaUrl
+				msg.MediaName = &file.Filename
+
+				mimeType := file.Header.Get("Content-Type")
+				if mimeType == "" || mimeType == "application/octet-stream" {
+					mimeType = http.DetectContentType(data)
+				}
+
+				// Forçar MIME correto com base na extensão caso o navegador envie octet-stream
+				switch ext {
+				case ".jpg", ".jpeg":
+					mimeType = "image/jpeg"
+				case ".png":
+					mimeType = "image/png"
+				case ".webp":
+					mimeType = "image/webp"
+				case ".gif":
+					mimeType = "image/gif"
+				case ".mp4":
+					mimeType = "video/mp4"
+				case ".mp3":
+					mimeType = "audio/mpeg"
+				case ".ogg":
+					mimeType = "audio/ogg"
+				case ".pdf":
+					mimeType = "application/pdf"
+				}
+
+				mediaType := "document"
+				if strings.HasPrefix(mimeType, "image/") || ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp" || ext == ".gif" {
+					mediaType = "image"
+				} else if strings.HasPrefix(mimeType, "video/") || ext == ".mp4" || ext == ".mkv" || ext == ".avi" {
+					mediaType = "video"
+				} else if strings.HasPrefix(mimeType, "audio/") || ext == ".mp3" || ext == ".ogg" || ext == ".wav" || ext == ".m4a" {
+					mediaType = "audio"
+				}
+				msg.MediaType = &mediaType
+				msg.SendType = mediaType
+
+				if errCreate := h.service.CreateMessageWithMedia(c.Request().Context(), tenantID, uint(ticketID), &msg, data, mimeType); errCreate != nil {
+					return c.JSON(http.StatusBadRequest, map[string]string{"error": errCreate.Error()})
+				}
+				return c.JSON(http.StatusCreated, msg)
+			}
+		}
 	}
 
 	if err := h.service.CreateMessage(c.Request().Context(), tenantID, uint(ticketID), &msg); err != nil {
@@ -255,7 +352,6 @@ func (h *Handler) DeleteMessage(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
 }
 
-// Stubs for missing routes
 func (h *Handler) GetTicketLogs(c echo.Context) error {
 	return c.JSON(http.StatusOK, []interface{}{})
 }
@@ -277,11 +373,55 @@ func (h *Handler) CloseProtocol(c echo.Context) error {
 }
 
 func (h *Handler) ForwardMessages(c echo.Context) error {
+	tenantID := c.Get("tenantId").(uint)
+
+	var payload struct {
+		Messages []struct {
+			ID        string `json:"id"`
+			MessageID string `json:"messageId"`
+		} `json:"messages"`
+		Contact struct {
+			ID uint `json:"id"`
+		} `json:"contact"`
+	}
+
+	if err := c.Bind(&payload); err != nil || payload.Contact.ID == 0 || len(payload.Messages) == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "parâmetros de encaminhamento inválidos"})
+	}
+
+	msgIDs := make([]string, 0, len(payload.Messages))
+	for _, m := range payload.Messages {
+		if m.ID != "" {
+			msgIDs = append(msgIDs, m.ID)
+		} else if m.MessageID != "" {
+			msgIDs = append(msgIDs, m.MessageID)
+		}
+	}
+
+	if err := h.service.ForwardMessages(c.Request().Context(), tenantID, msgIDs, payload.Contact.ID); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
 	return c.JSON(http.StatusOK, map[string]string{"status": "forwarded"})
 }
 
 func (h *Handler) EditMessage(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{"status": "edited"})
+	tenantID := c.Get("tenantId").(uint)
+	messageID := c.Param("messageId")
+
+	var payload struct {
+		Body string `json:"body"`
+	}
+	if err := c.Bind(&payload); err != nil || payload.Body == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "novo texto da mensagem inválido"})
+	}
+
+	updatedMsg, err := h.service.EditMessage(c.Request().Context(), tenantID, messageID, payload.Body)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, updatedMsg)
 }
 
 func (h *Handler) SyncPollMessage(c echo.Context) error {

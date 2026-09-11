@@ -28,7 +28,7 @@
     </template>
 
     <!-- Image -->
-    <template v-else-if="mediaType === 'image'">
+    <template v-else-if="isImage">
       <MediaViewer
         media-type="image"
         :media-url="sanitizedMediaUrl"
@@ -36,7 +36,7 @@
     </template>
 
     <!-- Video -->
-    <template v-else-if="mediaType === 'video'">
+    <template v-else-if="isVideo">
       <MediaViewer
         media-type="video"
         :media-url="sanitizedMediaUrl"
@@ -252,10 +252,34 @@ const emit = defineEmits(['open-contact-modal'])
 const showPdfDialog = ref(false)
 
 const sanitizedMediaUrl = computed(() => {
-  if (!props.mediaUrl) return ''
-  // Corrige URL malformada do tipo http://localhost:8082:443/public/...
-  // Remove a porta :443 duplicada que o backend está enviando
-  return props.mediaUrl.replace(/:(\d+):443\//, ':$1/')
+  let url = props.mediaUrl || ''
+  if (!url && props.mensagem?.mediaUrl) {
+    url = props.mensagem.mediaUrl
+  }
+  if (!url && props.mensagem?.body && /\.(jpg|jpeg|png|webp|gif|pdf|mp4|ogg|mp3)$/i.test(props.mensagem.body)) {
+    url = `/public/uploads/${props.mensagem.body}`
+  }
+  if (!url) return ''
+  url = url.replace(/:(\d+):443\//, ':$1/')
+  if (url.startsWith('/public') || url.startsWith('/uploads')) {
+    const backendUrl = process.env.VUE_URL_API || ''
+    url = `${backendUrl.replace(/\/$/, '')}${url}`
+  }
+  return url
+})
+
+const isImage = computed(() => {
+  const url = sanitizedMediaUrl.value?.toLowerCase() || ''
+  const body = props.mensagem?.body?.toLowerCase() || ''
+  const type = props.mediaType?.toLowerCase() || ''
+  return type === 'image' || /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url) || /\.(jpg|jpeg|png|webp|gif)$/i.test(body)
+})
+
+const isVideo = computed(() => {
+  const url = sanitizedMediaUrl.value?.toLowerCase() || ''
+  const body = props.mensagem?.body?.toLowerCase() || ''
+  const type = props.mediaType?.toLowerCase() || ''
+  return type === 'video' || /\.(mp4|m4v|webm|mov)(\?|$)/i.test(url) || /\.(mp4|m4v|webm|mov)$/i.test(body)
 })
 
 const isPdf = computed(() => {
