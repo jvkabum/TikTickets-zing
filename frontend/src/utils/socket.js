@@ -14,8 +14,16 @@ class NativeSocketIOEmulator {
     this.emitter = mitt()
     this.isConnected = false
     this.reconnectAttempts = 0
-    this.maxReconnectAttempts = 5
+    this.reconnectTimer = null
     this.id = Math.random().toString(36).substring(7)
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        console.info('socketIO (Native): Conexão de rede restabelecida. Reconectando WebSocket imediatamente...')
+        this.reconnectAttempts = 0
+        this.connect()
+      })
+    }
   }
 
   // Alias para compatibilidade com código legado que usa socket.connected (Socket.IO API)
@@ -90,13 +98,14 @@ class NativeSocketIOEmulator {
   }
 
   handleReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++
-      console.info(`socketIO (Native): Tentando reconectar (${this.reconnectAttempts}/${this.maxReconnectAttempts}) em 3 segundos...`)
-      setTimeout(() => {
-        this.connect()
-      }, 3000)
-    }
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
+    this.reconnectAttempts++
+    // Backoff exponencial com teto de 15 segundos
+    const delay = Math.min(2000 * Math.pow(1.3, Math.min(this.reconnectAttempts, 8)), 15000)
+    console.info(`socketIO (Native): Tentando reconectar (tentativa ${this.reconnectAttempts}) em ${(delay / 1000).toFixed(1)}s...`)
+    this.reconnectTimer = setTimeout(() => {
+      this.connect()
+    }, delay)
   }
 
   // API compatível com Socket.io-client

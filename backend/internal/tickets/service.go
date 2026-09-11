@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,9 @@ type TaskQueue interface {
 
 type WhatsAppWorker interface {
 	SendMessage(ctx context.Context, channelID uint, toJID string, text string) (string, error)
+	SendMessageReply(ctx context.Context, channelID uint, toJID string, text string, quotedID, quotedParticipant, quotedText string) (string, error)
+	SendMedia(ctx context.Context, channelID uint, toJID string, data []byte, filename string, mimeType string, mediaType string, caption string) (string, error)
+	SendMediaReply(ctx context.Context, channelID uint, toJID string, data []byte, filename string, mimeType string, mediaType string, caption string, quotedID, quotedParticipant, quotedText string) (string, error)
 	SendPoll(ctx context.Context, channelID uint, toJID string, question string, options []string, maxSelections int) (string, error)
 	RevokeMessage(ctx context.Context, channelID uint, toJID string, msgID string) error
 }
@@ -34,6 +38,14 @@ type TicketService struct {
 
 func NewTicketService(repo Repository, queue TaskQueue, waWorker WhatsAppWorker, wsNotifier WsNotifier) *TicketService {
 	return &TicketService{repo: repo, queue: queue, waWorker: waWorker, wsNotifier: wsNotifier}
+}
+
+func (s *TicketService) CreateMessageWithMedia(ctx context.Context, tenantID uint, ticketID uint, msg *Message, mediaData []byte, mimeType string) error {
+	return s.createMessageInternal(ctx, tenantID, ticketID, msg, mediaData, mimeType)
+}
+
+func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticketID uint, msg *Message) error {
+	return s.createMessageInternal(ctx, tenantID, ticketID, msg, nil, "")
 }
 
 // AcceptTicket lida com aceitação de ticket. Evita colisão (Concurrency/Race Condition) 
@@ -63,6 +75,24 @@ func (s *TicketService) AcceptTicket(ctx context.Context, ticketID uint, userID 
 			"ticketId": ticketID,
 			"userId":   userID,
 			"tenantId": tenantID,
+		})
+	}
+	return nil
+}
+
+// Update atualiza os dados do ticket e emite evento WebSocket em tempo real para sincronização entre atendentes/filas
+func (s *TicketService) Update(ctx context.Context, ticket *Ticket) error {
+	if err := s.repo.Update(ctx, ticket); err != nil {
+		return err
+	}
+	if s.wsNotifier != nil {
+		s.wsNotifier.Broadcast(fmt.Sprintf("tenant:%d:ticket", ticket.TenantID), map[string]interface{}{
+			"action": "update",
+			"ticket": ticket,
+		})
+		s.wsNotifier.Broadcast(fmt.Sprintf("%d:ticketList", ticket.TenantID), map[string]interface{}{
+			"type":    "ticket:update",
+			"payload": ticket,
 		})
 	}
 	return nil
@@ -120,7 +150,7 @@ func (s *TicketService) ListMessages(ctx context.Context, tenantID uint, ticketI
 	return s.repo.ListMessages(ctx, ticketID, limit, offset)
 }
 
-func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticketID uint, msg *Message) error {
+func (s *TicketService) createMessageInternal(ctx context.Context, tenantID uint, ticketID uint, msg *Message, mediaData []byte, mimeType string) error {
 	// 1. Validar se o ticket existe e pertence ao tenant
 	ticket, err := s.repo.GetByID(ctx, ticketID, tenantID)
 	if err != nil {
@@ -133,17 +163,33 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 		if ticket.WhatsappID != nil {
 			channelID = *ticket.WhatsappID
 		}
+		if channelID == 0 {
+			if defID, err := s.repo.GetDefaultWhatsappID(ctx, tenantID); err == nil && defID > 0 {
+				channelID = defID
+			}
+		}
 
 		toJID := ""
 		if ticket.Contact != nil {
 			if ticket.Contact.Number != "" {
+				rawNum := strings.Split(ticket.Contact.Number, "@")[0]
 				if ticket.IsGroup || ticket.Contact.IsGroup {
-					toJID = fmt.Sprintf("%s@g.us", ticket.Contact.Number)
+					toJID = fmt.Sprintf("%s@g.us", rawNum)
 				} else {
-					toJID = fmt.Sprintf("%s@s.whatsapp.net", ticket.Contact.Number)
+					var sb strings.Builder
+					for _, r := range rawNum {
+						if r >= '0' && r <= '9' {
+							sb.WriteRune(r)
+						}
+					}
+					cleanNum := sb.String()
+					if cleanNum != "" {
+						toJID = fmt.Sprintf("%s@s.whatsapp.net", cleanNum)
+					}
 				}
 			} else if ticket.Contact.LID != "" {
-				toJID = fmt.Sprintf("%s@lid", ticket.Contact.LID)
+				lidClean := strings.Split(ticket.Contact.LID, "@")[0]
+				toJID = fmt.Sprintf("%s@lid", lidClean)
 			}
 		}
 
@@ -151,7 +197,41 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 			var msgID string
 			var errWa error
 
-			if msg.SendType == "poll_creation" || (msg.MediaType != nil && *msg.MediaType == "poll_creation") {
+			var quotedID, quotedParticipant, quotedText string
+			if msg.QuotedMsg != nil {
+				quotedID = msg.QuotedMsg.MessageID
+				quotedText = msg.QuotedMsg.Body
+				if !msg.QuotedMsg.FromMe && ticket.Contact != nil && ticket.Contact.Number != "" {
+					cleanP := strings.Split(ticket.Contact.Number, "@")[0]
+					quotedParticipant = fmt.Sprintf("%s@s.whatsapp.net", cleanP)
+				}
+			} else if msg.QuotedMsgID != nil && *msg.QuotedMsgID != "" {
+				if q, errQ := s.repo.GetMessageByID(ctx, *msg.QuotedMsgID); errQ == nil && q != nil {
+					msg.QuotedMsg = q
+					quotedID = q.MessageID
+					quotedText = q.Body
+					if !q.FromMe && ticket.Contact != nil && ticket.Contact.Number != "" {
+						cleanP := strings.Split(ticket.Contact.Number, "@")[0]
+						quotedParticipant = fmt.Sprintf("%s@s.whatsapp.net", cleanP)
+					}
+				}
+			}
+
+			if len(mediaData) > 0 && msg.MediaType != nil {
+				filename := "arquivo"
+				if msg.MediaName != nil && *msg.MediaName != "" {
+					filename = *msg.MediaName
+				}
+				caption := msg.Body
+				if caption == filename {
+					caption = ""
+				}
+				if quotedID != "" {
+					msgID, errWa = s.waWorker.SendMediaReply(ctx, channelID, toJID, mediaData, filename, mimeType, *msg.MediaType, caption, quotedID, quotedParticipant, quotedText)
+				} else {
+					msgID, errWa = s.waWorker.SendMedia(ctx, channelID, toJID, mediaData, filename, mimeType, *msg.MediaType, caption)
+				}
+			} else if msg.SendType == "poll_creation" || (msg.MediaType != nil && *msg.MediaType == "poll_creation") {
 				var pollData struct {
 					Name    string `json:"name"`
 					Options []struct {
@@ -170,10 +250,18 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 				if len(options) >= 2 {
 					msgID, errWa = s.waWorker.SendPoll(ctx, channelID, toJID, pollData.Name, options, 1)
 				} else {
-					msgID, errWa = s.waWorker.SendMessage(ctx, channelID, toJID, msg.Body)
+					if quotedID != "" {
+						msgID, errWa = s.waWorker.SendMessageReply(ctx, channelID, toJID, msg.Body, quotedID, quotedParticipant, quotedText)
+					} else {
+						msgID, errWa = s.waWorker.SendMessage(ctx, channelID, toJID, msg.Body)
+					}
 				}
 			} else {
-				msgID, errWa = s.waWorker.SendMessage(ctx, channelID, toJID, msg.Body)
+				if quotedID != "" {
+					msgID, errWa = s.waWorker.SendMessageReply(ctx, channelID, toJID, msg.Body, quotedID, quotedParticipant, quotedText)
+				} else {
+					msgID, errWa = s.waWorker.SendMessage(ctx, channelID, toJID, msg.Body)
+				}
 			}
 
 			if errWa != nil {
@@ -198,7 +286,11 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 		msg.Status = "sended"
 	}
 	if msg.SendType == "" {
-		msg.SendType = "chat"
+		if msg.MediaType != nil && *msg.MediaType != "" {
+			msg.SendType = *msg.MediaType
+		} else {
+			msg.SendType = "chat"
+		}
 	}
 	if msg.Ack == 0 {
 		msg.Ack = 1
@@ -236,14 +328,19 @@ func (s *TicketService) CreateMessage(ctx context.Context, tenantID uint, ticket
 				"body":      msg.Body,
 				"ack":       msg.Ack,
 				"status":    msg.Status,
+				"mediaUrl":  msg.MediaUrl,
+				"mediaName": msg.MediaName,
+				"mediaType": msg.MediaType,
 				"fromMe":    true,
 				"read":      true,
 				"sendType":  msg.SendType,
 				"ticketId":  ticketID,
 				"tenantId":  tenantID,
-				"createdAt": msg.CreatedAt,
-				"ticket":    ticket,
-				"contact":   ticket.Contact,
+				"createdAt":   msg.CreatedAt,
+				"quotedMsg":   msg.QuotedMsg,
+				"quotedMsgId": msg.QuotedMsgID,
+				"ticket":      ticket,
+				"contact":     ticket.Contact,
 			},
 		})
 		s.wsNotifier.Broadcast(fmt.Sprintf("%d:ticketList", tenantID), map[string]interface{}{
@@ -289,6 +386,65 @@ func (s *TicketService) DeleteMessage(ctx context.Context, tenantID uint, ticket
 			"tenantId":  tenantID,
 			"messageId": messageID,
 		})
+	}
+
+	return nil
+}
+
+func (s *TicketService) EditMessage(ctx context.Context, tenantID uint, messageID string, newBody string) (*Message, error) {
+	updatedMsg, err := s.repo.UpdateMessageBody(ctx, tenantID, messageID, newBody)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.wsNotifier != nil {
+		s.wsNotifier.Broadcast(fmt.Sprintf("tenant:%d:appMessage", tenantID), map[string]interface{}{
+			"action":  "update",
+			"message": updatedMsg,
+		})
+		s.wsNotifier.Broadcast(fmt.Sprintf("%d:ticketList", tenantID), map[string]interface{}{
+			"type": "chat:update",
+			"payload": map[string]interface{}{
+				"id":        updatedMsg.ID,
+				"messageId": updatedMsg.MessageID,
+				"body":      updatedMsg.Body,
+				"ack":       updatedMsg.Ack,
+				"ticketId":  updatedMsg.TicketID,
+			},
+		})
+	}
+
+	return updatedMsg, nil
+}
+
+func (s *TicketService) ForwardMessages(ctx context.Context, tenantID uint, messageIDs []string, contactID uint) error {
+	if len(messageIDs) == 0 || contactID == 0 {
+		return errors.New("mensagens ou contato alvo inválidos")
+	}
+
+	targetTicket, err := s.repo.FindOrCreateTicketForContact(ctx, tenantID, contactID)
+	if err != nil {
+		return fmt.Errorf("falha ao localizar/criar ticket para encaminhamento: %w", err)
+	}
+
+	for _, mID := range messageIDs {
+		origMsg, errGet := s.repo.GetMessageByAnyID(ctx, tenantID, mID)
+		if errGet != nil || origMsg == nil {
+			continue
+		}
+
+		newMsg := Message{
+			TicketID:  targetTicket.ID,
+			TenantID:  tenantID,
+			Body:      origMsg.Body,
+			MediaType: origMsg.MediaType,
+			MediaUrl:  origMsg.MediaUrl,
+			MediaName: origMsg.MediaName,
+			SendType:  origMsg.SendType,
+			FromMe:    true,
+		}
+
+		_ = s.createMessageInternal(ctx, tenantID, targetTicket.ID, &newMsg, nil, "")
 	}
 
 	return nil

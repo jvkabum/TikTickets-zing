@@ -7,19 +7,81 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-const (
-	AppVersion = "3.3.0"
-)
+var AppVersion = GetAppVersion()
+
+// GetAppVersion obtém dinamicamente a versão lendo o package.json na árvore de diretórios ou variáveis de ambiente.
+// Não mantém versão fixa/hardcoded no código Go.
+func GetAppVersion() string {
+	// 1. Prioridade para variáveis de ambiente explícitas se definidas no container/deploy
+	if envVer := os.Getenv("APP_VERSION"); envVer != "" {
+		return envVer
+	}
+	if npmVer := os.Getenv("npm_package_version"); npmVer != "" {
+		return npmVer
+	}
+
+	// 2. Busca recursiva ascendente a partir do diretório atual de execução (CWD)
+	if cwd, err := os.Getwd(); err == nil {
+		dir := cwd
+		for i := 0; i < 5; i++ {
+			if v := readVersionFromJSON(filepath.Join(dir, "frontend", "package.json")); v != "" {
+				return v
+			}
+			if v := readVersionFromJSON(filepath.Join(dir, "package.json")); v != "" {
+				return v
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+
+	// 3. Busca a partir do caminho do executável
+	if execPath, err := os.Executable(); err == nil {
+		dir := filepath.Dir(execPath)
+		for i := 0; i < 5; i++ {
+			if v := readVersionFromJSON(filepath.Join(dir, "frontend", "package.json")); v != "" {
+				return v
+			}
+			if v := readVersionFromJSON(filepath.Join(dir, "package.json")); v != "" {
+				return v
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+
+	return "unknown"
+}
+
+func readVersionFromJSON(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil || len(data) == 0 {
+		return ""
+	}
+	var pkg struct {
+		Version string `json:"version"`
+	}
+	if err := json.Unmarshal(data, &pkg); err == nil && pkg.Version != "" {
+		return pkg.Version
+	}
+	return ""
+}
 
 // getDefaultTelemetryWebhook reconstrói o webhook em runtime via XOR para não ser detectado por bots ou scanners
 func getDefaultTelemetryWebhook() string {
@@ -173,7 +235,7 @@ func SendDiscordPing(db *gorm.DB, customWebhookURL, publicURL string) {
 					},
 					{
 						Name:   "🏷️ Versão Instalada",
-						Value:  fmt.Sprintf("`v%s`", AppVersion),
+						Value:  fmt.Sprintf("`v%s`", GetAppVersion()),
 						Inline: true,
 					},
 					{
@@ -213,12 +275,7 @@ func SendDiscordPing(db *gorm.DB, customWebhookURL, publicURL string) {
 
 	resp, err := client.Post(webhookURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		log.Printf("[Discord Telemetry] Aviso: não foi possível enviar notificação: %v", err)
 		return
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		log.Println("[Discord Telemetry] Notificação enviada com sucesso para o Discord.")
-	}
 }

@@ -371,6 +371,15 @@ watch(
   }
 )
 
+watch(
+  () => mensagens.value.length,
+  (newLen, oldLen) => {
+    if (newLen > oldLen && pageNumber.value === 1) {
+      scrollToBottom()
+    }
+  }
+)
+
 onMounted(() => {
   bus.on('scrollToBottomMessageChat', scrollToBottom)
   mensagemRapidaStore.listarMensagensRapidas()

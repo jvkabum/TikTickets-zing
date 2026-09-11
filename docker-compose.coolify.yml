@@ -18,6 +18,8 @@ networks:
 volumes:
   postgres_data:
     name: tiktickets_postgres_data
+  uploads_data:
+    name: tiktickets_uploads_data
 
 services:
   # ----------------------------------------------------------------------------
@@ -67,6 +69,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - uploads_data:/app/public/uploads
     networks:
       - coolify
     labels:

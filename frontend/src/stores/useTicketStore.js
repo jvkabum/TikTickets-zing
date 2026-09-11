@@ -230,14 +230,27 @@ export const useTicketStore = defineStore('ticket', () => {
     hasMore.value = true
   }
 
+  function getMsgTimestamp(m) {
+    const raw = m.createdAt || m.timestamp || m.created_at
+    if (!raw) return 0
+    const t = new Date(raw).getTime()
+    return isNaN(t) ? 0 : t
+  }
+
+  function sortMessages(list) {
+    return [...list].sort((a, b) => getMsgTimestamp(a) - getMsgTimestamp(b))
+  }
+
   function setMensagens(data) {
-    mensagens.value = data
+    mensagens.value = sortMessages(data || [])
   }
 
   function addMensagem(msg) {
-    const idx = mensagens.value.findIndex(m => m.id === msg.id)
+    const idx = mensagens.value.findIndex(m => m.id === msg.id || (msg.messageId && m.messageId === msg.messageId))
     if (idx === -1) {
-      mensagens.value.push(msg)
+      mensagens.value = sortMessages([...mensagens.value, msg])
+    } else {
+      mensagens.value[idx] = { ...mensagens.value[idx], ...msg }
     }
   }
 
@@ -289,11 +302,11 @@ export const useTicketStore = defineStore('ticket', () => {
     try {
       const { data } = await LocalizarMensagens(params)
       if (params.pageNumber === 1) {
-        mensagens.value = data.messages
+        mensagens.value = sortMessages(data.messages || [])
       } else {
         // Concatenar e remover duplicados
-        const newMessages = data.messages.filter(nm => !mensagens.value.find(m => m.id === nm.id))
-        mensagens.value = [...newMessages, ...mensagens.value]
+        const newMessages = (data.messages || []).filter(nm => !mensagens.value.find(m => m.id === nm.id || (nm.messageId && m.messageId === nm.messageId)))
+        mensagens.value = sortMessages([...newMessages, ...mensagens.value])
       }
       hasMore.value = data.hasMore
       return data

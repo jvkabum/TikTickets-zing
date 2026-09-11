@@ -155,6 +155,7 @@ type Message struct {
 	TicketID    uint           `gorm:"column:ticket_id;not null" json:"ticketId"`
 	TenantID    uint           `gorm:"column:tenant_id;not null" json:"tenantId"`
 	QuotedMsgID *string        `gorm:"column:quoted_msg_id" json:"quotedMsgId"`
+	QuotedMsg   *Message       `gorm:"foreignKey:QuotedMsgID;references:ID" json:"quotedMsg,omitempty"`
 	CreatedAt   time.Time      `gorm:"column:created_at" json:"createdAt"`
 	UpdatedAt   time.Time      `gorm:"column:updated_at" json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index;column:deleted_at" json:"deletedAt,omitempty"`

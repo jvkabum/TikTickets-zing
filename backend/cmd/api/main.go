@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -172,6 +173,10 @@ func main() {
 	// 6. Registro de Rotas (Públicas)
 	public := e.Group("")
 	
+	// Arquivos estáticos de upload (/public/uploads)
+	_ = os.MkdirAll("public/uploads", 0755)
+	e.Static("/public", "public")
+
 	// Health Check (Liveness)
 	e.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})

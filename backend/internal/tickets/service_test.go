@@ -37,8 +37,20 @@ func (m *mockTicketRepository) CreateMessage(ctx context.Context, message *Messa
 func (m *mockTicketRepository) GetMessageByID(ctx context.Context, messageID string) (*Message, error) {
 	return nil, nil
 }
+func (m *mockTicketRepository) GetMessageByAnyID(ctx context.Context, tenantID uint, messageID string) (*Message, error) {
+	return nil, nil
+}
+func (m *mockTicketRepository) UpdateMessageBody(ctx context.Context, tenantID uint, messageID string, newBody string) (*Message, error) {
+	return nil, nil
+}
 func (m *mockTicketRepository) DeleteMessage(ctx context.Context, messageID string) error {
 	return nil
+}
+func (m *mockTicketRepository) FindOrCreateTicketForContact(ctx context.Context, tenantID uint, contactID uint) (*Ticket, error) {
+	return &Ticket{ID: 1, ContactID: contactID, TenantID: tenantID}, nil
+}
+func (m *mockTicketRepository) GetDefaultWhatsappID(ctx context.Context, tenantID uint) (uint, error) {
+	return 1, nil
 }
 
 func TestAcceptTicket_Success(t *testing.T) {
@@ -97,6 +109,24 @@ func (m *mockWaWorker) SendMessage(ctx context.Context, channelID uint, toJID st
 	m.sentJID = toJID
 	m.sentText = text
 	return "wa-msg-123", nil
+}
+
+func (m *mockWaWorker) SendMessageReply(ctx context.Context, channelID uint, toJID string, text string, quotedID, quotedParticipant, quotedText string) (string, error) {
+	m.sentJID = toJID
+	m.sentText = text
+	return "wa-msg-123", nil
+}
+
+func (m *mockWaWorker) SendMedia(ctx context.Context, channelID uint, toJID string, data []byte, filename string, mimeType string, mediaType string, caption string) (string, error) {
+	m.sentJID = toJID
+	m.sentText = filename
+	return "wa-media-123", nil
+}
+
+func (m *mockWaWorker) SendMediaReply(ctx context.Context, channelID uint, toJID string, data []byte, filename string, mimeType string, mediaType string, caption string, quotedID, quotedParticipant, quotedText string) (string, error) {
+	m.sentJID = toJID
+	m.sentText = filename
+	return "wa-media-123", nil
 }
 
 func (m *mockWaWorker) SendPoll(ctx context.Context, channelID uint, toJID string, question string, options []string, maxSelections int) (string, error) {
@@ -179,4 +209,136 @@ func TestCreateMessage_SendsPoll(t *testing.T) {
 		t.Fatalf("expected messageID wa-poll-123, got %s", msg.MessageID)
 	}
 }
+
+func TestCreateMessage_SendMedia_Success(t *testing.T) {
+	whatsappID := uint(5)
+	mediaType := "image"
+	mediaName := "foto.jpg"
+	repo := &mockTicketRepository{
+		ticket: &Ticket{
+			ID:         1,
+			Status:     "open",
+			TenantID:   10,
+			WhatsappID: &whatsappID,
+			Contact: &contacts.Contact{
+				ID:     50,
+				Number: "+55 (11) 98888-7777",
+			},
+		},
+	}
+	wa := &mockWaWorker{}
+	service := NewTicketService(repo, nil, wa, nil)
+
+	msg := &Message{
+		Body:      "Legenda da foto",
+		MediaType: &mediaType,
+		MediaName: &mediaName,
+	}
+	mediaData := []byte("fake-image-bytes")
+	err := service.CreateMessageWithMedia(context.Background(), 10, 1, msg, mediaData, "image/jpeg")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	expectedJID := "5511988887777@s.whatsapp.net"
+	if wa.sentJID != expectedJID {
+		t.Fatalf("expected media sent to %s, got %s", expectedJID, wa.sentJID)
+	}
+	if msg.MessageID != "wa-media-123" {
+		t.Fatalf("expected messageID wa-media-123, got %s", msg.MessageID)
+	}
+}
+
+func TestCreateMessage_FallbackDefaultWhatsappID(t *testing.T) {
+	repo := &mockTicketRepository{
+		ticket: &Ticket{
+			ID:         1,
+			Status:     "open",
+			TenantID:   10,
+			WhatsappID: nil, // sem canal explícito no ticket
+			Contact: &contacts.Contact{
+				ID:     50,
+				Number: "5511999990000",
+			},
+		},
+	}
+	wa := &mockWaWorker{}
+	service := NewTicketService(repo, nil, wa, nil)
+
+	msg := &Message{Body: "Teste com canal fallback"}
+	err := service.CreateMessage(context.Background(), 10, 1, msg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	expectedJID := "5511999990000@s.whatsapp.net"
+	if wa.sentJID != expectedJID {
+		t.Fatalf("expected message sent to %s, got %s", expectedJID, wa.sentJID)
+	}
+	if msg.MessageID != "wa-msg-123" {
+		t.Fatalf("expected messageID wa-msg-123, got %s", msg.MessageID)
+	}
+}
+
+func TestCreateMessage_WithQuotedMessage(t *testing.T) {
+	whatsappID := uint(1)
+	repo := &mockTicketRepository{
+		ticket: &Ticket{
+			ID:         1,
+			Status:     "open",
+			TenantID:   10,
+			WhatsappID: &whatsappID,
+			Contact: &contacts.Contact{
+				ID:     50,
+				Number: "5511988887777",
+			},
+		},
+	}
+	wa := &mockWaWorker{}
+	service := NewTicketService(repo, nil, wa, nil)
+
+	quotedMsgID := "original-msg-1"
+	msg := &Message{
+		Body:        "Resposta para a mensagem anterior",
+		QuotedMsgID: &quotedMsgID,
+		QuotedMsg: &Message{
+			ID:        quotedMsgID,
+			MessageID: "wa-original-123",
+			Body:      "Mensagem original do cliente",
+			FromMe:    false,
+		},
+	}
+	err := service.CreateMessage(context.Background(), 10, 1, msg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if wa.sentText != "Resposta para a mensagem anterior" {
+		t.Fatalf("expected sentText 'Resposta para a mensagem anterior', got %s", wa.sentText)
+	}
+	if msg.QuotedMsg == nil || msg.QuotedMsg.MessageID != "wa-original-123" {
+		t.Fatalf("expected QuotedMsg populated")
+	}
+}
+
+func TestUpdateTicket_Realtime(t *testing.T) {
+	repo := &mockTicketRepository{
+		ticket: &Ticket{ID: 1, Status: "pending", TenantID: 10},
+	}
+	service := NewTicketService(repo, nil, nil, nil)
+
+	repo.ticket.Status = "open"
+	userID := uint(99)
+	repo.ticket.UserID = &userID
+
+	err := service.Update(context.Background(), repo.ticket)
+	if err != nil {
+		t.Fatalf("expected no error on update, got %v", err)
+	}
+	if repo.ticket.Status != "open" || *repo.ticket.UserID != 99 {
+		t.Fatalf("expected ticket updated")
+	}
+}
+
+
 
