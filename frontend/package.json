@@ -56,6 +56,7 @@
     "lodash": "^4.17.21",
     "mic-recorder-to-mp3": "^2.2.2",
     "mitt": "^3.0.1",
+    "pdfjs-dist": "^4.10.38",
     "pinia": "^3.0.4",
     "printd": "^1.6.0",
     "qrcode.vue": "^3.4.1",

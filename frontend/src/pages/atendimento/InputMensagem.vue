@@ -117,8 +117,34 @@
             color="primary"
             text-color="white"
             dense
+            class="q-pr-xs"
           >
-            {{ file.name }}
+            <q-avatar
+              v-if="file.type?.startsWith('image/')"
+              icon="mdi-image"
+              color="blue-9"
+              text-color="white"
+            />
+            <q-avatar
+              v-else-if="file.name?.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf'"
+              icon="mdi-file-pdf-box"
+              color="negative"
+              text-color="white"
+            />
+            <span class="ellipsis" style="max-width: 180px">{{ file.name }}</span>
+            <q-btn
+              v-if="file.type?.startsWith('image/')"
+              flat
+              round
+              dense
+              size="xs"
+              icon="mdi-pencil"
+              color="white"
+              class="q-ml-xs"
+              @click.stop="openEditorForFile(file)"
+            >
+              <q-tooltip>Editar / Cortar / Anotar imagem</q-tooltip>
+            </q-btn>
           </q-chip>
         </div>
 
@@ -159,6 +185,7 @@
           append
           style="display: none"
           accept=".txt,.xml,.jpg,.png,image/jpeg,.pdf,.doc,.docx,.mp4,.ogg,.mp3,.xls,.xlsx,.jpeg,.rar,.zip,.ppt,.pptx"
+          @update:model-value="onFilesPicked"
           @rejected="onRejectedFiles"
         />
 
@@ -222,6 +249,15 @@
         style="width: 280px; height: 50px"
       />
     </div>
+
+    <!-- Media Editor Modal -->
+    <MediaEditorModal
+      v-model="showMediaEditor"
+      :file="fileToEdit"
+      :initial-caption="editorInitialCaption"
+      @send="handleEditorSend"
+      @cancel="fileToEdit = null"
+    />
   </div>
 </template>
 
@@ -238,6 +274,7 @@ import RecordingTimer from './RecordingTimer.vue'
 import bus from 'src/utils/eventBus'
 import EmojiPickerComponent from 'src/components/EmojiPickerComponent.vue'
 import useEmoji from 'src/composables/useEmoji'
+import MediaEditorModal from 'src/components/chat/media-editor/MediaEditorModal.vue'
 
 const props = defineProps({
   replyingMessage: { type: Object, default: null },
@@ -271,6 +308,50 @@ const scheduleDate = ref(null)
 const isRecordingAudio = ref(false)
 const visualizarMensagensRapidas = ref(false)
 
+// Editor de Mídia
+const showMediaEditor = ref(false)
+const fileToEdit = ref(null)
+const editorInitialCaption = ref('')
+
+const openEditorForFile = file => {
+  fileToEdit.value = file
+  editorInitialCaption.value = textChat.value || ''
+  showMediaEditor.value = true
+}
+
+const onFilesPicked = files => {
+  if (files && files.length === 1 && files[0].type?.startsWith('image/')) {
+    openEditorForFile(files[0])
+  }
+}
+
+const handleEditorSend = async ({ editedFile, caption }) => {
+  if (props.isScheduleDate && !scheduleDate.value) return notificarErro('Informe a data do agendamento')
+
+  loading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('medias', editedFile)
+    const bodyText = caption || editedFile.name
+    formData.append('body', bodyText)
+    formData.append('fromMe', true)
+    formData.append('id', uid())
+    if (props.replyingMessage) formData.append('quotedMsg', JSON.stringify(props.replyingMessage))
+    if (scheduleDate.value) formData.append('scheduleDate', scheduleDate.value)
+
+    await ticketStore.enviarMensagem(ticketFocado.value.id, formData)
+    textChat.value = ''
+    arquivos.value = []
+    fileToEdit.value = null
+    emit('update:replyingMessage', null)
+    nextTick(() => inputRef.value?.focus())
+  } catch (e) {
+    notificarErro('Erro ao enviar imagem editada', e)
+  } finally {
+    loading.value = false
+  }
+}
+
 const cMensagensRapidas = computed(() => {
   let search = textChat.value.toLowerCase()
   if (search.startsWith('/')) search = search.substring(1)
@@ -283,7 +364,13 @@ const handleEnter = () => {
 
 const handleInputPaste = e => {
   const file = e.clipboardData?.files[0]
-  if (file) arquivos.value = [file]
+  if (file) {
+    if (file.type?.startsWith('image/')) {
+      openEditorForFile(file)
+    } else {
+      arquivos.value = [file]
+    }
+  }
 }
 
 const abrirEnvioArquivo = () => filePickerRef.value.pickFiles()
